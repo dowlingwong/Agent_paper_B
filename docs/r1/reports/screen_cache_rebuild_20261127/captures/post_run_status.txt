@@ -1,0 +1,9 @@
+Post-run status, deepthought (compute/20261127-26)
+deepthought
+git HEAD: c12136d664ae588a2539b76b2602e36742979ce8
+git status --porcelain lines: 0
+nvidia-smi (no process of ours was started; this is a host observation, not a run-time capture):
+0, NVIDIA GeForce GTX TITAN X, 657 MiB, 0 %
+1, NVIDIA GeForce GTX TITAN X, 5757 MiB, 100 %
+2, NVIDIA GeForce GTX TITAN X, 653 MiB, 0 %
+3, NVIDIA GeForce GTX TITAN X, 653 MiB, 0 %

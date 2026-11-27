@@ -1,0 +1,505 @@
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit MAX_ITER: 40 → 80
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit MAX_ITER: 40 → 80
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit MAX_ITER: 40 → 80
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 64
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit LEARNING_RATE_INIT: 1e-3 → 0.002
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 64
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit MAX_ITER: 40 → 80
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit LEARNING_RATE_INIT: 1e-3 → 0.002
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:53:48 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:51 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_score': 0.952646, 'train_loss': 0.146867}
+2026-11-27T14:53:51 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_score': 0.963788, 'train_loss': 0.055888}
+2026-11-27T14:53:51 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.5s; success=True metrics={'val_score': 0.952646, 'train_loss': 0.146867}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_score': 0.963788, 'train_loss': 0.055888}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_score': 0.97493, 'train_loss': 0.018601}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_score': 0.972145, 'train_loss': 0.033852}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 64
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 64
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.1s; success=True metrics={'val_score': 0.97493, 'train_loss': 0.06483}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.1s; success=True metrics={'val_score': 0.97493, 'train_loss': 0.004352}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.1s; success=True metrics={'val_score': 0.972145, 'train_loss': 0.033852}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.2s; success=True metrics={'val_score': 0.97493, 'train_loss': 0.004352}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.3s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.016906}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.3s; success=True metrics={'val_score': 0.97493, 'train_loss': 0.027138}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.4s; success=True metrics={'val_score': 0.97493, 'train_loss': 0.027138}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.4s; success=True metrics={'val_score': 0.97493, 'train_loss': 0.06483}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.3s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.016906}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.5s; success=True metrics={'val_score': 0.97493, 'train_loss': 0.018601}
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 64
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 64
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:53:52 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:53:53 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:55 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.009237}
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.005
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.009237}
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_score': 0.97493, 'train_loss': 0.007153}
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_score': 0.97493, 'train_loss': 0.007153}
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.1s; success=True metrics={'val_score': 0.961003, 'train_loss': 0.051678}
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.2s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.005
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.02
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.02
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.5s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_score': 0.963788, 'train_loss': 0.075972}
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.008362}
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:53:56 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_score': 0.963788, 'train_loss': 0.075972}
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.8s; success=True metrics={'val_score': 0.961003, 'train_loss': 0.051678}
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.013492}
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.6s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.005721}
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.5s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.013492}
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.9s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.008362}
+2026-11-27T14:53:57 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.9s; success=True metrics={'val_score': 0.977716, 'train_loss': 0.005721}
+2026-11-27T14:53:58 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:53:58 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:58 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:53:58 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:58 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:53:58 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:53:58 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:53:58 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.99839, 'val_acc': 0.980952}
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.4s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.075
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.1s; success=True metrics={'val_auc': 0.99839, 'val_acc': 0.980952}
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.075
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.3
+2026-11-27T14:54:00 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.3
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.4s; success=True metrics={'val_auc': 1.0, 'val_acc': 0.971429}
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:54:01 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.3s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 1.0, 'val_acc': 0.990476}
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.999597, 'val_acc': 0.990476}
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.9s; success=True metrics={'val_auc': 1.0, 'val_acc': 0.971429}
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 1.0, 'val_acc': 0.990476}
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:02 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:04 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_auc': 0.897683, 'val_acc': 0.814815}
+2026-11-27T14:54:04 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.897683, 'val_acc': 0.814815}
+2026-11-27T14:54:04 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:04 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:04 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:04 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:04 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_auc': 0.895753, 'val_acc': 0.802469}
+2026-11-27T14:54:04 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.895753, 'val_acc': 0.802469}
+2026-11-27T14:54:04 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 0.899614, 'val_acc': 0.839506}
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.2s; success=True metrics={'val_auc': 0.899614, 'val_acc': 0.839506}
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.075
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.899614, 'val_acc': 0.876543}
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.075
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.3
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.876448, 'val_acc': 0.901235}
+2026-11-27T14:54:05 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.2s; success=True metrics={'val_auc': 0.880309, 'val_acc': 0.925926}
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.3s; success=True metrics={'val_auc': 0.899614, 'val_acc': 0.876543}
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_auc': 0.880309, 'val_acc': 0.925926}
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.3
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_auc': 0.880309, 'val_acc': 0.925926}
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.880309, 'val_acc': 0.925926}
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.876448, 'val_acc': 0.901235}
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.8s; success=True metrics={'val_auc': 0.84556, 'val_acc': 0.91358}
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:06 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:07 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.7s; success=True metrics={'val_auc': 0.84556, 'val_acc': 0.91358}
+2026-11-27T14:54:07 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:07 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:08 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.88417, 'val_acc': 0.91358}
+2026-11-27T14:54:08 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.1s; success=True metrics={'val_auc': 0.88417, 'val_acc': 0.91358}
+2026-11-27T14:54:08 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:08 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:08 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:08 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:08 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 0.942654, 'val_acc': 0.875}
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.9509, 'val_acc': 0.875}
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.1s; success=True metrics={'val_auc': 0.942654, 'val_acc': 0.875}
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_auc': 0.9509, 'val_acc': 0.875}
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.939655, 'val_acc': 0.894231}
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.5s; success=True metrics={'val_auc': 0.939655, 'val_acc': 0.894231}
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.075
+2026-11-27T14:54:09 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:10 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.075
+2026-11-27T14:54:10 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:10 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.953898, 'val_acc': 0.894231}
+2026-11-27T14:54:10 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.953898, 'val_acc': 0.894231}
+2026-11-27T14:54:10 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.940405, 'val_acc': 0.875}
+2026-11-27T14:54:10 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 0.940405, 'val_acc': 0.875}
+2026-11-27T14:54:10 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.4s; success=True metrics={'val_auc': 0.9509, 'val_acc': 0.884615}
+2026-11-27T14:54:10 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.943778, 'val_acc': 0.903846}
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.3
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.15 → 0.3
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.1s; success=True metrics={'val_auc': 0.9509, 'val_acc': 0.884615}
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.2s; success=True metrics={'val_auc': 0.943778, 'val_acc': 0.903846}
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:11 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:12 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.940405, 'val_acc': 0.903846}
+2026-11-27T14:54:12 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.940405, 'val_acc': 0.903846}
+2026-11-27T14:54:12 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:12 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:12 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:12 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:13 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.862229, 'val_acc': 0.849057}
+2026-11-27T14:54:13 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 0.862229, 'val_acc': 0.849057}
+2026-11-27T14:54:13 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:13 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:13 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.5s; success=True metrics={'val_auc': 0.95952, 'val_acc': 0.875}
+2026-11-27T14:54:13 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.6s; success=True metrics={'val_auc': 0.95952, 'val_acc': 0.875}
+2026-11-27T14:54:13 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 0.865325, 'val_acc': 0.849057}
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.865325, 'val_acc': 0.849057}
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:14 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.865325, 'val_acc': 0.830189}
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.866873, 'val_acc': 0.830189}
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.005
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.3s; success=True metrics={'val_auc': 0.95356, 'val_acc': 0.962264}
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.3s; success=True metrics={'val_auc': 0.865325, 'val_acc': 0.830189}
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.866873, 'val_acc': 0.830189}
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.6s; success=True metrics={'val_auc': 0.95356, 'val_acc': 0.962264}
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.02
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.02
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.005
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:15 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.7s; success=True metrics={'val_auc': 0.955108, 'val_acc': 0.924528}
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.1s; success=True metrics={'val_auc': 0.865325, 'val_acc': 0.867925}
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.7s; success=True metrics={'val_auc': 0.955108, 'val_acc': 0.924528}
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.5s; success=True metrics={'val_auc': 0.865325, 'val_acc': 0.867925}
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:16 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:17 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.851393, 'val_acc': 0.830189}
+2026-11-27T14:54:17 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:17 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:17 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.851393, 'val_acc': 0.830189}
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.92437, 'val_acc': 0.806452}
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.92437, 'val_acc': 0.806452}
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.952012, 'val_acc': 0.962264}
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.2s; success=True metrics={'val_auc': 0.952012, 'val_acc': 0.962264}
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.3s; success=True metrics={'val_auc': 0.920168, 'val_acc': 0.741935}
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:18 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.2s; success=True metrics={'val_auc': 0.953782, 'val_acc': 0.83871}
+2026-11-27T14:54:19 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.5s; success=True metrics={'val_auc': 0.920168, 'val_acc': 0.741935}
+2026-11-27T14:54:19 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:19 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:19 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:19 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:19 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.953782, 'val_acc': 0.774194}
+2026-11-27T14:54:19 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.953782, 'val_acc': 0.83871}
+2026-11-27T14:54:19 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.005
+2026-11-27T14:54:19 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:19 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.005
+2026-11-27T14:54:19 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:20 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_auc': 0.92437, 'val_acc': 0.83871}
+2026-11-27T14:54:20 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.02
+2026-11-27T14:54:20 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:20 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.953782, 'val_acc': 0.774194}
+2026-11-27T14:54:20 [INFO] autoresearch.worker.local_worker: trial-001: applied edit C: 0.01 → 0.02
+2026-11-27T14:54:20 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:20 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:54:20 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:20 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.92437, 'val_acc': 0.83871}
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.920168, 'val_acc': 0.741935}
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.9s; success=True metrics={'val_auc': 0.760504, 'val_acc': 0.741935}
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → random_forest
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.9s; success=True metrics={'val_auc': 0.760504, 'val_acc': 0.741935}
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: applied edit model_type: logistic_regression → gradient_boosting
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:21 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_auc': 0.920168, 'val_acc': 0.741935}
+2026-11-27T14:54:22 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:22 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:22 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 0.953782, 'val_acc': 0.83871}
+2026-11-27T14:54:22 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.2s; success=True metrics={'val_auc': 0.962185, 'val_acc': 0.774194}
+2026-11-27T14:54:22 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.988235}
+2026-11-27T14:54:22 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.3s; success=True metrics={'val_auc': 0.953782, 'val_acc': 0.83871}
+2026-11-27T14:54:22 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:22 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.5s; success=True metrics={'val_auc': 0.962185, 'val_acc': 0.774194}
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.988235}
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.988235}
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.5s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.988235}
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: applied edit class_weight: balanced → null
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py --config config.yaml
+2026-11-27T14:54:23 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.988235}
+2026-11-27T14:54:24 [INFO] autoresearch.worker.local_worker: trial-001: no Change directive found; running without edit
+2026-11-27T14:54:24 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:24 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.988235}
+2026-11-27T14:54:24 [INFO] autoresearch.worker.local_worker: trial-001: applied edit MAX_ITER: 40 → 20
+2026-11-27T14:54:24 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:24 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.964706}
+2026-11-27T14:54:24 [INFO] autoresearch.worker.local_worker: trial-001: applied edit MAX_ITER: 40 → 20
+2026-11-27T14:54:24 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:24 [INFO] autoresearch.worker.local_worker: trial-001: applied edit ALPHA: 1e-4 → 5e-05
+2026-11-27T14:54:24 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:25 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.1s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.964706}
+2026-11-27T14:54:25 [INFO] autoresearch.worker.local_worker: trial-001: applied edit ALPHA: 1e-4 → 5e-05
+2026-11-27T14:54:25 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:25 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.976471}
+2026-11-27T14:54:25 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.976471}
+2026-11-27T14:54:26 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:54:26 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:26 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:54:26 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:26 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.7s; success=True metrics={'val_auc': 0.991745, 'val_acc': 0.941176}
+2026-11-27T14:54:26 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.9s; success=True metrics={'val_auc': 0.991745, 'val_acc': 0.941176}
+2026-11-27T14:54:26 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.976471}
+2026-11-27T14:54:26 [INFO] autoresearch.worker.local_worker: trial-001: applied edit ALPHA: 1e-4 → 0.0002
+2026-11-27T14:54:26 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:26 [INFO] autoresearch.worker.local_worker: trial-001: applied edit ALPHA: 1e-4 → 0.0002
+2026-11-27T14:54:26 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.988235}
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_auc': 0.998231, 'val_acc': 0.976471}
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.2s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.976471}
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.1s; success=True metrics={'val_auc': 0.998821, 'val_acc': 0.988235}
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: applied edit ALPHA: 1e-4 → 5e-05
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: applied edit ALPHA: 1e-4 → 5e-05
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_score': 0.921075, 'train_loss': 0.300601}
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_auc': 0.998231, 'val_acc': 0.976471}
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:27 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_score': 0.921075, 'train_loss': 0.300601}
+2026-11-27T14:54:28 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_score': 0.917325, 'train_loss': 0.346748}
+2026-11-27T14:54:28 [INFO] autoresearch.worker.local_worker: trial-001: applied edit ALPHA: 1e-4 → 0.0002
+2026-11-27T14:54:28 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:28 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_score': 0.917325, 'train_loss': 0.346748}
+2026-11-27T14:54:28 [INFO] autoresearch.worker.local_worker: trial-001: applied edit ALPHA: 1e-4 → 0.0002
+2026-11-27T14:54:28 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:28 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:54:28 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:28 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:54:28 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:29 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.2s; success=True metrics={'val_score': 0.9211, 'train_loss': 0.300584}
+2026-11-27T14:54:29 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:54:29 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:29 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_score': 0.9211, 'train_loss': 0.300584}
+2026-11-27T14:54:29 [INFO] autoresearch.worker.local_worker: trial-001: applied edit BATCH_SIZE: 64 → 32
+2026-11-27T14:54:29 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:30 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.3s; success=True metrics={'val_score': 0.920975, 'train_loss': 0.282738}
+2026-11-27T14:54:30 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.3s; success=True metrics={'val_score': 0.920975, 'train_loss': 0.282738}
+2026-11-27T14:54:30 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:54:30 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:30 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_score': 0.921075, 'train_loss': 0.300632}
+2026-11-27T14:54:30 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_score': 0.921075, 'train_loss': 0.300632}
+2026-11-27T14:54:30 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:54:30 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_score': 0.91115, 'train_loss': 0.327784}
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: applied edit ALPHA: 1e-4 → 0.0002
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: applied edit ALPHA: 1e-4 → 0.0002
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_score': 0.9204, 'train_loss': 0.317323}
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_score': 0.917325, 'train_loss': 0.346734}
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_score': 0.917325, 'train_loss': 0.346734}
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.2s; success=True metrics={'val_score': 0.91115, 'train_loss': 0.327784}
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.9s; success=True metrics={'val_score': 0.9204, 'train_loss': 0.317323}
+2026-11-27T14:54:31 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_score': 0.917375, 'train_loss': 0.346769}
+2026-11-27T14:54:32 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.7s; success=True metrics={'val_score': 0.897725, 'train_loss': 0.382606}
+2026-11-27T14:54:32 [INFO] autoresearch.worker.local_worker: trial-001: applied edit HIDDEN_UNITS: 32 → 16
+2026-11-27T14:54:32 [INFO] autoresearch.worker.local_worker: trial-001: running: python3 train.py
+2026-11-27T14:54:32 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.8s; success=True metrics={'val_score': 0.897725, 'train_loss': 0.382606}
+2026-11-27T14:54:32 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.3s; success=True metrics={'val_score': 0.917375, 'train_loss': 0.346769}
+2026-11-27T14:54:32 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.4s; success=True metrics={'val_score': 0.92115, 'train_loss': 0.28266}
+2026-11-27T14:54:33 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 4.0s; success=True metrics={'val_score': 0.92115, 'train_loss': 0.28266}
+2026-11-27T14:54:34 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 2.5s; success=True metrics={'val_score': 0.91115, 'train_loss': 0.327797}
+2026-11-27T14:54:34 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_score': 0.91115, 'train_loss': 0.327753}
+2026-11-27T14:54:34 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.5s; success=True metrics={'val_score': 0.91115, 'train_loss': 0.327753}
+2026-11-27T14:54:34 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.1s; success=True metrics={'val_score': 0.913425, 'train_loss': 0.305484}
+2026-11-27T14:54:34 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 2.8s; success=True metrics={'val_score': 0.913425, 'train_loss': 0.305484}
+2026-11-27T14:54:34 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_score': 0.92105, 'train_loss': 0.282833}
+2026-11-27T14:54:34 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 3.6s; success=True metrics={'val_score': 0.92105, 'train_loss': 0.282833}
+2026-11-27T14:54:34 [INFO] autoresearch.worker.local_worker: trial-001: run_command finished in 2.6s; success=True metrics={'val_score': 0.91115, 'train_loss': 0.327797}
+{"label": "ENGINEERING_ONLY", "planned_runs": 168, "written_runs": 168, "failed_runs": 0, "stop": null, "elapsed_seconds": 46.9, "identity_flags": 37}

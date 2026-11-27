@@ -1,0 +1,15 @@
+Pre-check STOP of the screening engineering smoke (compute/20261127-26)
+host: deepthought
+log: /work/dwong/screen_fix_20261127/smoke_20261127T134927Z.precheck_stop.log
+log_mtime: 2026-11-27T14:53:19+0100 (2026-11-27T13:53:19Z)
+invocation (first smoke, before the fetch):
+  /ceph/dwong/r1_prepare_20261025/venv/bin/python3 -B -m r1.noise.screen_measure run --engineering-smoke \
+    --out /work/dwong/screen_fix_20261127/smoke_FIXED_20261127T134927Z --workers 16 \
+    --tmp /tmp/r1_smoke_fixed_20261127T134927Z \
+    --data-cache /work/dwong/screen_fix_20261127/data_cache_20261127T134927Z
+observed: the process stopped in evidence_environment() before out.mkdir(); the output directory
+  /work/dwong/screen_fix_20261127/smoke_FIXED_20261127T134927Z did not exist after the stop.
+refs/remotes/origin/main before the fetch: 83425c7008826c2a4edb5470c708d8ce083d13f3
+refs/heads/main on origin at the fetch:     4a9a1f4aaaadca90edf1ae481cec3163a67e42b0
+action: git fetch origin in the same checkout; no attempt had started, so the same cache was used with a new
+  output directory (smoke_FIXED_20261127T135341Z).
