@@ -405,8 +405,9 @@ def cmd_sft_select(args, cfg) -> dict:
         rep_path = Path(r) / "stage_s" / "sft_report.json"
         try:
             if not rep_path.is_file():
-                raise OSError("missing")
-            json.loads(rep_path.read_text())
+                raise OSError("not a file")
+            if not isinstance(json.loads(rep_path.read_text(encoding="utf-8")), dict):
+                raise ValueError("not a JSON object")
         except (OSError, ValueError) as exc:
             bad.append(f"{rep_path} ({type(exc).__name__}: {exc})")
     if bad:

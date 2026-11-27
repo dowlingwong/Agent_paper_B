@@ -48,7 +48,10 @@ def test_unreadable_run_report_is_a_protocol_stop(tmp_path, capsys):
     run.mkdir(parents=True)
     (run / "sft_report.json").write_text("{not json")
     rc, err = _run(tmp_path, capsys, [tmp_path / "run1"])
-    assert rc == 2 and "JSONDecodeError" in err
+    assert rc == 2 and "run report missing or unreadable" in err and "JSONDecodeError" in err
+    (run / "sft_report.json").write_text("[]")                      # parses, but not an object
+    rc, err = _run(tmp_path, capsys, [tmp_path / "run1"])
+    assert rc == 2 and "not a JSON object" in err
 
 
 def test_one_bad_run_among_good_ones_stops_before_select(tmp_path, capsys, monkeypatch):
