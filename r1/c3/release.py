@@ -118,6 +118,8 @@ def row_pattern(tier: str, stage: str) -> str:
     commit (arms_path, arms for a test row; g1b for the T1 train/dev row)."""
     pre = (r"Release under PRE-STAGE A of the frozen sweep-2 analysis preregistration "
            r"\(`" + re.escape(PREREG_PATH) + r"`, sha256 `(?P<prereg>" + _HEX + r")`\)")
+    pre += (r"(?: and the G\.5 tail-law amendment \(`" + re.escape(G5_TAILS_AMENDMENT_PATH) +
+            r"`, sha256 `(?P<tail_amendment>" + _HEX + r")`\))?")
     arms = r", after the arms-frozen record `(?P<arms_path>docs/r1/[A-Za-z0-9_./-]+\.md)` \(sha256 `(?P<arms>" + _HEX + r")`\)"
     tail = (r", partitioned by the P3 split file \(sha256 `(?P<split>" + _HEX + r")`\) with the release step "
             r"`r1/c3/release\.py` @ `(?P<commit>" + _COMMIT + r")`\.")
@@ -132,11 +134,13 @@ def row_pattern(tier: str, stage: str) -> str:
 
 
 def row_text(tier: str, stage: str, *, prereg: str, split: str, commit: str, arms_path: str | None = None,
-             arms: str | None = None, g1b: dict | None = None) -> str:
+             arms: str | None = None, g1b: dict | None = None, tail_amendment: str | None = None) -> str:
     """The decision text of a release row with the values filled in (for the drafts and tests). ``g1b``:
     {node: (path, sha256)} for the T1 train/dev row (PRE-DELTA)."""
     head = (f"Release under PRE-STAGE A of the frozen sweep-2 analysis preregistration (`{PREREG_PATH}`, "
             f"sha256 `{prereg}`)")
+    if tail_amendment is not None:
+        head += f" and the G.5 tail-law amendment (`{G5_TAILS_AMENDMENT_PATH}`, sha256 `{tail_amendment}`)"
     tail = f", partitioned by the P3 split file (sha256 `{split}`) with the release step `r1/c3/release.py` @ `{commit}`."
     if stage == "traindev":
         mid = ""
@@ -294,6 +298,15 @@ def _final_block(text: str) -> list[str]:
     return lines[a + 1:b]
 
 
+def g5_tail_amendment_published(root=None) -> bool:
+    """Whether published main contains a G.5 tail-law amendment decision."""
+    try:
+        data = _git("show", "refs/remotes/origin/main:docs/r1/PLAN.md", root=root).decode("utf-8")
+    except _GIT_ERRORS:
+        return False
+    return any(key == G5_TAILS_AMENDMENT_ROW for key, _ in author_rows(data))
+
+
 def _g5_tails_prereg(base_sha: str, original_builder: str, root=None) -> dict:
     """Resolve an exact author-approved amendment before accepting a replacement builder."""
     rows = [decision for key, decision in author_rows(_committed("docs/r1/PLAN.md", root).decode())
@@ -337,11 +350,11 @@ def _g5_tails_prereg(base_sha: str, original_builder: str, root=None) -> dict:
                 raise ReleaseStop(f"STOP: the G.5 tail-law amendment does not bind {path}")
     except _GIT_ERRORS as exc:
         raise ReleaseStop("STOP: the G.5 tail-law implementation is not the reviewed published commit") from exc
-    return {"sha256": digest, "base_sha256": base_sha, "legacy_builder_sha256": original_builder,
+    return {"sha256": base_sha, "g5_tail_amendment_sha256": digest,
             "builder_sha256": fields["gate_input_builder_sha256"], "gate_sha256": fields["gate_sha256"]}
 
 
-def prereg_frozen(root=None) -> dict:
+def prereg_frozen(root=None, *, historical_builder_commit: str | None = None) -> dict:
     """The committed preregistration, refused unless its final fenced block says it is frozen with the pinned split
     file, PRE-STAGE A and the committed builder and gate sha256s (each key exactly once)."""
     data = _committed(PREREG_PATH, root)
@@ -363,7 +376,6 @@ def prereg_frozen(root=None) -> dict:
     changed = sorted(k for k, v in SIGNED_DECISIONS.items() if block[k] != v)
     if changed:
         raise ReleaseStop(f"STOP: the preregistration block's decisions differ from the signed ones: {changed}")
-    builder = _sha(_committed(BUILDER_PATH, root))
     gate = _sha(_committed(GATE_PATH, root))
     if block["frozen"] != "true":
         raise ReleaseStop("STOP: the preregistration is not frozen (frozen: true); no label is released before")
@@ -374,7 +386,16 @@ def prereg_frozen(root=None) -> dict:
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z", block["frozen_utc"]):
         raise ReleaseStop("STOP: the preregistration has no frozen_utc (YYYY-MM-DDTHH:MM[:SS]Z)")
     base_sha = _sha(data)
-    if block["gate_input_builder_sha256"] != builder:
+    if historical_builder_commit is not None:
+        try:
+            builder = _sha(_git("show", f"{historical_builder_commit}:{BUILDER_PATH}", root=root))
+        except _GIT_ERRORS as exc:
+            raise ReleaseStop("STOP: the historical gate-input builder is unavailable") from exc
+        if builder != block["gate_input_builder_sha256"]:
+            raise ReleaseStop("STOP: the historical gate-input builder is not the one the preregistration binds")
+        return {"sha256": base_sha, "builder_sha256": builder, "gate_sha256": gate}
+    builder = _sha(_committed(BUILDER_PATH, root))
+    if block["gate_input_builder_sha256"] != builder or g5_tail_amendment_published(root):
         return _g5_tails_prereg(base_sha, block["gate_input_builder_sha256"], root)
     return {"sha256": base_sha, "builder_sha256": builder, "gate_sha256": gate}
 
@@ -396,14 +417,6 @@ def release_row(tier: str, stage: str, *, writing: bool = False, root=None) -> d
     m = re.fullmatch(row_pattern(tier, stage), rows[0])
     if not m:
         raise ReleaseStop(f"STOP: {rid} does not have the exact release text (§8 draft)")
-    pre = prereg_frozen(root)
-    if (tier, stage) == ("T0", "traindev") and not writing and m.group("prereg") == pre.get("base_sha256"):
-        # Existing receipts identify the original published release and stay byte-verifiable.
-        pre = {**pre, "sha256": pre["base_sha256"], "builder_sha256": pre["legacy_builder_sha256"]}
-    if m.group("prereg") != pre["sha256"]:
-        raise ReleaseStop(f"STOP: {rid} cites another preregistration sha256")
-    if m.group("split") != p3_split.P3_SPLIT_SHA256:
-        raise ReleaseStop(f"STOP: {rid} cites another split file")
     commit = m.group("commit")
     try:
         _git("merge-base", "--is-ancestor", commit, "HEAD", root=root)
@@ -411,11 +424,23 @@ def release_row(tier: str, stage: str, *, writing: bool = False, root=None) -> d
         declared = _git("show", f"{commit}:{RELEASE_PATH}", root=root)
     except _GIT_ERRORS as exc:
         raise ReleaseStop(f"STOP: {rid}'s release-code commit is not a published ancestor with {RELEASE_PATH}") from exc
+    # Legacy read-only T0 train/dev receipts retain the builder from their published release commit.
+    historical = (tier, stage) == ("T0", "traindev") and not writing and m.group("tail_amendment") is None
+    pre = prereg_frozen(root, historical_builder_commit=commit if historical else None)
+    if m.group("prereg") != pre["sha256"]:
+        raise ReleaseStop(f"STOP: {rid} cites another preregistration sha256")
+    amendment = pre.get("g5_tail_amendment_sha256")
+    if m.group("tail_amendment") != amendment:
+        raise ReleaseStop(f"STOP: {rid} does not cite the effective G.5 tail-law amendment")
+    if m.group("split") != p3_split.P3_SPLIT_SHA256:
+        raise ReleaseStop(f"STOP: {rid} cites another split file")
     if writing and declared != _committed(RELEASE_PATH, root):
         raise ReleaseStop(f"STOP: the running {RELEASE_PATH} is not the one {rid} cites")
     out = {"row_id": rid, "decision_sha256": _sha(rows[0].encode()), "prereg_sha256": pre["sha256"],
            "builder_sha256": pre["builder_sha256"], "gate_sha256": pre["gate_sha256"],
            "split_sha256": m.group("split"), "release_commit": commit}
+    if amendment is not None:
+        out["g5_tail_amendment_sha256"] = amendment
     if stage == "test":
         if _sha(_committed(m.group("arms_path"), root)) != m.group("arms"):
             raise ReleaseStop(f"STOP: the arms-frozen record cited by {rid} is missing or changed")
@@ -686,6 +711,8 @@ def g5_tail_laws(table_dir, receipt: dict) -> dict[str, tuple[str, float | None]
         if build["source"] != "g5" or build["schema"] not in ("g5_t1_table/1", "g5_t1_table/2") or \
                 build["proposals_sha256"] != receipt["inputs"]["proposals_sha256"]:
             raise ValueError("G.5 build metadata does not identify the receipted table")
+        if not build["nodes"]:
+            raise ValueError("the G.5 build has no tail declarations")
         laws = {}
         for node, entry in build["nodes"].items():
             tails, nu = entry.get("tails", "gaussian"), entry.get("nu")
@@ -724,6 +751,8 @@ def open_partition(part_dir, *, expect_source: str, expect_stage: str,
     if set(receipt.get("outputs", {})) != set(PARTITIONS[expect_stage]):
         raise ReleaseStop(f"STOP: {rp} lists other partition files")
     row = release_row(receipt["tier"], expect_stage)
+    if receipt.get("g5_tail_amendment_sha256") != row.get("g5_tail_amendment_sha256"):
+        raise ReleaseStop(f"STOP: {rp} no longer matches {row['row_id']} (g5_tail_amendment_sha256)")
     for k, v in row.items():
         if receipt.get(k) != v:
             raise ReleaseStop(f"STOP: {rp} no longer matches {row['row_id']} ({k})")
@@ -773,7 +802,15 @@ def builder_source(release_root, source: str, table_dir):
     if _sha((Path(table_dir) / "proposals.jsonl").read_bytes()) != rts["inputs"]["proposals_sha256"]:
         raise ReleaseStop(f"STOP: {table_dir} is not the table the {source} partitions were released from")
     labels = td["label_block.traindev.jsonl"] + ts["label_block.test.jsonl"]
-    return Source(source, load_table(Path(table_dir)), labels, ts["evaluation_block.all.jsonl"])
+    tail_laws = {}
+    if source == "g5" and rtd.get("g5_tail_amendment_sha256") != rts.get("g5_tail_amendment_sha256"):
+        raise ReleaseStop("STOP: the G.5 partitions bind different tail-law amendments")
+    if source == "g5" and rtd.get("g5_tail_amendment_sha256"):
+        tail_laws = g5_tail_laws(table_dir, rtd)
+        if tail_laws != g5_tail_laws(table_dir, rts):
+            raise ReleaseStop("STOP: the G.5 partitions bind different tail laws")
+    return Source(source, load_table(Path(table_dir)), labels, ts["evaluation_block.all.jsonl"],
+                  tail_laws=tail_laws)
 
 
 def main(argv=None) -> int:

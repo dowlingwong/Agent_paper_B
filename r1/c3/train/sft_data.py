@@ -505,9 +505,9 @@ def soft_target(record: Mapping, table_row: Mapping) -> np.ndarray:
         raise SFTDataError(f"{record['proposal_id']}: audit label on an inert table row")
     if float(record["sigma_node"]) != float(table_row["sigma_node"]):
         raise SFTDataError(f"{record['proposal_id']}: label sigma_node differs from the table's")
+    tails = {key: record[key] for key in ("tails", "nu") if key in record}
     return LB.soft_label(record["delta_label"], None, float(table_row["sigma_node"]), inert=False,
-                         sigma_mode=SIGMA_MODE, k_label=int(record["k_label"]),
-                         tails=record.get("tails", "gaussian"), nu=record.get("nu"))
+                         sigma_mode=SIGMA_MODE, k_label=int(record["k_label"]), **tails)
 
 
 # ---------------------------------------------------------------------------------------------- prompts

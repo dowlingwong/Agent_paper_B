@@ -295,6 +295,8 @@ def cli(monkeypatch, world, tmp_path):
             "inputs": {"proposals_sha256": shas[source], "label_block_sha256": "6" * 64},
             "outputs": {"label_block.traindev.jsonl": "7" * 64}}
     monkeypatch.setattr(release, "traindev_labels", fake)
+    monkeypatch.setattr(AF, "_prereg_block", lambda repo: {
+        "gate_input_builder_sha256": AF._sha_file(repo / AC.BUILDER_PATH)})
     monkeypatch.setattr(AC, "_code_commit", lambda: (BASE_COMMIT, "f" * 64))
     monkeypatch.setattr(AC, "SWEEP2_PROPOSALS_SHA256", shas["sweep2"])
     (tmp_path / "t1.json").write_text(json.dumps({"suites": T1.suites, "modes": list(T1.modes), "d3_k6": False}))

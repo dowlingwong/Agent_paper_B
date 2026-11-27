@@ -29,13 +29,13 @@ schema. The changes apply before T1 SFT, arms freeze and any gate read.
 | Original frozen preregistration | `docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md` | `aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5` |
 | Original builder | `r1/c3/gate_input_builder.py` at the original freeze | `f67ee5e753381991600e91c76f09418f783a9e56517e12ce1203fd0cb5b9f808` |
 | `gate_sha256` | `r1/c3/gate.py` | `a3f7d002b54829c1fa40b7b18a1e2f4c5327749f20ae3ab7e0751b68c009cf23` |
-| `gate_input_builder_sha256` | `r1/c3/gate_input_builder.py` | `7cb9b4a95ea185b971ed7ccfacf55412ba0b4a006e43fa0ab6fae9ca8a9e7da4` |
+| `gate_input_builder_sha256` | `r1/c3/gate_input_builder.py` | `af339af450b108529f45b9b572fdb9903d6e7546b752536c035381d7adcf62be` |
 | `labels_sha256` | `r1/c3/labels.py` | `8f2d55696a92e3c0c0df3f192e134530bf48ee07b3f7c23dd8c5fa86d1398792` |
-| `arms_freeze_sha256` | `r1/c3/arms_freeze.py` | `7f0d7b6072f817018a1f8e1ff3bcb1be127d1eb483428682e50208fd3a58a603` |
+| `arms_freeze_sha256` | `r1/c3/arms_freeze.py` | `f8fb1fbb22694116afa51b71c8182c0db91f3d4ee5ab4920754d3b7428878dde` |
 | `arms_constants_sha256` | `r1/c3/arms_constants.py` | `617d33791b6095be6d10a71e73f60a55e003944d6ae94b2a2525def22a8968b0` |
-| `sft_data_sha256` | `r1/c3/train/sft_data.py` | `17b88bffd079295f38f2c9177410cdad32ac5978af99b86d8c68a08bd105167f` |
-| `fold_analysis_sha256` | `r1/c3/fold_analysis.py` | `fb7193900276071d2dc0046098d805c4746dfe80641b57d8042728f2b87497f3` |
-| `release_sha256` | `r1/c3/release.py` | `8b53f117a16ab9bea6980ea46781cb395cef17182df0ad74abb8dff16c3eb243` |
+| `sft_data_sha256` | `r1/c3/train/sft_data.py` | `526eef71dd9f5f4340fdd9d84ab706149b97e9cc7efd07203c8a37e053875234` |
+| `fold_analysis_sha256` | `r1/c3/fold_analysis.py` | `6cc6032717d6ee145e4dfc3abec248caba6b7fdde7967fb7a65797f80e7b5833` |
+| `release_sha256` | `r1/c3/release.py` | `f11c31cd088fe024ca3d8f010f233c4c06549f085ad3c192f7026b0fd50b857c` |
 
 ## Binding and review before publication
 
@@ -51,17 +51,19 @@ The resolver verifies the identical published author row, the amendment digest, 
 preregistration and builder, and the code pins at both the implementation commit and the current
 checkout. Keep the original preregistration and receipt bytes. Historical T0 train/dev rows verify
 against their original binding and cannot publish a fresh release under it from the amended checkout.
-The first T0 test release and new T1 releases cite the effective amendment. An arms-frozen record
+The first T0 test release and new T1 releases cite the original preregistration followed by a
+separate G.5 tail-law amendment path and SHA-256. Their receipts carry the original `prereg_sha256`
+and the separate `g5_tail_amendment_sha256`. An arms-frozen record
 continues to cite the original preregistration and adds the effective amendment as
 `g5_tail_amendment` with its path and digest. The shared check applies to `arms_constants` and
 `d3_constants`; complete the pending G2 fit from its reviewed original binding before swapping the
 working pin. The gate statistic and verdict code retains its existing SHA.
 
-For noninitial T1 nodes bind the frozen context with `gate_input_builder.bind_g5_tail_laws` before
-constructing inputs. The loader checks the already-verified release receipt against the unsealed
-table's build SHA and proposals digest. This carries the completion/addendum declaration into
-`Tier1.tail_laws`; folds preserve the node subset. SFT accepts the same bound metadata through the
-G.5 table directory. A mismatched or missing declaration stops the target computation.
+The G.5 gate input reader `release.builder_source` uses the build SHA and proposals digest in both
+signed release receipts. It passes the verified tail declarations into the builder; folds carry
+only the selected nodes' declarations. SFT and arms fits bind the same build metadata from the
+G.5 train/dev partition when needed for noninitial T1 nodes. A mismatched or missing declaration
+stops the target computation.
 
 The signed release conditions, D8 gate guard, reading order and one-time gate read continue to apply.
 The candidate is a code and amendment draft. Keep T1 SFT, arms freezing and the gate read pending
@@ -72,13 +74,13 @@ frozen: false
 base_preregistration_sha256: aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5
 original_gate_input_builder_sha256: f67ee5e753381991600e91c76f09418f783a9e56517e12ce1203fd0cb5b9f808
 gate_sha256: a3f7d002b54829c1fa40b7b18a1e2f4c5327749f20ae3ab7e0751b68c009cf23
-gate_input_builder_sha256: 7cb9b4a95ea185b971ed7ccfacf55412ba0b4a006e43fa0ab6fae9ca8a9e7da4
+gate_input_builder_sha256: af339af450b108529f45b9b572fdb9903d6e7546b752536c035381d7adcf62be
 labels_sha256: 8f2d55696a92e3c0c0df3f192e134530bf48ee07b3f7c23dd8c5fa86d1398792
-arms_freeze_sha256: 7f0d7b6072f817018a1f8e1ff3bcb1be127d1eb483428682e50208fd3a58a603
+arms_freeze_sha256: f8fb1fbb22694116afa51b71c8182c0db91f3d4ee5ab4920754d3b7428878dde
 arms_constants_sha256: 617d33791b6095be6d10a71e73f60a55e003944d6ae94b2a2525def22a8968b0
-sft_data_sha256: 17b88bffd079295f38f2c9177410cdad32ac5978af99b86d8c68a08bd105167f
-fold_analysis_sha256: fb7193900276071d2dc0046098d805c4746dfe80641b57d8042728f2b87497f3
-release_sha256: 8b53f117a16ab9bea6980ea46781cb395cef17182df0ad74abb8dff16c3eb243
+sft_data_sha256: 526eef71dd9f5f4340fdd9d84ab706149b97e9cc7efd07203c8a37e053875234
+fold_analysis_sha256: 6cc6032717d6ee145e4dfc3abec248caba6b7fdde7967fb7a65797f80e7b5833
+release_sha256: f11c31cd088fe024ca3d8f010f233c4c06549f085ad3c192f7026b0fd50b857c
 signed_by: PENDING
 frozen_utc: PENDING
 ```

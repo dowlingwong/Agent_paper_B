@@ -621,13 +621,14 @@ def _prereg_block(repo: Path) -> dict:
     if _sha(data) != PREREG_SHA256:
         raise ArmsFreezeError("the preregistration is not the frozen one")
     block = dict(line.split(": ", 1) for line in release._final_block(data.decode()))
-    if _sha_file(repo / release.BUILDER_PATH) != block["gate_input_builder_sha256"]:
+    if _sha_file(repo / release.BUILDER_PATH) != block["gate_input_builder_sha256"] or \
+            release.g5_tail_amendment_published(repo):
         try:
             active = release.prereg_frozen(root=repo)
         except release.ReleaseStop as exc:
             raise ArmsFreezeError(str(exc)) from exc
         block["gate_input_builder_sha256"] = active["builder_sha256"]
-        block["g5_tail_amendment_sha256"] = active["sha256"]
+        block["g5_tail_amendment_sha256"] = active["g5_tail_amendment_sha256"]
     return block
 
 

@@ -60,7 +60,8 @@ def node_subset(sources: list, nodes) -> list:
         rows = [r for r in s.rows if r["node"] in nodes]
         pids = {r["proposal_id"] for r in rows}
         out.append(B.Source(s.name, rows, [x for x in s.labels if x["proposal_id"] in pids],
-                            [x for x in s.evaluations if x["proposal_id"] in pids]))
+                            [x for x in s.evaluations if x["proposal_id"] in pids],
+                            tail_laws={node: law for node, law in s.tail_laws.items() if node in nodes}))
     return out
 
 

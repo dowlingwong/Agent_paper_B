@@ -98,6 +98,7 @@ class Source:
     rows: list                       # table rows (proposals.jsonl)
     labels: list = field(default_factory=list)        # label-block rows (label_block.jsonl format)
     evaluations: list = field(default_factory=list)   # evaluation-block rows (evaluation_block.jsonl format)
+    tail_laws: dict[str, tuple[str, float | None]] = field(default_factory=dict)  # receipted G.5 build
 
     @property
     def gate(self) -> bool:
@@ -123,10 +124,7 @@ def bind_g5_tail_laws(t1: Tier1, table_dir, receipt: dict) -> Tier1:
     from r1.c3.release import g5_tail_laws
 
     laws = g5_tail_laws(table_dir, receipt)
-    missing = t1.suites.keys() - laws.keys()
-    if missing:
-        raise BuilderError(f"the G.5 build has no tail law for frozen nodes {sorted(missing)}")
-    return replace(t1, tail_laws={node: laws[node] for node in t1.suites})
+    return replace(t1, tail_laws={node: laws[node] for node in t1.suites if node in laws})
 
 
 def _finite(x) -> bool:
@@ -250,6 +248,15 @@ def _prepare(sources: list[Source], assign: dict, t1: Tier1 | None) -> tuple[lis
     out = []
     for src in sources:
         tier = GATE_SOURCES.get(src.name) or KEY_SOURCES[src.name]
+        context = t1
+        if src.tail_laws:
+            if src.name != "g5" or t1 is None:
+                raise BuilderError("the receipted G.5 tail laws require a frozen T1 context")
+            if any(law != src.tail_laws[node] for node, law in t1.tail_laws.items() if node in src.tail_laws):
+                raise BuilderError("the frozen context and G.5 receipt give different tail laws")
+            if any(row["node"] not in src.tail_laws for row in src.rows):
+                raise BuilderError("the G.5 receipt lacks a tail law for a source node")
+            context = replace(t1, tail_laws=src.tail_laws)
         labels, evals = {}, {}
         for lab in src.labels:
             if lab["proposal_id"] in labels:
@@ -309,7 +316,7 @@ def _prepare(sources: list[Source], assign: dict, t1: Tier1 | None) -> tuple[lis
                 if kind == "audit":
                     k = lab["soft_parameters"]["k_label"]
                     soft = soft_label(lab["delta_label"], None, row["sigma_node"], sigma_mode="pooled_node",
-                                      k_label=k, **_tail_options(lab, tier, t1))
+                                      k_label=k, **_tail_options(lab, tier, context))
                     r["label_partial"] = k < len(label_seeds)
                 r.update(label_kind=kind, delta_true=dt, status=status, soft=soft)
                 used.add(pid)
