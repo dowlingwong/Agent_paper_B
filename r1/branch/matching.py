@@ -59,6 +59,12 @@ class CampaignUsage:
     controller_latency_s: float = 0.0
     trial_budget: int | None = None  # the campaign's trial budget (review F6: must not bind)
     trials: int = 0                  # trials the campaign recorded
+    # D.3 G8 (pre-declaration rev. 4 §5 "Run accounting"): charged replicate runs of FIXR3/EGATE, already
+    # included in ``worker_runs``; reused incumbent runs (not charged again); LLM calls issued again after an
+    # infrastructure failure (R1-NO-TIMEOUT (1): never counted in ``llm_calls``; descriptive).
+    replicate_runs: int = 0
+    replicate_runs_reused: int = 0
+    reissued_llm_calls: int = 0
 
 
 def _usage_section(arms: list[ArmDescriptor], usage: list[CampaignUsage]) -> dict:
