@@ -1,4 +1,4 @@
-# Waiting on the author — 27 Nov 2026, 11:20 CET (`main` `c80f83bc`). Signed 27 Nov in this session: screening note + P4-4B A (published `c76e1b49`); T5 correction published (`7cb5621d`); Paper C rows confirmed and merged (`1b566d78`).
+# Waiting on the author — 27 Nov 2026, 11:20 CET (`main` `972f0e70`). Signed 27 Nov in this session: screening note + P4-4B A (published `c76e1b49`); T5 correction published (`7cb5621d`); Paper C rows confirmed and merged (`1b566d78`).
 
 Answered on 26 Nov: D1 (rows (f)(g), TIMEOUT A, the three additions) → published `95249de3`. D2 (this tmux session
 coordinates; Codex does not push `main`; `canon/README.md` rule 1 stands, so no row is needed) → recorded. D3 (P.4 on Ada:
@@ -7,6 +7,8 @@ D4 (start order) → see the agents row. **G.5 signed** ("签 G.5：S1–S14 按
 
 | Item | Recommendation | The reply that decides | Blocks |
 |---|---|---|---|
+| **P.4 Ada E0 equivalence NOT met** (record on `main` `972f0e70`, review ACCEPTED): the staged Track P smoke PASSES on Ada; E0 against the 26 Oct TASL-7 reference passes the width and mean slopes but RPS is 25.9 % below the reference (tolerance 10 %). Compute reads it as code drift since the reference commit, not a runtime defect | **Recommended: re-run the E0 reference on TASL-7 (its 4090 is free) at the current code and config, then compare Ada with it.** E0 checks the runtime; comparing at the same code isolates it. If Ada and the new TASL-7 reference agree within tolerance, Ada passes E0; if not, it is a runtime finding for you. The old reference stays as a record | "签 E0 同代码重做参照" | The P.4 phase-1 note and SFT (A5) |
+| **Screening keeps stopping on deepthought's co-tenancy guard** (8 stops, 0 failed rows) | Nothing to decide yet: compute backs off (one attempt per 30 min when ≥ 12 cores are free) overnight. If it has not completed by 08:00 CET, the option is a note re-issue with fewer workers (for example 8), which lengthens the run but leaves room for others | — (decision tomorrow if needed) | The screening measurement; D.3 step (8) |
 | **No batch GPU for D.3's HTCondor preflight** (`compute/20261127-12`): the ETP L40S and the TOpAS A100s advertise `Start = false`; nothing matches | Nothing to decide yet: compute keeps watching. If the pool stays closed, D.3's proposer can run on Ada or the TASL pair under R1-HOST-FREE (one GPU model per instance and campaign), which needs no new row for work not under a signed note | — | D.3 per-arm smoke on HTCondor only |
 | Roles row: design agent; E-INT census choice (Codex commits on `main`, no PLAN row) | Defer until G.5 is signed; then one row for the roles (coordinator, writer, design, local, compute) and one for the census | — | Paper C; design-agent tasks |
 | S9: how an expansion node joins the frozen eight-node split | Sheet due from the local worker (`local/20261126-04`) | — | The G.5 addendum for expansion nodes |
