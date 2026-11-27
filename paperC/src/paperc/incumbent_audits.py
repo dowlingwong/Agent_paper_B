@@ -5,9 +5,14 @@ from __future__ import annotations
 import argparse
 from concurrent.futures import ProcessPoolExecutor
 import hashlib
+from itertools import islice
 import json
 import math
+import os
 from pathlib import Path
+import re
+import shutil
+import socket
 import statistics
 import subprocess
 
@@ -20,6 +25,7 @@ CLASSIFICATION = "results/r1/evidence/C3_sweep_classification_20261028.json"
 REGISTRY = "paperC/seeds/registry_v1.json"
 C1 = "results/r1/noise/D28_REPAIR_20261027/summary.json"
 AUTHORIZATION = "docs/r1/authorizations/paperc_measure_a_20261127.md"
+AUTHORIZATION_ROW = "R1-PAPERC-MEASURE-A-LAUNCH"
 HARNESS = "6adf3859de66c4814fcf376eed59880fbd8eeaf7"
 AUDIT_START = 10_900_000
 K = 10
@@ -50,8 +56,9 @@ def check_seeds(path: Path, count: int) -> None:
 
 def replay_retained(rows: list[dict], start_files: dict, node: str, instance: str, mode: str) -> dict:
     """Replay the actual keeps, including the first valid outcome excluded by the proposal featurizer."""
-    if [r["budget_index"] for r in rows] != list(range(1, 21)):
-        raise ValueError(f"{instance}: expected exactly 20 charged Sweep 1 trials")
+    if ([r["budget_index"] for r in rows] != list(range(1, len(rows) + 1))
+            or sum(features.row_worker_runs(r) for r in rows) != 20):
+        raise ValueError(f"{instance}: expected exactly 20 charged Sweep 1 trials in a contiguous ledger")
     current = features.normalise_files(start_files)
     configs = {features.files_hash(current): current}
     start = next(iter(configs))
@@ -88,6 +95,9 @@ def prepare(paper: Path) -> dict:
     check_seeds(paper / REGISTRY, len(roster))
     if len(roots) != 2 * len(roster) or len({(r["instance"], r["mode"]) for r in roots}) != len(roots):
         raise ValueError("expected two distinct Sweep 1 memory-mode roots per node and seed")
+    if {r["mode"] for r in roots} != {"append_only_summary", "none"} or any(
+            sum(node == n for n, _ in roster) != 18 for node in NODES):
+        raise ValueError("Sweep 1 roots differ from the pre-declared node and memory-mode roster")
     seed_at = {key: AUDIT_START + i * K for i, key in enumerate(roster)}
     for r in roots:
         first = seed_at[r["node"], int(r["instance"].rsplit("__s", 1)[1])]
@@ -97,10 +107,32 @@ def prepare(paper: Path) -> dict:
 
 
 def _audit_config(task: tuple) -> tuple[tuple, list[dict]]:
-    key, files, scratch = task
-    node, seeds, _ = key
-    rows = audit.run_config(node, files, list(seeds), scratch, stop_on_invalid=True,
-                            preserve_node_outputs=True)
+    key, files, scratch, journals, runtime = task
+    node, seeds, config = key
+    cache = runtime["caches"].get(node)
+
+    def check_cache(path):
+        def verified():
+            actual = {str(p.relative_to(path)): hashlib.sha256(p.read_bytes()).hexdigest()
+                      for p in path.rglob("*") if p.is_file() and not p.is_symlink()}
+            if actual != cache["sha256"]:
+                raise ValueError(f"{node}: OpenML cache did not match the launch pin")
+        verified()
+        return verified
+
+    def stage_cache(node_dir):
+        source = Path(cache["path"])
+        check_cache(source)
+        dest = node_dir / "data_cache"
+        if not dest.exists():
+            shutil.copytree(source, dest)
+        return check_cache(dest)
+
+    journal = journals / f"{node}-{seeds[0]}-{config}.jsonl"
+    identity = {"node": node, "config": config, "expected_worker": runtime["expected_worker"]}
+    rows = audit.run_config(node, files, list(seeds), scratch, stop_on_invalid=True, stop_on_failure=True,
+                            journal=str(journal), journal_identity=identity, preserve_node_outputs=True,
+                            prepare_cache=stage_cache if cache else None)
     if [r["seed"] for r in rows] != list(seeds) or any(not r["success"] or r["changed_files"] or
                                                       not math.isfinite(r["metric"]) for r in rows):
         raise ValueError(f"invalid or incomplete audit for {key}")
@@ -142,40 +174,64 @@ def summarise(roots: list[dict], results: dict, noise: dict, c1: dict) -> list[d
     return tables
 
 
-def run(paper: Path, plan_bytes: bytes, scratch: Path, out: Path) -> None:
+def run(paper: Path, published: Path, plan_bytes: bytes, runtime_bytes: bytes, scratch: Path, out: Path) -> None:
     def git(repo, *args):
         return subprocess.check_output(["git", "-C", str(repo), *args], text=True, timeout=30).strip()
 
-    note = audit._key_block(audit._published_bytes(paper, AUTHORIZATION).decode())
+    if Path(__file__).resolve().parents[3] != paper.resolve() or \
+            Path(audit.__file__).resolve().parents[2] != paper.resolve():
+        raise ValueError("running modules did not come from the pinned paper checkout")
+    note_bytes = audit._published_bytes(published, AUTHORIZATION)
+    note = audit._key_block(note_bytes.decode())
     paper_commit = git(paper, "rev-parse", "HEAD")
     expected = {"task": "local/20261127-19a", "approved": "true", "paper_commit": paper_commit,
-                "plan_sha256": hashlib.sha256(plan_bytes).hexdigest()}
+                "plan_sha256": hashlib.sha256(plan_bytes).hexdigest(),
+                "runtime_sha256": hashlib.sha256(runtime_bytes).hexdigest()}
     signer = note.get("signed_by", "").strip()
     if any(note.get(k) != v for k, v in expected.items()) or not signer or signer.startswith("TODO"):
         raise ValueError("published authorization does not bind this code and exact plan")
+    review_path = note.get("review_path", "")
+    if not re.fullmatch(r"docs/r1/reviews/[A-Z0-9_]+\.md", review_path) or hashlib.sha256(
+            audit._published_bytes(published, review_path)).hexdigest() != note.get("review_sha256"):
+        raise ValueError("independent review is absent from the published authorization binding")
+    plan_text = audit._published_bytes(published, "docs/r1/PLAN.md").decode()
+    note_sha = hashlib.sha256(note_bytes).hexdigest()
+    if not any(line.startswith(f"| {AUTHORIZATION_ROW} |") and note_sha in line for line in plan_text.splitlines()):
+        raise ValueError("the author has not bound the exact launch note in PLAN")
     git(paper, "merge-base", "--is-ancestor", paper_commit, "origin/main")
     harness = harness_root()
     if git(paper, "status", "--porcelain") or git(harness, "status", "--porcelain", "--untracked-files=no") or \
             git(harness, "rev-parse", "HEAD") != HARNESS:
         raise ValueError("paper or Sweep 1 harness checkout differs from the launch pin")
     workers = int(note.get("workers", 0))
-    if not 1 <= workers <= 16:
-        raise ValueError("signed worker count must be between 1 and 16")
+    runtime = json.loads(runtime_bytes)
+    if (not 1 <= workers <= 16 or socket.gethostname().split(".")[0] != "deepthought"
+            or len(os.sched_getaffinity(0)) < workers + 10 or runtime["free_cpu_floor"] != 10):
+        raise ValueError("signed deepthought host, worker count or CPU reserve differs")
+    if set(runtime["caches"]) != {"openml_credit_approval", "openml_ionosphere"}:
+        raise ValueError("both pinned OpenML caches are required")
     plan = json.loads(plan_bytes)
-    if plan != prepare(paper):
+    if plan != prepare(published):
         raise ValueError("signed audit plan no longer reproduces from the published Sweep 1 inputs")
     scratch.mkdir()
     out.mkdir()
     (out / "plan.json").write_bytes(plan_bytes)
+    (out / "runtime.json").write_bytes(runtime_bytes)
+    journals = out / "workers"
+    journals.mkdir()
     jobs = {(r["node"], tuple(r["audit_seeds"]), key): value for r in plan["roots"]
             for key, value in r["configs"].items()}
     results = {}
-    with (out / "runs.jsonl").open("x") as stream, ProcessPoolExecutor(max_workers=workers) as pool:
-        for key, rows in pool.map(_audit_config, ((key, cfg, str(scratch)) for key, cfg in jobs.items())):
-            results[key] = rows
-            stream.write(json.dumps({"node": key[0], "config": key[2], "rows": rows}, sort_keys=True) + "\n")
-            stream.flush()
-    table = summarise(plan["roots"], results, dataset.noise_table(paper / C1), json.loads((paper / C1).read_bytes()))
+    tasks = ((key, cfg, str(scratch), journals, runtime) for key, cfg in jobs.items())
+    try:
+        with ProcessPoolExecutor(max_workers=workers) as pool:
+            while group := tuple(islice(tasks, workers)):
+                results.update(pool.map(_audit_config, group))
+    except Exception as exc:
+        (out / "STOP.json").write_text(json.dumps({"class": type(exc).__name__, "message": str(exc)}) + "\n")
+        raise
+    table = summarise(plan["roots"], results, dataset.noise_table(published / C1),
+                      json.loads((published / C1).read_bytes()))
     (out / "summary.json").write_text(json.dumps(table, indent=2, sort_keys=True) + "\n")
 
 
@@ -187,8 +243,10 @@ def main(argv=None) -> None:
         p.add_argument("--paper", type=Path, required=True)
         p.add_argument("--out", type=Path, required=True)
         if command == "run":
+            p.add_argument("--published", type=Path, required=True)
             p.add_argument("--scratch", type=Path, required=True)
             p.add_argument("--plan", type=Path, required=True)
+            p.add_argument("--runtime", type=Path, required=True)
     args = parser.parse_args(argv)
     refuse_sealed(args.paper, args.out)
     if args.command == "prepare":
@@ -196,8 +254,8 @@ def main(argv=None) -> None:
             json.dump(prepare(args.paper), out, indent=2, sort_keys=True)
             out.write("\n")
     else:
-        refuse_sealed(args.plan, args.scratch)
-        run(args.paper, args.plan.read_bytes(), args.scratch, args.out)
+        refuse_sealed(args.plan, args.scratch, args.published, args.runtime)
+        run(args.paper, args.published, args.plan.read_bytes(), args.runtime.read_bytes(), args.scratch, args.out)
 
 
 if __name__ == "__main__":

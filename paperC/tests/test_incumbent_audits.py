@@ -18,8 +18,10 @@ def test_replay_includes_trial_one_and_keeps_the_final_files():
     assert got["retained"][0]["previous"] == got["start"]
     assert got["retained"][1]["previous"] == got["retained"][0]["candidate"]
     assert got["configs"][got["terminal"]] == {"train.py": "WIDTH = 8\n"}
+    rows.append({"budget_index": 21, "decision": "failed_invalid", "worker_mode": "local_worker_precheck"})
+    assert audits.replay_retained(rows, {"train.py": "WIDTH = 2\n"}, "digits_mlp", "digits_mlp__s17", "none") == got
     with pytest.raises(ValueError, match="exactly 20"):
-        audits.replay_retained(rows[:-1], {}, "digits_mlp", "digits_mlp__s17", "none")
+        audits.replay_retained(rows[:-2], {}, "digits_mlp", "digits_mlp__s17", "none")
 
 
 def test_registry_check_refuses_overlap(tmp_path):
@@ -50,5 +52,5 @@ def test_unpublished_or_wrong_note_cannot_create_job_paths(monkeypatch, tmp_path
     monkeypatch.setattr(audits.audit, "_published_bytes", lambda *args: b"approved: false\n")
     out, scratch = tmp_path / "output", tmp_path / "scratch"
     with pytest.raises(ValueError, match="published authorization"):
-        audits.run(Path.cwd(), b'{}', scratch, out)
+        audits.run(Path.cwd(), Path.cwd(), b'{}', b'{}', scratch, out)
     assert not out.exists() and not scratch.exists()

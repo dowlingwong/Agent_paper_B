@@ -41,22 +41,35 @@ The OpenML rows serve as descriptive controls.
    hashes against the launch note. Use deepthought, at most 16 workers, and keep at least 10
    of 40 logical CPUs free. Record the host, dependency freeze, CPU occupancy, cache paths
    and file hashes before running. Give the attempt fresh scratch and output paths.
-3. After publication of the signed note on `origin/main`, from the exact clean code commit
-   run `PYTHONPATH=paperC/src python -m paperc.incumbent_audits run --paper "$PAPER" --plan "$PLAN" --scratch "$SCRATCH" --out "$OUT"`.
+3. After publication, keep a current published provenance checkout separately from the clean launch-code
+   checkout. The signed runtime JSON names `free_cpu_floor: 10`, the worker-runtime fingerprint
+   from `r1.c3.audit`, and each OpenML cache's staging path and complete relative-path-to-SHA256 map.
+   Run from the exact code checkout.
+
+   ```sh
+   PYTHONPATH=paperC/src python -m paperc.incumbent_audits run --paper "$PAPER" \
+     --published "$PUBLISHED" --plan "$PLAN" --runtime "$RUNTIME" --scratch "$SCRATCH" --out "$OUT"
+   ```
+
    Seal the plan, per-attempt rows, summary, host/runtime record and checksums. An invalid
-   seed result or incomplete audit is a STOP with the raw scene preserved. Report actual
+   seed result or incomplete audit is a STOP with the raw scene and per-worker journals
+   preserved. At most one in-flight batch may finish after the first failure. Report actual
    compute and the next decision to the coordinator.
 
 ## Authorization note draft
 
 The coordinator renders the signed note at `docs/r1/authorizations/paperc_measure_a_20261127.md`
-once the exact plan, code and environment have accepted reviews. PLAN §10 binds the note before launch.
+once the exact plan, code and environment have accepted reviews. The author row
+`R1-PAPERC-MEASURE-A-LAUNCH` in PLAN §10 binds the note SHA-256 before launch.
 
 ```text
 task: local/20261127-19a
 approved: false
 paper_commit: TODO
 plan_sha256: TODO
+runtime_sha256: TODO
+review_path: TODO
+review_sha256: TODO
 workers: TODO
 signed_by: TODO
 ```
