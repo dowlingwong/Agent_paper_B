@@ -1,0 +1,84 @@
+{
+ "bases": {
+  "A_e1_22oct_aarch64": {
+   "cpu_hours": 2.445815561896135,
+   "cpu_seconds": 8804.936022826087,
+   "elapsed_seconds_at_16_workers": 550.3085014266304,
+   "mean_wall_s_used": {
+    "digits_mlp": 0.860051268115942,
+    "openml_breast_w": 0.9139632246376812,
+    "openml_climate": 0.871093115942029,
+    "openml_credit_approval": 0.8469009057971014,
+    "openml_ionosphere": 0.9017615942028986,
+    "openml_sonar": 0.8896373188405796,
+    "openml_wdbc": 0.8704951086956522,
+    "tabular_mlp": 0.8148423913043479
+   },
+   "pooled_mean_wall_s": 0.871093115942029,
+   "t0_nodes_measured": [
+    "digits_mlp",
+    "openml_breast_w",
+    "openml_credit_approval",
+    "openml_ionosphere",
+    "openml_sonar",
+    "openml_wdbc",
+    "tabular_mlp"
+   ]
+  },
+  "B_e1_d28_deepthought": {
+   "cpu_hours": 6.269571104619564,
+   "cpu_seconds": 22570.45597663043,
+   "elapsed_seconds_at_16_workers": 1410.6534985394019,
+   "mean_wall_s_used": {
+    "digits_mlp": 2.2206273097826084,
+    "openml_breast_w": 2.0571855072463765,
+    "openml_climate": 2.31879402173913,
+    "openml_credit_approval": 2.2206273097826084,
+    "openml_ionosphere": 2.2206273097826084,
+    "openml_sonar": 2.0452579710144927,
+    "openml_wdbc": 2.4612717391304346,
+    "tabular_mlp": 2.2206273097826084
+   },
+   "pooled_mean_wall_s": 2.2206273097826084,
+   "t0_nodes_measured": [
+    "openml_breast_w",
+    "openml_climate",
+    "openml_sonar",
+    "openml_wdbc"
+   ]
+  },
+  "C_b2_audit_deepthought_with_probe": {
+   "cpu_hours": 11.136898855507868,
+   "cpu_seconds": 40092.83587982832,
+   "elapsed_seconds_at_16_workers": 2975.042060085837,
+   "mean_wall_s": 3.9445922746781115,
+   "runs_per_second_at_16_workers": 3.4164222873900294,
+   "source": "docs/r1/reviews/B2_AUDIT_RUN_REVIEW_20261119.md lines 120, 125, 179-180"
+  }
+ },
+ "command": "python -m r1.noise.screen_power compute --out results/r1/engineering/screen_measure_20261123/compute.json",
+ "deadline_rule": "max(10,800 s, 2.5 T), T the largest of the three projections at 16 workers (docs/r1/authorizations/c3_sweep2_b2_addendum_20261122.md)",
+ "deadline_seconds": 10800.0,
+ "design_sha256": "bbc98b87d2170ad89ff17a92303ffb440583b74b035d2690a6a2ababeb8d8ec8",
+ "e1_runs_sha256": {
+  "A_e1_22oct_aarch64_4workers": "03aa9ee1231a59f38422c58733e7f4ac059df7d2014076485d0f907a0c0d5a22",
+  "B_e1_d28_climate_deepthought_16way": "b75d5b32e31ec491bc960073508dcecce744d0d638f6a7f19cbd8f204dca34dd",
+  "B_e1_d28_deepthought_16way": "49018a9966b4255f88e8240c3a0a028edefe87fd8982890e988492d034d0e1c4"
+ },
+ "engineering_smoke_runs_seed_999": 168,
+ "harness_runs_per_node": {
+  "digits_mlp": 1815,
+  "openml_breast_w": 1089,
+  "openml_climate": 1089,
+  "openml_credit_approval": 1089,
+  "openml_ionosphere": 1089,
+  "openml_sonar": 1089,
+  "openml_wdbc": 1089,
+  "tabular_mlp": 1815
+ },
+ "harness_runs_total": 10164,
+ "label": "ENGINEERING_ONLY",
+ "projection_T_seconds": 2975.042060085837,
+ "schema": "r1_screen_measure_compute/v1",
+ "workers": 16
+}

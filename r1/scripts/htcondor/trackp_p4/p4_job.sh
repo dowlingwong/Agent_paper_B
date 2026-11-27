@@ -10,12 +10,12 @@ _precreate() { for f in job_record.json SHA256SUMS; do [ -s "$f" ] || : > "$f"; 
 STOP() { echo "STOP: $*" >&2; _precreate; exit 2; }
 exec > >(tee -a p4_run.log) 2>&1
 _precreate
-[ "$#" -eq 2 ] || STOP "usage: p4_job.sh <p4_spec.json> <arm>"
+[ "$#" -eq 3 ] || STOP "usage: p4_job.sh <p4_spec.json> <arm> <host class>"
 [ -x "$PY" ] || STOP "env3 python missing in the image: $PY"
 [ -f "$1" ] || STOP "spec missing: $1"
 export GIT_TERMINAL_PROMPT=0 PYTHONDONTWRITEBYTECODE=1
-echo "P4 container job start $(date -u +%FT%TZ) host=$(hostname) arm=$2 uid=$(id -u)"
-"$PY" -B "$(dirname "$0")/p4_lib.py" job "$1" --arm "$2"
+echo "P4 container job start $(date -u +%FT%TZ) host=$(hostname) arm=$2 host_class=$3 uid=$(id -u)"
+"$PY" -B "$(dirname "$0")/p4_lib.py" job "$1" --arm "$2" --host-class "$3"
 RC=$?
 _precreate
 echo "P4 container job end $(date -u +%FT%TZ) rc=$RC"

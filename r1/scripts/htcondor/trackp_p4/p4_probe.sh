@@ -1,5 +1,5 @@
 #!/bin/bash
-# Track P P.4 phase-1 H200 SFT fit and timing probe entry point (inside the container job, image v2.2; one job = one
+# Track P P.4 phase-1 SFT fit and timing probe entry point (inside the container job, image v2.2; one job = one
 # base; ENGINEERING_ONLY; P4-PROBE A: at most 50 sft-dev steps on synthetic labels, nothing kept as an arm).
 # The same wrapper as p4_job.sh (pre-created outputs, the image's env3 Python, the log as p4_run.log so that
 # `p4_lib.py seal` keeps it), running the reviewed library's probe mode. AI-assisted (Claude).
@@ -11,12 +11,12 @@ _precreate() { for f in job_record.json SHA256SUMS; do [ -s "$f" ] || : > "$f"; 
 STOP() { echo "STOP: $*" >&2; _precreate; exit 2; }
 exec > >(tee -a p4_run.log) 2>&1
 _precreate
-[ "$#" -eq 2 ] || STOP "usage: p4_probe.sh <p4_probe_spec.json> <arm>"
+[ "$#" -eq 3 ] || STOP "usage: p4_probe.sh <p4_probe_spec.json> <arm> <host class>"
 [ -x "$PY" ] || STOP "env3 python missing in the image: $PY"
 [ -f "$1" ] || STOP "probe spec missing: $1"
 export GIT_TERMINAL_PROMPT=0 PYTHONDONTWRITEBYTECODE=1
-echo "P4 probe container job start $(date -u +%FT%TZ) host=$(hostname) arm=$2 uid=$(id -u)"
-"$PY" -B "$(dirname "$0")/p4_lib.py" probe "$1" --arm "$2"
+echo "P4 probe container job start $(date -u +%FT%TZ) host=$(hostname) arm=$2 host_class=$3 uid=$(id -u)"
+"$PY" -B "$(dirname "$0")/p4_lib.py" probe "$1" --arm "$2" --host-class "$3"
 RC=$?
 _precreate
 echo "P4 probe container job end $(date -u +%FT%TZ) rc=$RC"

@@ -1,5 +1,22 @@
-"""Track P P.4 phase 1 on NEMO2 H200 (HTCondor, image v2.2): the job of P4-JOB A, one job per base. ENGINEERING_ONLY;
-AI-assisted (Claude).
+"""Track P P.4 phase 1 on any admitted host class (R1-HOST-FREE: NEMO2 H200 by HTCondor, Ada RTX 6000 by a direct
+launch; image v2.2): the job of P4-JOB A, one job per base. ENGINEERING_ONLY; AI-assisted (Claude).
+
+**R1-HOST-FREE** (card local/20261126-06 unit 1). The spec admits host classes (``hosts``; ``HOST_CLASSES``): each
+with its launch kind, GPU name, compute capability, its own host config and its own SFT probe estimate. Each job is
+told its class (``--host-class``, the third argument of ``p4_job.sh`` / ``p4_probe.sh``); identity admits exactly one
+GPU of that class (name and compute capability), and a direct job's GPU must be the card its launcher leased
+(``lease_binding``). The record names the class, host, GPU model, UUID, driver and env3 freeze, and the card's other
+compute processes at the start and the end (count and memory, R1-CARD-SHARE (4)); an arm STOP (a CUDA OOM) beside
+another compute process is reclassified as an infrastructure failure, repeated in a new attempt directory
+(R1-CARD-SHARE (3); ``shared_card_loss``). One arm's run stays on one card: one job, one card; ``assemble`` records
+each arm's class and card and refuses an arm whose record does not carry its class's GPU or its leased card.
+``seal`` accepts a direct attempt with its launcher record (``direct_launch.json``) and charges GPU-hours on any card
+(R1-HOST-FREE (5)); ``charged_hours``, the probe charges and the charge files sum both kinds. **R1-NO-TIMEOUT (3)**:
+the 40 GPU-h and 64 slot-hour figures of P4-CAP A are reporting thresholds (``threshold_report``): launch validation,
+the switch's check before every submission, ``probe_records`` and ``assemble`` report usage against them and flag
+``report_to_author``; none refuses for them. No wall-clock limit decides anything: HTCondor's ``+RequestWalltime``
+is a scheduler request only (a walltime kill is sealed as an infrastructure failure), and a direct launch has none.
+The step list below is unchanged except where it says "the H200": read "the job's class".
 
 Authority: the P.4 phase-1 authorization draft (`docs/r1/proposals/TRACKP_P4_SFT_AUTHORIZATION_DRAFT_20261121.md`,
 revision 4.2; P3 of its §7 is this unit), R1-TRACKP-P4-DECISIONS (P4-PHASE1-TEST A, P4-P1SPLIT A, P4-LABELS A,
@@ -15,7 +32,8 @@ for host, image, staging and transfer failures; "protocol" for a refusal of the 
 training failure of the arm, such as a CUDA OOM at the chosen micro-batch):
 
 1. **Identity.** ``/opt/r1/VERSIONS.txt`` sha256 equal to the spec's (the image v2.2 pin), exactly one GPU and it
-   is an NVIDIA H200 (``nvidia-smi``), a non-root uid.
+   is the GPU of the job's host class (``nvidia-smi``; an NVIDIA H200 for ``nemo2_h200``), for a direct class the
+   leased card, a non-root uid.
 2. **Paper clone.** A full clone at the spec's paper commit with ``origin/main`` fetched, the commit an ancestor of
    ``origin/main``, the tree clean (every partition open runs ``git`` at HEAD and checks the release commit on
    ``origin/main``; a shallow clone would STOP every label read).
@@ -67,11 +85,13 @@ training failure of the arm, such as a CUDA OOM at the chosen micro-batch):
     walltime kill) under ``/ceph/srv/dwong/paperb/trackp_p4/<run_id>/<arm>/attempt-N/`` without overwrite and writes
     a receipt binding the record and the wrapper log, with the GPU-hours it charges to the cap.
 
-**Cap** (P4-CAP A): the projection (per arm: the spec's estimate, which must come from the H200 SFT probe at
-launch, × the wall factor + startup) must stay within 40 GPU-h, and the requested walltime within 64 slot-hours and
-86,400 s per job. The GPU-hours consumed are summed over **every** sealed attempt of the run (``charged_hours``: the
-record's ``gpu_hours``, or the arm's requested walltime when the record has none): ``assemble`` refuses a total over
-the cap, and the switch refuses a repeat whose projection would pass it. **P4-PROBECAP A**: the H200 SFT probe's
+**Cap** (P4-CAP A, a reporting threshold under R1-NO-TIMEOUT (3)): the projection (per arm: its largest estimate over
+the admitted classes, each of which must come from that class's SFT probe at launch, × the wall factor + startup) is
+reported against 40 GPU-h and 64 slot-hours; an HTCondor job's requested walltime stays within 86,400 s (a scheduler
+request). The GPU-hours consumed are summed over **every** sealed attempt of the run (``charged_hours``: the receipt's
+charge: the record's ``gpu_hours``, or the arm's requested walltime when the record has none; for a direct attempt the
+launcher's wall clock or the record's hours, whichever is larger): ``assemble`` and the switch report a total that
+reaches the figure to the author, and do not refuse. **P4-PROBECAP A**: the H200 SFT probe's
 GPU-hours count against the same 40 GPU-h. The spec carries them as ``caps.probe_gpu_hours`` (filled from the probe
 record's ``p4_probe_gpu_hours:`` line, which ``probe_records`` computes over every sealed probe attempt of every probe
 run); launch validation requires it, and the projection, ``charged_hours`` (hence ``assemble`` and the switch's
@@ -91,6 +111,7 @@ job; its run id keeps every probe attempt out of the P.4 run's tree. ``probe_rec
 from __future__ import annotations
 
 import argparse
+import calendar
 import hashlib
 import json
 import math
@@ -115,7 +136,26 @@ VERSIONS = Path("/opt/r1/VERSIONS.txt")
 SEALED_ROOT = Path("/ceph/srv/dwong/paperb/trackp_p4")
 ENV3_FREEZE = "docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt"
 ENV3_FREEZE_SHA256 = "50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08"
-HOST_CONFIG = "r1/scripts/configs/trackp_htcondor_v2.json"
+HOST_CONFIG = "r1/scripts/configs/trackp_htcondor_v2.json"   # the nemo2_h200 class's host config
+ADA_HOST_CONFIG = "r1/scripts/configs/trackp_ada_v1.json"      # the ada_rtx6000 class's host config
+# R1-HOST-FREE (1): the admitted host classes. A job is told its class (``--host-class``); the landed GPU must be that
+# class's model and compute capability, exactly one GPU visible; the record names host, GPU model, uuid, driver and the
+# env3 freeze. ``launch`` is how a job of the class starts: "htcondor" (p4_render_jdl + p4_switch, condor_submit) or
+# "direct" (p4_direct.py over SSH under a GPU lease). ``probe_label`` is the key of the class's SFT probe record in the
+# spec's estimate.source and in the note (the H200 one keeps its name, h200_sft_probe). ``smoke_label`` is the note key
+# that names the class's Track P smoke and E0 equivalence records (R1-QTORCH-AMEND: one smoke and one E0 check per GPU
+# model actually used; the switch requires the line, with records on origin/main, for every admitted class).
+HOST_CLASSES = {
+    "nemo2_h200": {"launch": "htcondor", "gpu_name": "NVIDIA H200", "compute_capability": "9.0",
+                   "host_config_path": HOST_CONFIG, "probe_label": "h200_sft_probe",
+                   "smoke_label": "h200_smoke_e0"},
+    "ada_rtx6000": {"launch": "direct", "gpu_name": "NVIDIA RTX 6000 Ada Generation", "compute_capability": "8.9",
+                    "host_config_path": ADA_HOST_CONFIG, "probe_label": "ada_sft_probe",
+                    "smoke_label": "ada_smoke_e0"},
+}
+HOST_FIXED = ("launch", "gpu_name", "compute_capability")       # a spec's hosts.<class> carries these values as above
+DIRECT_LAUNCH_FILE = "direct_launch.json"        # the direct launcher's record beside the job outputs (p4_direct.py)
+DIRECT_LAUNCH_SCHEMA = "trackp_p4_direct_launch/1"
 TRACKP_SCRIPT = "r1/scripts/trackp.py"
 SFT_CONFIG = "r1/scripts/configs/trackp_sft.json"
 SPLIT_FILE = {"path": "r1/c3/splits/c3_p3_split_v1.json",
@@ -141,7 +181,7 @@ CAP_SLOT_HOURS = 64.0                           # 1.6 x the cap
 MAX_WALLTIME_S = 86400
 PLAN_ROWS = ("R1-T1-HOST-TASL", "R1-TRACKP-P4-DECISIONS", "R1-TRACKP-P4-RUNNER-DECISIONS", "R1-TRACKP-IMAGE-V21",
              "R1-TRACKP-IMAGE-V22", "R1-TRACKP-IMAGE-V22-B", "R1-TRACKP-V21-FREEZE", "R1-HTC-QTORCH",
-             "R1-S2-LABELS-TRAINDEV-RELEASE", "R1-TRACKP-SFT-DEV", "R1-SWEEP2-PREREG")
+             "R1-S2-LABELS-TRAINDEV-RELEASE", "R1-TRACKP-SFT-DEV", "R1-SWEEP2-PREREG", "R1-HOST-FREE")
 TRANSFER_INPUTS = ("p4_job.sh", "p4_lib.py", "p4_spec.json", "proposals.jsonl", "configs.json", "build.json",
                    "label_block.traindev.jsonl", "RECEIPT.json")
 TRANSFER_OUTPUTS = "out.tar,job_record.json,SHA256SUMS,p4_run.log"
@@ -170,7 +210,8 @@ PROBE_SPEC_FILE = "p4_probe_spec.json"           # the committed template in thi
 PROBE_RECORD_SCHEMA = "trackp_p4_probe_record/1"
 PROBE_TABLE_SCHEMA = "trackp_p4_h200_sft_probe/1"
 PROBE = {"steps": 50, "lr": 1e-05, "seed": 0, "sample_ms": 500, "walltime_s": 7200, "labels": "synthetic"}
-PROBE_FILLED = (("paper", "commit"), ("image", "versions_sha256"), ("host_config", "sha256"))
+PROBE_FILLED = (("paper", "commit"), ("image", "versions_sha256"), ("host_class",),
+                *(("hosts", c, "host_config", "sha256") for c in HOST_CLASSES))
 PROBE_TRANSFER_INPUTS = ("p4_probe.sh", "p4_lib.py", "p4_probe_spec.json", "proposals.jsonl", "configs.json",
                          "build.json")
 PROBE_KEEP = ("out/logs", "out/gpu_lease_log.jsonl", "out/probe/wall.json", "out/probe/{arm}.gpu_mem.csv",
@@ -208,13 +249,31 @@ def _pin(value, name: str, pattern=SHA, *, allow: bool) -> None:
         raise Stop(f"STOP: {name} must be filled ({pattern.pattern})")
 
 
-def arm_hours(spec: dict, arm: str) -> float:
-    return float(spec["estimate"]["hours"][arm])
+def arm_hours(spec: dict, arm: str, host_class: str | None = None) -> float:
+    """The arm's estimated training hours on ``host_class`` (its ``hosts.<class>.estimate.hours``), or, with no class,
+    the largest over the spec's admitted classes: an arm may land on any of them, so the projection and the walltime
+    bound take the slowest (R1-HOST-FREE (5); with one admitted class this is that class's value). The largest is used
+    only for the projection, a pending submission's charge and an incomplete launcher record's bound; an HTCondor JDL
+    requests its own class's value (``p4_render_jdl.render``), the value ``validate_spec`` checks against 86,400 s."""
+    classes = [host_class] if host_class is not None else sorted(spec["hosts"])
+    return max(float(spec["hosts"][c]["estimate"]["hours"][arm]) for c in classes)
 
 
-def arm_walltime_s(spec: dict, arm: str) -> int:
+def arm_walltime_s(spec: dict, arm: str, host_class: str | None = None) -> int:
     lay = spec["layout"]
-    return int(math.ceil(arm_hours(spec, arm) * 3600 * float(lay["wall_factor"]) + float(lay["startup_s"])))
+    return int(math.ceil(arm_hours(spec, arm, host_class) * 3600 * float(lay["wall_factor"]) + float(lay["startup_s"])))
+
+
+def host_class_of(spec: dict, host_class: str, *, launch: str | None = None) -> dict:
+    """The admitted class ``host_class`` of the spec (its fixed values with the spec's host config and estimate), or a
+    STOP when the spec does not admit it or (``launch`` given) it does not start that way."""
+    hosts = spec.get("hosts") if isinstance(spec.get("hosts"), dict) else {}
+    if host_class not in HOST_CLASSES or host_class not in hosts:
+        raise Stop(f"STOP: host class {host_class!r} is not admitted by the spec (hosts: {sorted(hosts)}; R1-HOST-FREE)")
+    if launch is not None and HOST_CLASSES[host_class]["launch"] != launch:
+        raise Stop(f"STOP: host class {host_class} starts by {HOST_CLASSES[host_class]['launch']}, not {launch}")
+    return {"host_class": host_class, **HOST_CLASSES[host_class], "host_config": dict(hosts[host_class]["host_config"]),
+            "estimate": hosts[host_class].get("estimate")}
 
 
 def probe_gpu_hours(spec: dict) -> float | None:
@@ -226,7 +285,9 @@ def probe_gpu_hours(spec: dict) -> float | None:
 
 def projection(spec: dict) -> dict:
     """The four jobs' projected GPU-hours and slot-hours; ``within_cap`` adds the probe's charged GPU-hours
-    (P4-PROBECAP A; 0 while ``caps.probe_gpu_hours`` is a placeholder, which only default-strength validation admits)."""
+    (P4-PROBECAP A; 0 while ``caps.probe_gpu_hours`` is a placeholder, which only default-strength validation admits).
+    Each arm is projected at its largest estimate over the admitted host classes (``arm_hours``), wherever it lands;
+    GPU-hours count on any card (R1-HOST-FREE (5))."""
     per = {a: {"gpu_hours": round(arm_hours(spec, a) + spec["layout"]["startup_s"] / 3600, 3),
                "walltime_s": arm_walltime_s(spec, a)} for a in spec["arms"]}
     gpu = round(sum(v["gpu_hours"] for v in per.values()), 3)
@@ -240,9 +301,14 @@ def projection(spec: dict) -> dict:
 
 
 def validate_spec(spec: dict, *, launch: bool = False) -> dict:
-    """Fail-closed; ``launch=True`` refuses every placeholder (the image VERSIONS sha256, the host
-    config sha256 after its fill, the partition, receipt and freeze-record sha256, the probe-based estimate, the
-    probe's charged GPU-hours ``caps.probe_gpu_hours``) and refuses a probe spec (one with a ``probe`` block)."""
+    """Fail-closed; ``launch=True`` refuses every placeholder (the image VERSIONS sha256, each admitted class's host
+    config sha256 after its fill, the partition, receipt and freeze-record sha256, each admitted class's probe-based
+    estimate, the probe's charged GPU-hours ``caps.probe_gpu_hours``) and refuses a probe spec (one with a ``probe``
+    block). R1-HOST-FREE: ``hosts`` admits one or more classes of ``HOST_CLASSES`` with their fixed launch, GPU name and
+    compute capability, each with its own ``host_config`` {path, sha256} and ``estimate`` {hours, source}; the old fixed
+    ``gpu_model`` and the top-level ``host_config`` / ``estimate`` are refused. At launch every admitted class needs
+    its own SFT probe estimate (``<probe_label>: docs/r1/reports/<record>.md``), so no arm can be staged on a class
+    without one."""
     allow = not launch
     if spec.get("schema") != SCHEMA or spec.get("label") != ENGINEERING_ONLY or spec.get("phase") != 1:
         raise Stop(f"STOP: spec must be {SCHEMA}, ENGINEERING_ONLY, phase 1")
@@ -260,18 +326,41 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     _pin(image.get("versions_sha256"), "image.versions_sha256", allow=allow)
     if image.get("row") != IMAGE_ROW:
         raise Stop(f"STOP: image.row must be {IMAGE_ROW}")
-    if spec.get("gpu_model") != GPU_MODEL:
-        raise Stop(f"STOP: gpu_model must be {GPU_MODEL} (R1-T1-HOST-TASL)")
+    if "gpu_model" in spec:
+        raise Stop("STOP: gpu_model is replaced by the admitted host classes (hosts); the GPU model is recorded per job, "
+                   "not fixed (R1-HOST-FREE (1))")
+    for key in ("host_config", "estimate"):
+        if key in spec:
+            raise Stop(f"STOP: {key} is per host class (hosts.<class>.{key}; R1-HOST-FREE)")
+    hosts = spec.get("hosts")
+    if not isinstance(hosts, dict) or not hosts or set(hosts) - set(HOST_CLASSES):
+        raise Stop(f"STOP: hosts must admit one or more of the host classes {sorted(HOST_CLASSES)} (R1-HOST-FREE (1))")
     env3 = spec.get("env3") or {}
     want_env3 = {"python": ENV3_PYTHON, "freeze": ENV3_FREEZE, "freeze_sha256": ENV3_FREEZE_SHA256,
                  "rule": "R1-TRACKP-V21-FREEZE"}
     if {k: env3.get(k) for k in want_env3} != want_env3:
         raise Stop(f"STOP: env3 must be {want_env3} (R1-ENV-PIN, R1-HTC-QTORCH, R1-TRACKP-V21-FREEZE)")
-    for key, path in (("host_config", HOST_CONFIG), ("sft_config", SFT_CONFIG)):
-        block = spec.get(key) or {}
-        if block.get("path") != path:
-            raise Stop(f"STOP: {key}.path must be {path}")
-        _pin(block.get("sha256"), f"{key}.sha256", allow=allow and key == "host_config")
+    block = spec.get("sft_config") or {}
+    if block.get("path") != SFT_CONFIG:
+        raise Stop(f"STOP: sft_config.path must be {SFT_CONFIG}")
+    _pin(block.get("sha256"), "sft_config.sha256", allow=False)
+    for cls in sorted(hosts):                       # the fixed values and the host config of each admitted class
+        h = hosts[cls]
+        if not isinstance(h, dict) or set(h) - {*HOST_FIXED, "host_config", "estimate", "comment"}:
+            raise Stop(f"STOP: hosts.{cls} holds only {list(HOST_FIXED)}, host_config, estimate (and a comment)")
+        want = {k: HOST_CLASSES[cls][k] for k in HOST_FIXED}
+        if {k: h.get(k) for k in HOST_FIXED} != want:
+            raise Stop(f"STOP: hosts.{cls} must be {want} (R1-HOST-FREE (1))")
+        hc = h.get("host_config") or {}
+        if hc.get("path") != HOST_CLASSES[cls]["host_config_path"]:
+            raise Stop(f"STOP: hosts.{cls}.host_config.path must be {HOST_CLASSES[cls]['host_config_path']}")
+        _pin(hc.get("sha256"), f"hosts.{cls}.host_config.sha256", allow=allow)
+    hc_class = spec.get("host_class")
+    if launch and hc_class is not None:
+        raise Stop("STOP: a P.4 launch spec admits host classes; each job is told its class (--host-class), the spec "
+                   "names none (host_class is a probe-spec field)")
+    if hc_class is not None and not (allow and _placeholder(hc_class)) and hc_class not in hosts:
+        raise Stop(f"STOP: host_class must be one of the admitted classes {sorted(hosts)}")
     if spec.get("split_file") != SPLIT_FILE:
         raise Stop(f"STOP: split_file must be the signed P3 split file {SPLIT_FILE} (P4-P1SPLIT A)")
     table = spec.get("table") or {}
@@ -312,11 +401,12 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         raise Stop(f"STOP: caps must be {CAP_GPU_HOURS} GPU-h and {CAP_SLOT_HOURS} slot-hours (P4-CAP A)")
     pg = caps.get("probe_gpu_hours")
     number = isinstance(pg, (int, float)) and not isinstance(pg, bool)
-    if launch and not (number and 0 < pg <= CAP_GPU_HOURS and round(pg, 2) == pg):
-        raise Stop("STOP: caps.probe_gpu_hours must be the H200 SFT probe's charged GPU-hours (the probe record's "
-                   "p4_probe_gpu_hours: line), in (0, 40] with at most two decimals, before launch (P4-PROBECAP A)")
-    if not launch and not (_placeholder(pg) or (number and 0 <= pg <= CAP_GPU_HOURS)):
-        raise Stop("STOP: caps.probe_gpu_hours must be a placeholder or GPU-hours in [0, 40] (P4-PROBECAP A)")
+    if launch and not (number and 0 < pg and round(pg, 2) == pg):
+        raise Stop("STOP: caps.probe_gpu_hours must be the SFT probes' charged GPU-hours (the probe record's "
+                   "p4_probe_gpu_hours: line), positive with at most two decimals, before launch (P4-PROBECAP A; "
+                   "R1-NO-TIMEOUT (3): 40 GPU-h is a reporting threshold, not a bound)")
+    if not launch and not (_placeholder(pg) or (number and 0 <= pg)):
+        raise Stop("STOP: caps.probe_gpu_hours must be a placeholder or non-negative GPU-hours (P4-PROBECAP A)")
     pcf = caps.get("probe_charge_files")
     pcf_ok = isinstance(pcf, dict) and all(isinstance(r, str) and PROBE_RUN_ID.fullmatch(r) and isinstance(v, list)
                                            and v and all(isinstance(x, str) and SHA.fullmatch(x) for x in v)
@@ -334,24 +424,37 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         v = lay.get(key)
         if not isinstance(v, (int, float)) or isinstance(v, bool) or not lo <= v <= hi:
             raise Stop(f"STOP: layout.{key} must be in [{lo}, {hi}]")
-    est = spec.get("estimate") or {}
-    hours = est.get("hours") or {}
-    if set(hours) != set(arms) or any(not isinstance(v, (int, float)) or isinstance(v, bool) or not 0 < v <= 20
-                                      for v in hours.values()):
-        raise Stop("STOP: estimate.hours must give (0, 20] GPU-hours of training for every arm")
-    source = str(est.get("source", ""))
-    if launch and not re.fullmatch(r"h200_sft_probe: docs/r1/reports/\S+\.md", source):
-        raise Stop("STOP: estimate.source must be 'h200_sft_probe: docs/r1/reports/<record>.md' before launch (P5; "
-                   "P4-CAP A)")
+    for cls in sorted(hosts):                       # per class: its probe-based estimate (P5; P4-CAP A)
+        est = hosts[cls].get("estimate") or {}
+        hours = est.get("hours") or {}
+        if set(hours) != set(arms) or any(not isinstance(v, (int, float)) or isinstance(v, bool) or not 0 < v <= 20
+                                          for v in hours.values()):
+            raise Stop(f"STOP: hosts.{cls}.estimate.hours must give (0, 20] GPU-hours of training for every arm")
+        source, label = str(est.get("source", "")), HOST_CLASSES[cls]["probe_label"]
+        if launch and not re.fullmatch(rf"{label}: docs/r1/reports/\S+\.md", source):
+            raise Stop(f"STOP: hosts.{cls}.estimate.source must be '{label}: docs/r1/reports/<record>.md' before launch: "
+                       f"no arm runs on a class without its own SFT probe estimate (P5; P4-CAP A; R1-HOST-FREE)")
     proj = projection(spec)
-    for arm, v in proj["per_arm"].items():
-        if v["walltime_s"] > MAX_WALLTIME_S:
-            raise Stop(f"STOP: {arm} would request {v['walltime_s']} s, over {MAX_WALLTIME_S} s (one HTCondor job)")
-    if not proj["within_cap"]:
-        raise Stop(f"STOP: the projection {proj['total_gpu_hours']} GPU-h (with the probe's charged "
-                   f"{proj['probe_gpu_hours'] or 0.0}: {proj['total_with_probe_gpu_hours']}) / "
-                   f"{proj['total_slot_hours']} slot-h exceeds P4-CAP: author STOP")
-    return {"spec": spec, "run_id": run_id, "projection": proj}
+    for cls in sorted(c for c in hosts if HOST_CLASSES[c]["launch"] == "htcondor"):   # one HTCondor job's request
+        for arm in arms:
+            w = arm_walltime_s(spec, arm, cls)
+            if w > MAX_WALLTIME_S:
+                raise Stop(f"STOP: {arm} would request {w} s on {cls}, over {MAX_WALLTIME_S} s (one HTCondor job: a "
+                           "scheduler request, not a limit on the run)")
+    return {"spec": spec, "run_id": run_id, "projection": proj, "threshold": threshold_report(proj)}
+
+
+def threshold_report(proj: dict, charged: float | None = None) -> dict:
+    """R1-NO-TIMEOUT (3): the 40 GPU-h and 64 slot-hour figures of P4-CAP A are reporting thresholds for P.4 phase 1
+    (work not yet under a signed note): usage (``charged``, when given, else the projection with the probes' charge)
+    is reported against them, and reaching one is reported to the author at once (``report_to_author``). It never
+    refuses a spec, a submission, a launch or an assembly."""
+    gpu = proj["total_with_probe_gpu_hours"] if charged is None else charged
+    reached = [k for k, have, cap in (("gpu_hours", gpu, proj["cap_gpu_hours"]),
+                                     ("slot_hours", proj["total_slot_hours"], proj["cap_slot_hours"])) if have >= cap]
+    return {"rule": "R1-NO-TIMEOUT (3): a reporting threshold, not a refusal", "reached": reached,
+            "report_to_author": bool(reached), "gpu_hours": gpu, "gpu_hours_threshold": proj["cap_gpu_hours"],
+            "slot_hours_projected": proj["total_slot_hours"], "slot_hours_threshold": proj["cap_slot_hours"]}
 
 
 # =============================================================================================== helpers
@@ -381,6 +484,40 @@ def _read_utf8(path: Path, stop=None) -> str:
 
 def _utc(t: float | None = None) -> str:
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t))
+
+
+# The running job's host class and its host config (set by ``run_job`` / ``run_probe`` for the class the job was told,
+# restored afterwards). Outside a job (the desk, the tests) it is the HTCondor class, so every helper keeps its earlier
+# behaviour there. The job steps read the class's host config through ``job_host_config`` (trackp.py --config, the local
+# paths, the arm pin), and ``gpu_identity`` / ``configs`` take the class from here unless given one.
+_JOB_HOST = {"host_class": "nemo2_h200", "host_config": HOST_CONFIG}
+
+
+def job_host_class() -> str:
+    return _JOB_HOST["host_class"]
+
+
+def job_host_config() -> str:
+    return _JOB_HOST["host_config"]
+
+
+class _job_host:
+    """Context manager: the job runs as ``host_class`` (its host config path from ``HOST_CLASSES``)."""
+
+    def __init__(self, host_class: str):
+        if host_class not in HOST_CLASSES:
+            raise Stop(f"STOP: unknown host class {host_class!r} (R1-HOST-FREE: {sorted(HOST_CLASSES)})")
+        self.new = {"host_class": host_class, "host_config": HOST_CLASSES[host_class]["host_config_path"]}
+
+    def __enter__(self):
+        self.old = dict(_JOB_HOST)
+        _JOB_HOST.update(self.new)
+        return self
+
+    def __exit__(self, *exc):
+        _JOB_HOST.clear()
+        _JOB_HOST.update(self.old)
+        return False
 
 
 def _phase1(clone: Path):
@@ -413,7 +550,12 @@ def image_identity(spec: dict, versions: Path = VERSIONS) -> dict:
     return {"digest": spec["image"]["digest"], "versions_sha256": got}
 
 
-def gpu_identity(sh=_sh) -> dict:
+def gpu_identity(sh=_sh, host_class: str | None = None) -> dict:
+    """Exactly one GPU visible (unscoped ``nvidia-smi``), and it is the GPU of the job's declared host class (name and
+    compute capability; ``host_class`` defaults to the running job's class): R1-HOST-FREE (1). A job never moves to
+    another class: a GPU of another model is a STOP, whatever class it would fit."""
+    cls = host_class or job_host_class()
+    want = HOST_CLASSES[cls]
     res = sh(["nvidia-smi", "--query-gpu=name,uuid,driver_version,memory.total,compute_cap",
               "--format=csv,noheader"], timeout=120)
     if res.returncode != 0:
@@ -421,10 +563,73 @@ def gpu_identity(sh=_sh) -> dict:
     gpus = [[x.strip() for x in line.split(",")] for line in res.stdout.strip().splitlines() if line.strip()]
     if len(gpus) != 1:
         raise Stop(f"STOP: one GPU per P.4 job, nvidia-smi lists {len(gpus)}")
+    if len(gpus[0]) != 5:
+        raise Stop(f"STOP: nvidia-smi printed {gpus[0]!r}, not name, uuid, driver, memory, compute capability")
     name, uuid, driver, memory, cap = gpus[0]
-    if name != GPU_MODEL:
-        raise Stop(f"STOP: landed on {name}, not {GPU_MODEL} (no run moves to another GPU model)")
-    return {"name": name, "uuid": uuid, "driver": driver, "memory_total": memory, "compute_capability": cap}
+    if name != want["gpu_name"] or cap != want["compute_capability"]:
+        raise Stop(f"STOP: landed on {name} (compute capability {cap}), not {want['gpu_name']} "
+                   f"({want['compute_capability']}) of the job's host class {cls} (no run moves to another GPU model)")
+    return {"name": name, "uuid": uuid, "driver": driver, "memory_total": memory, "compute_capability": cap,
+            "host_class": cls}
+
+
+LEASED_GPU_ENV = "P4_LEASED_GPU_UUID"            # set by p4_direct.py: the card the launcher leased, by UUID
+
+
+def card_processes(sh=_sh, uuid: str | None = None) -> dict:
+    """R1-CARD-SHARE (4): the compute processes on the job's card as ``nvidia-smi --query-compute-apps`` shows them
+    from inside the job (count and memory only; rows of another card's UUID are not counted). A query that fails is
+    recorded, never a STOP. (Inside a container another user's processes may not be visible; for a direct job the
+    launcher's host-side count, sealed with the attempt, is the record that decides R1-CARD-SHARE (3).)"""
+    try:
+        res = sh(["nvidia-smi", "--query-compute-apps=gpu_uuid,pid,used_memory", "--format=csv,noheader,nounits"],
+                 timeout=120)
+        if res.returncode != 0:
+            return {"error": f"nvidia-smi rc={res.returncode}: {(res.stderr or '').strip()[:160]}"}
+        count, mem = 0, 0.0
+        for line in (res.stdout or "").splitlines():
+            parts = [x.strip() for x in line.split(",")]
+            if len(parts) < 3 or (uuid and parts[0] != uuid):
+                continue
+            count += 1
+            try:
+                mem += float(parts[2])
+            except ValueError:
+                pass
+        return {"count": count, "memory_mib": mem}
+    except Exception as exc:  # noqa: BLE001 - a record, never a STOP
+        return {"error": f"{type(exc).__name__}: {exc}"[:200]}
+
+
+def shared_card_loss(record: dict, *others: dict | None) -> bool:
+    """R1-CARD-SHARE (3): an arm STOP (a CUDA OOM) of an attempt whose card had another compute process at its start
+    or end (the job's own counts, and any host-side counts given in ``others``) is an infrastructure failure: it is
+    sealed and the same run is attempted again in a new attempt directory; never an outcome, never the author's STOP.
+    Reclassifies ``record`` in place and returns whether it did."""
+    counts = [record.get("card_processes_start"), record.get("card_processes_end"), *others]
+    shared = any(isinstance(c, dict) and isinstance(c.get("count"), int) and c["count"] > 0 for c in counts)
+    if record.get("stop_class") != "arm" or not shared:
+        return False
+    record["stop_class"] = "infrastructure"
+    record["stop"] = f"{record['stop']} [lost beside another compute process on the card: an infrastructure failure, " \
+                     "repeated in a new attempt directory (R1-CARD-SHARE (3))]"
+    record["lost_beside_another_process"] = True
+    return True
+
+
+def lease_binding(gpu: dict, environ=None, host_class: str | None = None) -> dict | None:
+    """A direct-launch class (R1-HOST-FREE): the one GPU the job sees must be the card the host launcher leased
+    (``P4_LEASED_GPU_UUID``, which p4_direct.py sets to the leased card's UUID); a missing or other UUID is a STOP.
+    An HTCondor class returns None (the slot is the lease)."""
+    cls = host_class or job_host_class()
+    if HOST_CLASSES[cls]["launch"] != "direct":
+        return None
+    environ = os.environ if environ is None else environ
+    leased = environ.get(LEASED_GPU_ENV)
+    if not leased or leased != gpu.get("uuid"):
+        raise Stop(f"STOP: {LEASED_GPU_ENV}={leased!r} is not the one GPU the job sees ({gpu.get('uuid')}): a direct job "
+                   "runs on its leased card only (p4_direct.py)")
+    return {"leased_uuid": leased, "env": LEASED_GPU_ENV}
 
 
 def host_identity() -> dict:
@@ -471,17 +676,20 @@ def clone_full(commit: str, dest: Path, git=_git, sh=_sh) -> dict:
     return {"repo": PAPER_REPO, "commit": commit, "origin_main": git(dest, "rev-parse", "origin/main").stdout.strip()}
 
 
-def configs(spec: dict, clone: Path, sh=_sh) -> dict:
-    """Step 4."""
+def configs(spec: dict, clone: Path, sh=_sh, host_class: str | None = None) -> dict:
+    """Step 4: the host config of the job's class (``hosts.<class>.host_config``) and the SFT config at the spec's
+    sha256, and ``trackp.py --check-config`` clean on that host config."""
+    cls = host_class or job_host_class()
+    blocks = {"host_config": host_class_of(spec, cls)["host_config"], "sft_config": spec["sft_config"]}
     out = {}
-    for key in ("host_config", "sft_config"):
-        path = clone / spec[key]["path"]
+    for key, block in blocks.items():
+        path = clone / block["path"]
         got = _sha_file(path)
-        if got != spec[key]["sha256"]:
-            raise Stop(f"STOP: {spec[key]['path']} sha256 {got} is not the spec's {spec[key]['sha256']}")
-        out[key] = {"path": spec[key]["path"], "sha256": got}
-    res = sh([ENV3_PYTHON, "-B", str(clone / TRACKP_SCRIPT), "--config", str(clone / HOST_CONFIG), "--check-config"],
-             cwd=clone, timeout=600)
+        if got != block["sha256"]:
+            raise Stop(f"STOP: {block['path']} sha256 {got} is not the spec's {block['sha256']}")
+        out[key] = {"path": block["path"], "sha256": got}
+    res = sh([ENV3_PYTHON, "-B", str(clone / TRACKP_SCRIPT), "--config", str(clone / blocks["host_config"]["path"]),
+              "--check-config"], cwd=clone, timeout=600)
     if res.returncode != 0:
         raise Stop(f"STOP: trackp.py --check-config is not clean on the host config: {res.stdout.strip()[:400]}")
     out["check_config"] = json.loads(res.stdout)
@@ -638,9 +846,10 @@ def tokenizer_record(job_dir: Path, stdout: str) -> dict:
     return {"count": len(rec), "hub_cache": str(cache), "pool": rec}
 
 
-def check_local_paths(arm: str, clone: Path, job_dir: Path) -> dict:
-    """The host config must point the arm at the staged directories (paths relative to the job directory)."""
-    cfg = json.loads(_read_utf8(clone / HOST_CONFIG))
+def check_local_paths(arm: str, clone: Path, job_dir: Path, host_config: str | None = None) -> dict:
+    """The host config (of the job's class, unless ``host_config`` names one) must point the arm at the staged
+    directories (paths relative to the job directory)."""
+    cfg = json.loads(_read_utf8(clone / (host_config or job_host_config())))
     base = cfg["bases"][arm]
     adapter_key, base_key = ARMS[arm]
     want = {"local_path": job_dir / "models" / base_key}
@@ -666,7 +875,8 @@ def trackp(clone: Path, job_dir: Path, args: list, sh=_sh, timeout: int = 86400)
     with the host config, offline. A refusal of the SFT pipeline (``trackp.py`` prints ``STOP: …`` and exits 2) is a
     protocol STOP, a CUDA OOM an arm STOP, anything else (a missing script, an argument error, a crash) an
     infrastructure STOP. The log is kept under ``out/logs/``."""
-    argv = [ENV3_PYTHON, "-B", str(clone / TRACKP_SCRIPT), "--config", str(clone / HOST_CONFIG), *map(str, args)]
+    argv = [ENV3_PYTHON, "-B", str(clone / TRACKP_SCRIPT), "--config", str(clone / job_host_config()),
+            *map(str, args)]
     res = sh(argv, cwd=job_dir, env={**offline_env(job_dir), "PYTHONPATH": str(clone)}, timeout=timeout)
     logs = job_dir / "out" / "logs"
     logs.mkdir(parents=True, exist_ok=True)
@@ -759,18 +969,27 @@ def run_name(lr: float, seed: int, n: int | str = "full") -> str:
 
 
 # =============================================================================================== the job
-def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: float | None = None,
+def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, host_class: str, started: float | None = None,
             sh=_sh, git=_git) -> dict:
-    """The job of one arm (module docstring). Writes ``out/``, ``out.tar``, ``job_record.json`` and ``SHA256SUMS`` in
-    ``job_dir`` (the job's scratch, the current directory by default) and raises Stop on a STOP."""
+    """The job of one arm (module docstring) on the host class it was told (``host_class``, which the spec must
+    admit; the job's GPU must be that class's, R1-HOST-FREE). Writes ``out/``, ``out.tar``, ``job_record.json`` and
+    ``SHA256SUMS`` in ``job_dir`` (the job's scratch, the current directory by default) and raises Stop on a STOP."""
+    with _job_host(host_class):
+        return _run_job(spec_path, arm, job_dir, host_class=host_class, started=started, sh=sh, git=git)
+
+
+def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str, started: float | None, sh,
+             git) -> dict:
     started = started or time.time()
     job_dir = Path(job_dir or Path.cwd()).resolve()
     spec = load_spec(spec_path)
     loaded = validate_spec(spec, launch=True)
     if arm not in spec["arms"]:
         raise Stop(f"STOP: {arm} is not an arm of the spec")
+    host = host_class_of(spec, host_class)
     record: dict = {"schema": RECORD_SCHEMA, "label": ENGINEERING_ONLY, "run_id": spec["run_id"], "arm": arm,
                     "phase": 1, "spec_sha256": _sha_file(spec_path), "paper_commit": spec["paper"]["commit"],
+                    "host_class": host_class, "launch": host["launch"],
                     "started_utc": _utc(started), "stop": None, "stop_class": None, "steps": [],
                     "projection": loaded["projection"]["per_arm"][arm],
                     "output_use": "ENGINEERING_ONLY P.4 phase 1 (R1-TRACKP-P4-DECISIONS): readiness only; no "
@@ -781,6 +1000,8 @@ def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: 
     try:
         record["image"] = image_identity(spec)
         record["gpu"] = gpu_identity(sh)
+        record["lease"] = lease_binding(record["gpu"])
+        record["card_processes_start"] = card_processes(sh, record["gpu"].get("uuid"))   # R1-CARD-SHARE (4)
         record["host"] = host_identity()
         record["steps"].append("identity")
         record["clone"] = clone_full(spec["paper"]["commit"], clone, git, sh)
@@ -832,7 +1053,7 @@ def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: 
         (out / "bootstrap.json").write_text(json.dumps(boot, indent=1, sort_keys=True) + "\n")
         record["bootstrap"] = {"raw": boot["raw"], "temperature_scaled": boot["temperature_scaled"]}
         record["steps"].append("bootstrap")
-        cfg = json.loads(_read_utf8(clone / HOST_CONFIG))
+        cfg = json.loads(_read_utf8(clone / job_host_config()))
         base = {k: cfg["bases"][arm].get(k) for k in ("family", "base_repo", "base_revision", "adapter_repo",
                                                        "adapter_revision")}
         pin = P.arm_pin(arm=arm, base_record=base, staged=record["staging"]["weights"], data_dir=data,
@@ -848,6 +1069,9 @@ def run_job(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: 
         record["stop"], record["stop_class"] = str(exc), exc.stop_class
     except Exception as exc:  # noqa: BLE001 - every failure writes the record and the sums
         record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
+    if (record.get("gpu") or {}).get("uuid"):            # R1-CARD-SHARE (4), then (3)
+        record["card_processes_end"] = card_processes(sh, record["gpu"]["uuid"])
+    shared_card_loss(record)
     finished = time.time()
     record["finished_utc"] = _utc(finished)
     record["gpu_hours"] = round((finished - started) / 3600, 4)
@@ -871,7 +1095,7 @@ def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh) -> dict:
             "print(json.dumps(T.main(sys.argv[1:])))\n")
     res = sh([ENV3_PYTHON, "-B", "-c", code, "--data", str(syn), "--table", ins["table_dir"], "--run", str(run),
               "--arm", arm, "--sweep", str(clone / SWEEP_INDEX), "--paper-root", str(clone),
-              "--classification", str(clone / CLASSIFICATION), "--host-config", str(clone / HOST_CONFIG),
+              "--classification", str(clone / CLASSIFICATION), "--host-config", str(clone / job_host_config()),
               "--ledger-dir", str(ledger), "--out", str(job_dir / "out" / "test_path" / "report")],
              cwd=job_dir, env=env, timeout=7200)
     (job_dir / "out" / "logs" / "test_path.log").write_text((res.stdout or "") + "\n--- stderr ---\n" + (res.stderr or ""),
@@ -897,7 +1121,9 @@ def validate_probe_spec(spec: dict) -> dict:
     inside the job. So: the default ``validate_spec``, then the probe run id (``trackp-p4-probe-<YYYYMMDD>-<letter>``,
     never the P.4 run's: F10), the fixed ``probe`` block (``PROBE``), and these filled with the patterns of
     ``_pin(..., allow=False)``: ``paper.commit`` (the host-config fill commit), ``image.digest`` (the v2.2 digest),
-    ``image.versions_sha256`` (T1) and ``host_config.sha256`` (T3). The arms and ``first_arm`` are those of the default
+    ``image.versions_sha256`` (T1), ``host_class`` (R1-HOST-FREE: the one admitted class the probe run measures; its
+    estimate is per class) and that class's ``hosts.<class>.host_config.sha256`` (T3; the other classes' may stay
+    placeholders). The arms and ``first_arm`` are those of the default
     check (both controls, ``kev-0.8b`` first). The label fields, ``estimate.*`` and ``caps.probe_gpu_hours`` may stay
     placeholders: the probe reads none of them. It does not require ``h200_sft_probe`` (F1)."""
     loaded = validate_spec(spec)
@@ -913,8 +1139,12 @@ def validate_probe_spec(spec: dict) -> dict:
     if spec["image"].get("digest") != IMAGE_V22:
         raise Stop("STOP: the probe runs in image v2.2 by digest (R1-TRACKP-IMAGE-V22-B)")
     _pin(spec["image"].get("versions_sha256"), "image.versions_sha256", allow=False)
-    _pin(spec["host_config"].get("sha256"), "host_config.sha256", allow=False)
-    return {"spec": spec, "run_id": run_id, "probe": dict(probe)}
+    cls = spec.get("host_class")
+    if not isinstance(cls, str) or cls not in spec["hosts"]:
+        raise Stop(f"STOP: a probe spec names the one host class its run uses (host_class, one of the admitted "
+                   f"{sorted(spec['hosts'])}): a probe run measures one class (R1-HOST-FREE; P4-PROBE A)")
+    _pin(spec["hosts"][cls]["host_config"].get("sha256"), f"hosts.{cls}.host_config.sha256", allow=False)
+    return {"spec": spec, "run_id": run_id, "probe": dict(probe), "host_class": cls}
 
 
 def check_probe_template(spec: dict, template: dict) -> None:
@@ -1074,20 +1304,33 @@ def probe_run_summary(run_dir: Path, data: dict, sft_cfg: dict, probe: dict, wal
             "step_s": step_summary(stage_s / "metrics.jsonl")}
 
 
-def run_probe(spec_path: Path, arm: str, job_dir: Path | None = None, *, started: float | None = None, sh=_sh,
-              git=_git, popen=subprocess.Popen, environ=None, lib_file: Path | None = None) -> dict:
-    """The H200 SFT fit and timing probe of one base (module docstring; cluster test plan §4.2 items 1-10). Writes
+def run_probe(spec_path: Path, arm: str, job_dir: Path | None = None, *, host_class: str | None = None,
+              started: float | None = None, sh=_sh, git=_git, popen=subprocess.Popen, environ=None,
+              lib_file: Path | None = None) -> dict:
+    """The SFT fit and timing probe of one base on the probe spec's host class (module docstring; cluster test plan
+    §4.2 items 1-10; R1-HOST-FREE: the class the job was told, ``host_class``, must be the probe spec's). Writes
     ``out/``, ``out.tar`` (the allow-list ``PROBE_KEEP`` only), ``job_record.json`` (``trackp_p4_probe_record/1``) and
     ``SHA256SUMS`` in ``job_dir`` and raises Stop on a STOP."""
-    started = started or time.time()
-    job_dir = Path(job_dir or Path.cwd()).resolve()
     spec = load_spec(spec_path)
     loaded = validate_probe_spec(spec)
+    if host_class is not None and host_class != loaded["host_class"]:
+        raise Stop(f"STOP: the job was told host class {host_class}, the probe spec measures {loaded['host_class']}")
+    with _job_host(loaded["host_class"]):
+        return _run_probe(spec_path, spec, loaded, arm, job_dir, started=started, sh=sh, git=git, popen=popen,
+                          environ=environ, lib_file=lib_file)
+
+
+def _run_probe(spec_path: Path, spec: dict, loaded: dict, arm: str, job_dir: Path | None, *, started, sh, git, popen,
+               environ, lib_file) -> dict:
+    started = started or time.time()
+    job_dir = Path(job_dir or Path.cwd()).resolve()
     if arm not in spec["arms"]:
         raise Stop(f"STOP: {arm} is not an arm of the probe spec")
     probe = loaded["probe"]
+    cls = loaded["host_class"]
     record: dict = {"schema": PROBE_RECORD_SCHEMA, "label": ENGINEERING_ONLY, "mode": "probe", "run_id": spec["run_id"],
                     "arm": arm, "phase": 1, "spec_sha256": _sha_file(spec_path), "paper_commit": spec["paper"]["commit"],
+                    "host_class": cls, "launch": HOST_CLASSES[cls]["launch"],
                     "started_utc": _utc(started), "stop": None, "stop_class": None, "steps": [], "probe": probe,
                     "output_use": "ENGINEERING_ONLY H200 SFT fit and timing probe (P4-PROBE A): synthetic labels, at "
                                   "most 50 steps, one base; nothing kept as an arm; no label file, receipt or freeze "
@@ -1099,6 +1342,8 @@ def run_probe(spec_path: Path, arm: str, job_dir: Path | None = None, *, started
     try:
         record["image"] = image_identity(spec)
         record["gpu"] = gpu_identity(sh)                 # unscoped, as the P.4 job runs it (F3; T7)
+        record["lease"] = lease_binding(record["gpu"], environ)
+        record["card_processes_start"] = card_processes(sh, record["gpu"].get("uuid"))   # R1-CARD-SHARE (4)
         record["host"] = host_identity()
         record["visible_devices"] = visible_devices(record["gpu"], environ)
         record["condor"] = condor_ad(environ)
@@ -1153,6 +1398,9 @@ def run_probe(spec_path: Path, arm: str, job_dir: Path | None = None, *, started
     except Exception as exc:  # noqa: BLE001 - every failure writes the record and the sums
         record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
     record["oom"] = record["stop_class"] == "arm" and "OOM" in str(record["stop"])
+    if (record.get("gpu") or {}).get("uuid"):            # R1-CARD-SHARE (4), then (3)
+        record["card_processes_end"] = card_processes(sh, record["gpu"]["uuid"])
+    shared_card_loss(record)
     finished = time.time()
     record["finished_utc"] = _utc(finished)
     record["gpu_hours"] = round((finished - started) / 3600, 4)
@@ -1187,6 +1435,7 @@ def check_first_probe_record(path: Path | None, spec: dict, spec_sha256: str, se
               "arm": record.get("arm") == first, "spec_sha256": record.get("spec_sha256") == spec_sha256,
               "receipt": receipt.get("job_record_sha256") == _sha_file(path),
               "identity_verified": receipt.get("identity_verified") is True,
+              "host_class": record.get("host_class") == spec.get("host_class"),     # one probe run, one class
               "stop": record.get("stop") is None and record.get("steps", [])[-1:] == ["probe"]}
     failed = sorted(k for k, ok in checks.items() if not ok)
     if failed:
@@ -1550,6 +1799,11 @@ def probe_charges(sealed_root: Path = SEALED_ROOT, *, wallclock: dict | None = N
       {"<arm>/attempt-<N>": {"cluster_id", "remote_wallclock_s"}}}}``), for runs without charge files: it must name
       exactly the run's sealed attempts.
 
+    A **direct** attempt (R1-HOST-FREE (5); its seal receipt says ``launch: direct``) has no HTCondor job: its receipt
+    already charges the larger of the launcher record's wall clock (one card) and the job record's ``gpu_hours``
+    (``seal``). It is charged that (or a charge file's larger value), is never "unrecorded", and a wall-clock input must
+    not name it (it names exactly the run's HTCondor attempts). The charge files list it with ``launch: direct``.
+
     T1 (P4-T1CHARGE A, R1-P4-PROBE-CHARGE): its charge comes from one of two places, never both: ``t1_wallclock``
     (``t1_charge``: every T1 job's ClusterId and ``RemoteWallClockTime``, bound to T1's pinned committed record, from
     the JSON input or ``T1_FROM_HISTORY``), which only
@@ -1583,17 +1837,26 @@ def probe_charges(sealed_root: Path = SEALED_ROOT, *, wallclock: dict | None = N
         if set(recorded) - keys:
             raise Stop(f"STOP: charge files of {d.name} name attempts that are not sealed: "
                        f"{sorted(set(recorded) - keys)[:5]}")
+        condor_keys = {f"{a['arm']}/{a['attempt']}" for a in c["attempts"] if a.get("launch") != "direct"}
         if given is not None:
             seen_runs.add(d.name)
-            if set(given) != keys:
-                raise Stop(f"STOP: the wall-clock input for {d.name} must give exactly its sealed attempts; missing "
-                           f"{sorted(keys - set(given))}, extra {sorted(set(given) - keys)}")
+            if set(given) != condor_keys:
+                raise Stop(f"STOP: the wall-clock input for {d.name} must give exactly its sealed HTCondor attempts; "
+                           f"missing {sorted(condor_keys - set(given))}, extra {sorted(set(given) - condor_keys)} (a "
+                           "direct attempt is charged by its launcher record, never by a wall-clock input)")
         attempts = []
         for a in c["attempts"]:
             a, key = dict(a), f"{a['arm']}/{a['attempt']}"
             receipt = a["charged_gpu_hours"]
             att_dir = d / a["arm"] / a["attempt"]
-            if given is not None:
+            if key in recorded and (recorded[key][0].get("launch") == "direct") != (a.get("launch") == "direct"):
+                raise Stop(f"STOP: {d.name}/{key}: the charge file and the seal receipt disagree on direct launch")
+            if a.get("launch") == "direct":     # R1-HOST-FREE (5): its receipt holds the launcher's wall clock already
+                entry, fname = recorded.get(key, ({}, None))
+                a.update(remote_wallclock_s=None, cluster_id=None, cluster_check="direct launch (no HTCondor job)",
+                         charged_gpu_hours=round(max(receipt, float(entry.get("charged_gpu_hours") or 0.0)), 4),
+                         charge_basis=fname or "receipt (direct launcher record)")
+            elif given is not None:
                 entry = given[key] or {}
                 wc = _wallclock_s(entry.get("remote_wallclock_s"), f"{d.name}/{key}")
                 a.update(remote_wallclock_s=wc, cluster_id=entry.get("cluster_id"),
@@ -1657,7 +1920,8 @@ def charge_file_docs(charges: dict, record_run: str) -> dict:
                             + ("; P4-T1CHARGE A: T1's charge, every T1 job, held here once" if mine else ""),
                     "attempts": {f"{a['arm']}/{a['attempt']}": {
                         "receipt_gpu_hours": a["receipt_gpu_hours"], "remote_wallclock_s": a.get("remote_wallclock_s"),
-                        "cluster_id": a.get("cluster_id"), "charged_gpu_hours": a["charged_gpu_hours"]}
+                        "cluster_id": a.get("cluster_id"), "charged_gpu_hours": a["charged_gpu_hours"],
+                        **({"launch": "direct"} if a.get("launch") == "direct" else {})}
                         for a in r["attempts"]},
                     "t1_gpu_hours": t1["gpu_hours"] if mine else None,
                     "t1": {k: t1.get(k) for k in ("jobs", "record", "cluster_check", "wallclock_source")}
@@ -1796,12 +2060,15 @@ def submission_order(arm_dir: Path, ledger: Path) -> dict:
         ranked = sorted(zip(clusters, free), key=lambda x: x[0][1])
         ids = [{"attempt": f[0], "cluster_id": c[1]} for c, f in ranked]
         return {"first": ranked[0][1][0], "extra": ids[1:], "basis": "ClusterId"}
-    stages = [str(Path(e["stage"]).resolve()) if e.get("stage") else None for e in read_ledger(ledger)
-              if e["arm"] == Path(arm_dir).name]
+    entries = [e for e in read_ledger(ledger) if e["arm"] == Path(arm_dir).name]
+    stages = [str(Path(e["stage"]).resolve()) if e.get("stage") else None for e in entries]
     pos = {}
     for name, receipt, _ in free:
         src = receipt.get("source_dir")
-        hits = [k for k, s in enumerate(stages) if src and s == str(Path(src).resolve()) and k not in pos.values()]
+        msha = receipt.get("stage_manifest_sha256")   # a direct attempt: its launcher record names the stage it ran
+        hits = [k for k, s in enumerate(stages) if k not in pos.values() and
+                ((src and s == str(Path(src).resolve())) or
+                 (msha and entries[k].get("stage_manifest_sha256") == msha))]
         if not hits:
             raise Stop(f"STOP: the STOP-free probe attempts of {Path(arm_dir).name} cannot be ordered by submission "
                        f"(no ClusterId from one schedd, no ledger entry for {name}): the author decides")
@@ -1820,16 +2087,27 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
     ``extra_stop_free_attempts`` so that more than one run per base is visible; and the §4.5 hours; ``p4_probe_gpu_hours`` is every probe attempt's charge (``probe_charges``)
     plus T1's (P4-T1CHARGE A, R1-P4-PROBE-CHARGE: every T1 job's ``RemoteWallClockTime``, from ``t1_wallclock`` for the
     first record, or from the base charge file that record wrote for a rebuilt one), rounded up to 0.01. A record
-    without T1's charge is a STOP. The P.4 spec with these values must validate within P4-CAP (S12), else a STOP."""
-    validate_probe_spec(probe_spec)
+    without T1's charge is a STOP. The P.4 spec with these values must validate (S12); its projection is reported
+    against the P4-CAP figures (``threshold``; R1-NO-TIMEOUT (3): reported, not refused).
+
+    R1-HOST-FREE: the record is of the probe spec's one host class (``host_class``), which the P.4 spec must admit with
+    the same fixed values and host config; every attempt's record must name that class. Its estimate is that class's
+    (``hosts.<class>.estimate``): the record prints ``p4_probe_host_class: <class>`` with the hours lines, and the S12
+    check projects the P.4 spec as launched on that class alone. The schema is ``trackp_p4_<probe_label>/1``
+    (``trackp_p4_h200_sft_probe/1`` for the H200 class, as before)."""
+    loaded = validate_probe_spec(probe_spec)
     validate_spec(p4_spec)
-    same = ("gpu_model", "env3", "sft_config", "split_file", "table", "layout", "arms", "first_arm", "protocol")
+    cls = loaded["host_class"]
+    same = ("env3", "sft_config", "split_file", "table", "layout", "arms", "first_arm", "protocol")
     differ = [k for k in same if probe_spec.get(k) != p4_spec.get(k)]
     differ += [f"image.{k}" for k in ("digest", "row") if probe_spec["image"].get(k) != p4_spec["image"].get(k)]
-    if probe_spec["host_config"]["path"] != p4_spec["host_config"]["path"] or \
-            (not _placeholder(p4_spec["host_config"]["sha256"]) and
-             probe_spec["host_config"]["sha256"] != p4_spec["host_config"]["sha256"]):
-        differ.append("host_config")
+    p4_host = (p4_spec.get("hosts") or {}).get(cls)
+    probe_host = probe_spec["hosts"][cls]
+    if not isinstance(p4_host, dict) or any(p4_host.get(k) != probe_host.get(k) for k in HOST_FIXED) or \
+            probe_host["host_config"]["path"] != p4_host["host_config"]["path"] or \
+            (not _placeholder(p4_host["host_config"]["sha256"]) and
+             probe_host["host_config"]["sha256"] != p4_host["host_config"]["sha256"]):
+        differ.append(f"hosts.{cls}")
     if differ:
         raise Stop(f"STOP: the probe spec and the P.4 spec differ in {differ}: the probe does not measure these jobs")
     run_root = (Path(sealed_root) / probe_spec["run_id"]).resolve()
@@ -1844,8 +2122,8 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
         if receipt.get("job_record_sha256") != _sha_file(d / "job_record.json") or rec.get("stop") or \
                 rec.get("schema") != PROBE_RECORD_SCHEMA or rec.get("spec_sha256") != probe_spec_sha256 or \
                 rec.get("run_id") != probe_spec["run_id"] or receipt.get("identity_verified") is not True or \
-                rec.get("steps", [])[-1:] != ["probe"]:
-            raise Stop(f"STOP: {d} is not a sealed, verified, STOP-free probe attempt of this probe spec")
+                rec.get("steps", [])[-1:] != ["probe"] or rec.get("host_class") != cls:
+            raise Stop(f"STOP: {d} is not a sealed, verified, STOP-free probe attempt of this probe spec (on {cls})")
         arm = rec["arm"]
         if arm in jobs:
             raise Stop(f"STOP: two probe attempts given for {arm}")
@@ -1873,6 +2151,7 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
         hours[arm] = est["hours"]
         entries.append({
             "arm": arm, "registry_keys": list(ARMS[arm]), "attempt": d.name, "condor_job": rec.get("condor"),
+            "host_class": rec.get("host_class"), "launch": rec.get("launch"),
             "hostname": (rec.get("host") or {}).get("hostname"), "gpu": rec.get("gpu"),
             "image_digest": rec["image"]["digest"], "versions_sha256": rec["image"]["versions_sha256"],
             "paper_commit": rec["paper_commit"], "host_config_sha256": rec["configs"]["host_config"]["sha256"],
@@ -1891,7 +2170,8 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
             "memory_total_mib": mem["memory_total_mib"], "headroom_frac": mem["headroom_frac"],
             "memory_samples": mem["samples"], "oom": bool(rec.get("oom")), "rc": 0, "stop": rec.get("stop"),
             "stop_class": rec.get("stop_class"), "gpu_hours_consumed": rec.get("gpu_hours"),
-            "estimate_hours": est["hours"], "estimate_steps": est["steps"]})
+            "estimate_hours": est["hours"], "estimate_steps": est["steps"],
+            "card_shared": card_was_shared(rec, json.loads(_read_utf8(d / "SEAL_RECEIPT.json")))})
     charges = probe_charges(sealed_root, wallclock=wallclock, t1_wallclock=t1_wallclock)
     if probe_spec["run_id"] not in charges["runs"]:
         raise Stop(f"STOP: no sealed attempt of {probe_spec['run_id']} under {sealed_root}")
@@ -1907,12 +2187,15 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
     docs = charge_file_docs(charges, probe_spec["run_id"])
     probe_hours = ceil_hundredth(charges["total"])
     would = json.loads(json.dumps(p4_spec))
-    would["estimate"]["hours"] = dict(hours)
+    would["hosts"] = {cls: would["hosts"][cls]}        # S12 as launched on the measured class alone
+    would["hosts"][cls]["estimate"]["hours"] = dict(hours)
     would["caps"]["probe_gpu_hours"] = probe_hours
-    proj = validate_spec(would)["projection"]          # S12: within 40 GPU-h with the probe, and 64 slot-hours
-    lines = [f"p4_estimate_hours: {arm} {hours[arm]:.2f}" for arm in p4_spec["arms"]] + \
+    proj = validate_spec(would)["projection"]          # S12; the 40 GPU-h / 64 slot-h figures are reported
+    lines = [f"p4_probe_host_class: {cls}"] + \
+        [f"p4_estimate_hours: {arm} {hours[arm]:.2f}" for arm in p4_spec["arms"]] + \
         [f"p4_probe_gpu_hours: {probe_hours:.2f}"]
-    return {"schema": PROBE_TABLE_SCHEMA, "label": ENGINEERING_ONLY, "probe_run_id": probe_spec["run_id"],
+    return {"schema": f"trackp_p4_{HOST_CLASSES[cls]['probe_label']}/1", "label": ENGINEERING_ONLY,
+            "probe_run_id": probe_spec["run_id"], "host_class": cls, "gpu_name": HOST_CLASSES[cls]["gpu_name"],
             "probe_spec_sha256": probe_spec_sha256,
             "rule": "P4-PROBE A, P4-PROBECAP A (R1-P4-TESTPLAN-DECISIONS); P4-T1CHARGE A (R1-P4-PROBE-CHARGE): T1's "
                     "RemoteWallClockTime, every T1 job, is in p4_probe_gpu_hours; cluster test plan §4.4 and §4.5",
@@ -1921,13 +2204,27 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
                             "reach the spec, and are checked against it, only through those lines",
             "entries": entries, "estimate_hours": hours, "probe_gpu_hours_charged": charges["total"],
             "p4_probe_gpu_hours": probe_hours, "probe_charges": charges, "projection": proj,
+            "threshold": threshold_report(proj),
             "wallclock_input": wallclock is not None, "t1_charged": True, "t1_gpu_hours": charges["t1_gpu_hours"],
             "t1": charges["t1"], "charge_file_docs": docs,
             "probe_over_2_gpu_h": probe_hours > 2.0,
             "extra_stop_free_attempts": {a: v for a, v in sorted(extras.items()) if v},
             "headroom_below_15pct": sorted(e["arm"] for e in entries if e["headroom_frac"] is not None
                                            and e["headroom_frac"] < 0.15),
+            "card_shared_arms": sorted(e["arm"] for e in entries if e["card_shared"]),
+            "fit_and_timing_reliable": not any(e["card_shared"] for e in entries),
             "lines": lines}
+
+
+def card_was_shared(record: dict, receipt: dict) -> bool:
+    """Review M8: another compute process was on the probe's card at its start or end (the launcher's host-side
+    counts in the receipt, or the job's own counts). The fit (peak memory, headroom) and the timing of a shared-card
+    probe are descriptive only (R1-CARD-SHARE (2)); the record says so (``card_shared_arms``,
+    ``fit_and_timing_reliable``), and the Ada probe is run on an empty card (``p4_direct.py cards``)."""
+    counts = [receipt.get("other_processes_start"), receipt.get("other_processes_end"),
+              record.get("card_processes_start"), record.get("card_processes_end")]
+    return bool(receipt.get("card_shared")) or any(isinstance(c, dict) and isinstance(c.get("count"), int) and
+                                                   c["count"] > 0 for c in counts)
 
 
 # =============================================================================================== seal / assemble
@@ -1945,6 +2242,18 @@ LOG_HEADER = {"probe": "P4 probe container job start", "p4": "P4 container job s
 CLEAN_END = re.compile(r"^P4 (?:probe )?container job end \S+ rc=0\s*$", re.M)   # the wrappers' last line on rc 0
 
 
+def logged_host_class(src: Path) -> str | None:
+    """The ``host_class=`` the wrapper's start line in ``p4_run.log`` names (``p4_job.sh``, ``p4_probe.sh``), or None."""
+    log = Path(src) / "p4_run.log"
+    if not log.is_file():
+        return None
+    for line in log.read_bytes().decode("utf-8", "replace").splitlines():
+        if line.startswith((LOG_HEADER["probe"], LOG_HEADER["p4"])):
+            m = re.search(r"\shost_class=(\S+)", line)
+            return m.group(1) if m else None
+    return None
+
+
 def clean_exit_logged(src: Path) -> bool:
     """True when ``p4_run.log`` holds a wrapper's end line with ``rc=0`` (a job killed by the walltime or evicted never
     writes it: the wrapper is killed before its last ``echo``)."""
@@ -1955,8 +2264,9 @@ def clean_exit_logged(src: Path) -> bool:
 STAGE_KIND = {"trackp_p4_probe_stage/1": "probe", "trackp_p4_stage/1": "p4"}   # STAGE_MANIFEST.json schemas
 
 
-def attempt_kind(src: Path, record: dict | None) -> str | None:
-    """"probe" or "p4" from the record (its schema or mode), else from the first line of ``p4_run.log`` that one of
+def attempt_kind(src: Path, record: dict | None, launch: dict | None = None) -> str | None:
+    """"probe" or "p4" from the record (its schema or mode), else from a direct launcher record's ``mode`` (``probe``
+    or ``job``), else from the first line of ``p4_run.log`` that one of
     the two wrappers writes, else (a job that never ran, sealed from its stage directory; review round 2, minor 2)
     from the stage's ``STAGE_MANIFEST.json`` (``trackp_p4_probe_stage/1`` with mode ``probe``, or ``trackp_p4_stage/1``,
     not a preview); None when none of them tells."""
@@ -1964,6 +2274,8 @@ def attempt_kind(src: Path, record: dict | None) -> str | None:
         return "probe"
     if record is not None and record.get("schema") == RECORD_SCHEMA:
         return "p4"
+    if launch is not None and launch.get("mode") in ("probe", "job"):
+        return {"probe": "probe", "job": "p4"}[launch["mode"]]
     log = Path(src) / "p4_run.log"
     if log.is_file():
         for line in log.read_bytes().decode("utf-8", "replace").splitlines():
@@ -1994,19 +2306,48 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
     - a readable record must be this run's and arm's and ENGINEERING_ONLY (else STOP: the wrong job);
     - ``SHA256SUMS``, when present and non-empty, must verify (else STOP); a killed or early-stopped job leaves the
       empty files ``p4_job.sh`` pre-creates (``sums: absent``; empty files are kept as they are);
-    - ``identity_verified`` is true only for a record carrying the H200 and the spec's image (v2.2) digest;
+    - ``identity_verified`` is true only for a record that names a host class the spec admits, of this attempt's
+      launch kind, and carries that class's GPU (name and compute capability) and the spec's image (v2.2) digest;
     - the attempt's kind (``attempt_kind``: the record's schema or mode, else the wrapper's first log line, else the
       stage manifest of a job that never ran) must be the spec's (a probe attempt only with a probe spec, a P.4
       attempt only with the P.4 spec); an attempt that shows none of them is sealed only with
       ``unknown_kind_confirmed`` and charged at least the larger of the probe's and the arm's walltime (and the
       record's ``gpu_hours`` if larger);
     - ``charged_gpu_hours`` is the record's ``gpu_hours``, or, with no readable value, the arm's requested walltime
-      (the most the slot could have used; for a probe spec, the probe's ``walltime_s``)."""
+      (the most the slot could have used; for a probe spec, the probe's ``walltime_s``).
+
+    **Direct attempts** (R1-HOST-FREE; the outputs carry the launcher's ``direct_launch.json``, which is copied and
+    bound by sha256 in the receipt, ``launch: direct``): the launcher record must be this run's, arm's and kind's, of a
+    direct class the spec admits, with the spec's image digest, and the job record (when readable) must name the same
+    class and the leased card's UUID (one job, one card), else a STOP. ``identity_verified`` also needs the launcher's
+    status ``finished``. The charge counts GPU-hours on any card (R1-HOST-FREE (5)): a complete launcher record
+    (``ended_utc``, ``wall_clock_s`` and ``exit_code`` set) charges the larger of its wall clock (the lease span, one
+    card) and the record's ``gpu_hours``; an incomplete one (the launcher was killed before its end) charges the
+    largest of the time from the launch start to this seal, the requested walltime bound and the record's
+    ``gpu_hours`` (fail closed: nothing bounds a direct job's wall clock). Without a launcher record, a record that
+    names a direct class is a STOP (no evidence bounds its GPU time), and so is one whose ``p4_run.log`` start line
+    names a direct class (review M4); an HTCondor attempt is sealed as before, and ``identity_verified`` needs its
+    record to name an admitted HTCondor class whose GPU it carries.
+
+    **The receipt's ``stop`` and ``stop_class`` are authoritative** (review M5): an arm STOP of an attempt that lost its
+    card to another compute process is reclassified ``infrastructure`` here (R1-CARD-SHARE (3)) from the launcher's
+    host-side counts even when the job record, which saw only what the container showed, still says ``arm``; every
+    reader of an attempt's outcome reads the receipt."""
     src = Path(job_output).resolve()
     record = _read_record(src / "job_record.json")
     if record is not None and (record.get("label") != ENGINEERING_ONLY or record.get("run_id") != spec["run_id"]
                                or record.get("arm") != arm):
         raise Stop("STOP: the job record does not match the run/arm or is not ENGINEERING_ONLY")
+    launch = read_direct_launch(src)
+    rec_class = (record or {}).get("host_class")
+    if launch is None and rec_class is None:        # review M4: the wrapper's log names the class the job was told
+        rec_class_logged = logged_host_class(src)
+        if rec_class_logged in HOST_CLASSES and HOST_CLASSES[rec_class_logged]["launch"] == "direct":
+            raise Stop(f"STOP: p4_run.log names the direct class {rec_class_logged} but {DIRECT_LAUNCH_FILE} is "
+                       "missing: it is not sealed as an HTCondor attempt (copy the launcher record back)")
+    if launch is None and rec_class in HOST_CLASSES and HOST_CLASSES[rec_class]["launch"] == "direct":
+        raise Stop(f"STOP: the record names the direct class {rec_class} but {DIRECT_LAUNCH_FILE} is missing: nothing "
+                   "bounds its GPU time; copy the launcher record back with the outputs (the author decides otherwise)")
     sums = "absent"
     if (src / "SHA256SUMS").is_file() and (src / "SHA256SUMS").stat().st_size > 0:
         if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=src, capture_output=True).returncode != 0:
@@ -2016,9 +2357,11 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
         raise Stop("STOP: p4_run.log records the wrapper's end with rc=0 but the job record is missing or unreadable: "
                    "a finished job's record was lost or blanked; it is not sealed as a killed job (the author decides)")
     want = "probe" if spec.get("probe") is not None else "p4"
-    kind = attempt_kind(src, record)        # minor 2 of review round 1: a killed probe never enters the P.4 tree
+    kind = attempt_kind(src, record, launch)  # minor 2 of review round 1: a killed probe never enters the P.4 tree
     if kind is not None and kind != want:
         raise Stop(f"STOP: this is a {kind} attempt; it is not sealed with a {want} spec")
+    if launch is not None:
+        direct_launch_matches(launch, spec, arm, want, record)
     if kind is None and not unknown_kind_confirmed:
         raise Stop("STOP: neither the job record nor p4_run.log shows whether this is a probe or a P.4 attempt; "
                    "seal it with --unknown-kind-confirmed (charged the larger of both walltimes)")
@@ -2039,33 +2382,154 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
     if target.exists():
         raise Stop(f"STOP: {target} exists; no overwrite")
     target.mkdir(parents=True, mode=0o700)
-    for name in ("out.tar", "job_record.json", "SHA256SUMS", "p4_run.log"):
+    for name in ("out.tar", "job_record.json", "SHA256SUMS", "p4_run.log", DIRECT_LAUNCH_FILE):
         if (src / name).exists():
             shutil.copy2(src / name, target / name)
-    verified = record is not None and (record.get("gpu") or {}).get("name") == GPU_MODEL and \
-        (record.get("image") or {}).get("digest") == spec["image"]["digest"]
+    cls = rec_class if rec_class in (spec.get("hosts") or {}) else None
+    verified = record is not None and cls is not None and \
+        HOST_CLASSES[cls]["launch"] == ("direct" if launch is not None else "htcondor") and \
+        (record.get("gpu") or {}).get("name") == HOST_CLASSES[cls]["gpu_name"] and \
+        (record.get("gpu") or {}).get("compute_capability") == HOST_CLASSES[cls]["compute_capability"] and \
+        (record.get("image") or {}).get("digest") == spec["image"]["digest"] and \
+        (launch is None or launch.get("status") == "finished")
     hours = (record or {}).get("gpu_hours")
     wall_h = round(_requested_walltime_s(spec, arm) / 3600, 4)
     readable = isinstance(hours, (int, float)) and not isinstance(hours, bool) and hours >= 0
-    if kind is None:                        # unknown kind, confirmed: at least the larger of both walltimes, even with
+    direct = {}
+    if launch is not None:                  # R1-HOST-FREE (5): GPU-hours of the leased card, whatever its model
+        charged, basis, direct = direct_charge(launch, float(hours) if readable else None, wall_h, time.time())
+        direct["direct_launch_sha256"] = _sha_file(target / DIRECT_LAUNCH_FILE)
+    elif kind is None:                     # unknown kind, confirmed: at least the larger of both walltimes, even with
         wall_h = max(wall_h, round(PROBE["walltime_s"] / 3600, 4), round(arm_walltime_s(spec, arm) / 3600, 4))
         charged = max(float(hours) if readable else 0.0, wall_h)       # a readable record (review round 2, minor 1)
+        basis = "job_record.gpu_hours" if charged == hours else \
+            "max(job_record.gpu_hours, the larger walltime) (unknown kind, confirmed)"
     else:
         charged = float(hours) if readable else wall_h
+        basis = "job_record.gpu_hours" if charged == hours else "requested walltime (no readable value)"
+    no_record = (launch or {}).get("refusal") or "STOP: no readable job record"
+    outcome = {"stop": (record or {}).get("stop", no_record),
+               "stop_class": (record or {}).get("stop_class", "infrastructure"), **{
+                   k: (record or {}).get(k) for k in ("card_processes_start", "card_processes_end")}}
+    if launch is not None:                  # R1-CARD-SHARE (3), (4): the launcher's host-side counts of the card
+        direct.update(other_processes_start=launch.get("other_processes_start"),
+                      other_processes_end=launch.get("other_processes_end"), card_shared=launch.get("card_shared"))
+        shared_card_loss(outcome, launch.get("other_processes_start"), launch.get("other_processes_end"))
     receipt = {"schema": RECEIPT_SCHEMA, "run_id": spec["run_id"], "arm": arm, "attempt": n,
                "sealed_path": str(target), "record_readable": record is not None, "sums": sums,
-               "identity_verified": verified, "stop": (record or {}).get("stop", "STOP: no readable job record"),
-               "stop_class": (record or {}).get("stop_class", "infrastructure"),
+               "identity_verified": verified, "stop": outcome["stop"],
+               "stop_class": outcome["stop_class"],
+               **({"lost_beside_another_process": True}
+                  if outcome.get("lost_beside_another_process") or (record or {}).get("lost_beside_another_process")
+                  else {}),
                "charged_gpu_hours": charged, "kind": kind or "unknown (confirmed)",
-               "charge_basis": ("job_record.gpu_hours" if charged == hours else
-                                "requested walltime (no readable value)" if kind is not None else
-                                "max(job_record.gpu_hours, the larger walltime) (unknown kind, confirmed)"),
+               "charge_basis": basis,
+               "launch": "direct" if launch is not None else "htcondor", "host_class": rec_class,
                "job_record_sha256": _sha_file(target / "job_record.json") if (target / "job_record.json").is_file()
                else None,
                "run_log_sha256": _sha_file(target / "p4_run.log") if (target / "p4_run.log").is_file() else None,
+               **direct,
                "source_dir": str(src), "sealed_utc": _utc()}
     (target / "SEAL_RECEIPT.json").write_text(json.dumps(receipt, indent=1) + "\n")
     return receipt
+
+
+def seal_threshold(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
+    """R1-NO-TIMEOUT (3) at seal: the run's charged GPU-hours after this seal (every sealed attempt, pending
+    submissions, the probes' charge) against the 40 GPU-h figure; ``report_to_author`` when reached. Printed by the
+    ``seal`` CLI; never a refusal (a run whose tree cannot be counted is reported as such)."""
+    try:
+        charged = charged_hours(spec, sealed_root)
+        out = threshold_report(projection(spec), charged["total"])
+    except (Stop, KeyError, TypeError, ValueError) as exc:
+        return {"error": f"the charge could not be counted: {exc}"}
+    if out["report_to_author"]:
+        print(f"REPORT TO THE AUTHOR: {charged['total']} GPU-h charged in {spec['run_id']} reaches the P4-CAP figure "
+              f"{spec['caps']['gpu_hours']} GPU-h (R1-NO-TIMEOUT (3): reported, not refused)", file=sys.stderr)
+    return out
+
+
+def read_direct_launch(src: Path) -> dict | None:
+    """The direct launcher's record beside the outputs (``direct_launch.json``, ``trackp_p4_direct_launch/1``), or None
+    when the attempt has none (an HTCondor attempt). A file that is there but is not such a record (a symlink, not
+    UTF-8 JSON, another schema) is a STOP: the launcher writes it atomically, so a broken one is not a kill."""
+    p = Path(src) / DIRECT_LAUNCH_FILE
+    if not p.exists() and not p.is_symlink():
+        return None
+    if p.is_symlink() or not p.is_file():
+        raise Stop(f"STOP: {p} is not a regular file")
+    try:
+        doc = json.loads(_read_utf8(p))
+    except (ValueError, Stop):
+        raise Stop(f"STOP: {p} is not a readable launcher record (the author decides)") from None
+    if not isinstance(doc, dict) or doc.get("schema") != DIRECT_LAUNCH_SCHEMA or doc.get("label") != ENGINEERING_ONLY:
+        raise Stop(f"STOP: {p} is not a {DIRECT_LAUNCH_SCHEMA} ENGINEERING_ONLY record")
+    return doc
+
+
+def direct_launch_matches(launch: dict, spec: dict, arm: str, kind: str, record: dict | None) -> None:
+    """A direct launcher record belongs to this attempt (``seal``): this run, arm and kind (``job`` for a P.4 spec,
+    ``probe`` for a probe spec), a direct class the spec admits (for a probe spec, the spec's ``host_class``), the
+    spec's image digest; and a readable job record names the same class and runs on the leased card (its GPU UUID is
+    the launcher's), else a STOP."""
+    cls = launch.get("host_class")
+    want_mode = "probe" if kind == "probe" else "job"
+    bad = []
+    if launch.get("run_id") != spec["run_id"] or launch.get("arm") != arm:
+        bad.append("run_id/arm")
+    if launch.get("mode") != want_mode:
+        bad.append(f"mode (not {want_mode})")
+    if cls not in (spec.get("hosts") or {}) or HOST_CLASSES[cls]["launch"] != "direct":
+        bad.append(f"host_class {cls!r} (not a direct class the spec admits)")
+    elif kind == "probe" and cls != spec.get("host_class"):
+        bad.append(f"host_class {cls} (the probe spec measures {spec.get('host_class')})")
+    if launch.get("image_digest") != spec["image"]["digest"]:
+        bad.append("image_digest")
+    uuid = (launch.get("gpu") or {}).get("uuid")
+    if not isinstance(uuid, str) or not uuid.startswith("GPU-"):
+        bad.append("gpu.uuid")
+    if record is not None:
+        if record.get("host_class") != cls:
+            bad.append(f"job record host_class {record.get('host_class')!r}")
+        if record.get("gpu") is not None and (record.get("gpu") or {}).get("uuid") != uuid:
+            bad.append("job record GPU uuid is not the leased card's")
+    if bad:
+        raise Stop(f"STOP: {DIRECT_LAUNCH_FILE} does not belong to this attempt: {bad}")
+
+
+def _utc_epoch(text) -> float | None:
+    """Seconds since the epoch of a ``YYYY-MM-DDTHH:MM:SSZ`` stamp (``_utc``'s form), or None."""
+    try:
+        return float(calendar.timegm(time.strptime(str(text), "%Y-%m-%dT%H:%M:%SZ")))
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def direct_charge(launch: dict, record_hours: float | None, walltime_h: float, now: float) -> tuple:
+    """(charged GPU-hours, basis, receipt fields) of a direct attempt (``seal``; R1-HOST-FREE (5), P4-CAP A,
+    P4-PROBECAP A): one card, so GPU-hours = the launcher's ``wall_clock_s`` / 3600 (the lease span), or the record's
+    ``gpu_hours`` if larger. An incomplete launcher record (no end, wall clock or exit code: the launcher was killed)
+    charges the largest of launch start to ``now`` (the seal), ``walltime_h`` and the record's hours; a record without
+    a readable ``started_utc`` cannot be bounded and is a STOP."""
+    wall = launch.get("wall_clock_s")
+    complete = isinstance(wall, (int, float)) and not isinstance(wall, bool) and 0 <= wall <= 30 * 86400 and \
+        isinstance(launch.get("exit_code"), int) and not isinstance(launch.get("exit_code"), bool) and \
+        _utc_epoch(launch.get("ended_utc")) is not None
+    fields = {"direct_launch_sha256": None, "launcher_status": launch.get("status"),
+              "launcher_wall_clock_s": wall if complete else None, "launcher_exit_code": launch.get("exit_code"),
+              "gpu_uuid": (launch.get("gpu") or {}).get("uuid"),
+              "stage_manifest_sha256": (launch.get("stage") or {}).get("manifest_sha256")}
+    if complete:
+        charged = round(max(float(wall) / 3600, record_hours or 0.0), 4)
+        basis = "max(direct launcher wall clock, job_record.gpu_hours)"
+    else:
+        start = _utc_epoch(launch.get("started_utc"))
+        if start is None:
+            raise Stop(f"STOP: {DIRECT_LAUNCH_FILE} has no readable started_utc: its GPU time cannot be bounded")
+        span = max(0.0, now - start) / 3600
+        charged = round(max(span, walltime_h, record_hours or 0.0), 4)
+        basis = "incomplete launcher record: max(launch start to seal, requested walltime, job_record.gpu_hours)"
+    return charged, basis, fields
 
 
 def _requested_walltime_s(spec: dict, arm: str) -> int:
@@ -2091,7 +2555,7 @@ def charged_hours(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
             h = float(r.get("charged_gpu_hours") or 0)
             per[arm_dir.name] = round(per.get(arm_dir.name, 0.0) + h, 4)
             attempts.append({"arm": arm_dir.name, "attempt": att.name, "charged_gpu_hours": h,
-                             "stop": r.get("stop")})
+                             "stop": r.get("stop"), **({"launch": "direct"} if r.get("launch") == "direct" else {})})
     pending = pending_submissions(spec, sealed_root, attempts)
     for p in pending:
         per[p["arm"]] = round(per.get(p["arm"], 0.0) + p["charged_gpu_hours"], 4)
@@ -2136,9 +2600,12 @@ def pending_submissions(spec: dict, sealed_root: Path, attempts: list[dict]) -> 
 
 
 def comparable(rec: dict) -> dict:
-    """What every job of the table must share, without job-local paths (the job directory differs per job)."""
+    """What every job of the table must share, without job-local paths (the job directory differs per job). The host
+    config is shared per host class (``host_config[<class>]``): jobs of one class must agree, jobs of two classes
+    carry their own class's config (R1-HOST-FREE; each job checked its class's sha256 against the spec)."""
     return {"paper_commit": rec.get("paper_commit"), "image": rec.get("image"),
-            "configs": {x: rec["configs"][x] for x in ("host_config", "sft_config")},
+            "configs": {"sft_config": rec["configs"]["sft_config"]},
+            f"host_config[{rec.get('host_class')}]": rec["configs"]["host_config"],
             "data": (rec.get("data") or {}).get("identity"),
             "labels": {k: v for k, v in (rec["inputs"]["labels"]).items() if k != "partition"},
             "env3_status": {k: rec["env3_freeze"].get(k) for k in ("status", "image_line", "pinned_line",
@@ -2153,7 +2620,14 @@ def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str, sealed_root:
     """One sealed, STOP-free attempt per arm (and no other STOP-free attempt of that arm: no choosing among
     attempts); in every job the same spec, paper commit, image, env3 freeze status, configs, labels (without the
     job-local partition path) and data identity (``data_identity``: path-free); GPU-hours summed over every sealed
-    attempt of the run plus the probe's (``charged_hours``) against the cap."""
+    attempt of the run plus the probe's (``charged_hours``) against the cap, HTCondor and direct attempts alike
+    (R1-HOST-FREE (5)).
+
+    R1-HOST-FREE: the GPU model is recorded, not fixed. Each arm's job names its host class, and its one card (GPU
+    model, UUID, driver) is recorded per arm in ``jobs``; ``gpu_models`` and ``mixed_gpu_models`` show whether the
+    arms ran on more than one model. One arm's training run stays on one card: the arm's assembled attempt must name an
+    admitted class and carry exactly that class's GPU, and a direct attempt's record must be on the card its launcher
+    leased (the receipt's ``gpu_uuid``); anything else is a STOP."""
     jobs, keys = {}, {}
     charged = charged_hours(spec, sealed_root)
     listed = {(a["arm"], a["attempt"]) for a in charged["attempts"]}
@@ -2180,9 +2654,18 @@ def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str, sealed_root:
             if not o.get("stop"):
                 raise Stop(f"STOP: {rec['arm']} has another STOP-free attempt {other.name}: one attempt per arm, "
                            "never chosen by result")
+        cls, gpu = rec.get("host_class"), rec.get("gpu") or {}
+        if cls not in (spec.get("hosts") or {}) or gpu.get("name") != HOST_CLASSES[cls]["gpu_name"] or \
+                not isinstance(gpu.get("uuid"), str) or \
+                (receipt.get("launch") == "direct" and receipt.get("gpu_uuid") != gpu.get("uuid")):
+            raise Stop(f"STOP: {d}: one arm's run stays on one card of its admitted class; the record names class "
+                       f"{cls!r}, GPU {gpu.get('name')!r} ({gpu.get('uuid')!r}), receipt card {receipt.get('gpu_uuid')!r}")
         jobs[rec["arm"]] = {"sealed": str(d), "job_record_sha256": receipt["job_record_sha256"],
                             "selected_lr": (rec.get("select") or {}).get("selected_lr"),
-                            "gpu_hours": rec.get("gpu_hours"), "env3_freeze": rec.get("env3_freeze")}
+                            "gpu_hours": rec.get("gpu_hours"), "env3_freeze": rec.get("env3_freeze"),
+                            "host_class": cls, "launch": receipt.get("launch", "htcondor"),
+                            "hostname": (rec.get("host") or {}).get("hostname"),
+                            "gpu": {k: gpu.get(k) for k in ("name", "uuid", "driver", "compute_capability")}}
         for k, v in comparable(rec).items():
             keys.setdefault(k, set()).add(json.dumps(v, sort_keys=True))
     if set(jobs) != set(spec["arms"]):
@@ -2193,12 +2676,13 @@ def assemble(sealed: list[Path], spec: dict, spec_file_sha256: str, sealed_root:
     if json.loads(next(iter(keys["data"]))) is None:
         raise Stop("STOP: the job records carry no data identity")
     ledger = check_probe_ledger(spec, sealed_root)       # M1: the spec's probe charge and charge files = the sealed tree
-    if charged["total"] > spec["caps"]["gpu_hours"]:
-        raise Stop(f"STOP: {charged['total']} GPU-h charged by all attempts and the probe exceeds P4-CAP "
-                   f"{spec['caps']['gpu_hours']}")
+    threshold = threshold_report(projection(spec), charged["total"])    # R1-NO-TIMEOUT (3): reported, never refused
     return {"schema": ASSEMBLY_SCHEMA, "label": ENGINEERING_ONLY, "run_id": spec["run_id"], "jobs": jobs,
             "gpu_hours_consumed": charged["total"], "gpu_hours_probe": charged["probe"], "probe_ledger": ledger,
+            "threshold": threshold,
             "gpu_hours_by_attempt": charged["attempts"],
+            "gpu_models": {a: j["gpu"]["name"] for a, j in sorted(jobs.items())},
+            "mixed_gpu_models": len({j["gpu"]["name"] for j in jobs.values()}) > 1,
             "data_identity": json.loads(next(iter(keys["data"]))),
             "env3_freeze": json.loads(next(iter(keys["env3_status"])))}
 
@@ -2268,8 +2752,12 @@ def main(argv=None) -> int:
     v = sub.add_parser("validate"); v.add_argument("spec"); v.add_argument("--launch", action="store_true")
     v.add_argument("--probe", action="store_true", help="probe strength (validate_probe_spec) instead")
     j = sub.add_parser("job"); j.add_argument("spec"); j.add_argument("--arm", required=True)
-    p = sub.add_parser("probe", help="the H200 SFT fit and timing probe of one base (P4-PROBE A)")
+    j.add_argument("--host-class", required=True, choices=sorted(HOST_CLASSES),
+                   help="the host class the job runs under (R1-HOST-FREE); its GPU must be that class's")
+    p = sub.add_parser("probe", help="the SFT fit and timing probe of one base on one host class (P4-PROBE A)")
     p.add_argument("spec"); p.add_argument("--arm", required=True)
+    p.add_argument("--host-class", required=True, choices=sorted(HOST_CLASSES),
+                   help="the host class the job runs under; it must be the probe spec's host_class")
     r = sub.add_parser("probe-record", help="the probe record (§4.4) and hours (§4.5) from sealed probe attempts")
     r.add_argument("probe_spec"); r.add_argument("p4_spec"); r.add_argument("sealed", nargs="+")
     r.add_argument("--out", required=True, help="a new probe_records.json (never overwritten)")
@@ -2301,9 +2789,10 @@ def main(argv=None) -> int:
                              indent=1))
         elif args.cmd == "validate":
             loaded = validate_spec(load_spec(Path(args.spec)), launch=args.launch)
-            print(json.dumps({"ok": True, "run_id": loaded["run_id"], "projection": loaded["projection"]}, indent=1))
+            print(json.dumps({"ok": True, "run_id": loaded["run_id"], "projection": loaded["projection"],
+                              "threshold": loaded["threshold"]}, indent=1))
         elif args.cmd == "probe":
-            rec = run_probe(Path(args.spec), args.arm)
+            rec = run_probe(Path(args.spec), args.arm, host_class=args.host_class)
             print(json.dumps({"ok": True, "arm": args.arm, "memory": rec["memory"],
                               "s_per_step_wall": rec["run"]["s_per_step_wall"]}, indent=1))
         elif args.cmd == "probe-charge":
@@ -2333,11 +2822,13 @@ def main(argv=None) -> int:
                               "probe_over_2_gpu_h": table["probe_over_2_gpu_h"],
                               "headroom_below_15pct": table["headroom_below_15pct"]}, indent=1), file=sys.stderr)
         elif args.cmd == "job":
-            rec = run_job(Path(args.spec), args.arm)
+            rec = run_job(Path(args.spec), args.arm, host_class=args.host_class)
             print(json.dumps({"ok": True, "arm": args.arm, "selected_lr": rec["select"]["selected_lr"]}, indent=1))
         elif args.cmd == "seal":
-            print(json.dumps(seal(Path(args.job_output), load_spec(Path(args.spec)), args.arm,
-                                  unknown_kind_confirmed=args.unknown_kind_confirmed), indent=1))
+            spec = load_spec(Path(args.spec))
+            receipt = seal(Path(args.job_output), spec, args.arm, unknown_kind_confirmed=args.unknown_kind_confirmed)
+            print(json.dumps(receipt, indent=1))
+            print(json.dumps({"threshold": seal_threshold(spec)}, indent=1), file=sys.stderr)
         else:
             print(json.dumps(assemble([Path(x) for x in args.sealed], load_spec(Path(args.spec)),
                                       _sha_file(Path(args.spec))), indent=1))
