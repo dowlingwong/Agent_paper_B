@@ -74,6 +74,22 @@ def _write_json(path: str | Path, payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
 
 
+def _write_record(path: str | Path, payload: Mapping[str, Any]) -> str:
+    """Write a record with a self-hash over the body (payload without ``record_sha256``)."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    body = dict(payload)
+    body.pop("record_sha256", None)
+    body_text = json.dumps(body, indent=1, sort_keys=True, allow_nan=False, default=str) + "\n"
+    digest = hashlib.sha256(body_text.encode()).hexdigest()
+    full = {**body, "record_sha256": digest}
+    text = json.dumps(full, indent=1, sort_keys=True, allow_nan=False, default=str) + "\n"
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
+    return digest
+
+
 def _spec(arm: str, *, node: str, seed: int, manifest: A.Manifest, observed: Mapping[str, Any],
           run_id: str) -> ChunkSpec:
     if int(seed) not in SMOKE_SEEDS:
@@ -124,7 +140,7 @@ def write_manifest(*, out: str, campaign_model: str, proposer_sha256: str, base_
 
 
 def _verify_record(path: str | Path) -> dict[str, Any]:
-    """Read a record written by ``_write_json`` and verify its self-hash."""
+    """Read a record written by ``_write_record`` and verify its self-hash."""
     payload = _read_json(path)
     claimed = payload.pop("record_sha256", None)
     text = json.dumps(payload, indent=1, sort_keys=True, allow_nan=False, default=str) + "\n"
@@ -225,7 +241,7 @@ def run_smoke(*, manifest_path: str, observed_path: str, out: str, harness_root:
                         "the task card asks for one instance per arm and a G6 audit. Every output here "
                         "is ENGINEERING_ONLY and is not evidence."),
     }
-    record["record_sha256"] = _write_json(root / "smoke.json", record)
+    record["record_sha256"] = _write_record(root / "smoke.json", record)
     return record
 
 
@@ -318,7 +334,7 @@ def audit_smoke(*, out: str, sigma_node: float | None, harness_root: str | None,
               "sigma_source": sigma_source,
               "note": "Engineering check of the G6 audit path; these rows are not Y evidence and "
                       "never enter an outcome table."}
-    record["record_sha256"] = _write_json(root / "audit.json", record)
+    record["record_sha256"] = _write_record(root / "audit.json", record)
     return record
 
 
@@ -351,14 +367,14 @@ def table_check(*, out: str, predeclaration: str, noise_summary: str | None) -> 
                              + failures[0]["error"]),
                   "predeclaration": predeclaration,
                   "noise_summary": noise_summary}
-        record["record_sha256"] = _write_json(root / "table.json", record)
+        record["record_sha256"] = _write_record(root / "table.json", record)
         return record
     record = {"schema": "r1_d3_smoke_table/v1", "engineering_only": True,
               "status": "ROWS_PASS", "task": "compute/20261127-27", "rows": rows,
               "note": "The seven real smoke rows pass G7.build_row. No stage table is written: the "
                       "pinned analysis requires the full declared design and the signed smoke is not "
                       "an outcome design."}
-    record["record_sha256"] = _write_json(root / "table.json", record)
+    record["record_sha256"] = _write_record(root / "table.json", record)
     return record
 
 
