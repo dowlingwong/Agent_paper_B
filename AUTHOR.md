@@ -1,4 +1,4 @@
-# Waiting on the author — 27 Nov 2026, 11:20 CET (`main` `6cf3ca70`). Signed 27 Nov in this session: screening note + P4-4B A (published `c76e1b49`); T5 correction published (`7cb5621d`); Paper C rows confirmed and merged (`1b566d78`).
+# Waiting on the author — 27 Nov 2026, 11:20 CET (`main` `96eb63da`). Signed 27 Nov in this session: screening note + P4-4B A (published `c76e1b49`); T5 correction published (`7cb5621d`); Paper C rows confirmed and merged (`1b566d78`).
 
 Answered on 26 Nov: D1 (rows (f)(g), TIMEOUT A, the three additions) → published `95249de3`. D2 (this tmux session
 coordinates; Codex does not push `main`; `canon/README.md` rule 1 stands, so no row is needed) → recorded. D3 (P.4 on Ada:
@@ -7,7 +7,6 @@ D4 (start order) → see the agents row. **G.5 signed** ("签 G.5：S1–S14 按
 
 | Item | Recommendation | The reply that decides | Blocks |
 |---|---|---|---|
-| **Screening evidence run STOPPED at its first worker-runtime probe** (`compute/20261127-22`; record merged `6cf3ca70`; 0 of 10,164 runs written; strict preflight had passed; scene kept). The probe compares `sys.executable` literally: the launch ran `…/venv/bin/python`, the worker reports `…/venv/bin/python3`, both symlinks to the same interpreter with identical versions and package list | **Recommended (A): re-issue the signed note with the launch command naming `python3`** (the interpreter the worker spawns; nothing else changes). The local worker prepares a one-line amendment, the screening reviewer re-checks the diff, you sign, and compute launches a new `SMEAS_EVIDENCE_<stamp>`. No code changes, so `code_commit` and every hash stay. (B): a reviewed probe change that compares the resolved real path. That changes `code_commit`, needs a code review and a re-signed note: more work for the same result | "签 screening 重发 A" | The screening measurement, and through it the D.3 arm list before freezing |
 | **No batch GPU for D.3's HTCondor preflight** (`compute/20261127-12`): the ETP L40S and the TOpAS A100s advertise `Start = false`; nothing matches | Nothing to decide yet: compute keeps watching. If the pool stays closed, D.3's proposer can run on Ada or the TASL pair under R1-HOST-FREE (one GPU model per instance and campaign), which needs no new row for work not under a signed note | — | D.3 per-arm smoke on HTCondor only |
 | Roles row: design agent; E-INT census choice (Codex commits on `main`, no PLAN row) | Defer until G.5 is signed; then one row for the roles (coordinator, writer, design, local, compute) and one for the census | — | Paper C; design-agent tasks |
 | S9: how an expansion node joins the frozen eight-node split | Sheet due from the local worker (`local/20261126-04`) | — | The G.5 addendum for expansion nodes |
