@@ -376,6 +376,9 @@ def _stage_s(args, cfg) -> dict:
     with _lease(args, lease_log):
         seed_everything(args.seed)          # before the model exists: LoRA and new-head init follow the seed
         model, tok, make, base = _build(args, cfg)
+        if args.p4_gradient_checkpointing:
+            model.enable_gradient_checkpointing()
+            protocol["gradient_checkpointing"] = True
         heads = new_head_parameters(model) if hasattr(model, "heads") else []
         tokens = token_row_parameters(model)
         data_sha = SD.sha256_file(Path(args.data) / "sft_data.json")
@@ -396,6 +399,8 @@ def cmd_sft_dev(args, cfg) -> dict:
     """R1-TRACKP-SFT-DEV: one Stage S configuration, ENGINEERING_ONLY (DRYRUN with --tiny)."""
     if _evidence(args) not in SFT_DEV_LABELS:
         raise R.TrackPStop("sft-dev is ENGINEERING_ONLY (R1-TRACKP-SFT-DEV); P.4 evidence runs are a later unit")
+    if args.p4_gradient_checkpointing and (args.tiny or args.base not in ("kev-4b", "qwen3.5-4b-base")):
+        raise R.TrackPStop("P.4 gradient checkpointing requires kev-4b or qwen3.5-4b-base (R1-P4-4B-CHECKPOINT)")
     return _stage_s(args, cfg)
 
 
@@ -507,6 +512,9 @@ def main(argv=None) -> int:
             p.add_argument("--label-sweep", default="sweep1", choices=("sweep1", "sweep2"))
             p.add_argument("--label-freeze", help="sft-data: the label-table freeze record, when it exists")
             p.add_argument("--tokenizers", default="pool", choices=("pool", "whitespace"))
+        if name == "sft-dev":
+            p.add_argument("--p4-gradient-checkpointing", action="store_true",
+                           help="Enable gradient checkpointing for the two P.4 4B arms")
     args = ap.parse_args(argv)
     try:
         allow = args.allow_placeholders

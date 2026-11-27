@@ -1,0 +1,15 @@
+# Independent review of Paper C E-INT preparation
+
+- Task `local/20261127-20`.
+- Reviewed implementation `36bfbbc3fbf3de9f67d25756a94b0fe3c57ab07e` from published base `840ad01df1c517f023c3dc14c32ec7ae2429a109`.
+- Verdict **ACCEPTED FOR DESK PREPARATION**. Runbook §5 and the task card authorize preparation. A signed launch card and note control every CUDA attempt.
+
+The previous rounds found a missing runnable driver, stale cast weights, a checkout-binding gap, an allocator requirement, and admission of unmatched or non-finite results. The reviewed tip provides a pinned source reader, runnable four-cell adapter and fixed evaluator. It disables autocast parameter caching across updates, checks that the three loaded project modules come from the declared checkout, requires the enabled native caching allocator, and refuses unmatched phase, spec, validation stream, and runtime fields. It also refuses a non-finite validation loss.
+
+I verified the pinned harness loader and BOS configuration against their Git objects. The native loader crops and repacks rows for its fixed evaluator. The proposed adapter retains raw Parquet document boundaries and uses the original pinned tokenizer with a separate fixed 512-token evaluator. Its outcome measures short-context quality after training. The proposed 61005–61007 seeds are within the Paper C training reserve after its explicit claims 61001–61004.
+
+I loaded the exact candidate source blobs for synthetic CPU replay. A packed and an unpacked update of the candidate decoder consumed seven matching loss targets and produced equal fixed-evaluator losses with validation-target digest prefix `35056e394451`. The CPU BF16 regression probe confirmed that a second forward within the same autocast scope observed an optimizer update with caching disabled. A matched synthetic receipt set returned interaction `0.5`. Six altered receipt sets were rejected for phase, spec, validation digest, torch version, CUDA version, or non-finite loss. A foreign checkout was rejected before accessing the launch note or device. The initial independent packing replay passed 540 paired microbatch comparisons at 20 synthetic seeds. `git diff --check 840ad01d 36bfbbc3` passed.
+
+The launch owner must obtain the separate signed card and note, pin the smoke and census specs, verify the dataset on the launch host, and reserve an empty eligible card behind Paper B's critical work. The smoke must verify CUDA BF16 and math SDPA, allocator and external process telemetry, reproducibility, headroom, and receipt collection. The exact bound in this draft covers the native PyTorch allocator's reserved bytes. External process memory is sampled and reported separately. Bind the time budget after the smoke and preserve the measured resource charges and checksums per attempt. The implementation records ordered target digests. An operator receipt should carry any additional document-order digest called for by the draft.
+
+No GPU, host access, protected data reads, or pytest invocation was part of this independent review.

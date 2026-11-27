@@ -3,7 +3,13 @@
  "label": "ENGINEERING_ONLY",
  "phase": 1,
  "run_id": "trackp-p4-probe-20261125-a",
- "comment": "Track P P.4 phase 1: the SFT fit and timing probe of one host class (P4-PROBE A, P4-PROBECAP A; R1-HOST-FREE; cluster test plan docs/r1/reports/trackp_p4_runner_20261122/P4_CLUSTER_TEST_PLAN_20261124.md \u00a74), one job per base on the class's launch path (an HTCondor job or a direct launch), image v2.2. This committed file is a TEMPLATE: it is never filled in place. The cluster fills a copy in exactly these fields (paper.commit: the published host-config fill commit carrying the probe mode; image.versions_sha256: T1's value; host_class: the class the probe run measures; hosts.<that class>.host_config.sha256: its filled host config's sha256; the other classes' host config sha256 stay placeholders), and commits that copy with the probe record. p4_lib.check_probe_template (at staging and in the job) refuses any other difference. Everything else equals p4_spec.json, except host_class, run_id (outside the P.4 run's sealed tree, F10) and the fixed probe block. The label fields, the estimates and caps.probe_gpu_hours stay placeholders: the probe reads none of them. The run id's date is the date this template was written, not the date of the run.",
+ "ada_4b_reprobe": {
+  "run_id": "trackp-p4-probe-20261127-b",
+  "prior_run_id": "trackp-p4-probe-20261125-a",
+  "prior_spec_sha256": "540bd9798017260ca391612351706189712221c269482a7d47385695160a50a2",
+  "prior_paper_commit": "91cfd48a67f8d62d4e20826976cbdbdbcfcaf505"
+ },
+ "comment": "Track P P.4 phase 1: the SFT fit and timing probe of one host class (P4-PROBE A, P4-PROBECAP A; R1-HOST-FREE; cluster test plan docs/r1/reports/trackp_p4_runner_20261122/P4_CLUSTER_TEST_PLAN_20261124.md \u00a74), one job per base on the class's launch path (an HTCondor job or a direct launch), image v2.2. This committed file is a TEMPLATE: it is never filled in place. The cluster fills a copy in exactly these fields (paper.commit: the published host-config fill commit carrying the probe mode; image.versions_sha256: T1's value; host_class: the class the probe run measures; hosts.<that class>.host_config.sha256: its filled host config's sha256; the other classes' host config sha256 stay placeholders), and commits that copy with the probe record. p4_lib.check_probe_template (at staging and in the job) refuses any other difference. For the signed Ada 4B re-probe, also select the exact alternative run_id in ada_4b_reprobe. Stage only the two 4B arms with the original Ada first-arm seal. Everything else equals p4_spec.json, except host_class, run_id (outside the P.4 run's sealed tree, F10) and the fixed probe block. The label fields, the estimates and caps.probe_gpu_hours stay placeholders: the probe reads none of them. The run id's date is the date this template was written, not the date of the run.",
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
   "commit": "TODO: the published host-config fill commit carrying the probe mode (cluster test plan \u00a76 step 4)"
@@ -116,6 +122,7 @@
   "lc_seed": 20261122,
   "micro_batch": 8,
   "effective_batch": 16,
+  "gradient_checkpointing": {"kev-4b": true, "qwen3.5-4b-base": true},
   "duplicate_policy": "heldout_excludes_seen",
   "real_label_test_read": "none",
   "bootstrap": {

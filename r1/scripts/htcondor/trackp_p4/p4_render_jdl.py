@@ -173,6 +173,8 @@ def render_direct(spec: dict, arm: str, host_class: str, *, mode: str, preview: 
            "submit_marker": f"P4_SUBMIT_STARTED_{arm}.json" if job else None,
            "launch_command": f"python3 {DIRECT_LAUNCHER} launch --stage <this stage copied to "
                              f"{hv['values'].get('ssh_alias')}> --arm {arm} --gpu <free card index>"}
+    if not job and spec["run_id"] == lib.ADA_REPROBE["run_id"]:
+        doc["requires_empty_card"] = True
     return json.dumps(doc, indent=1, sort_keys=True) + "\n"
 
 
@@ -342,7 +344,7 @@ def stage_probe(spec_path: Path, stage_dir: Path, *, table: Path, arm: str, firs
     loaded = lib.validate_probe_spec(spec)
     lib.check_probe_template(spec, lib.load_spec(HERE / lib.PROBE_SPEC_FILE))
     bound = (binding or check_probe_binding)(spec)
-    if arm not in spec["arms"]:
+    if arm not in loaded["probe_arms"]:
         raise lib.Stop(f"STOP: {arm} is not an arm of the probe spec")
     spec_sha = _sha(spec_path)
     gate = None
@@ -370,6 +372,12 @@ def stage_probe(spec_path: Path, stage_dir: Path, *, table: Path, arm: str, firs
     if any(a["arm"] == arm and not a["stop"] for a in sofar["attempts"]):
         raise lib.Stop(f"STOP: {arm} already has a sealed STOP-free probe attempt in {spec['run_id']}: one probe run per "
                        "base (P4-PROBE A); a repeat follows only a STOP")
+    if spec["run_id"] == lib.ADA_REPROBE["run_id"]:
+        for attempt in (a for a in sofar["attempts"] if a["arm"] == arm):
+            receipt = lib.load_spec(run_dir / arm / attempt["attempt"] / "SEAL_RECEIPT.json")
+            if receipt.get("stop_class") != "infrastructure":
+                raise lib.Stop(f"STOP: {arm} has a sealed {receipt.get('stop_class')} STOP; refer it to the author "
+                               "(R1-P4-4B-CHECKPOINT)")
     inputs = check_table(table)
     ledger = run_dir / lib.SUBMISSION_LEDGER
     created, written = not stage_dir.exists(), []
