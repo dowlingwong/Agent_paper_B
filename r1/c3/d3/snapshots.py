@@ -20,8 +20,9 @@ snapshot records the E1 state and the action in flight, so a replay uses the sam
 
 Limits recorded honestly in the snapshot payload:
 
-* ``llm_calls`` is the last hook's value plus the controller's own ``llm_calls`` for the
-  decision in flight.  A manager call made after the E1 hook (a revision) is not visible
+* ``llm_calls`` is the last observed ``ComputeBudget`` value at the hook/charge.  A
+  controller that issues its own calls must consume the harness budget; the wrapper does
+  not add a second copy.  A manager call made after the E1 hook (a revision) is not visible
   to the wrapper; ``llm_calls_basis`` names the source.  No G1 decision depends on it.
 * The snapshot is written immediately after the run that reaches the exact ``w``.  No
   later mutation and no imputed ``w`` point.
@@ -77,10 +78,10 @@ def _sha256_bytes(data: bytes) -> str:
 def _jsonable(value: Any) -> Any:
     """A deterministic JSON projection of controller/forecast state.
 
-    Unknown objects fall back to ``repr``; the SHA is a replay *record*, not a claim that
-    every third-party object is serialisable.  A controller with mutable state exposed
-    through a non-JSON attribute should provide ``snapshot_state()`` (see
-    :func:`controller_state_sha256`).
+    Unknown objects are refused: their ``repr`` may contain an object address, which would
+    make the projection non-deterministic.  A controller with mutable state exposed through a
+    non-JSON attribute must provide ``snapshot_state()`` (see
+    :func:`controller_state_sha256`); a silent ``repr`` fallback is not a replay record.
     """
     if value is None or isinstance(value, (bool, int, str)):
         return value
@@ -95,9 +96,10 @@ def _jsonable(value: Any) -> Any:
     if hasattr(value, "to_dict") and callable(value.to_dict):
         try:
             return _jsonable(value.to_dict())
-        except Exception:  # noqa: BLE001 - projection only
-            pass
-    return {"repr": repr(value)}
+        except Exception as exc:  # noqa: BLE001 - projection only
+            raise SnapshotStop(f"controller state has a to_dict() that cannot be projected: {exc}") from exc
+    raise SnapshotStop(f"controller state value {type(value).__name__} is not JSON-projectable; "
+                       "provide snapshot_state() or a JSON-able field")
 
 
 def _plan_state(plan: Any) -> Any:
@@ -296,27 +298,37 @@ class SnapshotRecorder:
     # ---- harness hook -----------------------------------------------------
     def __call__(self, ctx: SnapshotContext) -> None:
         self.observe_budget(ctx.compute_budget, where=f"hook {ctx.epoch}")
-        self._controller_state_at_hook = controller_state_sha256(ctx.controller)
         if ctx.epoch == "E0":
             if self.start_config is None:
                 self.start_config = read_worker_config(ctx.worker, ctx.node_spec)
+            self._controller_state_at_hook = controller_state_sha256(ctx.controller)
             return
-        incumbent = _files_config(ctx.incumbent_snapshot.contents) if ctx.incumbent_snapshot is not None else {}
-        self._trial = _TrialState(
-            trial_id=str(ctx.trial_id),
-            incumbent_config=incumbent,
-            config_sha256=config_sha256(incumbent),
-            controller_state_sha256=controller_state_sha256(ctx.controller),
-            last_kept_trial_index=_last_kept_trial_index(list(ctx.ledger_prefix)),
-            llm_calls=int(getattr(ctx.compute_budget, "llm_calls", 0)),
-            controller_calls_at_e1=self._controller_calls,
-        )
+        if ctx.epoch == "E1":
+            incumbent = (_files_config(ctx.incumbent_snapshot.contents)
+                         if ctx.incumbent_snapshot is not None else {})
+            # E1 state is authoritative for every snapshot of this trial, including the
+            # verify runs that happen after the E2 hook (coordinator condition 3).
+            self._controller_state_at_hook = controller_state_sha256(ctx.controller)
+            self._trial = _TrialState(
+                trial_id=str(ctx.trial_id),
+                incumbent_config=incumbent,
+                config_sha256=config_sha256(incumbent),
+                controller_state_sha256=controller_state_sha256(ctx.controller),
+                last_kept_trial_index=_last_kept_trial_index(list(ctx.ledger_prefix)),
+                llm_calls=int(getattr(ctx.compute_budget, "llm_calls", 0)),
+                controller_calls_at_e1=self._controller_calls,
+            )
+            return
+        # E2 must not overwrite the E1 state; the E2 decision and the verify runs use the
+        # E1 capture (the only deliberate update is the budget's llm_calls).
+        if self._trial is None:
+            raise SnapshotStop(f"hook {ctx.epoch} arrived before an E1 state")
 
     def observe_budget(self, budget: Any, *, where: str) -> None:
         """Record the exact budget and check charged-run parity at the charge."""
         self._last_budget = budget
         runs = getattr(budget, "worker_runs", None)
-        if where == "consume_worker_run":
+        if runs is not None:
             self.check_parity(runs, where=where)
         if self._trial is not None:
             calls = getattr(budget, "llm_calls", None)
@@ -324,14 +336,23 @@ class SnapshotRecorder:
                 self._trial.llm_calls = int(calls)
 
     # ---- controller wrapper callbacks ------------------------------------
-    def note_decision(self, epoch: str, action: str, llm_calls: int = 0) -> None:
+    def note_decision(self, epoch: str, action: str) -> None:
         self._controller_calls += 1
-        if self._trial is not None:
-            if epoch in ("E1", "E2"):
-                self._trial.pending_action = action
+        if self._trial is not None and epoch in ("E1", "E2"):
+            self._trial.pending_action = action
 
     # ---- counting worker callback ----------------------------------------
     def note_run(self, run_kind: str, where: str) -> None:
+        if self._trial is not None:
+            # E1 decision = +1 controller call; a verify run happens after the E2 decision
+            # = +2.  A revise/re-screen that adds another controller call fails closed.
+            expected = self._trial.controller_calls_at_e1 + (2 if run_kind == "verify" else 1)
+            if self._controller_calls != expected:
+                raise SnapshotStop(
+                    f"the controller was called {self._controller_calls - self._trial.controller_calls_at_e1} "
+                    f"time(s) between the E1 hook and a {run_kind} run; expected "
+                    f"{expected - self._trial.controller_calls_at_e1}"
+                )
         self.count += 1
         w = self.count
         if w in SNAPSHOT_WS:
@@ -416,7 +437,14 @@ class SnapshotRecorder:
         if path.exists() or self._final_written:
             raise SnapshotStop(f"refusing to overwrite {path}")
         if w_final == 20 and 20 in self._written:
-            payload = self._payload(w=20, final=True, ended_on=ended_on, run_kind="final")
+            # True alias: copy the already-written w20 payload, then add the final fields.
+            # Recomputing it would use the E2 state and would not be the same record.
+            source = Path(self.out_dir) / "snapshots" / "w20.json"
+            payload = json.loads(source.read_text(encoding="utf-8"))
+            payload["final"] = True
+            payload["ended"] = True
+            payload["ended_on"] = ended_on
+            payload["run_kind"] = "final"
             payload["alias_of"] = "w20.json"
             payload["alias_sha256"] = self._written[20]
         else:
@@ -472,7 +500,7 @@ class RecordingController:
 
     def decide(self, view: Any, mask: Mapping[str, bool]) -> Any:
         decision = self._inner.decide(view, mask)
-        self.recorder.note_decision(str(view.epoch), str(decision.action), int(getattr(decision, "llm_calls", 0) or 0))
+        self.recorder.note_decision(str(view.epoch), str(decision.action))
         return decision
 
     def __getattr__(self, name: str) -> Any:

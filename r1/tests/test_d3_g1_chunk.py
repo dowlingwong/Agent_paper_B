@@ -98,10 +98,17 @@ def _manifest(spec):
             "campaign_model_source_sha256": sha256_json(dict(spec.campaign_model_source))}
 
 
+def _observed():
+    return {"model": "NVIDIA RTX 4090", "proposer_model": "gemma4_31b", "memory_check": "pass",
+            "lease": True, "gpu_uuid": "GPU-test", "driver": "test", "memory_total": 24564,
+            "memory_free": 24000, "other_processes_start": 0, "other_processes_end": 0,
+            "request": "test", "scope": "test", "environment_freeze": "test"}
+
+
 def test_one_chunk_writes_layout_records_and_sums(tmp_path):
     spec = _spec()
     out = tmp_path / "chunk"
-    summary = run_chunk(spec, out, _factory, manifest=_manifest(spec))
+    summary = run_chunk(spec, out, _factory, manifest=_manifest(spec), observed=_observed())
     assert summary["campaigns"] == 18
     assert summary["worker_runs"] == 18 * 20
     chunk = json.loads((out / "chunk.json").read_text())
@@ -109,9 +116,20 @@ def test_one_chunk_writes_layout_records_and_sums(tmp_path):
     assert chunk["launcher"] == "ssh" and chunk["W"] == 20 and chunk["llm_cap"] == 80
     first = out / "campaigns" / f"{NODE}__s6201"
     assert (first / "campaign.json").is_file()
+    assert (first / "ledger.jsonl").is_file()
+    assert (first / "runs.jsonl").is_file()
+    assert (first / "summary.json").is_file()
     assert (first / "snapshots" / "w5.json").is_file()
     assert (first / "snapshots" / "final.json").is_file()
     assert (first / "SHA256SUMS").is_file()
+    camp = json.loads((first / "campaign.json").read_text())
+    assert camp["record_name"] == f"a__A2__{NODE}__s6201__r0"
+    assert camp["campaign_id"] == f"{NODE}__s6201"
+    cs = json.loads((first / "summary.json").read_text())
+    assert cs["worker_runs"] == 20 and cs["ended_on"] == "worker_runs"
+    assert chunk["gpu_model"] == "NVIDIA RTX 4090"
+    assert chunk["memory_check"] == "pass"
+    assert chunk["proposer_check"] == "pass" and chunk["model_check"] == "pass"
     # The outer sums verifies every entry.
     for line in (out / "SHA256SUMS").read_text().splitlines():
         digest, rel = line.split("  ", 1)
@@ -127,7 +145,7 @@ def test_existing_output_is_refused(tmp_path):
     out = tmp_path / "chunk"
     out.mkdir()
     with pytest.raises(ChunkStop):
-        run_chunk(_spec(), out, _factory, manifest=_manifest(_spec()))
+        run_chunk(_spec(), out, _factory, manifest=_manifest(_spec()), observed=_observed())
 
 
 def test_signed_values_are_enforced():
@@ -146,22 +164,30 @@ def test_signed_values_are_enforced():
 def test_hardware_refusals():
     spec = _spec()
     manifest = {"campaign_model": "NVIDIA RTX 4090", "proposer_model": "gemma4_31b"}
-    check_hardware(spec, {"model": "NVIDIA RTX 4090", "proposer_model": "gemma4_31b", "memory_check": "pass"}, manifest)
+    good = {"model": "NVIDIA RTX 4090", "proposer_model": "gemma4_31b", "memory_check": "pass",
+            "lease": True}
+    check_hardware(spec, good, manifest)
     with pytest.raises(ChunkStop):
-        check_hardware(spec, {"model": "NVIDIA RTX 6000 Ada Generation",
-                              "proposer_model": "gemma4_31b", "memory_check": "pass"}, manifest)
+        check_hardware(spec, {**good, "model": "NVIDIA RTX 6000 Ada Generation"}, manifest)
     with pytest.raises(ChunkStop):
-        check_hardware(spec, {"model": "NVIDIA RTX 4090", "proposer_model": "other", "memory_check": "pass"}, manifest)
+        check_hardware(spec, {**good, "proposer_model": "other"}, manifest)
     with pytest.raises(ChunkStop):
-        check_hardware(spec, {"model": "NVIDIA RTX 4090", "proposer_model": "gemma4_31b",
-                              "memory_check": "fail"}, manifest)
+        check_hardware(spec, {**good, "memory_check": "fail"}, manifest)
+    with pytest.raises(ChunkStop):
+        check_hardware(spec, {**good, "lease": False}, manifest)
+    with pytest.raises(ChunkStop):
+        check_hardware(spec, {**good, "lease": None}, manifest)
+    with pytest.raises(ChunkStop):
+        check_hardware(spec, {**good, "model": ""}, manifest)
+    with pytest.raises(ChunkStop):
+        check_hardware(spec, good, {"campaign_model": "NVIDIA RTX 4090"})
 
 
 def test_manifest_source_mismatch_is_refused(tmp_path):
     spec = _spec()
     manifest = dict(_manifest(spec), campaign_model_source_sha256="0" * 64)
     with pytest.raises(ChunkStop):
-        run_chunk(spec, tmp_path / "chunk", _factory, manifest=manifest)
+        run_chunk(spec, tmp_path / "chunk", _factory, manifest=manifest, observed=_observed())
 
 
 def test_w_zero_final_uses_start_config(tmp_path):

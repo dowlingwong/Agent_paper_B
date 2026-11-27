@@ -127,23 +127,32 @@ class ChunkSpec:
 def check_hardware(spec: ChunkSpec, observed: Mapping[str, Any], manifest: Mapping[str, Any]) -> None:
     """The revision-6b placement refusals: model, proposer, lease and memory.
 
-    ``observed`` carries ``model`` (GPU model identifier), ``proposer_model`` and
-    ``memory_check`` (``pass``/``fail``) plus optional ``lease``.  A mismatch is a placement
-    refusal (re-place), not a scientific STOP; the caller records it and does not run.
+    Fail closed: the manifest must carry ``campaign_model`` and ``proposer_model``; the
+    observed record must carry the same values, ``memory_check == "pass"`` and
+    ``lease is True``.  A missing field is a placement refusal (re-place), not a pass.  If the
+    manifest also carries ``instance_model``, it must agree with ``campaign_model``.
     """
-    want_model = str(manifest.get("campaign_model", ""))
-    got_model = str(observed.get("model", ""))
-    if want_model and got_model and want_model != got_model:
+    want_model = str(manifest.get("campaign_model") or "")
+    want_prop = str(manifest.get("proposer_model") or "")
+    if not want_model or not want_prop:
+        raise ChunkStop("the campaign manifest must name campaign_model and proposer_model")
+    instance_model = str(manifest.get("instance_model") or "")
+    if instance_model and instance_model != want_model:
+        raise ChunkStop(f"instance_model {instance_model!r} differs from campaign_model {want_model!r}")
+    got_model = str(observed.get("model") or "")
+    if not got_model:
+        raise ChunkStop("the observed hardware record has no GPU model")
+    if want_model != got_model:
         raise ChunkStop(f"GPU model mismatch: manifest {want_model!r}, observed {got_model!r}")
-    want_prop = str(manifest.get("proposer_model", ""))
-    got_prop = str(observed.get("proposer_model", ""))
-    if want_prop and got_prop and want_prop != got_prop:
+    got_prop = str(observed.get("proposer_model") or "")
+    if not got_prop:
+        raise ChunkStop("the observed hardware record has no proposer model")
+    if want_prop != got_prop:
         raise ChunkStop(f"proposer model mismatch: manifest {want_prop!r}, observed {got_prop!r}")
-    if observed.get("memory_check") == "fail":
-        raise ChunkStop("insufficient free GPU memory for the declared footprint")
-    lease = observed.get("lease")
-    if lease is False:
-        raise ChunkStop("the declared lease is not held")
+    if observed.get("memory_check") != "pass":
+        raise ChunkStop("the observed memory check must be 'pass' (missing is a refusal)")
+    if observed.get("lease") is not True:
+        raise ChunkStop("the declared lease is not held (observed lease must be true)")
 
 
 CampaignFactory = Callable[[ChunkSpec, int, Path, SnapshotRecorder], tuple[dict[str, Any], str]]
@@ -163,13 +172,17 @@ def _validate_kwargs(kwargs: Mapping[str, Any]) -> None:
 
 
 def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory, *,
-              manifest: Mapping[str, Any] | None = None) -> dict[str, Any]:
+              manifest: Mapping[str, Any] | None = None,
+              observed: Mapping[str, Any] | None = None) -> dict[str, Any]:
     """Run one chunk and write its records.  The output directory must be absent."""
     out = Path(out_dir)
     if out.exists():
         raise ChunkStop(f"refusing an existing chunk directory {out}")
     if manifest is None:
         raise ChunkStop("a chunk needs the locked campaign manifest (campaign_manifest.json)")
+    if observed is None:
+        raise ChunkStop("a chunk needs the observed hardware record (revision 6b)")
+    check_hardware(spec, observed, manifest)
     if str(manifest.get("campaign_model_source_sha256", "")) and \
             str(manifest["campaign_model_source_sha256"]) != sha256_json(dict(spec.campaign_model_source)):
         raise ChunkStop("the campaign manifest's model source does not match this launch")
@@ -201,6 +214,29 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory, *,
             "ended_on": ended_on, "snapshots": recorder.snapshot_hashes(),
             "final_sha256": final_sha, "snapshot_schema": SNAPSHOT_SCHEMA,
         }
+        record["record_name"] = f"{spec.stage}__{spec.arm}__{inst}__r{spec.repetition}"
+        record["campaign_id"] = inst
+        records_path = Path(kwargs["records_path"])
+        ledger = records_path.read_text(encoding="utf-8") if records_path.is_file() else ""
+        (cdir / "ledger.jsonl").write_text(ledger, encoding="utf-8")
+        run_rows = []
+        for line in ledger.splitlines():
+            if not line.strip():
+                continue
+            try:
+                run_rows.append(json.loads(line))
+            except json.JSONDecodeError as exc:
+                raise ChunkStop(f"the ledger line is not JSON: {exc}") from exc
+        (cdir / "runs.jsonl").write_text(
+            "".join(json.dumps({"instance_id": inst, "record": row}, sort_keys=True) + "\n"
+                    for row in run_rows), encoding="utf-8")
+        campaign_summary = {
+            "schema": "r1_d3_campaign_summary/v1", "campaign_id": inst,
+            "record_name": record["record_name"], "instance_seed": seed,
+            "worker_runs": w_final, "llm_calls": record["llm_calls"], "ended_on": ended_on,
+            "snapshots": record["snapshots"], "final_sha256": final_sha,
+        }
+        _write_json(cdir / "summary.json", campaign_summary)
         _write_json(cdir / "campaign.json", record)
         sha256sums(cdir)
         campaigns.append(record)
@@ -212,7 +248,20 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory, *,
         "W": spec.W, "llm_cap": spec.llm_cap,
         "campaign_manifest_sha256": sha256_json(dict(manifest)),
         "campaign_model_source": dict(spec.campaign_model_source),
-        "hardware": dict(spec.hardware), "notes": dict(spec.notes),
+        "hardware": dict(observed),
+        "hardware_claim": dict(spec.hardware),
+        "gpu_model": observed.get("model"), "gpu_uuid": observed.get("gpu_uuid"),
+        "driver": observed.get("driver"), "memory_total": observed.get("memory_total"),
+        "memory_free": observed.get("memory_free"), "memory_check": observed.get("memory_check"),
+        "other_processes_start": observed.get("other_processes_start"),
+        "other_processes_end": observed.get("other_processes_end"),
+        "proposer_expected": manifest.get("proposer_model"),
+        "proposer_observed": observed.get("proposer_model"),
+        "proposer_check": "pass",
+        "request": observed.get("request"), "scope": observed.get("scope"),
+        "environment_freeze": observed.get("environment_freeze"),
+        "model_check": "pass", "status": "complete",
+        "notes": dict(spec.notes),
         "instances": [spec.instance_id(s) for s in spec.instance_seeds],
     }
     _write_json(out / "chunk.json", chunk)

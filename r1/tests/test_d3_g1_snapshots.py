@@ -150,6 +150,9 @@ def test_final_alias_at_w20(tmp_path):
     assert snap["ended_on"] == "worker_runs"
     assert snap["alias_of"] == "w20.json"
     assert snap["alias_sha256"] == recorder.snapshot_hashes()["w20.json"]
+    w20 = _load(tmp_path, "w20.json")
+    assert snap["controller_state_sha256"] == w20["controller_state_sha256"]
+    assert snap["incumbent_config"] == w20["incumbent_config"]
     assert len(digest) == 64
 
 
@@ -185,9 +188,10 @@ def test_snapshot_refuses_overwrite(tmp_path):
     # A snapshot needs E1 state; a minimal fake keeps the failure about the file.
     rec._trial = type("T", (), {"trial_id": "t", "incumbent_config": {}, "config_sha256": "0" * 64,
                                 "controller_state_sha256": "0" * 64, "last_kept_trial_index": None,
-                                "llm_calls": 0, "pending_action": None})()
+                                "llm_calls": 0, "pending_action": None, "controller_calls_at_e1": 0})()
     rec.start_config = {}
     rec.count = 4
+    rec.note_decision("E1", "continue")
     rec.note_run("main", "test")
     assert (tmp_path / "snapshots" / "w5.json").is_file()
     with pytest.raises(SnapshotStop):
@@ -229,3 +233,53 @@ def test_recording_controller_reports_action(tmp_path):
     ctl = RecordingController(VerifyOnce(at=1), rec)
     ctl.decide(view, {})
     assert rec._controller_calls == 1
+
+
+class StatefulController(VerifyOnce):
+    """A controller with a decision counter exposed through snapshot_state()."""
+
+    def __init__(self, at: int) -> None:
+        super().__init__(at)
+        self.n = 0
+
+    def snapshot_state(self):
+        return {"n": self.n}
+
+    def decide(self, view, mask):
+        self.n += 1
+        return super().decide(view, mask)
+
+
+def test_verify_snapshots_keep_the_e1_controller_state(tmp_path):
+    _run(tmp_path, StatefulController(at=2), W=20)
+    verify5 = _load(tmp_path, "w5.json")
+    assert verify5["run_kind"] == "verify"
+    assert verify5["pending_action"] == "verify"
+
+    class Expected:
+        def snapshot_state(self):
+            return {"n": 4}
+
+    # Trial 2's E1 hook is the fourth decision (E0, trial 1 E1/E2, trial 2 E1); the
+    # verify block must carry that E1 value, not the E2 state n=5.
+    assert verify5["controller_state_sha256"] == controller_state_sha256(Expected())
+
+
+def test_hook_parity_is_checked_at_every_hook():
+    rec = SnapshotRecorder(out_dir="/tmp/unused", stage="a", arm="A0", node=NODE,
+                           repetition=0, instance_id="x")
+    with pytest.raises(SnapshotParityStop):
+        rec.observe_budget(type("B", (), {"worker_runs": 7, "llm_calls": 0})(), where="hook E1")
+
+
+def test_controller_repr_fallback_is_refused():
+    class Weird:
+        pass
+
+    class C:
+        version = "c/v1"
+        _plans = {}
+        log = [Weird()]
+
+    with pytest.raises(SnapshotStop):
+        controller_state_sha256(C())
