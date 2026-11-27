@@ -6,7 +6,7 @@ reserved smoke instance per D.3a arm. It writes no outcome table.
 
 - **Task:** `compute/20261127-27` (with the inherited takeover card `compute/20261126-00`).
 - **Base:** `origin/main` `d669b0bf` (the branch merged `a3c8284d` before delivery).
-- **Deliverable branch:** `compute-d3-smoke-20261127` @ TBD (base `d669b0bf`, merges `280c0015`).
+- **Deliverable branch:** `compute-d3-smoke-20261127` @ `546be763` (base `d669b0bf`, merges `280c0015`); this report and its captures are in that commit.
 - **Review branch:** `compute-d3-smoke-review-20261127` @ `936b2c58`; review
   `docs/r1/reviews/D3_SMOKE_ENGINEERING_REVIEW_20261127.md` sha256 `30657df4…`; **Verdict: ACCEPTED**.
 - **Run:** `d3-smoke-engineering-20261127-a`, run root `/home/dowling/r1_tracks/work/d3smoke_20261127/run-d` on TASL-2.
@@ -106,7 +106,7 @@ they fail at collection on both base and tip in this venv.
 
 ## 6. Captures and hashes
 
-Capture tree: `docs/r1/reports/d3_smoke_20261127/captures/` (152 files; top-level `SHA256SUMS`). The full run
+Capture tree: `docs/r1/reports/d3_smoke_20261127/captures/` (152 files; top-level `SHA256SUMS` sha256 `d849792bbb0f0d7754fa2d29a3933a58a2947e637bb8223519ab515d2c422c7b`). The full run
 trees stay on TASL-2 under `/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/`.
 
 | Object | sha256 |
