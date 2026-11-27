@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 02:30 CET, `main` at `5c901d19`
+# State — 27 Nov 2026, 02:45 CET, `main` at `8b01ef6a`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -7,7 +7,7 @@ authority: the signed PLAN on `main` and the signed notes. `HANDOVER.md` is the 
 **On `main` since the handover:** `95249de3` rows (f)(g) (one compute agent, free placement, shared cards, TIMEOUT A, no
 dates); `b7e8a6aa` build source of the v2.2 image; `ef06a65c` **R1-G5-SIGNATURE** (G.5 signed, S1–S14 as recommended, S6 =
 2027-12-31, S4 = acceptance line; the coordinator publishes the note once its records, render and review exist);
-`54082a05` the ancestor–descendant screening test with its re-check review; P.4 merge: sft-select missing-runs STOP and the H200 host-config fill (torch files 194/194; `cluster/20261126-01` done by this merge); `bd406db9` screening fix, P.4 direct launch and Ada host config, D.3 pre-declaration revision 4 (draft, unsigned), hygiene inventory; `6684e840` test-only unit, D.3c memo; `4490a0a9` copy review verdict line, P11 evidence table, redacted survey, manuscript restructure (title option 1, eight pages) and claim sheet; `e9c29a16` **R1-G5-TAILS, R1-G5-P11, R1-G5-S9** (author, 27 Nov); `9d87bebf` positive control and T5 shared-noise; `47df6f55` houseprice CPU-set fix (local/20261126-01); `166db0eb` **kit c1 record, seven-node REL-T1-G1B
+`54082a05` the ancestor–descendant screening test with its re-check review; `8b01ef6a` **R1-D3-VERIFY-SEED, R1-D3-PREDECL-R4** (author, 27 Nov; the pre-declaration freezes after its steps 3 and 5); `5c901d19` P.4 merge: sft-select missing-runs STOP and the H200 host-config fill (torch files 194/194; `cluster/20261126-01` done by this merge); `bd406db9` screening fix, P.4 direct launch and Ada host config, D.3 pre-declaration revision 4 (draft, unsigned), hygiene inventory; `6684e840` test-only unit, D.3c memo; `4490a0a9` copy review verdict line, P11 evidence table, redacted survey, manuscript restructure (title option 1, eight pages) and claim sheet; `e9c29a16` **R1-G5-TAILS, R1-G5-P11, R1-G5-S9** (author, 27 Nov); `9d87bebf` positive control and T5 shared-noise; `47df6f55` houseprice CPU-set fix (local/20261126-01); `166db0eb` **kit c1 record, seven-node REL-T1-G1B
 copy, and the published expansion note `g1b_x_t1_tasl_20261126.md`** (strict check PASS, four gates PASS).
 
 **Workers (23:22 CET, seen in their tmux panes):** Local (`paperb-local`) is working, on the houseprice CPU-set evidence (item 1).
@@ -20,8 +20,8 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 |---|---|---|---|
 | 1 | `compute/20261126-10`: expansion G.1b | §2 2B | **running**: ETTh1 finished 00:34Z (460/460, determinism true, no STOP) and is sealed; MetaMaze, Forest Cover, Titanic in train. Next: seals, then `assemble` and `summarise` |
 | 1b | `compute/20261127-05` with `-08`: G.5 P11 host tests (they do not wait for the note) | §2 2B | ready; TASL-2 items wait for the 0-7 leases |
-| 1c | `compute/20261127-06`: Ada P.4 venv | §4 | **blocked: Ada refuses compute's key for `dowling`** (author) |
-| 1d | `compute/20261127-09`: G1 core review (`51cf07f7`, 16 tests, zero new failures); design revision 6c for FIXR3/EGATE | §2 2A | ready. Verify-seed collision is with the author; G2 constants with local |
+| 1c | `compute/20261127-06` with `-11`: Ada P.4 venv via `ssh ada_server` | §4 | **ready** (author set up access 27 Nov) |
+| 1d | `compute/20261127-09`: G1 core review (`51cf07f7`); design revision 6c for FIXR3/EGATE | §2 2A | ready. Verify seeds decided (R1-D3-VERIFY-SEED: harness unit `local/20261127-07`); G2 with local |
 | 2 | `compute/20261127-01` (= `experiment/20261126-03`): houseprice CPU-set check on TASL-2 | §2 2B | next: ready (fix on `main` `47df6f55`); waits on the 0-3/4-7 leases while the expansion runs |
 | 2b | `compute/20261126-11`: survey redaction | §4 | delivered `f60a2225`, **incomplete** (truncated `ps` user column in `Ada.txt` l.49–62); fix in `compute/20261127-02` item 2, then merge |
 | 2c | `compute/20261127-03`: copy review's verdict case (G.5 B3); P11 evidence table | §2 2B | ready, after the launch |
@@ -49,7 +49,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | 8 | `local/20261126-07`: rows (g) inventory and the G.5 card monitor | §2 2B | ready |
 | done | `local/20261126-04`: S9 sheet | §2 2B | `016742b1`; to the author with P10/P11 |
 | 10 | `local/20261126-05`: item 1 controllers **delivered** (`mac-d3-g9-sidecar-20261127` @ `27564dbb`; FIXR3/EGATE accepted as decision engines only), coordinator merge under test; item 2 test-only and item 4 D.3c memo merged; item 3 HPO reference pushed (`666320c9`, no report yet); item 5 Paper C last | §2 2A, 2C, 3A | in progress |
-| 11 | `local/20261126-06` units 2–3: further G.5 audit hosts; revision 4 under R1-HOST-FREE | §2 2B | ready after unit 1 |
+| 11 | `local/20261127-07` harness verify-seed unit; `local/20261127-08` revision 4 to frozen (after G2 and the harness unit); `local/20261126-06` units 2–3 (audit hosts: `mac-g5-audit-hosts-20261127` pushed, no report) | §2 2A, 2B | ready in that order |
 | done | `local/20261126-13`: hygiene inventory (`2005d0b0`: 72 worktrees proposed to retire, 14 keep, 6 active; 29 untracked dirs) | §2 0 | merged `bd406db9`; retirements are the author's |
 | 2b | `local/20261126-08` final render | §2 2B | **STOP for decisions** (`mac-g5-render-20261126` @ `2959b369`; review NOT ACCEPTED on B1–B4): P10 and P11 go to the author (`sheets/G5_P10_P11_S9_SHEET_20261127.md`); B3 (copy review's verdict case) → `compute/20261127-03`; `paper.commit` filled at publication |
 | — | `local/20261126-12`: G.5 addendum code | §2 2B | blocked: the author's S9 row, after item 9 |
@@ -59,7 +59,8 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | # | Card | Runbook | State |
 |---|---|---|---|
 | 1 | `writer/20261126-01` with `-02`: restructure | §2 1, §3 | **delivered** `6138b54f` (re-check ACCEPT WITH MINOR, minors applied; main text about 8.85 pages). The author told the writer in its pane: title option 1, trim to eight pages. **Merge after that trim**, with `writer/20261126-03` |
-| 2 | `writer/20261126-03`: revised outline and claim-to-table sheet | §2 1, §3 | **delivered** (`a9a9f6bb`, review ACCEPT WITH MINOR, corrected). Merges with or after item 1; §6 passed to local (`local/20261126-16`); §5 items go to the author as one sheet |
+| 3 | `writer/20261127-01`: check the two external figures; bring in the rows of 27 Nov | §3 | **current**: ready |
+| done | `writer/20261126-03`: revised outline and claim-to-table sheet | §2 1, §3 | **delivered** (`a9a9f6bb`, review ACCEPT WITH MINOR, corrected). Merges with or after item 1; §6 passed to local (`local/20261126-16`); §5 items go to the author as one sheet |
 | — | result tables | §3 item 4 | blocked: released results; none exist |
 
 ## Coordinator
