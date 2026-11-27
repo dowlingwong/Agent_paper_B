@@ -179,6 +179,9 @@ def bind_readings(spec: dict, spec_path: Path, note_path: Path | None, *, on_mai
     ``docs/r1/authorizations/<run_id>.md`` on published main byte-identically, reads ``approved: true``, binds this
     spec's sha256, and its ``t1_table_readings`` line equals the line rendered from the spec (``TABLE_READINGS`` and
     the spec's choice); the choice is taken from that line. Without a note: only ``refuse``."""
+    if (a := spec.get("_addendum")) is not None:
+        return {"readings": dict(S.TABLE_READINGS), "note": a["note"], "note_sha256": a["note_sha256"],
+                "campaign_divergent_delta_hat": spec["key_values"]["t1_table_readings"]["campaign_divergent_delta_hat"]}
     if note_path is None:
         return {"readings": dict(S.TABLE_READINGS), "campaign_divergent_delta_hat": "refuse", "note": None,
                 "note_sha256": None}
@@ -238,9 +241,10 @@ def noise_by_node(spec: dict, row: dict, *, ar_record=None) -> dict:
         raw = (S.REPO_ROOT / c["path"]).read_bytes()
         if _sha(raw) != c["sha256"]:
             raise Stop(f"STOP: {c['path']} differs from the sha256 the row cites")
+        addendum = spec.get("_addendum")
         key = "ar" if node == S.AR else "seven"
-        e = nf[key]
-        if key == "seven" or S.options(spec)["G5-ARPEND"] == "B":
+        e = addendum["noise"] if addendum else nf[key]
+        if addendum or key == "seven" or S.options(spec)["G5-ARPEND"] == "B":
             if (c["path"], c["sha256"]) != (e.get("copy"), e.get("sha256")):
                 raise Stop(f"STOP: the row's G.1b summary for {node} is not the spec's REL-T1-G1B copy "
                            f"(noise_floor.{key})")
@@ -306,12 +310,14 @@ def tail_law(spec: dict, node: str, *, ar_record=None) -> dict:
     return {"tails": "gaussian"} if tails == "gaussian" else {"tails": "student_t", "nu": float(nu)}
 
 
-def _one_attempt(d: Path) -> Path:
+def _one_attempt(d: Path, spec: dict | None = None) -> Path:
     """The one complete sealed attempt of a job or chunk directory; every other sealed attempt ended in an
     infrastructure STOP (one attempt per job, chosen by the rule, never by result)."""
     done, others = [], []
     for _, p in G.attempts(d):
-        SE.verify_sealed(p)
+        receipt = SE.verify_sealed(p)
+        if spec is not None:
+            SE.addendum_binding(spec, receipt)
         rec = json.loads((p / "job_record.json").read_text())
         (done if rec.get("stop") is None else others).append((p, rec))
     if len(done) != 1:
@@ -325,21 +331,22 @@ def _one_attempt(d: Path) -> Path:
 def sealed_node(spec: dict, node: str, spec_sha256: str) -> dict:
     """The node's sealed inputs: one complete attempt per job and chunk, its sealed plans, all bound together."""
     root = SE.sealed_run(spec) / node
-    SE.verify_sealed(root / "_node")
+    SE.addendum_binding(spec, SE.verify_sealed(root / "_node"))
     out = {"campaigns": {}, "chunks": {}, "index": {}, "records": []}
     for wave in (1, 2):
-        camp = _one_attempt(root / f"campaigns-wave{wave}")
+        camp = _one_attempt(root / f"campaigns-wave{wave}", spec)
         idx_path = root / "_node" / f"wave{wave}_plan_index.json"
         if not idx_path.is_file():
             raise Stop(f"STOP: {node} wave {wave} has no sealed plan index")
         idx = json.loads(idx_path.read_text())
+        SE.addendum_binding(spec, idx)
         crec = json.loads((camp / "job_record.json").read_text())
         if idx.get("campaign_out_tar_sha256") != crec.get("out_tar_sha256") or \
                 idx.get("campaign_out_tar_sha256") != L._sha_file(camp / "out.tar"):
             raise Stop(f"STOP: {node} wave {wave}: the plan was not made from the sealed campaign attempt")
         chunks = []
         for i in range(idx["chunks"]):
-            c = _one_attempt(root / f"audits-wave{wave}" / f"chunk-{i}")
+            c = _one_attempt(root / f"audits-wave{wave}" / f"chunk-{i}", spec)
             r = json.loads((c / "job_record.json").read_text())
             if r.get("plan_sha256") != idx["plan_json_sha256"] or r.get("chunk") != i or r.get("K") != idx["K"]:
                 raise Stop(f"STOP: {node} wave {wave} chunk {i} does not belong to the sealed plan")
@@ -354,6 +361,7 @@ def sealed_node(spec: dict, node: str, spec_sha256: str) -> dict:
     for r in out["records"]:
         if r.get("spec_sha256") != spec_sha256 or r.get("run_id") != spec["run_id"] or r.get("node") != node:
             raise Stop(f"STOP: a sealed record of {node} was written under another spec, run or node")
+        SE.addendum_binding(spec, r)
     if out["index"][1]["K"] != out["index"][2]["K"]:
         raise Stop(f"STOP: {node}'s two waves were planned at different K (P4: K is uniform)")
     return out
@@ -579,6 +587,7 @@ def sealed_run_checks(spec: dict) -> dict:
     runs-tree log may not have outgrown, and over every earlier opening of the sealed tree."""
     run_dir = SE.sealed_run(spec) / "_run"
     receipt = SE.verify_sealed(run_dir)
+    SE.addendum_binding(spec, receipt)
     sealed_log = run_dir / "_access_log.jsonl"
     J.check_access_log(spec, path=sealed_log)
     live = J.run_root(spec) / "_access_log.jsonl"
@@ -617,7 +626,9 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
         labels += got["labels"]
         evals += got["evaluations"]
         eval_counts[node] = got["eval_counts"]
-        nodes[node] = {**noise[node], **metric, "gate_suite": F.gate_suite(metric["suite"]), "K": data["K"],
+        extra = (spec.get("_addendum") or {}).get("role") == "g5_addendum_extra_task"
+        gate_suite = None if extra and metric["suite"] in F.EXTRA_TASK_SUITES else F.gate_suite(metric["suite"])
+        nodes[node] = {**noise[node], **metric, "gate_suite": gate_suite, "K": data["K"],
                        "counts": got["counts"], "features": got["features"],
                        "attempts": sorted(str(p) for p in [*inputs["campaigns"].values(),
                                                            *inputs["chunks"][1], *inputs["chunks"][2]])}
@@ -646,6 +657,96 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
         out["evaluation_block"] = _lines(sorted(evals, key=key))
         out["eval_counts"] = eval_counts
     return out
+
+
+def _addendum_specs(spec: dict, spec_sha: str, row: dict, paths) -> tuple[dict, dict]:
+    """Match the release row's exact expansion nodes to published specs for this base run."""
+    from g5_addendum import published
+    from r1.c3 import p3_split
+
+    expected = set(row.get("g1b_summaries", ())) - set(S.T1_NODES)
+    if not expected and not paths:
+        return {}, {}
+    if row.get("split_sha256") != p3_split.P3_SPLIT_V2_SHA256:
+        raise Stop("STOP: a G.5 expansion assembly needs the signed v2 release row")
+    values, bindings = {}, {}
+    run_ids = {spec["run_id"]}
+    for p in paths:
+        try:
+            path = Path(p).resolve().relative_to(S.REPO_ROOT.resolve()).as_posix()
+        except ValueError as exc:
+            raise Stop("STOP: each G.5 addendum spec must be in this checkout") from exc
+        sha = L._sha_file(p)
+        published(f"{path} sha256 {sha}", "sweep2/t1_tasl", G._read_main)
+        addendum = S.load_spec(Path(p))
+        a = addendum.get("_addendum")
+        if not a or a["base_spec_sha256"] != spec_sha or a["base_run_id"] != spec["run_id"]:
+            raise Stop(f"STOP: {path} does not join this G.5 base spec and run")
+        name = addendum["nodes"][0]["node"]
+        if name not in expected or name in values or addendum["run_id"] in run_ids:
+            raise Stop(f"STOP: repeated or unauthorized G.5 addendum for {name}")
+        run_ids.add(addendum["run_id"])
+        values[name] = addendum
+        bindings[name] = {"spec_path": path, "run_id": addendum["run_id"], "role": a["role"],
+                          "sealed_run": str(SE.sealed_run(addendum)), **SE.addendum_binding(addendum)}
+    if set(values) != expected:
+        raise Stop(f"STOP: G.5 assembly is missing addenda for {sorted(expected - set(values))}")
+    return values, bindings
+
+
+def _combine_runs(primary: dict, supplied: list[dict], bindings: dict, stage: str) -> dict:
+    """Combine only the approved MLGym additions into the primary assembly."""
+    runs = [primary, *supplied]
+    for result in supplied:
+        if primary["K"] != result["K"] or primary["seeds"] != result["seeds"]:
+            raise Stop("STOP: base and addendum seals have different K or audit seeds")
+    out = {**primary, "nodes": {n: v for result in runs for n, v in result["nodes"].items()}}
+    for key in ("proposals", "label_block", *(("evaluation_block",) if stage == "test" else ())):
+        rows = [line for result in runs for line in result[key].splitlines(keepends=True)]
+        by_id = {json.loads(line)["proposal_id"]: line for line in rows}
+        if len(rows) != len(by_id):
+            raise Stop(f"STOP: a proposal occurs in two G.5 runs ({key})")
+        out[key] = b"".join(by_id[i] for i in sorted(by_id))
+    if stage == "test":
+        out["eval_counts"] = {n: v for result in runs for n, v in result["eval_counts"].items()}
+    build = json.loads(primary["build"])
+    build.update(addenda=bindings, nodes=out["nodes"], featurizer=F.describe(out["nodes"]),
+                 proposals_sha256=_sha(out["proposals"]))
+    out["build"] = (json.dumps(build, indent=1, sort_keys=True) + "\n").encode()
+    return out
+
+
+def _derive_runs(spec: dict, spec_sha: str, stage: str, row: dict, *, purpose_head: str, readings: dict,
+                 check, git, ar_record, addendum_paths) -> tuple[dict, dict]:
+    from r1.c3 import p3_split
+
+    specs, bindings = _addendum_specs(spec, spec_sha, row, addendum_paths)
+    summaries = row.get("g1b_summaries") or {}
+    base_row = {**row, "g1b_summaries": {n: v for n, v in summaries.items() if n not in specs}} if specs else row
+    primary = derive(spec, spec_sha, stage, SE.SealedTree(spec, lock=check), base_row, purpose_head=purpose_head,
+                     readings=readings, git=git, ar_record=ar_record)
+    if not specs:
+        return primary, {}
+    supplied, extras = [], {}
+    for name, added in sorted(specs.items()):
+        binding = bindings[name]
+        if readings["note"] != added["_addendum"]["base_note"]:
+            raise Stop(f"STOP: the G.5 addendum for {name} needs the assembly's exact published main note")
+        added_readings = bind_readings(added, Path(binding["spec_path"]), None)
+        result = derive(added, binding["spec_sha256"], stage, SE.SealedTree(added, lock=check),
+                        {**row, "g1b_summaries": {name: summaries[name]}}, purpose_head=purpose_head,
+                        readings=added_readings, git=git)
+        if result["K"] != added["_addendum"]["_K"] or result["K"] != primary["K"]:
+            raise Stop(f"STOP: the G.5 addendum for {name} has another K than the main note and run")
+        if name in p3_split.T1_EXPANSION_MLGYM and result["nodes"][name]["gate_suite"] == "MLGym":
+            supplied.append(result)
+        elif name in p3_split.T1_EXTRA_TASKS and result["nodes"][name]["gate_suite"] is None:
+            build = {**json.loads(result["build"]), **binding, "source": "g5_extra_task"}
+            result["build"] = (json.dumps(build, indent=1, sort_keys=True) + "\n").encode()
+            extras[name] = result
+        else:
+            raise Stop(f"STOP: the G.5 addendum for {name} has an invalid S9 release route")
+    return _combine_runs(primary, supplied, bindings, stage), extras
 
 
 # =============================================================================================== the stages
@@ -681,64 +782,77 @@ def read_evidence(evidence_dir: Path, name: str, *, lock=None) -> bytes:
     return (Path(evidence_dir) / name).read_bytes()
 
 
+def _tables(table: Path, evidence: Path, primary: dict, extras: dict):
+    yield table, evidence, primary
+    for node, data in sorted(extras.items()):
+        yield table / "extra_tasks" / node, evidence / "extra_tasks" / node, data
+
+
+def _check_addendum_stage(row_td: dict, row_test: dict | None, has_addenda: bool) -> None:
+    if has_addenda and row_test is not None and row_test.get("split_sha256") != row_td.get("split_sha256"):
+        raise Stop("STOP: the test release must use the same P3 split v2 as the G.5 expansion train/dev release")
+
+
+def _completion_bytes(stage, data, row_td, row_test):
+    return (json.dumps(_completion(stage, data, row_td, row_test), indent=1, sort_keys=True) + "\n").encode()
+
+
 def assemble(spec_path: Path, stage: str, table_dir: Path, evidence_dir: Path, *, note_path: Path | None = None,
-             on_main=G._note_on_main, lock=None, git=G._sh, ar_record=None) -> dict:
-    """Write the T1 table and label block (``traindev``), or the evaluation block (``test``), from the sealed tree,
-    with the readings of the signed note (``bind_readings``)."""
+             on_main=G._note_on_main, lock=None, git=G._sh, ar_record=None, addendum_paths=()) -> dict:
+    """Write the authorised G.5 blocks. Expansion specs join the main run, with one separate output per 1GC node."""
+    if stage not in STAGES:
+        raise Stop(f"STOP: stage must be one of {STAGES}")
     spec_path = Path(spec_path)
     spec = S.load_spec(spec_path)
+    if spec.get("_addendum"):
+        raise Stop("STOP: assemble from the main G.5 spec, with expansion specs passed as addenda")
     spec_sha = L._sha_file(spec_path)
     check = lock or SE.release_lock
-    row_td = check("traindev")                      # R1-T1-LABELS-UNSEAL: before anything sealed is opened
+    row_td = check("traindev")
     row_test = check("test") if stage == "test" else None
+    _check_addendum_stage(row_td, row_test, bool(addendum_paths))
     readings = bind_readings(spec, spec_path, note_path, on_main=on_main)
     ar_record = ar_record or default_ar_record(spec, spec_path)
     table_dir, evidence_dir = Path(table_dir), Path(evidence_dir)
+    sealed = Path(spec["worker"]["sealed_root"]).resolve() if addendum_paths else SE.sealed_run(spec).resolve()
     for d in (table_dir, evidence_dir):
-        if any(part.casefold() == "r1_sealed" for part in d.resolve().parts) or \
-                SE.sealed_run(spec).resolve() in [d.resolve(), *d.resolve().parents]:
+        if any(part.casefold() == "r1_sealed" for part in d.resolve().parts) or (
+                sealed in [d.resolve(), *d.resolve().parents]):
             raise Stop(f"STOP: {d} is inside a sealed tree (the release step refuses sealed paths)")
-    tree = SE.SealedTree(spec, lock=check)
-    if stage == "traindev":
-        if table_dir.exists() or evidence_dir.exists():
-            raise Stop("STOP: the table and evidence directories are written once (they exist)")
-        d = derive(spec, spec_sha, stage, tree, row_td, purpose_head="assembly traindev:", readings=readings, git=git,
-                   ar_record=ar_record)
-        table_dir.mkdir(parents=True)
-        evidence_dir.mkdir(parents=True)
-        _write_once(table_dir / "proposals.jsonl", d["proposals"])
-        _write_once(table_dir / "build.json", d["build"])
-        _write_once(evidence_dir / "label_block.jsonl", d["label_block"])
-        comp = _completion(stage, d, row_td, None)
-        _write_once(evidence_dir / "evidence_completion.json",
-                    (json.dumps(comp, indent=1, sort_keys=True) + "\n").encode())
-        return comp
-    if stage != "test":
-        raise Stop(f"STOP: stage must be one of {STAGES}")
-    if (evidence_dir / "evaluation_block.jsonl").exists():
+    if stage == "traindev" and (table_dir.exists() or evidence_dir.exists()):
+        raise Stop("STOP: the table and evidence directories are written once (they exist)")
+    if stage == "test" and (evidence_dir / "evaluation_block.jsonl").exists():
         raise Stop("STOP: the evaluation block is written once (it exists)")
-    d = derive(spec, spec_sha, stage, tree, row_td, purpose_head="assembly test:", readings=readings, git=git,
-               ar_record=ar_record)
-    for name, raw in (("proposals.jsonl", (table_dir / "proposals.jsonl").read_bytes()),
-                      ("build.json", (table_dir / "build.json").read_bytes()),
-                      ("label_block.jsonl", read_evidence(evidence_dir, "label_block.jsonl", lock=check))):
-        want = d["label_block"] if name == "label_block.jsonl" else d["proposals" if name == "proposals.jsonl"
-                                                                       else "build"]
-        if raw != want:
-            raise Stop(f"STOP: {name} is not the one the sealed tree gives now (changed since the train/dev stage)")
-    _write_once(evidence_dir / "evaluation_block.jsonl", d["evaluation_block"])
-    comp = _completion(stage, d, row_td, row_test)
-    _write_once(evidence_dir / "evidence_completion_test.json",
-                (json.dumps(comp, indent=1, sort_keys=True) + "\n").encode())
-    return comp
+    d, extras = _derive_runs(spec, spec_sha, stage, row_td, purpose_head=f"assembly {stage}:", readings=readings,
+                             check=check, git=git, ar_record=ar_record, addendum_paths=addendum_paths)
+    if stage == "traindev":
+        for table, evidence, data in _tables(table_dir, evidence_dir, d, extras):
+            table.mkdir(parents=True)
+            evidence.mkdir(parents=True)
+            _write_once(table / "proposals.jsonl", data["proposals"])
+            _write_once(table / "build.json", data["build"])
+            _write_once(evidence / "label_block.jsonl", data["label_block"])
+            _write_once(evidence / "evidence_completion.json", _completion_bytes(stage, data, row_td, None))
+        return _completion(stage, d, row_td, None)
+
+    for table, evidence, data in _tables(table_dir, evidence_dir, d, extras):
+        if (evidence / "evaluation_block.jsonl").exists() or (evidence / "evidence_completion_test.json").exists():
+            raise Stop("STOP: the evaluation block and its completion are written once (they exist)")
+        earlier = {"proposals": (table / "proposals.jsonl").read_bytes(), "build": (table / "build.json").read_bytes(),
+                   "label_block": read_evidence(evidence, "label_block.jsonl", lock=check)}
+        for key, raw in earlier.items():
+            if raw != data[key]:
+                name = "build.json" if key == "build" else key + ".jsonl"
+                raise Stop(f"STOP: {name} is not the one the sealed tree gives now (changed since the train/dev stage)")
+    for _, evidence, data in _tables(table_dir, evidence_dir, d, extras):
+        _write_once(evidence / "evaluation_block.jsonl", data["evaluation_block"])
+        _write_once(evidence / "evidence_completion_test.json", _completion_bytes(stage, data, row_td, row_test))
+    return _completion(stage, d, row_td, row_test)
 
 
 def verify_evidence(table_dir: Path, audit_dir: Path, *, test: bool, lock=None, git=G._sh,
                     spec_path: Path | None = None, on_main=G._note_on_main, ar_record=None) -> dict:
-    """The G.5 integrity check (§6 carve-out), run by ``r1/c3/release_checks.py`` inside the release step's integrity
-    context: re-derive the blocks from the sealed tree with the committed spec and compare bytes. Before the test row
-    (``test`` False) only the label seeds are read, and an existing evaluation block is refused. Returns pass, counts
-    and hashes, never a value."""
+    """Re-derive and compare the received bytes under the same release locks as assembly."""
     spec_path = Path(spec_path or S.REPO_ROOT / SPEC_REL)
     spec = S.load_spec(spec_path)
     spec_sha = L._sha_file(spec_path)
@@ -752,22 +866,33 @@ def verify_evidence(table_dir: Path, audit_dir: Path, *, test: bool, lock=None, 
         raise Stop("STOP: an evaluation block exists before R1-T1-LABELS-TEST-RELEASE")
     row_td = check("traindev")
     row_test = check("test") if test else None
+    addenda = build.get("addenda", {})
+    _check_addendum_stage(row_td, row_test, bool(addenda))
     ar_record = ar_record or default_ar_record(spec, spec_path)
-    note = build["readings"].get("note")             # the readings re-bound to the signed note, not replayed
+    note = build["readings"].get("note")
     readings = bind_readings(spec, spec_path, S.REPO_ROOT / note if note else None, on_main=on_main)
-    tree = SE.SealedTree(spec, lock=check)
-    d = derive(spec, spec_sha, stage, tree, row_td, purpose_head=f"release integrity {stage}:", readings=readings,
-               git=git, ar_record=ar_record)
-    names = [("proposals.jsonl", table_dir, "proposals"), ("build.json", table_dir, "build"),
-             ("label_block.jsonl", audit_dir, "label_block")] + \
-        ([("evaluation_block.jsonl", audit_dir, "evaluation_block")] if test else [])
-    for name, where, key in names:
-        if (where / name).read_bytes() != d[key]:
-            raise Stop(f"STOP: {name} differs from the blocks the sealed tree gives")
-    comp = _completion(stage, d, row_td, row_test)
-    name = "evidence_completion_test.json" if test else "evidence_completion.json"
-    raw = (json.dumps(comp, indent=1, sort_keys=True) + "\n").encode()
-    if (audit_dir / name).read_bytes() != raw:
-        raise Stop(f"STOP: {name} is not the completion record of these blocks")
-    return {"check": "g5_assemble.verify_evidence", "pass": True, "stage": stage, "completion": comp,
-            "completion_sha256": _sha(raw)}
+    if not isinstance(addenda, dict):
+        raise Stop("STOP: invalid G.5 addendum build bindings")
+    paths = []
+    for node, binding in addenda.items():
+        if not isinstance(binding, dict) or not S._rel_ok(binding.get("spec_path")) or not re.fullmatch(r"[a-z0-9_]+", node):
+            raise Stop(f"STOP: invalid spec path or node name for G.5 addendum {node}")
+        if not test and (audit_dir / "extra_tasks" / node / "evaluation_block.jsonl").exists():
+            raise Stop("STOP: an extra-task evaluation block exists before R1-T1-LABELS-TEST-RELEASE")
+        paths.append(S.REPO_ROOT / binding["spec_path"])
+    d, extras = _derive_runs(spec, spec_sha, stage, row_td, purpose_head=f"release integrity {stage}:", readings=readings,
+                             check=check, git=git, ar_record=ar_record, addendum_paths=paths)
+    completion_name = "evidence_completion_test.json" if test else "evidence_completion.json"
+    for table, evidence, data in _tables(table_dir, audit_dir, d, extras):
+        names = [("proposals.jsonl", table, "proposals"), ("build.json", table, "build"),
+                 ("label_block.jsonl", evidence, "label_block")]
+        if test:
+            names.append(("evaluation_block.jsonl", evidence, "evaluation_block"))
+        for name, where, key in names:
+            if (where / name).read_bytes() != data[key]:
+                raise Stop(f"STOP: {name} differs from the blocks the sealed tree gives")
+        if (evidence / completion_name).read_bytes() != _completion_bytes(stage, data, row_td, row_test):
+            raise Stop(f"STOP: {completion_name} is not the completion record of these blocks")
+    return {"check": "g5_assemble.verify_evidence", "pass": True, "stage": stage,
+            "completion": _completion(stage, d, row_td, row_test),
+            "completion_sha256": _sha(_completion_bytes(stage, d, row_td, row_test))}

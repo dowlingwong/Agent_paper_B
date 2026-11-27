@@ -192,7 +192,8 @@ def node_delta(node: str, summary_raw: bytes, run_dir: Path) -> dict:
     return node_noise(node, summary_raw, asm_path.read_bytes(), runs_path.read_bytes(), str(run_dir))
 
 
-def derive(spec: dict, row: dict, run_dirs: dict | None = None, *, ar_record=None) -> dict:
+def derive(spec: dict, row: dict, run_dirs: dict | None = None, *, ar_record=None, spec_path: Path | None = None,
+           addendum_paths=()) -> dict:
     """The T1 noise record of the nodes the train/dev row cites, from ``g5_assemble.noise_by_node`` (the function the
     table uses): σ_node by T0's definition and δ_n by D18, both from the REL-T1-G1B copies of each node's G.1b run
     beside its summary copy (D6 A), every value bound to the copies' sha256s. ``run_dirs`` ({node: directory}) is
@@ -200,7 +201,22 @@ def derive(spec: dict, row: dict, run_dirs: dict | None = None, *, ar_record=Non
     Under R1-T1-D21-SCOPE the cited nodes are every node with a G.1b fixed-seed determinism PASS, whatever its D21
     value; each node's entry carries its ``d21`` value (from ``noise_by_node``) for the screening funnel (R1-BX-D12)."""
     import g5_assemble as A                                  # noqa: PLC0415 - g5_assemble imports this module
-    noise = A.noise_by_node(spec, row, ar_record=ar_record)
+    from r1.c3 import p3_split
+
+    cited = row.get("g1b_summaries") or {}
+    expanded = set(cited) - set(S.T1_NODES)
+    if expanded or addendum_paths:
+        base_path = Path(spec_path or S.REPO_ROOT / A.SPEC_REL)
+        raw = base_path.read_bytes()
+        if json.loads(raw) != spec:
+            raise Stop("STOP: the base G.5 spec bytes do not match the noise derivation spec")
+        specs, _ = A._addendum_specs(spec, _sha(raw), row, addendum_paths)
+        base_row = {**row, "g1b_summaries": {node: summary for node, summary in cited.items() if node not in expanded}}
+        noise = A.noise_by_node(spec, base_row, ar_record=ar_record)
+        for node in sorted(set(specs) & set(p3_split.T1_EXPANSION_MLGYM)):
+            noise.update(A.noise_by_node(specs[node], {**row, "g1b_summaries": {node: cited[node]}}))
+    else:
+        noise = A.noise_by_node(spec, row, ar_record=ar_record)
     if run_dirs is not None:
         if set(run_dirs) != set(noise):
             raise Stop(f"STOP: run directories are given for {sorted(run_dirs)}, the row cites {sorted(noise)}")
@@ -241,6 +257,8 @@ def write_record(record: dict, dest: str, *, repo: Path | None = None) -> str:
 def builder_noise(record: dict, *, sha256: str | None = None, raw: bytes | None = None) -> dict:
     """{node: {"delta_n", "sigma_node"}} for ``gate_input_builder.build`` from a T1 noise record (given its bytes, they
     must hash to ``sha256``)."""
+    from r1.c3 import p3_split
+
     if raw is not None:
         if sha256 is None or _sha(raw) != sha256:
             raise Stop("STOP: the T1 noise record differs from the sha256 it is cited with")
@@ -249,6 +267,8 @@ def builder_noise(record: dict, *, sha256: str | None = None, raw: bytes | None 
         raise Stop(f"STOP: not a {NOISE_SCHEMA} record")
     out = {}
     for node, n in sorted(record["nodes"].items()):
+        if node in p3_split.T1_EXTRA_TASKS:
+            raise Stop(f"STOP: {node} is a 1GC extra task outside the gate noise record (R1-G5-S9)")
         d, s = n.get("delta_n"), n.get("sigma_node")
         if not all(isinstance(x, float) and math.isfinite(x) and x > 0 for x in (d, s)):
             raise Stop(f"STOP: {node} has no positive finite delta_n and sigma_node")
