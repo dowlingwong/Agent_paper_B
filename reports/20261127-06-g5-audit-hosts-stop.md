@@ -1,0 +1,9 @@
+# local/20261126-06 unit 2 — additional G.5 audit hosts (STOP before host admission)
+
+- Task: `local/20261126-06`, unit 2. Base `6684e840`. Published branch `mac-g5-audit-hosts-20261127` @ `497884d5f42c6941e32a9d7d5458577a1a4a5c5e`.
+- Independent tier-E re-check: **NOT ACCEPTED** after the first review's seven corrections. The current launcher rejects occupied cards regardless of free memory, contrary to R1-CARD-SHARE, and discards successful attempts merely for sharing. Some timeout and OOM exits miss the ending sample or are classified by substring rather than the actual reason.
+- The production checkout guard still compares the addendum to the original G.5 `paper_commit`, which refuses the new spec at its documented path. Binding needs a separately pinned, signed addendum launch and coverage through the real Git guard. The houseprice cross-host record also must bind the CPU class and exact measured CPU set before admission.
+- Tests: candidate's pre-correction full suite recorded base 181 failed / 4247 passed / 161 skipped / 3 errors and tip 181 / 4261 / 161 / 3, with identical failing IDs. After corrections the five relevant module files plus audit-host cases recorded base 396 passed / 1 failed and tip 413 passed / 1 failed, same failing ID. No final full-suite comparison on `497884d5` is recorded here. Spec/hash proposals remain in the branch report.
+- Next: retain the draft lane pending binding design, CPU attestation and independent re-review. The author's Ada hardware-class decision, compute access to Ada, and each node's short cross-host PASS are separate requirements before the addendum can launch. The existing TASL-pair path can proceed under its own note.
+
+Decided alone: keep the corrected draft as a candidate and defer production admission until signed binding and review.
