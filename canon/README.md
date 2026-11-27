@@ -20,18 +20,18 @@ The [documentation index](../docs/r1/README.md) locates experimental records and
 
 ## Who decides what
 
-The author decides what matters; agents solve execution and engineering questions themselves (R1-AUTONOMY, signed
-26 Nov 2026).
+The author approves each research stage in one decision. Agents handle engineering and execution under
+R1-AUTONOMY and R1-STAGE-APPROVAL.
 
 | Level | Who | What | Where it is recorded |
 |---|---|---|---|
 | 0 | the agent doing the work | Everything inside its task that changes none of: which evidence is collected or how it is read; a cap or budget; a signed file; another agent's work; anything that cannot be undone. Examples: how the code is written, test design, review rounds until accepted, a retry after an infrastructure failure in a new attempt directory, waiting for a slot or a lease, CPU sets within the rows, read-only diagnostics, merging `main` into its branch | one line in its report ("decided alone: …") |
 | 1 | the coordinator | Routing and priorities; splitting and ordering units; publishing a note that a row pre-authorises once its checks pass; merging reviewed units to `main` under R1-AUTONOMY (3); adopting a reviewed recommendation that is not level 2, as a row marked "(coordinating chat, under R1-AUTONOMY)"; settling an engineering disagreement between agents | the task file, the merge commit, or the coordinator row |
-| 2 | the author | Claims and scope; signatures of preregistrations, pre-declarations and evidence notes; any read of a sealed or test partition; any change to a signed file; a cap raised or a change to what R1-HOST-FREE keeps bound; a step that cannot proceed; a STOP that concerns the validity of evidence; deletion; credentials; anything PLAN does not cover | a PLAN §10 row |
+| 2 | the author | Claims and scope; signatures of preregistrations, pre-declarations and evidence notes; any read of a sealed or test partition; any change to a signed file; a cap raised or a change to what R1-HOST-FREE keeps bound; a blocked step that requires an author decision; a STOP that concerns the validity of evidence; deletion; credentials; anything PLAN does not cover | a PLAN §10 row |
 
-When unsure of the level, take the higher one. A level-2 item reaches the author as one decision sheet: the options,
-a recommendation, the cost, what it blocks, and the draft row text. An agent that hits a level-2 item keeps working
-on everything the item does not block.
+When unsure of the level, take the higher one. Group related Level 2 choices in the stage decision, then bring
+ready decisions together in the daily digest. Give the options, the recommendation and reason, the cost,
+what each choice blocks, and the reply that approves it. Keep independent work moving while a decision is pending.
 
 ## Rules every agent keeps
 
@@ -71,7 +71,9 @@ The repository carries the messages (R1-AUTONOMY):
   over; a session that finds another name there stops coordinating.
 - **Rhythm.** An agent looks for new tasks when it finishes one and every 15 minutes while idle. The coordinator
   looks at the report branches at least hourly, verifies and merges what is ready, and writes the next tasks.
-- **The author** gets one digest a day in Chinese, and a message at once only when a level-2 item blocks work.
+- **The author** gets one Chinese digest a day with completed work, results, next steps and decisions.
+  Raise a Level 2 decision immediately if it blocks the critical path. Follow existing incident and resource
+  reporting requirements.
 
 ## Roles and what runs them (R1-AGENT-RUNTIMES, R1-AGENT-COMPUTE)
 
