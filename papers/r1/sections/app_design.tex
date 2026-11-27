@@ -61,7 +61,7 @@ T1 takes task assets (data, baseline script, evaluator) from three public suites
 
 % New 26 Nov 2026 (R1-T1-D21-SCOPE, R1-T1-NODE-EXPANSION, R1-G5-EXPANSION-JOIN, R1-STEP-ORDER (2)(a)).
 \paragraph{The T1 node set.}
-The qualification rule above selects T0 noise nodes. It is not applied to T1, where it would leave few nodes (\TBD{how many of the eight, from the sealed noise-floor records}). We decided this before any T1 label existed. A T1 node enters the label runs if it passed the census of its baseline script, a fixed-seed determinism check in its noise-floor run and, where one was run, a cross-host check. Its probability of a wrong decision is reported in the screening funnel and is not a filter. Four further candidate tasks are screened in the same way: a Titanic classification task, a MetaMaze task, ETTh1 forecasting and Forest Cover classification. A candidate joins the T1 set when its noise-floor run completes with a determinism pass. It then joins the label runs through an addendum to their authorisation, with the same code, the same $K$ and the same rules. A candidate that does not pass is reported in the funnel. Membership is decided by these checks and not by a date. \TBD{Final T1 node set; per node the probability of a wrong decision; the funnel with every screened candidate.}
+The T0 noise criterion does not select T1 tasks. The funnel reports the probability of a wrong decision for each task. The labels require a baseline census, fixed-seed determinism in the noise-floor run and, where required, a cross-host check. Four candidates are screened. A determinism pass admits the task to the label runs through an authorisation addendum. On admission, Titanic and MetaMaze join arm training and the primary gate under MLGym. Eligible 1GC tasks, ETTh1 and Forest Cover, are labelled by G.5 and reported per task, outside arm training and the gate. The new split uses the original rule and salt, preserving assignments for T0 and the original eight T1 tasks. Failed candidates stay in the funnel. \TBD{Final labelled tasks, gate population and screening funnel.}
 
 % New 26 Nov 2026 (R1-G5-DIFF-RECOUNT; G.4b pilot result of 25 Nov; R1-BX-D14-G4B).
 \paragraph{Pilot of the T1 label runs.}
@@ -101,7 +101,9 @@ The ten seeds have two roles that never mix:
 The evaluation block is never used to train, tune or select any arm. An earlier pilot that shared seeds between the two roles passed its gate spuriously, which is why the roles are separated.
 
 \paragraph{Soft labels.}
-The training label of an eligible proposal is a distribution over 12 bins of the standardised increment: one no-op bin, and 11 bins with edges $-\infty,-3,-2,-1,-0.5,-0.15,0.15,0.5,1,2,3,+\infty$. It is the normal distribution centred at the label-block mean with standard deviation $\sigma_{\mathrm{node}}/\sqrt{5}$, integrated over the bins. No arm of the ladder is trained on hard labels.
+The training label of an eligible proposal is a distribution over 12 bins of the standardised increment: one no-op bin, and 11 bins with edges $-\infty,-3,-2,-1,-0.5,-0.15,0.15,0.5,1,2,3,+\infty$. Under the Gaussian label model, it is a normal distribution centred at the label-block mean with standard deviation $\sigma_{\mathrm{node}}/\sqrt{5}$, integrated over the bins. No arm of the ladder is trained on hard labels.
+
+For the seven original T1 tasks covered by the G.5 tail declaration, the ogbn-arxiv and MinAtar Breakout label models use Student-$t$ tails with five degrees of freedom. The MLAgentBench CIFAR-10 and IMDb tasks and the MLGym CIFAR-10, Fashion-MNIST and house-price tasks use Gaussian tails. The declaration uses excess kurtosis of paired differences across 30 joint seeds, before any label is assembled. \TBD{Tail declaration for the remaining tasks and the scale rule from the published G.5 note.}
 
 \paragraph{Sealing and staged release.}
 An audit writes its raw seed runs and the two blocks into a sealed directory with a completion record that binds every input and output hash. A reader recomputes both blocks from the raw runs before use. Access is staged by the preregistration. First, only the label blocks of training and development instances are released. Arms are trained, selected and calibrated on them. Then an \emph{arms-frozen record} is committed with the hashes of every arm, split and gate file. Only after that are the test label blocks and all evaluation blocks released. A code lock enforces the order. A lock forbids a read but cannot prevent a deliberate one, which counts as a stop.
@@ -219,10 +221,26 @@ Three rules from the literature run beside the four arms of the decomposition:
 \item a commit gate in the style of PACE \citep{shawn2026pace}: a betting e-process on the paired metric differences of replicate runs, used with the constants of its existing implementation; it is not a reproduction of PACE;
 \item the margin rule of the Ladder \citep{blum2015ladder}, which keeps a candidate when its observed increment exceeds a margin per node, and screens nothing.
 \end{itemize}
-Fixed replication and the commit gate are charged for every replicate run. The constants of A1 and A2, and the margins, are fitted on the development label block of sweep~2 and pinned before the first run; each margin is found by direct search. No arm of this stage reads a test label or an evaluation value, and no output of the stage trains, tunes or selects an arm. \TBD{If the direct measurement of a shared noise component finds one on a node, a seventh arm with a corrected keep threshold may be added before the pre-declaration is signed; then update the arm list, the family and the results table.}
+The three reference rules have the rule layer off. Fixed replication and the commit gate charge each replicate. The constants of A1 and A2 and the margins are fitted on the development label block of sweep~2 and pinned before the first run; each margin is found by direct search. This phase uses no test labels or evaluation values. Its outputs train, tune and select no arm.
+
+\paragraph{Contrast families and design sensitivity.}
+D.3a tests A0R $-$ A0, A2 $-$ A0R, A1 $-$ A0, A2 $-$ A0, FIXR3 $-$ A0, EGATE $-$ A0, LADDER $-$ A0 and LADDER $-$ A2. D.3b tests A3 $-$ A2, A5 $-$ A2, A3 $-$ A0, A5 $-$ A0 and A5 $-$ A3, plus A6 $-$ A5 if A6 enters. Each contrast is a paired difference in audited gain $Y$. We average within each node and weight the seven nodes equally. Each family uses two-sided tests with Holm at 0.05. With 126 pairs and the normal approximation at Holm's first step, an 80\% power calculation gives detectable differences of $0.319\,\mathrm{sd}(D)$ for D.3a and $0.304\,\mathrm{sd}(D)$ for D.3b (five contrasts), where $\mathrm{sd}(D)$ is the assumed common within-node standard deviation of the paired difference. These figures describe the design. The measured effects and intervals go in Table~\ref{tab:closed}.
+
+\subsubsection{Declared readings}
+\label{app:d3-readings}
+A Holm rejection of A2 $-$ A0 with a positive estimate establishes a rule gain. If A2 $-$ A0R rejects favourably, the one-step rule adds gain. Otherwise a favourable A0R $-$ A0 supports the reading that de-duplication raises audited gain and the one-step rule adds no demonstrated gain. This qualifies rows 1--4 of Table~\ref{tab:readings}. If neither component rejects favourably, attribution is unresolved.
+
+A Holm rejection of A3 $-$ A2 or A5 $-$ A2 with a positive estimate establishes a learned gain. A rejection with a negative estimate is reported even if the other arm gains. If A2 has no demonstrated gain over A0, report that result and any harm, alongside any separately established learned gain over A2 and its interval. Report the contrasts against A0 separately. If D.3b stops, report the reason and the available D.3a results.
+
+A statistical gate STOP, such as no eligible node or a nonpositive test denominator, leaves no one-step verdict. With both a rule and a learned gain, use only the campaign part of row 1. With a rule gain and no learned gain, state the two campaign outcomes. With no rule gain, use the campaign reading of row 5.
+
+\subsubsection{Further campaign details}
 
 \paragraph{The conditional arm A6.}
 A6 enters the closed loop only if it was trained after a gate that passes, on the training and development label blocks only, and frozen in its own record before the learned arms run. Its contrast is A6 against A5. This condition is unchanged; only A3 and A5 run whatever the gate shows.
+
+\paragraph{Verify and audit seeds.}
+The D.3 harness must use verify seeds disjoint from the D21 noise-floor block and all other declared namespaces. Verification happens inside the campaign. The fresh-seed audit measures every kept incumbent and supplies $Y$ and the last run that improved it. \TBD{Reviewed harness pin, verify-seed namespace and disjointness record from the frozen declaration.}
 
 \paragraph{Charging.}
 A proposal that the rule layer skips is charged no worker run. A replicate run is charged as a worker run. Arms are matched on the budget, not on realised use: an arm that skips can issue more manager calls, up to the common cap. \TBD{From the signed pre-declaration: whether a skip counts as a manager call, how a skip appears in the manager's memory (the 23 Nov text: one line without a metric), the rule that ends a campaign, and how a repeated attempt after an infrastructure failure is charged.}
@@ -234,7 +252,7 @@ The following are written into the pre-declaration before any run. They are desc
 \item[(b)] \emph{Compute per campaign.} Worker runs and worker seconds, manager calls and tokens, proposer GPU-seconds, controller inference seconds and wall-clock time.
 \item[(c)] \emph{Runs-to-match.} Per node, the smallest $w$ at which an arm's mean $Y(w)$ reaches A0's mean $Y(20)$.
 \item[(d)] \emph{Mechanism counts per campaign.} Duplicates proposed and executed, rule skips, value skips, keeps, distinct configurations executed, and the last charged run that improved the audited incumbent.
-\item[(e)] \emph{Offline--online agreement.} Per node and arm, the gate's per-node utility beside the arm's closed-loop $Y$, with the rank agreement of the arms. It uses only outputs that the preregistered analysis already writes.
+\item[(e)] \emph{Offline--online agreement.} Per node, compare offline utility with closed-loop $Y$ for A2, A3 and A5, and give the rank agreement. A0 and A1 join only if their post-freeze test rows are available.
 \item[(f)] \emph{Learning by tier.} A5 against A3 and A5 against A2, separately for T0 and T1, from the per-node and per-tier tables of the preregistration.
 \end{itemize}
 

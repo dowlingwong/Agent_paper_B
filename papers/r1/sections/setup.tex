@@ -14,7 +14,7 @@ Details are in Appendix~\ref{app:design}, and every departure from an earlier pl
 T0 has eight CPU training nodes: two multilayer-perceptron tasks (digits, and a synthetic tabular task) and six OpenML classification tasks \citep{vanschoren2013openml}: breast-w, ionosphere, wdbc, credit-approval, sonar and climate-model-simulation-crashes. On T0 a proposal changes a single configuration parameter. Every decision can then be audited cheaply. The primary analysis uses seven nodes; the eighth, \texttt{openml\_wdbc}, missed one liveness criterion and is a pre-declared sensitivity row.
 
 \paragraph{Tier T1: GPU nodes.}
-T1 takes task assets from three public suites and runs them as nodes of our own loop: autoresearch \citep{autoresearchloop}, MLGym \citep{mlgym2025} and MLAgentBench \citep{mlagentbench}. On T1 a proposal is a code-level diff. Eight T1 nodes are prepared, and four further candidates are screened. A node enters by passing a fixed-seed determinism check, not by a noise threshold or a date (Appendix~\ref{app:nodes}). \TOneNodesUsed
+T1 uses code-level diffs on eight tasks from autoresearch \citep{autoresearchloop}, MLGym \citep{mlgym2025} and MLAgentBench \citep{mlagentbench}. Each expansion task must pass determinism and join by addendum. MLGym additions enter the arms and gate. 1GC additions are labelled and reported separately (Appendix~\ref{app:nodes}).
 
 \paragraph{Logged sweeps.}
 A \emph{sweep} runs the default loop with a language-model manager and logs every proposal. Two T0 sweeps use the same eight nodes and 18 instance seeds per node, with $W=20$ worker runs per campaign. Sweep~2 is the main source; its proposer was selected by an exam under a rule frozen in advance (Appendix~\ref{app:exam}). Sweep~1 used a smaller manager. T1 label runs use the main proposer, with 12 instances per node.
@@ -36,7 +36,7 @@ Seven rule arms run: A0, A0R, A1, A2 and the three reference rules of Table~\ref
 The noise-aware part of the question rests on A2 $-$ A0R and A1 $-$ A0; A2 $-$ A0 alone does not separate it from de-duplication. The remaining contrasts of this family are each rule arm against A0, and the margin rule against A2. The constants of A1 and A2 are fitted on the development label block of sweep~2 and pinned before the first run. No arm of this family reads a test label, so these campaigns do not wait for the gate.
 
 \paragraph{Learned arms.}
-A3 and A5 run exactly as frozen in the arms-frozen record, on the same instances and seeds. They run whether or not the offline gate passes. The contrasts are A3 and A5 against A2 and against A0, and A5 against A3. Contrasts are tested two-sided, with a Holm step-down at family-wise level 0.05 within each family. \TBD{Multiplicity of the enlarged families, from the signed pre-declaration.}
+A3 and A5 run as frozen on the same instances and seeds regardless of the gate verdict. D.3a tests eight rule-arm contrasts. D.3b tests five learned-arm contrasts, or six if A6 enters. Tests are two-sided, with Holm at 0.05 within each family (Appendix~\ref{app:closed}).
 
 \paragraph{Secondary outcomes and reference rows.}
 Declared before any run, and descriptive: the budget curve $Y(w)$ at $w=5,10,15,20$, compute per campaign, runs-to-match against A0, mechanism counts, the agreement between each arm's offline utility and its closed-loop outcome, and the learned arms by tier. Two classical configuration methods, random search with de-duplication and SMAC3 \citep{lindauer2022smac}, replace the manager on the same instances as reference rows. On three T1 nodes, A0, A2, A3 and A5 run a descriptive closed loop on new instances. Both are optional: they enter if complete and reviewed when the required parts are (Appendix~\ref{app:closed}).
@@ -52,28 +52,23 @@ The gate has low power. In the simulation that fixed the pass rule, the mean two
 
 \subsection{Declared readings}
 \label{sec:setup-readings}
-% The four open points named in the caption of Table tab:readings (27 Nov, trim; full text in the claim sheet,
-% section 5, items 1, 2a, 2b and the reviewer's note N2): the operational definition of the first two columns in
-% terms of the pre-declared contrasts; the reading when A2 > A0 comes from the rule layer alone; the reading when a
-% learned arm gains over A0 and A2 does not; the reading of a statistical stop of the gate.
-
-The gate does not decide which arms run in the closed loop; this was fixed before the gate was read, before any arm was frozen and before any closed-loop campaign ran (Table~\ref{tab:dev-nov}). Table~\ref{tab:readings} gives the reading of every combination of outcomes, written before any of them was known.
+A2 $>$ A0 means Holm rejects A2 $-$ A0 with a positive estimate. Learned gain applies the same rule to A3 $-$ A2 or A5 $-$ A2. Table~\ref{tab:readings} gives the joint readings. If the gate stops without a verdict, the closed-loop contrasts carry the headline on their own.
 
 \begin{table}[t]
-\caption{Declared readings. Reading guide: each row is one combination of the closed-loop outcome of the rule arms, the closed-loop outcome of the learned arms and the offline gate; the last column is what the paper says. \TBD{Four open points of the readings, from the signed pre-declaration.}}
+\caption{Declared readings for the two experiments. Appendix~\ref{app:d3-readings} specifies attribution and exceptions.}
 \label{tab:readings}
 \centering
 \footnotesize
 \setlength{\tabcolsep}{2.5pt}
-\begin{tabular}{L{0.42in}L{0.5in}L{0.3in}L{1.75in}}
+\begin{tabular}{L{0.42in}L{0.47in}L{0.27in}L{1.8in}}
 \toprule
-Rule arms & Learned arms & Gate & Reading \\
+Rule gain & Learned gain & Gate & Reading \\
 \midrule
-A2 $>$ A0 & A3 or A5 $>$ A2 & pass & Learned control raises audited gain at a matched budget; the decomposition says how much each part adds. \\
-A2 $>$ A0 & A3 or A5 $>$ A2 & fail & The same reading, from the closed loop. The gate is reported as measured, with its power. The disagreement between the two levels is a finding. \\
-A2 $>$ A0 & no gain over A2 & pass & One-step gains do not carry into the loop; the mechanism counts and the agreement table say where they are lost. \\
-A2 $>$ A0 & no gain over A2 & fail & Noise-aware rule control is enough at this task complexity. Effect sizes and intervals bound what learning could add; the tier table says whether this changes with code-level edits. \\
-no gain over A0 & any & any & The measured negative: on these tasks the loop is not limited by its keep and screen decisions. The control errors and the theory stand. \\
+Yes & Yes & pass & Learned control raises campaign gain; the offline gate also shows a one-step gain. \\
+Yes & Yes & fail & Learned control raises campaign gain; the two measures disagree. \\
+Yes & No & pass & A one-step gain did not carry into the loop. Examine mechanism counts and agreement. \\
+Yes & No & fail & Rule control improved the loop. Learning added no demonstrated gain. Give intervals and offline gains by tier. \\
+No & Any & any & A2 showed no demonstrated gain over A0. Report any separate learned gain and any harm. \\
 \bottomrule
 \end{tabular}
 \end{table}

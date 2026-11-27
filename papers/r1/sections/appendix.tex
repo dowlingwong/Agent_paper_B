@@ -5,7 +5,7 @@
 \section{Deviations and Post-hoc Amendments}
 \label{app:deviations}
 
-Tables~\ref{tab:dev-exam}--\ref{tab:dev-rules} list every departure from an earlier declared plan that we know of. Each row gives what was planned, what changed, when the change was decided relative to the data it could affect, and the identifier of the dated decision record in the project's decision log. The log is part of the anonymised artifact. \TBD{Confirm that the anonymised artifact includes the decision log with these identifiers.}
+Tables~\ref{tab:dev-exam}--\ref{tab:dev-27nov} list every departure from an earlier declared plan that we know of. Each row gives what was planned, what changed, when the change was decided relative to the data it could affect, and the identifier of the dated decision record in the project's decision log. The log is part of the anonymised artifact. \TBD{Confirm that the anonymised artifact includes the decision log with these identifiers.}
 
 Three terms are used in the timing column. \emph{Collection data} are the proposals and in-campaign results of a sweep. \emph{Audit labels} are fresh-seed audit values. \emph{Evaluation values} are the audit values of the evaluation seeds, which no training, tuning or selection step may read.
 
@@ -276,6 +276,28 @@ R1-P4-TESTPLAN-DECISIONS \\
 \end{table*}
 
 
+\begin{table*}[t]
+\caption{Changes decided on 27 November 2026. The G.5 changes preceded label assembly. The D.3 changes preceded the gate and all closed-loop runs.}
+\label{tab:dev-27nov}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{L{0.8in}L{1.3in}L{2.8in}L{1.3in}}
+\toprule
+Item & Earlier plan & What changed & Record \\
+\midrule
+G.5 tails & Gaussian label model & Student-$t$ with five degrees of freedom for ogbn-arxiv and MinAtar Breakout. Gaussian for the other five tasks in the reviewed pre-label record. & R1-G5-TAILS \\
+\addlinespace
+G.5 host tests & All C1--C15 tests expected before publication & Publication needs independently reviewed pre-run host checks. C12 uses the signed acceptance line. A short C10 check covers one restart before publication. The full span is checked during the run; C15 assembly and release checks are due before first use. C16 precedes the first TASL-7 audit chunk. & R1-G5-P11 \\
+\addlinespace
+T1 expansion & Determinism-qualified tasks join G.5; split and gate handling open & The split extends using the same rule and salt. Eligible MLGym expansion tasks join arm training and the primary gate. Eligible 1GC tasks are labelled and reported separately. & R1-G5-S9 \\
+\addlinespace
+D.3 verify seeds & Harness verify range overlapped the D21 block & Require a reviewed harness pin and a disjoint verify range. Freeze after the check and review. & R1-D3-VERIFY-SEED \\
+\addlinespace
+D.3 analysis and readings & Separate rule and learned stages; five headline readings & Eight rule and five learned contrasts (six with A6); Holm within each. Specify gain attribution, gate STOP and the design sensitivity before results. & R1-D3-PREDECL-R4 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
 \section{Components Outside the Submission Version}
 \label{app:scope}
 
@@ -488,7 +510,7 @@ The computations are in Appendix~\ref{app:theory}. For (b), with $N=2$ and (NF),
 \label{app:results}
 
 % Added 23 Nov 2026 (results prose); AI-assisted. Table shells only; every value is a placeholder.
-This appendix holds the per-node and secondary tables to which Section~\ref{sec:results} refers. Only the primary read of Table~\ref{tab:ladder} carries a verdict; every entry here is descriptive. Short node names: digits and tabular are the two MLP tasks, climate is climate-model-simulation-crashes, and credit is credit-approval.
+This appendix holds per-node and secondary tables for Section~\ref{sec:results}. Gate tables accompany a completed read. Short node names: digits and tabular are the two MLP tasks, climate is climate-model-simulation-crashes, and credit is credit-approval.
 
 % Revised 23 Nov 2026 (R1-CONTROLS-NEG-DROP): positive control only; AI-assisted. Values are placeholders.
 \begin{table}[t]
@@ -539,6 +561,7 @@ Pooled & \Cell & \Cell & \Cell & \Cell \\
 \end{tabular}
 \end{table}
 
+\ifGateStopped\else
 \begin{table*}[t]
 \caption{Per-node statistics of the primary gate read. Reading guide: $z$ is the paired $z$ statistic of the oracle minus A2 over training and development instances, and eligibility needs $z\ge3$; the development denominator must reach the node's practical threshold $\delta_n$; a node that is not eligible or is below the test floor is outside the IQM and inside the PoI; the last column counts the test proposals and instances left out as repeats. Per-node values carry no verdict. \TBD{Rows for the T1 nodes of the arms-frozen record; off-split and off-design counts.}}
 \label{tab:app-gate-nodes}
@@ -669,10 +692,11 @@ sonar & \Cell & \Cell & \Cell \\
 \end{tabular}
 \end{table}
 \fi
+\fi
 
 % Added 26 Nov 2026 (R1-D3-OUTCOMES2, R1-D3-ORDER); AI-assisted. Table shells only; every value is a placeholder.
 \begin{table*}[t]
-\caption{Every closed-loop arm on T0 at a matched budget. Reading guide: $\bar Y$ is the mean of $Y$ over nodes; a difference is paired by instance and shown with its 95\% interval, and a star marks a rejection by the two-sided Holm step-down within the arm's family; runs and calls are means per campaign. The learned arms ran whatever the offline gate showed. The reference proposers replace the manager; their rows are descriptive and outside the tested families. \TBD{If the reference proposers were not complete when the paper was assembled, their rows are removed and the text says so.}}
+\caption{Every closed-loop arm on T0 at a matched budget. Reading guide: $\bar Y$ is the mean of $Y$ over nodes; a difference is paired by instance and shown with its 95\% interval, and a star marks a rejection by the two-sided Holm step-down within the arm's family; runs and calls are means per campaign. \ifLearnedNotRun D.3b stopped before analysis.\else A3 and A5 run regardless of the offline gate verdict.\fi The reference proposers replace the manager; their rows are descriptive and outside the tested families. \TBD{If the reference proposers were not complete when the paper was assembled, their rows are removed and the text says so.}}
 \label{tab:closed}
 \centering
 \footnotesize
@@ -686,8 +710,12 @@ A0R & default keep rule with the rule layer & \LoopYAZeroR & \LoopDAZeroRvAZero 
 A1 & one-step rule, constant forecast & \LoopYAOne & \LoopDAOnevAZero & & \Cell & \Cell \\
 A2 & A1 with the rule layer & \LoopYATwo & \LoopDATwovAZero & reference & \Cell & \Cell \\
 \midrule
+\ifLearnedNotRun
+\multicolumn{7}{l}{D.3b stopped. Arm outcomes and contrasts not estimated.} \\
+\else
 A3 & tabular forecast & \LoopYAThree & \LoopDAThreevAZero & \LoopDAThreevATwo & \Cell & \Cell \\
 A5 & fine-tuned small language model & \LoopYAFive & \LoopDAFivevAZero & \LoopDAFivevATwo & \Cell & \Cell \\
+\fi
 \midrule
 FIXR3 & three runs, Welch test & \LoopYFixR & \LoopDFixRvAZero & & \Cell & \Cell \\
 EGATE & e-process on replicate runs & \LoopYEGate & \LoopDEGatevAZero & & \Cell & \Cell \\
@@ -714,8 +742,10 @@ A0 & \Cell & \Cell & \Cell & \Cell & \Cell \\
 A0R & \Cell & \Cell & \Cell & \Cell & \Cell \\
 A1 & \Cell & \Cell & \Cell & \Cell & \Cell \\
 A2 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+\ifLearnedNotRun\else
 A3 & \Cell & \Cell & \Cell & \Cell & \Cell \\
 A5 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+\fi
 \midrule
 Arm & Worker seconds & Manager calls & Tokens & GPU seconds & Controller seconds \\
 \midrule
@@ -723,12 +753,16 @@ A0 & \Cell & \Cell & \Cell & \Cell & \Cell \\
 A0R & \Cell & \Cell & \Cell & \Cell & \Cell \\
 A1 & \Cell & \Cell & \Cell & \Cell & \Cell \\
 A2 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+\ifLearnedNotRun\else
 A3 & \Cell & \Cell & \Cell & \Cell & \Cell \\
 A5 & \Cell & \Cell & \Cell & \Cell & \Cell \\
+\fi
 \bottomrule
 \end{tabular}
 \end{table*}
 
+\ifGateStopped\else
+\ifLearnedNotRun\else
 \begin{table*}[t]
 \caption{Offline--online agreement per T0 node. Reading guide: for each arm, the gate's per-node offline utility $U$ beside the arm's mean closed-loop $Y$; the last row is the rank agreement of the arms across the two levels. Descriptive; agreement is not a test of decision independence.}
 \label{tab:app-agree}
@@ -753,6 +787,7 @@ Rank agreement & \multicolumn{6}{c}{\Cell} \\
 \end{tabular}
 \end{table*}
 
+\fi
 \begin{table}[t]
 \caption{The learned arms by tier, offline. Reading guide: differences in offline utility from the per-tier tables of the preregistered analysis; T0 has single-parameter edits and T1 code-level diffs. Descriptive.}
 \label{tab:app-tier}
@@ -767,6 +802,7 @@ T1 & \Cell & \Cell \\
 \bottomrule
 \end{tabular}
 \end{table}
+\fi
 
 \begin{table}[t]
 \caption{Descriptive closed loop on three T1 nodes. Reading guide: mean $Y$ per arm and node, with the paired difference to A0 and its interval. No verdict. \TBD{Removed, with a sentence in its place, if the loop was not complete when the paper was assembled.}}

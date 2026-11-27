@@ -119,26 +119,16 @@ Correction round, 26 Nov 2026: the eighteen MINOR findings and the notes of
 
 ## 5. For the author to confirm or decide
 
-Each item is a claim or a reading that the manuscript now words and that the rows do not fix word for word.
+Items 1, 2, 2a, 2b, 7 and 8 are settled by R1-D3-PREDECL-R4. Other items remain for review.
 
-1. **What "A2 > A0" and "A3 or A5 > A2" mean in the five readings.** The proposal's §6 does not say. Draft
-   operational reading: the Holm rejection, in the favourable direction, of A2 − A0 in the D.3a family; and of
-   A3 − A2 or A5 − A2 in the D.3b family. A significant difference in the wrong direction needs a reading too.
-   Recommendation: fix this in revision 4 of the D.3 pre-declaration, so the switches `\ifRuleGain` and
-   `\ifLearnedGain` are set by rule. The manuscript carries a placeholder for it (`tab:readings`).
-2. **The fifth reading.** The declared reading that R1-ALIGN-OUTCOME adopts includes "Not an ICML submission in the
-   present form." The manuscript writes the measured negative and keeps that sentence out of the paper text. Confirm
-   that it stays out of the text.
-2a. **A gain that comes from the rule layer alone.** (The corrected manuscript now opens readings three and four with
-   "Rule-based control" and points to the decomposition; `tab:readings` keeps the declared "noise-aware rule control
-   is enough". Text and table differ until the author rules.) If A2 − A0 and A0R − A0 are rejected and A2 − A0R is not, readings
-   three and four would still open with "Noise-aware rule control raises the audited gain", which credits the one-step
-   rule with a de-duplication gain. The five readings do not separate this case. Recommendation: revision 4 states it,
-   and the headline then says "de-duplication raises the audited gain; the one-step rule adds no demonstrated gain".
-   This refines a declared reading, so it is the author's decision.
-2b. **A statistical STOP of the gate** (no eligible node, or a nonpositive test denominator) is neither pass nor fail.
-   `tab:readings` has no row for it and its text is not drafted. Recommendation: the closed-loop reading stands on
-   its own and the gate is reported as a STOP with no verdict; to be declared before the read.
+1. **Rule and learned gains.** In each two-sided family, Holm must reject a contrast with a positive estimate. Rule
+   gain uses A2 − A0. Learned gain uses A3 − A2 or A5 − A2.
+2. **The fifth reading.** The venue recommendation stays in the plan. The manuscript states that A2 showed no
+   demonstrated gain, reports any harm and gives any separate learned gain over A2 with its interval.
+2a. **Rule layer alone.** If A2 gains over A0 and A0R gains over A0, with no favourable rejection of A2 − A0R,
+   the manuscript credits de-duplication and states that the one-step rule adds no demonstrated gain.
+2b. **Statistical gate STOP.** The manuscript records the reason without a gate verdict and reads the closed-loop
+   contrasts on their own.
 3. **The contribution order and wording** in the introduction (the order follows R1-ALIGN-OUTCOME; only the wording
    is open): closed-loop decomposition; offline test of the
    one-step claim; control errors as supporting evidence; the rule and its scope.
@@ -150,26 +140,31 @@ Each item is a claim or a reading that the manuscript now words and that the row
 5. **The section title "The One-Step Rule and Its Scope"** and the move of the selection-bias proposition and the
    failure examples to the appendix. The main text keeps two statements, both with an author-checked source.
 6. **How the proof status is disclosed** (R1-PROOF-POLICY fixes what must be said; the wording is open; the note is now at the start of the theory appendix).
-7. **Offline–online agreement covers A2, A3 and A5 only** in the draft table. A0R and the three reference rules have
-   no offline read (R1-D3-DECOMP; R1-D3-MIN; for LADDER, R1-MINSUB-CHOICES (4)). A0 and A1 can join if the post-freeze amendment's test rows exist.
-   Confirm that this is the intended scope of R1-D3-OUTCOMES2 (e).
-8. **A statement of what D.3 can detect.** The results text reserves a sentence for the smallest difference the design
-   could detect. The pre-declaration draft would need to state it. If it will not, the sentence is removed.
+7. **Offline–online agreement.** Per node for A2, A3 and A5. A0 and A1 can join if the post-freeze test rows exist.
+8. **D.3 design sensitivity.** Appendix design details give the detectable differences at the first Holm step under
+   the signed design assumptions.
 9. **The disclosure row on incidental terminal output from sealed files** (R1-P4-TESTPLAN-DECISIONS, P4-INCID A) is
    worded from the runner report. That it is cited is decided (P4-INCID A); confirm the wording.
 10. **Committed facts used in the text:** 3,274 duplicates among 4,999 replayed proposals of sweep 1 (introduction),
     and the T1 pilot's 126 of 180 proposals run, 0.62 to 0.82 per node (appendix; an engineering pilot, cited as a
-    pilot). Confirm that the pilot may be quoted. The introduction also quotes two figures from other papers (49.9 % of neutral
-    candidates kept; an apparent gain 2.7 times a threshold), carried over from the 23 Nov text. R1-C1-POSITION
-    requires both to be checked against the PDFs before submission; that check is not recorded yet.
+    pilot). Confirm that the pilot may be quoted. External-source audit (writer/20261127-01, R1-C1-POSITION):
+
+    | Figure in the earlier draft | Primary source inspected | Disposition |
+    |---|---|---|
+    | 49.9% of exact-neutral candidates kept | [Jalaian and Dasari, NeurIPS workshop abstract](https://neurips.cc/virtual/2026/156529). The abstract attributes the rate to best-of-one replay on repeated runs of a distillation and quantisation pipeline. | Removed from the introduction and related-work appendix. [OpenReview PDF](https://openreview.net/pdf?id=ST7MiylIdO) returned a verification challenge; a PDF page and sentence could not be verified. |
+    | 2.7 times the meaningful-effect threshold | [Grover, NeurIPS workshop abstract](https://neurips.cc/virtual/2026/157611). The ratio refers to the expected apparent gain from selecting the best of 32 nanoGPT runs. | Removed from both sections. [OpenReview PDF](https://openreview.net/pdf?id=x3lY2QO0Xe) returned a verification challenge; a PDF page and sentence could not be verified. |
+
+    The manuscript retains qualitative findings supported by the abstracts. The bibliography gives the author names from the same event pages.
+
+### Decisions of 27 November
+
+- R1-D3-PREDECL-R4 resolves items 1, 2a, 2b, 7 and 8 above. Revision 4 §7.4 defines favourable rejections, attribution to the rule layer, and a statistical gate STOP. A learned gain in row 5 is reported with its interval. An unfavourable rejection is reported as harm. The matching method and reading templates are in papers/r1. The sensitivity figures (0.319 and 0.304 times the assumed within-node standard deviation of the paired difference) describe the design at Holm's first step with 80% power.
+- R1-G5-S9 separates the MLGym expansion tasks in the arms and gate from the separately reported 1GC tasks. R1-G5-TAILS and R1-G5-P11 set the pre-label tail choices and the timing of host checks. R1-D3-VERIFY-SEED requires a disjoint verify-seed block. Realised populations, effect sizes and the frozen-declaration bindings remain open.
 
 ## 6. For the design agent and the coordinator
 
-- Revision 4 of the D.3 pre-declaration (`local/20261126-03`) should state: the two families with their contrasts as
-  in §3.1 (D.3a: A0R − A0, A2 − A0R, A1 − A0, A2 − A0, FIXR3 − A0, EGATE − A0, LADDER − A0, LADDER − A2; D.3b:
-  A3 − A2, A5 − A2, A3 − A0, A5 − A0, A5 − A3, and A6 − A5 should A6 enter) and their multiplicity; the rule for item 1 of §5; whether the rule
-  layer is on for FIXR3, EGATE and LADDER (the table of arms has a placeholder); how a repeated attempt after an
-  infrastructure failure is charged; and the detectable difference of item 8.
+- The author settled the contrast families, readings, reference-rule settings, repeat charging and detectable
+  difference in revision 4. The frozen pre-declaration and bindings are still pending.
 - The outcome-table unit of the D.3 chain should write the macros of §3.1 by name into `generated/numbers.tex`, block (b2).
 - If the screening measurement adds a further rule arm (the "seventh" of R1-D3-CHOICES (1); the eighth since A0R), `tab:arms`, `tab:closed`, the family in
   §3.1 and this sheet change together.
