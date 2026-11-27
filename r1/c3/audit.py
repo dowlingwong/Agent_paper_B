@@ -272,10 +272,10 @@ def _copy_audit_node(source: Path, destination: Path, files: dict[str, str], edi
 def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, stop_on_failure: bool = False,
                journal: str | None = None, journal_identity: dict | None = None, *,
                preserve_node_outputs: bool = False, stop_on_invalid: bool = False,
-               continue_on_divergence: bool = False) -> list[dict]:
+               continue_on_divergence: bool = False, prepare_cache=None) -> list[dict]:
     """Run one configuration at the given joint seeds (subprocess-safe). ``continue_on_divergence`` (only the D4 option-B
     contingency, ``audit_d4b``) keeps running the remaining seeds after a divergent seed run; any other failure still
-    ends the configuration."""
+    ends the configuration. A supplied cache stager returns a checker that runs after each seed."""
     from r1.harness import import_harness
     harness = import_harness()
     from autoresearch.manager.base import ManagerProposal
@@ -288,11 +288,17 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, sto
     # Unique work directories and copied artifacts consume increasing storage.
     out = []
     node_dir = work / node
-    _copy_audit_node(harness / "nodes" / node, node_dir, files, spec.editable_paths)
-    if node.startswith("openml_") and not (node_dir / "data_cache").exists():
-        cache = harness / PILOT_DATA_CACHE.format(node=node)
-        if cache.exists():
-            shutil.copytree(cache, node_dir / "data_cache")
+    def prepare_node():
+        _copy_audit_node(harness / "nodes" / node, node_dir, files, spec.editable_paths)
+        if prepare_cache is not None:
+            return prepare_cache(node_dir)
+        if node.startswith("openml_") and not (node_dir / "data_cache").exists():
+            cache = harness / PILOT_DATA_CACHE.format(node=node)
+            if cache.exists():
+                shutil.copytree(cache, node_dir / "data_cache")
+        return None
+
+    check_cache = prepare_node()
     worker_type = LocalWorker
     if preserve_node_outputs:
         from r1.exam.b1_worker_artifact_guard import GuardedTrialPath
@@ -318,6 +324,8 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, sto
             from r1.exam.b1_node_artifacts import preserve_node_artifacts
             preserve_node_artifacts(node_dir)
         res = worker.run_trial_at_seed(noedit, spec, i + 1, train_seed=s, split_seed=s)
+        if check_cache is not None:
+            check_cache()
         out.append({"seed": s, "success": bool(res.success), "failure": res.failure_message,
                     "metric": res.parsed_metrics.get(spec.metric_name) if res.success else None,
                     "changed_files": bool(res.changed_files),
@@ -337,11 +345,7 @@ def run_config(node: str, files: dict[str, str], seeds: list[int], tmp: str, sto
             # a divergent run (it did not end the configuration): the next seed gets a fresh copy of the node; the
             # used copy is kept beside it
             node_dir.rename(work / f"{node}.diverged_seed{s}")
-            _copy_audit_node(harness / "nodes" / node, node_dir, files, spec.editable_paths)
-            if node.startswith("openml_") and not (node_dir / "data_cache").exists():
-                cache = harness / PILOT_DATA_CACHE.format(node=node)
-                if cache.exists():
-                    shutil.copytree(cache, node_dir / "data_cache")
+            check_cache = prepare_node()
         if stop_on_invalid:
             metric = out[-1]['metric']
             if not out[-1]['success'] or isinstance(metric, bool) or not isinstance(metric, (int, float)) or not math.isfinite(metric):
