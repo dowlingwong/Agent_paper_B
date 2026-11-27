@@ -115,6 +115,7 @@
   "lc_seed": 20261122,
   "micro_batch": 8,
   "effective_batch": 16,
+  "gradient_checkpointing": {"kev-4b": true, "qwen3.5-4b-base": true},
   "duplicate_policy": "heldout_excludes_seen",
   "real_label_test_read": "none",
   "bootstrap": {

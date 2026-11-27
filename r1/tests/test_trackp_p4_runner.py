@@ -1022,7 +1022,7 @@ def job_world(sweep, tmp_path, monkeypatch):
         "label_freeze": {"path": "docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md", "sha256": "8" * 64}})
     monkeypatch.setattr(L, "stage", lambda spec, arm, clone, job_dir, sh: {"weights": {"kev-0.8b/a": "1" * 64}})
     monkeypatch.setattr(L, "check_local_paths", lambda arm, clone, job_dir: {})
-    monkeypatch.setattr(L, "test_path", lambda clone, job_dir, arm, ins, sh: {"labels": "synthetic"})
+    monkeypatch.setattr(L, "test_path", lambda clone, job_dir, arm, ins, sh, **kw: {"labels": "synthetic"})
     calls = []
     state = {"oom_at": None}
 
@@ -1041,8 +1041,11 @@ def job_world(sweep, tmp_path, monkeypatch):
             train, val, vs, man = SD.load_sft_data(data, secondary=True)
             from r1.c3.train.model import new_head_parameters
             model = tiny.build_hashbag(seed=int(a["--seed"]))
+            protocol = {**SFT.DEFAULT_PROTOCOL, "micro_batch": 8}
+            if "--p4-gradient-checkpointing" in args:
+                protocol["gradient_checkpointing"] = True
             SFT.run_stage_s(model, train, val, Path(a["--run-dir"]) / "stage_s",
-                            {**SFT.DEFAULT_PROTOCOL, "micro_batch": 8}, lr=float(a["--lr"]), seed=int(a["--seed"]),
+                            protocol, lr=float(a["--lr"]), seed=int(a["--seed"]),
                             head_params=new_head_parameters(model), log=lambda x: None,
                             data_sha256=P._sha_file(data / "sft_data.json"), label_status=man["label_status"],
                             val_secondary=vs, duplicate_policy=man["cross_split_duplicates"])
@@ -1207,7 +1210,14 @@ def test_two_job_directories_give_one_comparable_record(job_world, tmp_path):
     job_b = tmp_path / "var" / "lib" / "condor" / "execute" / "dir_42"
     job_b.mkdir(parents=True)
     rec_a = L.run_job(spec_path, "kev-0.8b", job, host_class=H)
+    a_calls = [c for c in calls if c[0] == "sft-dev"]
+    calls.clear()
     rec_b = L.run_job(spec_path, "kev-4b", job_b, host_class=H)
+    b_calls = [c for c in calls if c[0] == "sft-dev"]
+    assert rec_a["gradient_checkpointing"] is False and rec_b["gradient_checkpointing"] is True
+    assert len(a_calls) == len(b_calls) and len(a_calls) >= 9
+    assert all("--p4-gradient-checkpointing" not in c for c in a_calls)
+    assert all(c[-1] == "--p4-gradient-checkpointing" for c in b_calls)
     assert rec_a["data"]["sft_data_sha256"] != rec_b["data"]["sft_data_sha256"]      # the manifests hold paths
     assert L.comparable(rec_a) == L.comparable(rec_b)
     assert rec_a["data"]["identity"]["rows_sha256"] == rec_b["data"]["identity"]["rows_sha256"]
@@ -1861,6 +1871,137 @@ def test_the_probe_template_is_the_p4_spec_with_a_probe_run_id_and_block():
         L.validate_probe_spec(copy.deepcopy(PROBE_TEMPLATE))
 
 
+@pytest.mark.parametrize("arm, enabled", [
+    ("kev-0.8b", False), ("qwen3.5-0.8b-base", False),
+    ("kev-4b", True), ("qwen3.5-4b-base", True),
+])
+def test_checkpoint_policy_only_appends_a_flag_for_4b(arm, enabled):
+    expected = ["sft-dev", "--data", "data", "--base", arm, "--lr", "1e-05", "--seed", "0", "--run-dir", "run",
+                "--steps", "50"]
+    actual = L.sft_dev_argv(arm, Path("data"), 1e-5, 0, Path("run"), ("--steps", "50"),
+                           checkpointing=PROBE_TEMPLATE["protocol"]["gradient_checkpointing"].get(arm, False))
+    assert actual == expected + (["--p4-gradient-checkpointing"] if enabled else [])
+    with pytest.raises(L.ProtocolStop, match="gradient_checkpointing"):
+        L.check_checkpointing({"gradient_checkpointing": not enabled}, enabled)
+
+
+def test_genuine_ada_4b_reprobe_scope_and_prior_pin():
+    spec = probe_filled()
+    spec["run_id"] = L.ADA_REPROBE["run_id"]
+    spec["host_class"] = "ada_rtx6000"
+    spec["hosts"]["ada_rtx6000"]["host_config"]["sha256"] = "a" * 64
+    assert L.validate_probe_spec(spec)["probe_arms"] == ("kev-4b", "qwen3.5-4b-base")
+    L.check_probe_template(spec, PROBE_TEMPLATE)
+    spec["host_class"] = H
+    with pytest.raises(L.Stop, match="both checkpointed 4B arms on Ada"):
+        L.validate_probe_spec(spec)
+    prior = ROOT / "docs/r1/reports/trackp_p4_probe_ada_20261127" / "p4_probe_spec_ada.json"
+    assert _sha(prior.read_bytes()) == L.ADA_REPROBE["prior_spec_sha256"]
+    assert L.load_spec(prior)["paper"]["commit"] == L.ADA_REPROBE["prior_paper_commit"]
+
+
+def test_ada_4b_reprobe_uses_the_old_first_seal_and_cannot_repeat_a_sealed_arm_stop(probe_stage_world, tmp_path,
+                                                                                 monkeypatch):
+    spec_path, table = probe_stage_world
+    spec = L.load_spec(spec_path)
+    spec.update(host_class="ada_rtx6000", run_id=L.ADA_REPROBE["run_id"])
+    spec["hosts"]["ada_rtx6000"]["host_config"]["sha256"] = "a" * 64
+    spec_path.write_text(json.dumps(spec))
+    monkeypatch.setattr(RJ, "direct_host_values",
+                        lambda *a, **k: {"values": {"ssh_alias": "ada"}, "host_config": {}})
+    sealed = tmp_path / "sealed"
+    prior = sealed / L.ADA_REPROBE["prior_run_id"] / "kev-0.8b" / "attempt-4"
+    prior.mkdir(parents=True)
+    record_path = prior / "job_record.json"
+    record = {"schema": L.PROBE_RECORD_SCHEMA, "host_class": "ada_rtx6000", "arm": "kev-0.8b",
+              "run_id": L.ADA_REPROBE["prior_run_id"], "paper_commit": L.ADA_REPROBE["prior_paper_commit"],
+              "spec_sha256": L.ADA_REPROBE["prior_spec_sha256"], "stop": None, "steps": ["probe"]}
+    record_path.write_text(json.dumps(record))
+    L._write_sums(prior, ("job_record.json",))
+    (prior / "SEAL_RECEIPT.json").write_text(json.dumps({"identity_verified": True,
+                                                        "job_record_sha256": _sha(record_path.read_bytes())}))
+    args = {"table": table, "first_record": record_path, "sealed_root": sealed, "binding": lambda _: {}}
+    d = tmp_path / "stage"
+    with pytest.raises(L.Stop, match="is not an arm"):
+        RJ.stage_probe(spec_path, d, arm="kev-0.8b", **args)
+    RJ.stage_probe(spec_path, d, arm="kev-4b", **args)
+    assert L.load_spec(d / "p4direct_kev-4b.json")["requires_empty_card"] is True
+    failed = sealed / spec["run_id"] / "kev-4b" / "attempt-1"
+    failed.mkdir(parents=True)
+    (failed / "SEAL_RECEIPT.json").write_text(json.dumps({"stop": "STOP: OOM", "stop_class": "arm"}))
+    with pytest.raises(L.Stop, match="sealed arm STOP"):
+        RJ.stage_probe(spec_path, tmp_path / "again", arm="kev-4b", **args)
+
+
+@pytest.mark.parametrize("arm", ["kev-4b", "qwen3.5-4b-base"])
+def test_4b_probe_attests_the_flag_in_the_run_and_oom_record(probe_world, tmp_path, arm):
+    spec_path, calls, state = probe_world
+    rec, _ = _run_probe(spec_path, arm, tmp_path / "pass")
+    assert calls[-1][-1] == "--p4-gradient-checkpointing"
+    assert rec["gradient_checkpointing"] is rec["run"]["gradient_checkpointing"] is True
+    state["oom"] = True
+    with pytest.raises(L.ArmStop, match="OOM"):
+        _run_probe(spec_path, arm, tmp_path / "oom")
+    rec = L.load_spec(tmp_path / "oom" / "job_record.json")
+    assert rec["oom"] is rec["gradient_checkpointing"] is True
+
+
+def test_ada_reprobe_record_carries_only_the_earlier_08b_results(probe_world, tmp_path, monkeypatch, t1_repo):
+    spec_path, calls, state = probe_world
+    spec = L.load_spec(spec_path)
+    spec.update(run_id=L.ADA_REPROBE["run_id"], host_class="ada_rtx6000")
+    spec["hosts"]["ada_rtx6000"]["host_config"]["sha256"] = "a" * 64
+    spec_path.write_text(json.dumps(spec))
+    spec_sha = _sha(spec_path.read_bytes())
+    original = probe_filled()
+    original.update(host_class="ada_rtx6000")
+    original["hosts"]["ada_rtx6000"]["host_config"]["sha256"] = "a" * 64
+    monkeypatch.setattr(L, "card_processes", lambda *a, **k: {"count": 0, "memory_mib": 0})
+    # Generate all four common-data reports with the real synthetic Stage S fixture before binding the historical bits.
+    historical_template = {**original, "host_class": H}
+    historical_path = tmp_path / "training_fixture.json"
+    historical_path.write_text(json.dumps(historical_template))
+    sealed = tmp_path / "sealed"
+    dirs = []
+    for i, arm in enumerate(spec["arms"]):
+        rec, _ = _run_probe(historical_path, arm, tmp_path / f"training_{arm}", cluster=100 + i)
+        if arm in L.CHECKPOINT_ARMS:
+            rec.update(run_id=spec["run_id"], spec_sha256=spec_sha)
+        else:
+            rec.update(run_id=L.ADA_REPROBE["prior_run_id"], spec_sha256=L.ADA_REPROBE["prior_spec_sha256"],
+                       paper_commit=L.ADA_REPROBE["prior_paper_commit"])
+            rec["run"]["gradient_checkpointing"] = "off (SFT path)"
+            rec.pop("gradient_checkpointing")
+        rec["host_class"] = "ada_rtx6000"
+        d = sealed / rec["run_id"] / arm / "attempt-1"
+        d.mkdir(parents=True)
+        result = d / "job_record.json"
+        result.write_text(json.dumps(rec))
+        L._write_sums(d, ("job_record.json",))
+        (d / "SEAL_RECEIPT.json").write_text(json.dumps({"identity_verified": True, "stop": None, "launch": "direct",
+                                                        "job_record_sha256": _sha(result.read_bytes()),
+                                                        "charged_gpu_hours": 0.1,
+                                                        "other_processes_start": {"count": 0},
+                                                        "other_processes_end": {"count": 0}}))
+        dirs.append(d)
+    _make_t1_repo(t1_repo, history="760065 0 4 360.0\n")
+    report = L.probe_records(spec, spec_sha, SPEC, dirs, sealed, t1_wallclock=L.T1_FROM_HISTORY)
+    assert {e["arm"]: e["probe_run_id"] for e in report["entries"]} == {
+        arm: spec["run_id"] if arm in L.CHECKPOINT_ARMS else L.ADA_REPROBE["prior_run_id"] for arm in spec["arms"]}
+    assert report["probe_gpu_hours_charged"] == 0.5
+    rec = L.load_spec(dirs[-1] / "job_record.json")
+    rec["run"]["gradient_checkpointing"] = False
+    path = dirs[-1] / "job_record.json"
+    path.write_text(json.dumps(rec))
+    L._write_sums(dirs[-1], ("job_record.json",))
+    receipt_path = dirs[-1] / "SEAL_RECEIPT.json"
+    receipt = L.load_spec(receipt_path)
+    receipt["job_record_sha256"] = _sha(path.read_bytes())
+    receipt_path.write_text(json.dumps(receipt))
+    with pytest.raises(L.Stop, match="does not attest the required checkpointing"):
+        L.probe_records(spec, spec_sha, SPEC, dirs, sealed, t1_wallclock=L.T1_FROM_HISTORY)
+
+
 def test_probe_strength_needs_the_host_fields_but_not_the_probe_record():
     """§4.2 item 12 / F1: probe strength passes with the label fields, estimate.source and caps.probe_gpu_hours still
     placeholders (no h200_sft_probe needed), and refuses an unfilled host field, another image, the P.4 run id, a
@@ -1981,7 +2122,10 @@ def probe_world(sweep, tmp_path, monkeypatch):
             from r1.c3.train.model import new_head_parameters
             model = tiny.build_hashbag(seed=int(a["--seed"]))
             run = Path(a["--run-dir"])
-            SFT.run_stage_s(model, train, val, run / "stage_s", {**SFT.DEFAULT_PROTOCOL, "micro_batch": 8},
+            protocol = {**SFT.DEFAULT_PROTOCOL, "micro_batch": 8}
+            if "--p4-gradient-checkpointing" in args:
+                protocol["gradient_checkpointing"] = True
+            SFT.run_stage_s(model, train, val, run / "stage_s", protocol,
                             lr=float(a["--lr"]), seed=int(a["--seed"]), head_params=new_head_parameters(model),
                             log=lambda x: None, max_steps=int(a["--steps"]),
                             data_sha256=P._sha_file(data / "sft_data.json"), label_status=man["label_status"],

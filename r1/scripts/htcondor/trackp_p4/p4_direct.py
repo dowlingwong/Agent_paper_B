@@ -407,6 +407,8 @@ class Launch(object):
                 raise Refusal("STOP: a P.4 container still runs on card {} ({}): its launcher was killed; wait for it "
                               "or stop it before leasing the card again".format(self.gpu_index, running))
         self.others_start = card_processes(card["uuid"], self.run)
+        if self.desc.get("requires_empty_card") is True and self.others_start.get("count") != 0:
+            raise Refusal("STOP: the Ada 4B re-probe requires an empty card (R1-P4-4B-CHECKPOINT)")
         self.need = int(self.desc["host"]["min_free_mib"])
         if card["memory_free_mib"] is None or card["memory_free_mib"] < self.need:
             raise Refusal("STOP: card {} has {} MiB free, the job needs {} MiB (R1-CARD-SHARE (1): free memory, not "
