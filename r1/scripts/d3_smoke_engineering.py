@@ -146,8 +146,8 @@ def _validate_smoke(root: Path) -> dict[str, Any]:
     if str(record.get("stage")) != "a":
         raise AuditStop("the smoke record is not stage a")
     sigma = record.get("sigma_node")
-    if sigma is None or not float(sigma) > 0:
-        raise AuditStop("the smoke record carries no positive sigma_node")
+    if sigma is not None and not float(sigma) > 0:
+        raise AuditStop("the smoke record's sigma_node is not positive")
     for arm, chunk_dir in sorted((record.get("chunks") or {}).items()):
         chunk = Path(chunk_dir)
         chunk_record = _read_json(chunk / "chunk.json")
@@ -280,14 +280,26 @@ def _audit_one(args: tuple[str, str, float, str, dict[str, Any]]) -> dict[str, A
     return {"chunk": chunk_dir, "audit": audit_dir, "campaigns": len(rows)}
 
 
-def audit_smoke(*, out: str, sigma_node: float | None, harness_root: str | None, jobs: int = 4) -> dict[str, Any]:
+def audit_smoke(*, out: str, sigma_node: float | None, harness_root: str | None, jobs: int = 4,
+                manifest_path: str | None = None, repo_root: str | None = None) -> dict[str, Any]:
     root = Path(out)
     smoke = _validate_smoke(root)
     if (root / "audits").exists():
         raise AuditStop(f"refusing an existing audit root {root / 'audits'}")
-    declared_sigma = float(smoke["sigma_node"])
+    if smoke.get("sigma_node") is not None:
+        declared_sigma = float(smoke["sigma_node"])
+        sigma_source = "smoke.json"
+    else:
+        if not manifest_path:
+            raise AuditStop("the smoke record has no sigma_node; pass --manifest to derive it from the constants")
+        manifest = A.load_manifest(manifest_path, repo_root=repo_root)
+        constants = A.load_constants(manifest, repo_root=repo_root)
+        declared_sigma = float(constants.noise[smoke["node"]]["sigma_node"])
+        sigma_source = "constants"
     if sigma_node is not None and abs(float(sigma_node) - declared_sigma) > 1e-12:
-        raise AuditStop(f"sigma_node {sigma_node} differs from the smoke record's {declared_sigma}")
+        raise AuditStop(f"sigma_node {sigma_node} differs from the declared {declared_sigma}")
+    if not declared_sigma > 0:
+        raise AuditStop("sigma_node must be positive")
     chunks = smoke["chunks"]
     expected = _expected_worker()
     tasks = []
@@ -303,6 +315,7 @@ def audit_smoke(*, out: str, sigma_node: float | None, harness_root: str | None,
     record = {"schema": "r1_d3_smoke_audit/v1", "engineering_only": True,
               "task": "compute/20261127-27", "results": results,
               "expected_worker": expected, "sigma_node": declared_sigma,
+              "sigma_source": sigma_source,
               "note": "Engineering check of the G6 audit path; these rows are not Y evidence and "
                       "never enter an outcome table."}
     record["record_sha256"] = _write_json(root / "audit.json", record)
@@ -367,6 +380,8 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--sigma-node", type=float, default=None)
     a.add_argument("--harness-root", default=None)
     a.add_argument("--jobs", type=int, default=4)
+    a.add_argument("--manifest", default=None)
+    a.add_argument("--repo-root", default=None)
     t = sub.add_parser("table")
     t.add_argument("--out", required=True)
     t.add_argument("--predeclaration", required=True)
@@ -393,7 +408,8 @@ def main(argv: list[str] | None = None) -> int:
                                        arms=tuple(args.arms), run_id=args.run_id), sort_keys=True))
         elif args.cmd == "audit":
             print(json.dumps(audit_smoke(out=args.out, sigma_node=args.sigma_node,
-                                        harness_root=args.harness_root, jobs=args.jobs), sort_keys=True))
+                                        harness_root=args.harness_root, jobs=args.jobs,
+                                        manifest_path=args.manifest, repo_root=args.repo_root), sort_keys=True))
         elif args.cmd == "table":
             print(json.dumps(table_check(out=args.out, predeclaration=args.predeclaration,
                                          noise_summary=args.noise_summary), sort_keys=True))
