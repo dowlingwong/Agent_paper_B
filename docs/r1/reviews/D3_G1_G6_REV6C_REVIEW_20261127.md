@@ -29,6 +29,14 @@ checked the seven cited sha256 values; ran the four delivered unit-test modules 
 (`69 passed` for FIXR3/EGATE/G8; `16 passed` for the snapshot core/chunk); then ran small read-only probes
 for the specific integration claims in §8. No integration test exists and none was written.
 
+**Status note (current `main`).** `origin/main` advanced to `8b01ef6a` after this review branch was cut
+from `5c901d19`; it adds **R1-D3-VERIFY-SEED** (option A: a reviewed harness pin on top of `a3fedbbd` with
+a verify-seed base; the default reproduces today's seeds) and **R1-D3-PREDECL-R4** (the author signs
+revision 4, including §13 items 21–31). The design's §7 statements that the verify-seed collision "still
+blocks ... until the author's row" and that "the pre-declaration's signature [is] still required" are
+therefore stale as of that `main`. The confinement of the blocker to the harness arms is still correct.
+This is a status/obsolescence note; it does not change the findings or the verdict.
+
 ---
 
 Verdict: CHANGES REQUIRED
@@ -275,8 +283,10 @@ record does not contain the start configuration.
 Yes. The blocker is the pinned harness `_run_verify` seeds 1010-1209 colliding with the D21 noise-floor
 block (G1 unit report §3.1). FIXR3 and EGATE use no KG verify: their engines take only `run(...)` on
 seeds 6201-6218 and 6500+10i+j, and the replicate loop does not call `run_real_campaign` or
-`run_trial_at_seed`. The design's statement at 6c:147-149 is correct. The route still needs the
-pre-declaration signature and its unit reviews (6c:150-152), which it says.
+`run_trial_at_seed`. The design's statement at 6c:147-149 is correct as to the arms. Its "until the
+author's row" clause is now stale: R1-D3-VERIFY-SEED (option A) is on `origin/main` `8b01ef6a`, and
+R1-D3-PREDECL-R4 signs revision 4. The design's "their unit reviews ... are still required" (6c:150-152)
+remains true; the signature prerequisite is now satisfied.
 
 **Are the cited sha256 values correct?**
 Yes, all seven in 6c §9:
@@ -298,7 +308,8 @@ questions, and the interface between the design and the delivered code.
 
 **Out of scope / not decided here.** The scientific arm set, W=20, cap 80, seeds, K=10, Y_final and the
 FIXR3/EGATE rules (I found no change); the accepted 5b/6b text except where 6c relies on it; the level-2
-verify-seed decision (still with the author); the pre-declaration signature and the A1/A2/LADDER
+verify-seed decision (resolved by R1-D3-VERIFY-SEED after the design was written; not re-litigated here);
+the pre-declaration signature (signed by R1-D3-PREDECL-R4 on `8b01ef6a`) and the A1/A2/LADDER
 constants file; the tier-E review of the engines/accounting/snapshot core themselves; any campaign,
 audit, label, evaluation, sealed read, GPU job or smoke. I did not modify `main`, `coord/*`, the reviewed
 branch, the engine branch or the snapshot branch.
@@ -316,6 +327,6 @@ branch, the engine branch or the snapshot branch.
 - Base: `origin/main` @ `5c901d19` (this review branch is based on it; the reviewed branch is not merged).
 - Verdict: **CHANGES REQUIRED** (four BLOCKING, five MAJOR, seven MINOR).
 
-**Review file sha256:** `c9c136d19d7c8f097199509d7b324b34e8426125b2bec1a3da6f12cdbc443b9a` — the sha256 of the review text above this line. The sha256 of the committed file (this line included) is reported in the commit message and in the reviewer's report.
+**Review file sha256:** `ccdc2330606939e9b5a13db92580afa26424d05dc7b7ca1515ebf59134b390af` — the sha256 of the review text above this line. The sha256 of the committed file (this line included) is reported in the commit message and in the reviewer's report.
 
 *Prepared by a fresh independent reviewer; no part of the reviewed work was authored by this session.*
