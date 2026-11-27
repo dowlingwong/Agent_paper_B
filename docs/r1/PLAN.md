@@ -1678,6 +1678,12 @@ preregistration, the gate code and every signed note are unchanged.
 |---|---|
 | R1-PAPERC-ROWS-CONFIRMED | **The 18 Paper C rows of 15, 19 and 22 November are confirmed and bind from this merge** (author, 27 Nov 2026: "PAPERC 15/19/22 按清单确认"; the coordinator's sheet `sheets/PAPERC_ROWS_BASIS_20261127.md` on `coord/coordinator` @ `0b4c5a02`, which lists each row with the commit that first wrote it and the basis recorded there). (1) The rows: R1-PAPERC-PROPOSER, -DELTA, -OPD, -NOWAIT, -HOME, -REFRAME, -CENSUS-FIRST (15 Nov); R1-PAPERC-GONOGO, -RELEVANCE, -EQUIV-DESIGN, -MEASURE-FIRST, -OPE-SUPPORT, -RESTORE, -ESTIMAND-GUARDS, -SCOPE-DIRECTIONS, -HARNESS-PIN (19 Nov); R1-PAPERC-G-SETTLED, -HARNESS-PIN-SET (22 Nov). R1-PAPERC-ESYN-SCALING, named in the 22 Nov commit but absent from the consolidated PLAN, is not adopted by this row. (2) **G3 of 22 November (R1-PAPERC-G-SETTLED) supersedes the older addendum §A.4 wording** wherever the two differ. (3) **The node-value stakes floor is met when either criterion holds:** the median retained increment ≥ 0.5 σ_d, or the decision regret ≥ 0.1 σ_d (as R1-PAPERC-RELEVANCE and G3 state). Eligibility checks for each experiment follow after this merge. |
 
+### 27 November 2026 — T5 numerical correction to R1-D3-CHOICES (author)
+
+| ID | Decision |
+|---|---|
+| R1-D3-CHOICES-T5-CORRECTION | **Correct the T5 figures cited under R1-D3-CHOICES (1)** (author, 27 Nov 2026, in Codex chat, "T5 数字更正同意更正"; `AUTHOR.md` on `coord/coordinator` at `042c1930`). In the ENGINEERING_ONLY T5 simulation at `digits_on`, W = 20 and target s = 0.79, the change in gain from correcting base A2 is +1.38 δ_n per campaign for the feasible keep-count correction and +3.27 δ_n for the correction given the known record error. The earlier +0.47 and +1.84 δ_n figures are for the oracle-prior base in the same cell. Across both digits settings and both budgets at s = 0.79, the A2 gains are +1.38 to +5.70 δ_n (feasible) and +3.27 to +9.97 δ_n (known record error). Source: `docs/r1/theory/T5_SHARED_NOISE_20261122.md` §4.8 and independent review m1 in `docs/r1/reviews/T5_SHARED_NOISE_REVIEW_20261126.md`. The direct screening test and the SHARED decision route remain governed by R1-D3-CHOICES (1) and R1-SCREEN-MEASURE. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
