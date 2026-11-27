@@ -411,3 +411,71 @@ def test_parse_refuses_malformed_files(fitted):
             AC.parse(json.dumps(d).encode())
     with pytest.raises(AF.ArmsFreezeError, match="not JSON"):
         AC.parse(b"{")
+
+
+def test_g5_student_t_reaches_sft_arms_freeze_and_gate(monkeypatch):
+    from scipy.stats import t as student_t
+
+    from r1.c3 import labels as L
+    from r1.c3.train import sft_data as SD
+
+    node = "mlgym_breakout_minatar"
+    monkeypatch.setitem(SIG, node, 0.02)
+    t1 = B.Tier1(suites={node: "MLGym"}, modes=("history",))
+    world = _world(t1=t1)
+    rows = world["tables"]["g5"]
+    every = world["every"]["g5"]
+    traindev = world["labels"]["g5"]
+    for label in every:
+        if label["label_kind"] == "audit":
+            label["soft_parameters"].update(tails="student_t", nu=5)
+
+    source = B.Source("g5", rows, every, world["evals"]["g5"])
+    prepared = _builder_prepared(world, t1=t1)
+    training = AF.training_rows("g5", rows, traindev, assign=ASSIGN, t1=t1)
+    table_sha = "a" * 64
+    receipt = {"inputs": {"proposals_sha256": table_sha, "label_block_sha256": "b" * 64},
+               "outputs": {SD.PARTITION_NAME: "c" * 64}}
+    sft_source = SD.G5LabelSource("synthetic", receipt_sha256="d" * 64, table_rows=rows, t1=t1,
+                                  table_sha256=table_sha, loader=lambda *_: (traindev, receipt))
+    sft = {r["proposal_id"]: r for r in sft_source.label_records()}
+    gate = {r["row"]["proposal_id"]: r for r in prepared}
+    compared = 0
+    for row in training:
+        if row["label_kind"] != "audit":
+            continue
+        pid = row["proposal_id"]
+        record = sft[pid]
+        assert (record["tails"], record["nu"]) == ("student_t", 5)
+        gate_row = gate[pid]
+        soft = SD.soft_target(record, gate_row["row"])
+        assert _bits(soft) == _bits(gate_row["soft"]) == _bits(row["soft"])
+        reference = np.diff(student_t.cdf(L.EDGES, 5, loc=record["delta_label"] / record["sigma_node"],
+                                          scale=np.sqrt(3 / (5 * record["k_label"]))))
+        assert np.allclose(soft[1:], reference, atol=1e-14, rtol=0)
+        compared += 1
+    assert compared
+    combined = {key: (table, world["labels"][key]) for key, table in world["tables"].items()}
+    fitted, _ = AC.fit_sources(combined, t1=t1, assign=ASSIGN)
+    assert _bits(fitted[node]["A2"]) == _bits(B.fit_a2(prepared).by_node[node])
+
+    edited = next(label for label in traindev if label["label_kind"] == "audit")
+    edited["soft_parameters"].pop("tails")
+    edited["soft_parameters"].pop("nu")
+    with pytest.raises(B.BuilderError, match="requires Student-t with nu = 5"):
+        B._prepare([source], ASSIGN, t1)
+    with pytest.raises(AF.ArmsFreezeError, match="requires Student-t with nu = 5"):
+        AF.training_rows("g5", rows, traindev, assign=ASSIGN, t1=t1)
+
+
+@pytest.mark.parametrize(("tier", "node", "kind", "parameters", "match"), [
+    ("T0", "digits_mlp", "audit", {"tails": "student_t", "nu": 5}, "only to T1 audit"),
+    ("T1", "mlgym_breakout_minatar", "rule_noop", {"tails": "student_t", "nu": 5}, "only to T1 audit"),
+    ("T1", "mlgym_breakout_minatar", "audit", {"tails": "student_t", "nu": 6}, "requires Student-t"),
+    ("T1", "mlab_imdb", "audit", {"tails": "student_t", "nu": 5}, "requires Gaussian"),
+    ("T1", "mlab_ogbn_arxiv", "audit", {"tails": "gaussian", "nu": None}, "nu is given"),
+])
+def test_invalid_g5_tail_metadata_refused(tier, node, kind, parameters, match):
+    lab = {"proposal_id": "fixture", "node": node, "label_kind": kind, "soft_parameters": parameters}
+    with pytest.raises(B.BuilderError, match=match):
+        B._tail_options(lab, tier)

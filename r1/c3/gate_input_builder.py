@@ -67,7 +67,7 @@ import numpy as np
 from r1.c3 import gate as G
 from r1.c3 import p3_split
 from r1.c3.arms import RulesPrior, is_duplicate, is_noop
-from r1.c3.labels import INERT, N_BINS, soft_label
+from r1.c3.labels import INERT, N_BINS, label_tail_options, soft_label
 from r1.c3.offline_eval import CAMPAIGN_RUNS, G_PRIMARY, decisions
 
 BUILDER_VERSION = "2"
@@ -150,6 +150,13 @@ def _instance(row: dict, assign: dict) -> tuple[str, str]:
     return inst, assign[inst]["split"]
 
 
+def _tail_options(lab: dict, tier: str) -> dict:
+    try:
+        return label_tail_options(lab, tier=tier)
+    except ValueError as exc:
+        raise BuilderError(f"{lab['proposal_id']}: {exc}") from exc
+
+
 def _label_ok(lab: dict, row: dict, label_seeds: tuple) -> str:
     """Validate a label row against its table row; returns its kind (rule_noop, audit, divergent)."""
     kind = lab.get("label_kind")
@@ -160,6 +167,7 @@ def _label_ok(lab: dict, row: dict, label_seeds: tuple) -> str:
     if is_noop(row):
         if kind != "rule_noop":
             raise BuilderError(f"{row['proposal_id']}: a no-op needs a rule_noop label row")
+        _tail_options(lab, _tier_of(row["node"]))
         return kind
     if kind not in ("audit", "divergent"):
         raise BuilderError(f"{row['proposal_id']}: label kind {kind!r} is not audit/divergent")
@@ -174,6 +182,8 @@ def _label_ok(lab: dict, row: dict, label_seeds: tuple) -> str:
             raise BuilderError(f"{row['proposal_id']}: label value missing or inconsistent")
         if sp.get("sigma_node") != row["sigma_node"]:
             raise BuilderError(f"{row['proposal_id']}: soft-label sigma_node differs from the table's")
+    else:
+        _tail_options(lab, _tier_of(row["node"]))
     return kind
 
 
@@ -280,7 +290,8 @@ def _prepare(sources: list[Source], assign: dict, t1: Tier1 | None) -> tuple[lis
                 soft = None
                 if kind == "audit":
                     k = lab["soft_parameters"]["k_label"]
-                    soft = soft_label(lab["delta_label"], None, row["sigma_node"], sigma_mode="pooled_node", k_label=k)
+                    soft = soft_label(lab["delta_label"], None, row["sigma_node"], sigma_mode="pooled_node",
+                                      k_label=k, **_tail_options(lab, tier))
                     r["label_partial"] = k < len(label_seeds)
                 r.update(label_kind=kind, delta_true=dt, status=status, soft=soft)
                 used.add(pid)

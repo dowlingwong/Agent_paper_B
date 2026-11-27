@@ -57,6 +57,34 @@ def soft_label_version(sigma_mode: str | None = None) -> str:
 TAIL_LAWS = ("gaussian", "student_t")
 STUDENT_T_SCALE = "sd_matched"          # the label sd is s for both laws; scale = s * sqrt((nu - 2) / nu)
 
+# The initial G.5 declarations in R1-G5-TAILS. Autoresearch and later addenda take their law
+# from the separately bound completion or addendum record at assembly.
+G5_STUDENT_T_NU = {"mlab_ogbn_arxiv": 5, "mlgym_breakout_minatar": 5}
+G5_GAUSSIAN_NODES = frozenset({"mlab_cifar10", "mlab_imdb", "mlgym_cifar10", "mlgym_fmnist", "mlgym_houseprice"})
+
+
+def label_tail_options(label: dict, *, tier: str) -> dict:
+    """Validate and return the soft-label arguments carried by an assembled audit row."""
+    parameters = label.get("soft_parameters") or {}
+    if not isinstance(parameters, dict):
+        raise ValueError("soft_parameters must be a mapping")
+    declared = {"tails", "nu"} & parameters.keys()
+    if tier != "T1" or label.get("label_kind") != "audit":
+        if declared:
+            raise ValueError("tail metadata belongs only to T1 audit labels")
+        return {}
+
+    tails, nu = parameters.get("tails", "gaussian"), parameters.get("nu")
+    check_tail_law(tails, nu)
+    if tails == "gaussian" and "nu" in parameters:
+        raise ValueError("nu is given for a gaussian tail law")
+    node = label.get("node")
+    if node in G5_STUDENT_T_NU and (tails != "student_t" or nu != G5_STUDENT_T_NU[node]):
+        raise ValueError(f"{node} requires Student-t with nu = {G5_STUDENT_T_NU[node]} (R1-G5-TAILS)")
+    if node in G5_GAUSSIAN_NODES and tails != "gaussian":
+        raise ValueError(f"{node} requires Gaussian tails (R1-G5-TAILS)")
+    return {"tails": tails, "nu": nu} if tails == "student_t" else {}
+
 
 def check_tail_law(tails: str, nu) -> None:
     """``gaussian`` takes no nu; ``student_t`` needs a finite real nu > 2 (finite variance, so s can be its sd)."""

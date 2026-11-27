@@ -826,8 +826,7 @@ def test_tails_student_t_assembly_records_the_law(world):
     assert np.allclose(p[1:], ref / ref.sum(), atol=1e-14, rtol=0)
     gaussian = LB.soft_label(lab["delta_label"], None, lab["sigma_node"], k_label=lab["k_label"])
     assert not np.allclose(p, gaussian, atol=1e-14, rtol=0)
-    # open item (report): the T1 training reader's schema does not yet admit the two fields, so it refuses rather
-    # than silently building a Gaussian label for a student_t node
+    # The generic T0 reader keeps its schema. The dedicated G5LabelSource carries the T1 fields.
     assert set(lab) - sft_data.SOFT_PARAMETER_KEYS == {"tails", "nu"}
 
 

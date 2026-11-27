@@ -436,9 +436,10 @@ class G5LabelSource:
                 lab = by_pid[r["proposal_id"]]
                 k = int(lab["soft_parameters"]["k_label"])
                 partial += k < len(lab["seeds"])
+                tails = {"tails": r["tails"], "nu": r["nu"]} if "tails" in r else {}
                 records.append({"proposal_id": r["proposal_id"], "node": r["node"], "label_kind": kind,
                                 "delta_label": float(lab["delta_label"]), "k_label": k,
-                                "sigma_node": float(lab["soft_parameters"]["sigma_node"])})
+                                "sigma_node": float(lab["soft_parameters"]["sigma_node"]), **tails})
             elif kind == "divergent":
                 divergent += 1
         self._records = records
@@ -499,7 +500,8 @@ def soft_target(record: Mapping, table_row: Mapping) -> np.ndarray:
     if float(record["sigma_node"]) != float(table_row["sigma_node"]):
         raise SFTDataError(f"{record['proposal_id']}: label sigma_node differs from the table's")
     return LB.soft_label(record["delta_label"], None, float(table_row["sigma_node"]), inert=False,
-                         sigma_mode=SIGMA_MODE, k_label=int(record["k_label"]))
+                         sigma_mode=SIGMA_MODE, k_label=int(record["k_label"]),
+                         tails=record.get("tails", "gaussian"), nu=record.get("nu"))
 
 
 # ---------------------------------------------------------------------------------------------- prompts
