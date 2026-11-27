@@ -1,8 +1,9 @@
 # D.3 single-GPU HTCondor preflight — capacity finding (task `compute/20261127-12`)
 
 **Result: BLOCKED, no match.** Three ENGINEERING_ONLY submissions (two card targets; one A100 attempt was
-superseded) used the intended D.3 request shape and none could run: the ETP L40S slot is administratively closed (`Start = false`), and the only TOpAS A100 parent
-with free GPUs is also `Start = false`; the other A100 parents have no free GPU. No container was started and no
+superseded) used the intended D.3 request shape and none could run: the ETP L40S slot is administratively closed (`Start = false`); on TOpAS the parent with
+the most free A100 GPUs (`175`, five) is `Start = false`, `167` has one free but `Start`/`Requirements` are
+`undefined`/`error`, and `179` has none free. No container was started and no
 input was read inside a job. This is a capacity finding, not a STOP of evidence and not the D.3 per-arm smoke.
 
 - **Base:** `origin/main` `e153df24ee3435bbe0b2fa994297b15250550c30`
