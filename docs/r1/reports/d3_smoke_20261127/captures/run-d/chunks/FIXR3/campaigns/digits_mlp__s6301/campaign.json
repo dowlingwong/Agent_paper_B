@@ -1,0 +1,24 @@
+{
+ "arm": "FIXR3",
+ "campaign_id": "digits_mlp__s6301",
+ "campaign_kind": "replicate",
+ "ended_on": "no_fundable_candidate",
+ "final_sha256": "38f95355bb05839c283b26f3e33bc534b252648fba050a670b492c276395b86d",
+ "instance_id": "digits_mlp__s6301",
+ "instance_seed": 6301,
+ "llm_calls": 7,
+ "node": "digits_mlp",
+ "pre_decision_snapshots": {},
+ "record_name": "a__FIXR3__digits_mlp__s6301__r0",
+ "repetition": 0,
+ "schema": "r1_d3_campaign/v1",
+ "snapshot_schema": "r1_d3_snapshot/v1",
+ "snapshots": {
+  "w10.json": "3ac62af0defcb0a8e8b9792535111a5c532a1fcf3f08a69c822f93248ebf7e2a",
+  "w15.json": "d5d026e32d4cd4add2c8258146519532f216d1559e9d71bfe7ab2b2abed91185",
+  "w5.json": "8cd1257727009545960e68922c4431784ccdef8339ab7b71ddff1e17c95d94ea"
+ },
+ "stage": "a",
+ "worker_runs": 18,
+ "zero_variance_cases": 0
+}

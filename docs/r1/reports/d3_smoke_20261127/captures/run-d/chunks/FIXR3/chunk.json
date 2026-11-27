@@ -1,0 +1,113 @@
+{
+ "W": 20,
+ "arm": "FIXR3",
+ "campaign_kind": "replicate",
+ "campaign_manifest_sha256": "d6b45c7b97665f3065e35b02626629d7a711ce7328c83345baa9fa092cf607dc",
+ "campaign_model": "NVIDIA GeForce RTX 4090",
+ "campaign_model_source": {
+  "path": "docs/r1/proposals/d3_design_20261126/D3_G1_G6_DESIGN_REV6_LAUNCHERS_20261126.md",
+  "sha256": "0d696535d94395c85592c7ac9483790483966bbe0bf48961d132c50aa49b922d"
+ },
+ "chunk_end_utc": "2026-11-27T15:23:29Z",
+ "chunk_start_utc": "2026-11-27T14:45:14Z",
+ "created_utc": "2026-11-27T15:23:29Z",
+ "driver": "535.309.01",
+ "driver_version": "535.309.01",
+ "environment_freeze": {
+  "harness_commit": "9bb416805175149eb87b71f28d77530572aa4bce",
+  "llamacpp": "/home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server",
+  "model": "gemma4_31b Q4_K_M",
+  "python": "/home/dowling/r1_tracks/venv/bin/python",
+  "python_version": "3.11.17"
+ },
+ "gpu_model": "NVIDIA GeForce RTX 4090",
+ "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+ "hardware": {
+  "chunk_start_utc": "2026-11-27T14:45:14Z",
+  "driver": "535.309.01",
+  "environment_freeze": {
+   "harness_commit": "9bb416805175149eb87b71f28d77530572aa4bce",
+   "llamacpp": "/home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server",
+   "model": "gemma4_31b Q4_K_M",
+   "python": "/home/dowling/r1_tracks/venv/bin/python",
+   "python_version": "3.11.17"
+  },
+  "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+  "host": "TASL-2",
+  "host_class": null,
+  "lease": true,
+  "lease_kind": "ssh",
+  "lease_path": "/home/dowling/r1_locks/gpu0.lock",
+  "memory_check": "pass",
+  "memory_free": 23825,
+  "memory_total": 24564,
+  "model": "NVIDIA GeForce RTX 4090",
+  "other_processes_end": {
+   "count": 1,
+   "unknown_memory_count": 0,
+   "used_memory_mib": 21248
+  },
+  "other_processes_start": {
+   "count": 0,
+   "unknown_memory_count": 0,
+   "used_memory_mib": 0
+  },
+  "proposer_model": "gemma4_31b",
+  "request": null,
+  "required_memory_mib": 22000,
+  "schema": "r1_d3_observed/v1",
+  "scope": "tmux"
+ },
+ "hardware_claim": {},
+ "host": "TASL-2",
+ "host_class": null,
+ "instances": [
+  "digits_mlp__s6301"
+ ],
+ "launcher": "direct",
+ "lease_path": "/home/dowling/r1_locks/gpu0.lock",
+ "llm_cap": 80,
+ "memory_check": "pass",
+ "memory_free": 23825,
+ "memory_free_mib_at_start": 23825,
+ "memory_total": 24564,
+ "memory_total_mib": 24564,
+ "model_check": "pass",
+ "node": "digits_mlp",
+ "notes": {
+  "design_deviation": "ran on digits_mlp, not openml_climate",
+  "design_node": "openml_climate",
+  "engineering_only": true,
+  "run_id": "d3-smoke-engineering-20261127-a",
+  "smoke_arms": [
+   "A0",
+   "A0R",
+   "A1",
+   "A2",
+   "FIXR3",
+   "EGATE",
+   "LADDER"
+  ],
+  "smoke_seed": 6301,
+  "task": "compute/20261127-27"
+ },
+ "other_processes_end": {
+  "count": 1,
+  "unknown_memory_count": 0,
+  "used_memory_mib": 21248
+ },
+ "other_processes_start": {
+  "count": 0,
+  "unknown_memory_count": 0,
+  "used_memory_mib": 0
+ },
+ "proposer_check": "pass",
+ "proposer_expected": "gemma4_31b",
+ "proposer_observed": "gemma4_31b",
+ "repetition": 0,
+ "request": null,
+ "schema": "r1_d3_chunk/v1",
+ "scope": "tmux",
+ "stage": "a",
+ "status": "complete"
+}

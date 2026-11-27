@@ -83,9 +83,19 @@ Runner = Callable[[str, Mapping[str, str], list[int]], list[Run]]
 # seeds, snapshots, hashing
 # ---------------------------------------------------------------------------
 
+SMOKE_AUDIT_SEED_BASE = 6390   # ENGINEERING smoke audit block, separate from every deployment block
+
+
 def audit_seeds(instance_seed: int) -> tuple[int, ...]:
-    """The instance's ten audit seeds (pre-declaration §4, §7)."""
+    """The instance's ten audit seeds (pre-declaration §4, §7).
+
+    The per-arm engineering smoke uses the reserved smoke seeds 6301-6302 and its own
+    audit block 6391-6410 (task ``compute/20261127-27``); those rows are never evidence
+    and never enter an outcome table.
+    """
     s = int(instance_seed)
+    if s in (6301, 6302):
+        return tuple(SMOKE_AUDIT_SEED_BASE + 10 * (s - 6301) + k for k in range(1, K + 1))
     if not 6201 <= s <= 6218:
         raise AuditStop(f"instance seed {s} is outside 6201-6218")
     return tuple(AUDIT_SEED_BASE + 10 * (s - 6201) + k for k in range(1, K + 1))

@@ -1,0 +1,26 @@
+{
+ "arm": "LADDER",
+ "campaign_id": "digits_mlp__s6301",
+ "campaign_kind": "harness",
+ "ended_on": "worker_runs",
+ "final_sha256": "55e269a749f628bc5aefad7d587b35184edbd5ef4dd2389d7c09edb224f7749b",
+ "instance_id": "digits_mlp__s6301",
+ "instance_seed": 6301,
+ "llm_calls": 20,
+ "node": "digits_mlp",
+ "pre_decision_snapshots": {
+  "w20_pre.json": "6bf56ef0f65272852b88cf9bd2178f49087ebf41b47ec4fe59c5957399a2624e"
+ },
+ "record_name": "a__LADDER__digits_mlp__s6301__r0",
+ "repetition": 0,
+ "schema": "r1_d3_campaign/v1",
+ "snapshot_schema": "r1_d3_snapshot/v1",
+ "snapshots": {
+  "w10.json": "109147d1b859061a1332ca2836eec1bc76731afe52cd7eb7a1a2601c43bed6f6",
+  "w15.json": "935f1b5d4f776764f5506ce79f6e3c1d1635d74ae60016544dcbe31d14c776c6",
+  "w20.json": "407e868abcd36516891043d9f7caec8f320fef04b78123b657654734fd370b75",
+  "w5.json": "e8da17691179ae0cb33940bef0fc631de520da40b307434db671c23fb737b392"
+ },
+ "stage": "a",
+ "worker_runs": 20
+}

@@ -1,0 +1,7 @@
+{
+ "config_sha256": "829f95d5d15ef87138caf60a105e807c40344eb32a8a778dea1061a4958fe413",
+ "files": {
+  "train.py": "#!/usr/bin/env python3\n\"\"\"digits_mlp: editable hyperparameters for a frozen sklearn MLP benchmark (R1 L8b).\n\nOnly the constants below are editable. Output:\n    val_score: 0.XXXXXX   (validation metric, higher is better)\nThe held-out test score is computed but deliberately not printed: the worker\nparses every ``key: value`` line into the ledger, and a controller or an LLM\nside query must never see a test metric (L14 review, finding 6).\n\"\"\"\nfrom benchmark import run_benchmark\n\n# \u2500\u2500 editable hyperparameters \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nHIDDEN_UNITS = 256\nALPHA = 1e-5\nLEARNING_RATE_INIT = 1e-2\nBATCH_SIZE = 32\nMAX_ITER = 500\n\n\ndef main() -> None:\n    result = run_benchmark(\n        hidden_units=HIDDEN_UNITS,\n        alpha=ALPHA,\n        learning_rate_init=LEARNING_RATE_INIT,\n        batch_size=BATCH_SIZE,\n        max_iter=MAX_ITER,\n    )\n    print(f\"val_score: {result['val_score']:.6f}\")\n    print(f\"train_loss: {result['train_loss']:.6f}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+ },
+ "keep_run": 20
+}
