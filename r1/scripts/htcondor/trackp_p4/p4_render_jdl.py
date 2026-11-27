@@ -253,6 +253,7 @@ def stage(spec_path: Path, stage_dir: Path, *, table: Path, partition: Path, hos
         files[name] = _sha(stage_dir / name)
     manifest = {"schema": "trackp_p4_stage/1", "run_id": loaded["run_id"], "preview": preview,
                 "host_class": host_class, "launch": host["launch"],
+                "harness_commit": spec.get("harness_commit"),
                 "projection": loaded["projection"], "inputs": inputs, "files": files}
     (stage_dir / "STAGE_MANIFEST.json").write_text(json.dumps(manifest, indent=1) + "\n")
     return manifest

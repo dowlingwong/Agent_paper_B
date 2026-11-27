@@ -8,6 +8,7 @@
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
   "commit": "TODO: the published launch commit carrying this runner"
  },
+ "harness_commit": "897d83c8efa364ec2fdd37288241cc42e01d7274",
  "image": {
   "digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949",
   "versions_sha256": "TODO_VERIFY_ON_HOST: sha256 of /opt/r1/VERSIONS.txt in image v2.2 (not in V22_BUILD_20261124.md, its review or the v2.2 branch)",

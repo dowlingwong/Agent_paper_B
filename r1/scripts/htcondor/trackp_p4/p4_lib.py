@@ -16,7 +16,8 @@ the 40 GPU-h and 64 slot-hour figures of P4-CAP A are reporting thresholds (``th
 the switch's check before every submission, ``probe_records`` and ``assemble`` report usage against them and flag
 ``report_to_author``; none refuses for them. No wall-clock limit decides anything: HTCondor's ``+RequestWalltime``
 is a scheduler request only (a walltime kill is sealed as an infrastructure failure), and a direct launch has none.
-The step list below is unchanged except where it says "the H200": read "the job's class".
+The Track P stages and synthetic evaluator run without subprocess deadlines (R1-NO-TIMEOUT (1)).
+The step list below uses "the H200" for the job's admitted class.
 
 Authority: the P.4 phase-1 authorization draft (`docs/r1/proposals/TRACKP_P4_SFT_AUTHORIZATION_DRAFT_20261121.md`,
 revision 4.2; P3 of its §7 is this unit), R1-TRACKP-P4-DECISIONS (P4-PHASE1-TEST A, P4-P1SPLIT A, P4-LABELS A,
@@ -130,6 +131,7 @@ ASSEMBLY_SCHEMA = "trackp_p4_assembly/1"
 ENGINEERING_ONLY = "ENGINEERING_ONLY"
 GPU_MODEL = "NVIDIA H200"
 PAPER_REPO = "https://github.com/dowlingwong/Agent_paper_B.git"
+HARNESS_REPO = "https://github.com/dowlingwong/autoresearch_harness.git"
 ENV3_PYTHON = "/opt/r1/envs/trackp/bin/python"
 UV = "/opt/uv/uv"                                # uv 0.13.6 in the image (UV_INSTALL_DIR=/opt/uv); env3 has no pip
 VERSIONS = Path("/opt/r1/VERSIONS.txt")
@@ -329,6 +331,8 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     if paper.get("repo") != PAPER_REPO:
         raise Stop(f"STOP: paper.repo must be {PAPER_REPO}")
     _pin(paper.get("commit"), "paper.commit", COMMIT, allow=allow)
+    if launch or "harness_commit" in spec:
+        _pin(spec.get("harness_commit"), "harness_commit", COMMIT, allow=allow)
     image = spec.get("image") or {}
     _pin(image.get("digest"), "image.digest", DIGEST, allow=allow)
     if image.get("digest") in (IMAGE_V2, IMAGE_V21):
@@ -757,6 +761,23 @@ def clone_full(commit: str, dest: Path, git=_git, sh=_sh) -> dict:
     return {"repo": PAPER_REPO, "commit": commit, "origin_main": git(dest, "rev-parse", "origin/main").stdout.strip()}
 
 
+def stage_harness(commit: str, dest: Path, git=_git, sh=_sh) -> dict:
+    """Stage a fresh checkout for all three P.4 prompt-replay subprocesses."""
+    if dest.exists() or dest.is_symlink():
+        raise Stop("STOP: the job harness checkout already exists")
+    clone = sh(["git", "clone", "--quiet", "--no-checkout", HARNESS_REPO, str(dest)], timeout=3600)
+    if clone.returncode:
+        raise Stop(f"STOP: cannot clone the prompt-replay harness: {clone.stderr.strip()[:300]}")
+    if git(dest, "checkout", "--quiet", "--detach", commit).returncode:
+        raise Stop(f"STOP: cannot check out prompt-replay harness {commit}")
+    head = git(dest, "rev-parse", "HEAD")
+    status = git(dest, "status", "--porcelain", "--untracked-files=all")
+    source = dest / "src" / "autoresearch" / "memory" / "summarizer.py"
+    if head.returncode or head.stdout.strip() != commit or status.returncode or status.stdout or not source.is_file():
+        raise Stop(f"STOP: prompt-replay harness is not a clean checkout of {commit}")
+    return {"repo": HARNESS_REPO, "commit": commit}
+
+
 def configs(spec: dict, clone: Path, sh=_sh, host_class: str | None = None) -> dict:
     """Step 4: the host config of the job's class (``hosts.<class>.host_config``) and the SFT config at the spec's
     sha256, and ``trackp.py --check-config`` clean on that host config."""
@@ -945,20 +966,22 @@ def check_local_paths(arm: str, clone: Path, job_dir: Path, host_config: str | N
 
 
 # =============================================================================================== the SFT steps
-def offline_env(job_dir: Path) -> dict:
+def offline_env(job_dir: Path, harness: Path | None = None) -> dict:
     env = dict(os.environ, HF_HOME=str(job_dir / "hf"), HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1",
                PYTHONDONTWRITEBYTECODE="1", PYTORCH_CUDA_ALLOC_CONF="expandable_segments:True")
+    if harness is not None:
+        env["AR_HARNESS_ROOT"] = str(harness)
     return env
 
 
-def trackp(clone: Path, job_dir: Path, args: list, sh=_sh, timeout: int = 86400) -> dict:
+def trackp(clone: Path, job_dir: Path, args: list, sh=_sh, *, harness: Path | None = None) -> dict:
     """One ``trackp.py`` call (the clone's script, by absolute path; the job directory is the working directory)
     with the host config, offline. A refusal of the SFT pipeline (``trackp.py`` prints ``STOP: …`` and exits 2) is a
     protocol STOP, a CUDA OOM an arm STOP, anything else (a missing script, an argument error, a crash) an
     infrastructure STOP. The log is kept under ``out/logs/``."""
     argv = [job_python(), "-B", str(clone / TRACKP_SCRIPT), "--config", str(clone / job_host_config()),
             *map(str, args)]
-    res = sh(argv, cwd=job_dir, env={**offline_env(job_dir), "PYTHONPATH": str(clone)}, timeout=timeout)
+    res = sh(argv, cwd=job_dir, env={**offline_env(job_dir, harness), "PYTHONPATH": str(clone)}, timeout=None)
     logs = job_dir / "out" / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     log = logs / f"{len(list(logs.iterdir())):03d}_{args[0]}.log"
@@ -986,10 +1009,11 @@ def data_argv(clone: Path, job_dir: Path, ins: dict, *, synthetic: bool = False)
     return argv
 
 
-def data_build(clone: Path, job_dir: Path, ins: dict, sh=_sh, *, synthetic: bool = False) -> Path:
+def data_build(clone: Path, job_dir: Path, ins: dict, sh=_sh, *, synthetic: bool = False,
+               harness: Path | None = None) -> Path:
     """Step 7 (and the synthetic build of step 10)."""
     argv = data_argv(clone, job_dir, ins, synthetic=synthetic)
-    trackp(clone, job_dir, argv, sh)
+    trackp(clone, job_dir, argv, sh, harness=harness)
     return Path(argv[argv.index("--run-dir") + 1]) / "data"
 
 
@@ -1105,6 +1129,9 @@ def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str
         record["steps"].append("env3_freeze")
         record["configs"] = configs(spec, clone, sh)
         record["steps"].append("configs")
+        harness = job_dir / "autoresearch_harness"
+        record["harness"] = stage_harness(spec["harness_commit"], harness, git, sh)
+        record["steps"].append("harness")
         ins = inputs(spec, clone, job_dir)
         record["inputs"] = ins
         record["steps"].append("inputs")
@@ -1112,7 +1139,7 @@ def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str
         record["local_paths"] = check_local_paths(arm, clone, job_dir)
         record["steps"].append("staging")
         P = _phase1(clone)
-        data = data_build(clone, job_dir, ins, sh)
+        data = data_build(clone, job_dir, ins, sh, harness=harness)
         record["data"] = {"dir": str(data.relative_to(job_dir)), "sft_data_sha256": _sha_file(data / "sft_data.json"),
                           "identity": data_identity(data)}
         record["steps"].append("data")
@@ -1163,7 +1190,7 @@ def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str
         (out / "arm_pin.json").write_text(json.dumps(pin, indent=1, sort_keys=True) + "\n")
         record["arm_pin_sha256"] = _sha_file(out / "arm_pin.json")
         record["steps"].append("arm_pin")
-        record["test_path"] = test_path(clone, job_dir, arm, ins, sh, checkpointing=checkpointing)
+        record["test_path"] = test_path(clone, job_dir, arm, ins, sh, checkpointing=checkpointing, harness=harness)
         record["steps"].append("test_path")
     except Stop as exc:
         record["stop"], record["stop_class"] = str(exc), exc.stop_class
@@ -1183,13 +1210,13 @@ def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str
     return record
 
 
-def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh, *, checkpointing=False) -> dict:
+def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh, *, checkpointing=False, harness: Path) -> dict:
     """Step 10 (P4-PHASE1-TEST A): the evaluator's path on synthetic labels; the real-label test is never read."""
-    syn = data_build(clone, job_dir, ins, sh, synthetic=True)
+    syn = data_build(clone, job_dir, ins, sh, synthetic=True, harness=harness)
     run = sft_dev(clone, job_dir, arm, syn, LR_GRID[0], 0, job_dir / "out" / "test_path" / "run", sh,
                   extra=("--steps", "2", "--eval-every", "1"), checkpointing=checkpointing)
     ledger = job_dir / "out" / "ledgers" / TABLE_PIN
-    env = {**offline_env(job_dir), "PYTHONPATH": str(clone)}
+    env = {**offline_env(job_dir, harness), "PYTHONPATH": str(clone)}
     code = ("import json, sys\nfrom pathlib import Path\n"
             "from r1.scripts import trackp_p4_test_path as T\n"
             "print(json.dumps(T.main(sys.argv[1:])))\n")
@@ -1197,7 +1224,7 @@ def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh, *, checkp
               "--arm", arm, "--sweep", str(clone / SWEEP_INDEX), "--paper-root", str(clone),
               "--classification", str(clone / CLASSIFICATION), "--host-config", str(clone / job_host_config()),
               "--ledger-dir", str(ledger), "--out", str(job_dir / "out" / "test_path" / "report")],
-             cwd=job_dir, env=env, timeout=7200)
+             cwd=job_dir, env=env, timeout=None)
     (job_dir / "out" / "logs" / "test_path.log").write_text((res.stdout or "") + "\n--- stderr ---\n" + (res.stderr or ""),
                                                            encoding="utf-8")
     if res.returncode != 0:
