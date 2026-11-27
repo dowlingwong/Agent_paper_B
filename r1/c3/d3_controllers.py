@@ -23,9 +23,13 @@ Units in this module (each its own reviewed tier-E unit):
   kept iff Delta_hat > 0 (harness keep rule ``default/v1``); no screen, no forecast, no verify.  The rule layer is the
   same test as A2's: ``r1.c3.features.featurize_view`` on the harness ``ControlView`` and its ``noop`` / ``duplicate``
   flags, checked in the order ``RuleController`` checks them (no-op first).
+* **LADDER** (§5.6; gap G5): ``LadderController`` — execute every proposal (rule layer off as built), one run, keep
+  iff Delta_hat > eta_node (harness keep rule ``bayes_threshold/v1`` with a threshold-carrier ``KeepPrior`` whose
+  t* is exactly eta), no verify.  eta = c * sigma_node with c from the constants file (§5.0, G2; not built here).
 """
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from r1.c3 import d3_analysis as D3
@@ -36,7 +40,8 @@ from r1.harness import import_harness
 import_harness()
 
 from autoresearch.control_plane.action_versions import (  # noqa: E402
-    KEEP_RULE_DEFAULT, NEW_CAMPAIGN_VERIFY_SPLIT_POLICY, VERIFY_RESPONSE_MEAN, ActionVersions)
+    KEEP_RULE_BAYES, KEEP_RULE_DEFAULT, NEW_CAMPAIGN_VERIFY_SPLIT_POLICY, VERIFY_RESPONSE_MEAN, ActionVersions,
+    KeepPrior)
 from autoresearch.control_plane.controller import ControlDecision  # noqa: E402
 
 D3_ARMS = D3.ARMS_D3A + D3.ARMS_D3B_WITH_A6
@@ -124,3 +129,60 @@ class RuleLayerController:
 def a0r_controller(node_ctx: NodeContext) -> RuleLayerController:
     """Arm A0R (§5.1b): the rule layer with the default keep rule; no screen, no verify."""
     return RuleLayerController(node_ctx, arm="A0R", rule_layer=D3_RULE_LAYER["A0R"])
+
+
+# ---------------------------------------------------------------------------
+# LADDER (§5.6; gap G5): execute every proposal, one run, keep iff Delta_hat > eta_node, no verify
+# ---------------------------------------------------------------------------
+
+LADDER_VERSION = "d3_ladder/v1"
+# §5.6: eta = c * sigma_node over the 121-point grid c in {-3.00, -2.95, ..., +3.00}; the fitted c per node is in the
+# constants file (§5.0, gap G2, not built here).
+LADDER_GRID = tuple(round(-3.0 + 0.05 * k, 2) for k in range(121))
+
+
+def ladder_eta(c: float, sigma_node: float) -> float:
+    """eta_node = c * sigma_node for a grid value c (§5.6); refuses c off the declared grid."""
+    if c not in LADDER_GRID:
+        raise ValueError("c must be one of the 121 declared grid values -3.00, -2.95, ..., +3.00 (§5.6)")
+    if not (math.isfinite(float(sigma_node)) and sigma_node > 0):
+        raise ValueError("sigma_node must be a finite positive number")
+    return float(c) * float(sigma_node)
+
+
+class LadderController(RuleLayerController):
+    """Arm LADDER: E1 as ``RuleLayerController`` (rule layer off as built, §5 / §13 item 21: every proposal is
+    executed); E2 keep iff Delta_hat > eta through the harness keep rule ``bayes_threshold/v1``, served a
+    ``KeepPrior`` whose threshold t* = -mu sigma^2 / tau^2 is exactly eta (mu = -eta, tau = sigma = 1: a threshold
+    carrier, not a belief; gap G5's construction); no verify (the controller never asks for one).  The first valid
+    trial is kept without comparison (harness).  ``eta`` is in metric units (``ladder_eta``)."""
+
+    def __init__(self, node_ctx: NodeContext, *, eta: float, rule_layer: bool | None = None,
+                 eta_source: str = "constants_file") -> None:
+        super().__init__(node_ctx, arm="LADDER",
+                         rule_layer=D3_RULE_LAYER["LADDER"] if rule_layer is None else rule_layer)
+        eta = float(eta)
+        if not math.isfinite(eta):
+            raise ValueError("eta must be finite")
+        self.eta = eta
+        self.version = f"{LADDER_VERSION}[eta={eta!r}]"
+        self._prior = KeepPrior(mu=-eta, tau=1.0, sigma=1.0, source=f"ladder:{eta_source}:eta={eta!r}")
+        if self._prior.threshold != eta:  # exact: (-(-eta) * 1.0) / 1.0
+            raise ValueError("the keep threshold must equal eta exactly")
+
+    def keep_prior(self, view: Any) -> KeepPrior:
+        return self._prior
+
+    def campaign_kwargs(self, *, W: int = D3_W, llm_cap: int = D3_LLM_CALL_CAP, trials: int | None = None,
+                        **versions: str) -> dict:
+        kwargs = super().campaign_kwargs(W=W, llm_cap=llm_cap, trials=trials, **versions)
+        kwargs["action_versions"] = ActionVersions.new_campaign(**{
+            "keep_rule": KEEP_RULE_BAYES, "verify_response": VERIFY_RESPONSE_MEAN,
+            "verify_split_policy": NEW_CAMPAIGN_VERIFY_SPLIT_POLICY, **versions})
+        kwargs["keep_prior"] = self._prior
+        return kwargs
+
+
+def ladder_controller(node_ctx: NodeContext, *, c: float) -> LadderController:
+    """Arm LADDER with eta = c * sigma_node (c from the constants file, §5.0/§5.6)."""
+    return LadderController(node_ctx, eta=ladder_eta(c, node_ctx.sigma_node), eta_source=f"c={c!r}")
