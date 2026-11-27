@@ -97,6 +97,7 @@ Branch `compute-screen-cache-rebuild-20261127`; all files under
 | `captures/worker_runtime.jsonl` | `4633b06b663d0f8cd30d7ffea2238e8e75dec1169d613a27f086ff7a32180141` |
 | `captures/cotenancy.log` | `7504a1116ca585e953344ceca3d625c79a7cfc5ed719a5775d5f126be9436374` |
 | `captures/smoke.log` | `ef7865fe75fee999510edf6c9a25f9fb6bb4a2e1bc10dfa7a3a55c682540504a` |
+| `captures/data_cache_build.log` | `8159b5fdc3608352987a7306cbee3a2bc77bf6c38bf833495654d4d6694139a6` |
 | `captures/precheck_stop.log` | `eb462ad22bf6f57e054e65d211ad544104795e884c4e5f4f5919129644024c0a` |
 | `captures/RUN_ENV.txt` | recorded code, Python, harness commit and clean-harness line |
 | `captures/cache_file_list.txt` | the 24 cache files with stored and decompressed sha256 |
