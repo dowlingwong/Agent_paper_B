@@ -80,14 +80,15 @@ signed text).
 
 ## 6. Running elsewhere / blocked
 
-- **`compute/20261127-30` (screening evidence, second re-issue): RUNNING.** Under the signed note on `main`
-  (`85d41476…`, `approved: true`) from clean code `c12136d6`; run id `SMEAS_EVIDENCE_20261127T1550Z`, deepthought
-  16 workers, cache tree `3843b53c…`, output
-  `/work/dwong/screen_measure_20261127/paper_c12136d6/results/r1/screen_measure/SMEAS_EVIDENCE_20261127T1550Z`,
-  tmux `smeas_reissue2`. Strict preflight passed (design/cotenancy/lineage/worker-runtime written); no STOP at the
-  start. The first attempt with stamp `1548Z` was a preflight refusal only (`origin/main` stale after the coordinator's
-  new merge); it created no output and is not a run. Next round: check the manifest/run count, then run the exact
-  analysis command.
+- **`compute/20261127-30` (screening evidence, second re-issue): STOP at the co-tenancy guard.** Under the signed
+  note on `main` (`85d41476…`, `approved: true`) from clean code `c12136d6`; run id
+  `SMEAS_EVIDENCE_20261127T1550Z`, deepthought 16 workers, cache tree `3843b53c…`. The strict preflight passed and the
+  run wrote **186 of 10,164 runs, 0 failed**, then stopped at 15:51:53Z with
+  `cotenancy 9.87 cores left to other users` (threshold 10; load1 45.13, our 15 workers). Scene kept at
+  `/work/dwong/screen_measure_20261127/paper_c12136d6/results/r1/screen_measure/SMEAS_EVIDENCE_20261127T1550Z`;
+  manifest `39575f58…`, lineage `a21db593…`, worker runtime `5f6ea547…`, cotenancy `3011a190…`. Nothing resumed;
+  see `20261127-30-screen-stop-cotenancy.md`. The earlier `1548Z` stamp was a preflight refusal only (stale
+  `origin/main`), created no output and is not a run.
 - **Expansion G.1b (`compute/20261126-10`):** ETTh1, MetaMaze and **Forest Cover** sealed; Forest Cover attempt-1
   `determinism` PASS, `stop: null`, seal receipt `2940254a…`. Titanic was 84/150 joint runs at 15:33Z, still running;
   assemble/summarise wait for its seal.
