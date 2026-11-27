@@ -34,6 +34,16 @@ push. The preflight review needed five wording/evidence rounds; all findings are
   The `fb101386` intermediate run also had zero new ids (205 vs 206). Environments: Python 3.11.13, pytest 9.2.0,
   `AR_HARNESS_ROOT` at the Mac harness checkout, fresh TMPDIR; the known failures are environment/known-base failures.
 
+## Resource samples (read-only, 03:37–03:38 UTC)
+
+- **TASL-7:** RTX 4090 24,564 MiB, 44 MiB used, 0 % util, load 0.00; `gpu0.lock` free; only system/ollama
+  processes. Idle for a T1 job that fits 24 GB.
+- **Ada:** cards 0 and 2 empty (48,427 MiB free each, 0 %); cards 1/3/4/5 shared by another user (~14.7 GB free,
+  100 %); cards 6/7 21.2 GB free (44 %/0 %). The P.4 blocker is the runtime, not memory.
+- **ETP pool:** deepthought 2 × TITAN X, deepthought2 1 × L40S (`Unclaimed`, but `START = false`); no H200/H100.
+- **TOpAS:** A100 parent `c03-001-175` 5 free but `START = false`; `167`/`179` busy/not runnable.
+- **TASL-2:** expansion G.1b CPU jobs on sets 0-3/4-7/12-15; GPU 353 MiB used by a non-job process; no GPU job.
+
 ## Still running or waiting
 
 | Item | State | What the next round checks |
