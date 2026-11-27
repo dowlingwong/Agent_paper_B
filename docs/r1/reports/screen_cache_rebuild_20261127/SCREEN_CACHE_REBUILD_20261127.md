@@ -11,7 +11,9 @@ evaluation, test or sealed file was read; no GPU was used; no evidence run was s
   `mac-screen-cache-layout-20261127` (`e9d7f230`), independently reviewed **ACCEPTED** (tier E:
   `docs/r1/reviews/SCREEN_MEASURE_CACHE_LAYOUT_REVIEW_20261127.md`, sha256 `594b7dfd…d524`). It is
   an ancestor of the published `origin/main`. The checkout was a fresh full clone, detached at this
-  commit, with a clean working tree.
+  commit, with a clean working tree at start and `git status --porcelain` empty after the run
+  (`captures/post_run_status.txt`). The run used only CPU nodes and requested no GPU; the host's
+  card state is recorded separately in that file as a post-run observation.
 - **Host / environment:** deepthought; batch venv `/ceph/dwong/r1_prepare_20261025/venv` Python
   3.13.15 (scikit-learn 1.8.0, NumPy 2.4.4, SciPy 1.17.1, pandas 3.0.3); harness
   `6adf3859de66c4814fcf376eed59880fbd8eeaf7`, clean (`harness_dirty=0`). `AR_HARNESS_ROOT` and the
@@ -22,7 +24,9 @@ evaluation, test or sealed file was read; no GPU was used; no evidence run was s
 ## 1. New cache and its fixed-point layout
 
 `data-cache` filled each of the six OpenML nodes once, then performed a fresh offline load and
-refused if that load changed the tree. It succeeded.
+refused if that load changed the tree. It succeeded. The old cache
+(`data_cache_ENG_20261127T0417Z`), the earlier cache STOP directory and both earlier evidence STOP
+scenes remain untouched; the read-only listing is `captures/preserved_scenes.txt`.
 
 | Field | Value |
 |---|---|
@@ -81,7 +85,10 @@ One pre-check STOP is preserved, not counted as a run or a scene:
 `refs/remotes/origin/main` was one commit behind the remote (the coordinator's docs-only
 `4a9a1f4a` merge landed during setup). The strict environment check runs before any attempt
 directory is created, so no run started and no scene exists. After `git fetch`, the same cache and
-a new output directory produced the PASS above. Nothing was patched, relaxed or retried.
+a new output directory produced the PASS above. The context, exact invocation and observed absence
+of the output directory are in `captures/precheck_context.txt`. Nothing was patched or relaxed;
+no attempt or run was retried — only the preflight was re-invoked after `git fetch`, and it had
+created no attempt.
 
 ## 3. Captures and hashes
 
@@ -99,6 +106,9 @@ Branch `compute-screen-cache-rebuild-20261127`; all files under
 | `captures/smoke.log` | `ef7865fe75fee999510edf6c9a25f9fb6bb4a2e1bc10dfa7a3a55c682540504a` |
 | `captures/data_cache_build.log` | `8159b5fdc3608352987a7306cbee3a2bc77bf6c38bf833495654d4d6694139a6` |
 | `captures/precheck_stop.log` | `eb462ad22bf6f57e054e65d211ad544104795e884c4e5f4f5919129644024c0a` |
+| `captures/precheck_context.txt` | `26c77a0c22e58f9ab57580faaa3f75f3a7837f482f57bf08783f22019d2ea93e` |
+| `captures/preserved_scenes.txt` | `7b660c7c440fec06f904b902e76a929fc9d19e68603b4cb6589703fe1f37c813` |
+| `captures/post_run_status.txt` | `edb2c142274e477652adc7ec224150d9262c915dad8ba22d9fcf88a5b4bb2a01` |
 | `captures/RUN_ENV.txt` | recorded code, Python, harness commit and clean-harness line |
 | `captures/cache_file_list.txt` | the 24 cache files with stored and decompressed sha256 |
 | `commands.sh` | the exact build and smoke commands |

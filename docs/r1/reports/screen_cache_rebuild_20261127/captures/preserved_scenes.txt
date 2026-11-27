@@ -1,0 +1,6 @@
+Preserved old cache and earlier STOP scenes (read-only listing, compute/20261127-26)
+drwxr-xr-x 2 dwong cms 6 Nov 27 11:24 /work/dwong/screen_measure_20261127/paper/results/r1/screen_measure/SMEAS_EVIDENCE_20261127T1032Z
+drwxr-xr-x 2 dwong cms 8 Nov 27 12:55 /work/dwong/screen_measure_20261127/paper/results/r1/screen_measure/SMEAS_EVIDENCE_20261127T1155Z
+drwxr-xr-x 3 dwong cms 3 Nov 27 01:41 /work/dwong/screen_prep_20261126/data_cache_ENG_20261127T004046Z_STOP_arff_suffix
+drwxr-xr-x 8 dwong cms 9 Nov 27 04:13 /work/dwong/screen_prep_20261126/data_cache_ENG_20261127T0417Z
+drwxr-xr-x 2 dwong cms 6 Nov 27 04:14 /work/dwong/screen_prep_20261126/smoke_ENG_20261127T0417Z
