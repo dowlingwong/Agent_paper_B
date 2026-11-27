@@ -26,7 +26,7 @@ label_tail: <declared law and provenance before assembly, with nu and sd matchin
 instance_split: r1/c3/splits/c3_p3_split_v2.json sha256 4dd46796e50ec188b5f89ebc8f4c04e6ab60a5056f124538936dd1bb5d6ae53a
 pre_split_amendment: <published v2 amendment path and sha256>
 supply: <MLGym arms and primary gate, or 1GC separate descriptive output>
-projection: <R1-BX-D14-G4B recompute with the joining node, path and sha256>
+gpu_hour_projection: <reported projection with the joining node, path and sha256; R1-NO-TIMEOUT (3)>
 review: <independent acceptance of the filled addendum and applicable checks>
 ```
 
