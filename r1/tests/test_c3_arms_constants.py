@@ -479,3 +479,20 @@ def test_invalid_g5_tail_metadata_refused(tier, node, kind, parameters, match):
     lab = {"proposal_id": "fixture", "node": node, "label_kind": kind, "soft_parameters": parameters}
     with pytest.raises(B.BuilderError, match=match):
         B._tail_options(lab, tier)
+
+
+def test_noninitial_t1_label_requires_an_independent_bound_law():
+    node = "autoresearch_fixedtokens"
+    lab = {"proposal_id": "fixture", "node": node, "label_kind": "audit",
+           "soft_parameters": {}}
+    with pytest.raises(B.BuilderError, match="requires a source-bound"):
+        B._tail_options(lab, "T1")
+
+    t1 = B.Tier1(suites={node: "autoresearch"}, modes=("history",), tail_laws={node: ("student_t", 7)})
+    with pytest.raises(B.BuilderError, match="differ from its bound"):
+        B._tail_options(lab, "T1", t1)
+    lab["soft_parameters"].update(tails="student_t", nu=7)
+    assert B._tail_options(lab, "T1", t1) == {"tails": "student_t", "nu": 7}
+    t1.tail_laws[node] = ("gaussian", None)
+    with pytest.raises(B.BuilderError, match="differ from its bound"):
+        B._tail_options(lab, "T1", t1)

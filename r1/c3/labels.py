@@ -63,7 +63,7 @@ G5_STUDENT_T_NU = {"mlab_ogbn_arxiv": 5, "mlgym_breakout_minatar": 5}
 G5_GAUSSIAN_NODES = frozenset({"mlab_cifar10", "mlab_imdb", "mlgym_cifar10", "mlgym_fmnist", "mlgym_houseprice"})
 
 
-def label_tail_options(label: dict, *, tier: str) -> dict:
+def label_tail_options(label: dict, *, tier: str, expected: tuple[str, float | None] | None = None) -> dict:
     """Validate and return the soft-label arguments carried by an assembled audit row."""
     parameters = label.get("soft_parameters") or {}
     if not isinstance(parameters, dict):
@@ -83,6 +83,10 @@ def label_tail_options(label: dict, *, tier: str) -> dict:
         raise ValueError(f"{node} requires Student-t with nu = {G5_STUDENT_T_NU[node]} (R1-G5-TAILS)")
     if node in G5_GAUSSIAN_NODES and tails != "gaussian":
         raise ValueError(f"{node} requires Gaussian tails (R1-G5-TAILS)")
+    if expected is None and node not in G5_STUDENT_T_NU and node not in G5_GAUSSIAN_NODES:
+        raise ValueError(f"{node} requires a source-bound completion or addendum tail declaration")
+    if expected is not None and (tails, nu) != expected:
+        raise ValueError(f"{node}'s label tails differ from its bound declaration")
     return {"tails": tails, "nu": nu} if tails == "student_t" else {}
 
 

@@ -110,6 +110,8 @@ class Tier1:
     suites: dict                     # {node: suite}, suite in gate.SUITES: the frozen T1 node set
     modes: tuple                     # the declared memory mode(s) under G5-MEM
     d3_k6: bool = False              # the R1-BX-D3 row exists: K = 6
+    # Verified from the completion or addendum, never inferred from a label row.
+    tail_laws: dict[str, tuple[str, float | None]] = field(default_factory=dict)
 
 
 def _finite(x) -> bool:
@@ -150,9 +152,10 @@ def _instance(row: dict, assign: dict) -> tuple[str, str]:
     return inst, assign[inst]["split"]
 
 
-def _tail_options(lab: dict, tier: str) -> dict:
+def _tail_options(lab: dict, tier: str, t1: Tier1 | None = None) -> dict:
+    expected = t1.tail_laws.get(lab.get("node")) if tier == "T1" and t1 is not None else None
     try:
-        return label_tail_options(lab, tier=tier)
+        return label_tail_options(lab, tier=tier, expected=expected)
     except ValueError as exc:
         raise BuilderError(f"{lab['proposal_id']}: {exc}") from exc
 
@@ -291,7 +294,7 @@ def _prepare(sources: list[Source], assign: dict, t1: Tier1 | None) -> tuple[lis
                 if kind == "audit":
                     k = lab["soft_parameters"]["k_label"]
                     soft = soft_label(lab["delta_label"], None, row["sigma_node"], sigma_mode="pooled_node",
-                                      k_label=k, **_tail_options(lab, tier))
+                                      k_label=k, **_tail_options(lab, tier, t1))
                     r["label_partial"] = k < len(label_seeds)
                 r.update(label_kind=kind, delta_true=dt, status=status, soft=soft)
                 used.add(pid)

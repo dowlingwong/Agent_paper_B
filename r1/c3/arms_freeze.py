@@ -250,7 +250,7 @@ def training_rows(source: str, rows, labels, *, assign=None, t1: B.Tier1 | None 
                     raise ArmsFreezeError(f"{pid}: non-inert proposal without its label row (complete population)")
                 kind = B._label_ok(lab, row, label_seeds)
                 if kind == "audit":
-                    tails = B._tail_options(lab, tier)
+                    tails = B._tail_options(lab, tier, t1)
                     r["soft"] = soft_label(lab["delta_label"], None, row["sigma_node"], sigma_mode="pooled_node",
                                            k_label=lab["soft_parameters"]["k_label"], **tails)
                     r.update(tails)
