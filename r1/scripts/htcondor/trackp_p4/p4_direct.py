@@ -38,7 +38,7 @@ stage is copied to the host unchanged. Then::
    card is descriptive only (R1-CARD-SHARE (2));
 6. copies the staged inputs into the job directory (each checked against the manifest) and runs the entry script
    (``p4_job.sh`` or ``p4_probe.sh``, with the spec, the arm and the host class) in the digest-pinned image v2.2
-   through the configured runtime, ``apptainer`` or ``docker`` only (anything else is refused), with only the leased
+   through ``apptainer`` or ``docker``, or on Ada through the reviewed host venv and the same entry script. Only the leased
    card visible (by UUID: ``--gpus device=<uuid>`` or ``--nv --nvccli`` with ``NVIDIA_VISIBLE_DEVICES``; the job's own
    identity step refuses anything but exactly one GPU of its class, and ``P4_LEASED_GPU_UUID`` binds it to this
    lease), as the calling non-root user, the job directory the working directory and ``HOME``;
@@ -75,7 +75,7 @@ LAUNCH_SCHEMA = "trackp_p4_direct_launch/1"          # = p4_lib.DIRECT_LAUNCH_SC
 LAUNCH_FILE = "direct_launch.json"                    # = p4_lib.DIRECT_LAUNCH_FILE
 ENGINEERING_ONLY = "ENGINEERING_ONLY"
 LEASED_GPU_ENV = "P4_LEASED_GPU_UUID"                 # = p4_lib.LEASED_GPU_ENV
-RUNTIMES = ("apptainer", "docker")
+RUNTIMES = ("apptainer", "docker", "venv")
 MODES = {"job": "p4_job.sh", "probe": "p4_probe.sh"}
 SPEC_FILES = {"job": "p4_spec.json", "probe": "p4_probe_spec.json"}
 OUTPUTS = ("out.tar", "job_record.json", "SHA256SUMS", "p4_run.log", LAUNCH_FILE)
@@ -140,6 +140,12 @@ def load_descriptor(stage, arm):
     host = d.get("host") or {}
     if host.get("container_runtime") not in RUNTIMES:
         raise Refusal("STOP: container runtime {!r} is not one of {}".format(host.get("container_runtime"), RUNTIMES))
+    if host["container_runtime"] == "venv":
+        venv = host.get("venv") or {}
+        python = venv.get("python", "")
+        if d.get("host_class") != "ada_rtx6000" or not isinstance(python, str) or not os.path.isabs(python) or \
+                ".." in python.split("/") or not python.endswith("/bin/python") or venv.get("version") != "3.12.10":
+            raise Refusal("STOP: the Ada venv needs its reviewed absolute Python 3.12.10 interpreter")
     for key in ("work_root", "lock_dir"):
         v = os.path.expanduser(str(host.get(key, "")))
         if not os.path.isabs(v) or ".." in v.split("/"):
@@ -280,10 +286,14 @@ def card_processes(uuid, run=_run):
 
 
 def runtime_version(runtime, run=_run):
-    res = run([runtime, "--version"])
-    if res.returncode != 0:
+    try:
+        res = run([runtime, "--version"])
+    except OSError:
+        raise Refusal("STOP: {} is not executable here".format(runtime)) from None
+    version = (res.stdout or res.stderr or "").strip().splitlines()
+    if res.returncode != 0 or not version:
         raise Refusal("STOP: {} --version failed: the configured runtime is not usable here".format(runtime))
-    return (res.stdout or res.stderr).strip().splitlines()[0][:200]
+    return version[0][:200]
 
 
 def container_argv(desc, job_dir, uuid, uid, gid, name):
@@ -309,6 +319,8 @@ def container_argv(desc, job_dir, uuid, uid, gid, name):
             if k != "HOME":
                 argv += ["--env", "{}={}".format(k, env[k])]
         return argv + ["docker://" + image] + args, {"NVIDIA_VISIBLE_DEVICES": uuid}
+    if host["container_runtime"] == "venv":
+        return args, {**env, "P4_VENV_PYTHON": host["venv"]["python"], "PYTHONNOUSERSITE": "1"}
     raise Refusal("STOP: container runtime {!r} is not one of {}".format(host["container_runtime"], RUNTIMES))
 
 
@@ -394,7 +406,13 @@ class Launch(object):
             raise Refusal("STOP: card {} has {} MiB free, the job needs {} MiB (R1-CARD-SHARE (1): free memory, not "
                           "an empty card, decides); lease another card".format(self.gpu_index,
                                                                                  card["memory_free_mib"], self.need))
-        self.runtime_version = runtime_version(runtime, self.run)
+        if runtime == "venv":
+            venv = self.desc["host"]["venv"]
+            self.runtime_version = runtime_version(venv["python"], self.run)
+            if self.runtime_version != "Python " + venv["version"]:
+                raise Refusal("STOP: the Ada venv interpreter is not Python {}".format(venv["version"]))
+        else:
+            self.runtime_version = runtime_version(runtime, self.run)
 
     def _mkdir_private(self, path):
         """Create ``path`` and any missing parent below the work root, each with mode 0700 (review M9)."""
@@ -440,6 +458,9 @@ class Launch(object):
             "job_dir": self.job_dir, "command": None, "started_utc": _utc(self.lease_t), "ended_utc": None,
             "wall_clock_s": None, "exit_code": None, "status": "started", "refusal": None,
             "timeout": "none (R1-NO-TIMEOUT)", "_lease_t": self.lease_t}
+        if self.record["runtime"] == "venv":
+            self.record["venv"] = desc["host"]["venv"]
+            self.record["image_executed"] = False
         self._save()
 
     def copy_inputs(self):
@@ -459,7 +480,10 @@ class Launch(object):
         self.record["command"] = argv
         self.record["status"] = "running"
         self._save()
-        env = dict(self.environ, **extra_env)
+        # The native job inherits only the host tool search path and the job's own settings.
+        environ = ({"PATH": self.environ.get("PATH", os.defpath)} if self.record["runtime"] == "venv"
+                   else self.environ)
+        env = dict(environ, **extra_env)
         old = {s: signal.signal(s, self._on_signal) for s in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)}
         try:
             # review M1: the child inherits the lease's descriptor, so a SIGKILLed launcher does not free the card

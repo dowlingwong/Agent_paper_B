@@ -5,13 +5,13 @@
 set -u
 set -o pipefail
 umask 077
-PY=/opt/r1/envs/trackp/bin/python
+PY=${P4_VENV_PYTHON:-/opt/r1/envs/trackp/bin/python}
 _precreate() { for f in job_record.json SHA256SUMS; do [ -s "$f" ] || : > "$f"; done; [ -s out.tar ] || tar -cf out.tar --files-from /dev/null 2>/dev/null || : > out.tar; }
 STOP() { echo "STOP: $*" >&2; _precreate; exit 2; }
 exec > >(tee -a p4_run.log) 2>&1
 _precreate
 [ "$#" -eq 3 ] || STOP "usage: p4_job.sh <p4_spec.json> <arm> <host class>"
-[ -x "$PY" ] || STOP "env3 python missing in the image: $PY"
+[ -x "$PY" ] || STOP "env3 python missing: $PY"
 [ -f "$1" ] || STOP "spec missing: $1"
 export GIT_TERMINAL_PROMPT=0 PYTHONDONTWRITEBYTECODE=1
 echo "P4 container job start $(date -u +%FT%TZ) host=$(hostname) arm=$2 host_class=$3 uid=$(id -u)"
