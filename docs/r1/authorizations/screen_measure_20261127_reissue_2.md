@@ -1,4 +1,4 @@
-# R1-SCREEN-MEASURE on deepthought — second re-issue draft
+# R1-SCREEN-MEASURE on deepthought — second re-issue, author-signed
 
 AI-assisted (Codex, local worker, 27 Nov 2026). The author signed the original note and adopted the companion
 pre-declaration on 27 Nov 2026 under R1-SCREEN-MEASURE-SIGNATURE. R1-SCREEN-MEASURE-CHOICES (1)–(9) fixes
@@ -6,7 +6,7 @@ the design, with option (a) as primary and all triples reported as secondary.
 
 The author signed the first re-issue under R1-SCREEN-MEASURE-REISSUE after the [worker-runtime STOP](../reports/screen_measure_stop_20261127/SCREEN_MEASURE_STOP_20261127.md).
 
-This second re-issue awaits author signature after the [27 November cache STOP](../reports/screen_measure_stop_20261127b/SCREEN_MEASURE_STOP_20261127B.md) at 12:59 CET, with `<reissue2_stamp>` set to a fresh UTC launch stamp distinct from `20261127T1032Z` and `20261127T1155Z`.
+The author signed this second re-issue under R1-SCREEN-MEASURE-REISSUE-2 after the [27 November cache STOP](../reports/screen_measure_stop_20261127b/SCREEN_MEASURE_STOP_20261127B.md) at 12:59 CET, with `<reissue2_stamp>` set to a fresh UTC launch stamp distinct from `20261127T1032Z` and `20261127T1155Z`.
 
 The companion is a byte-identical copy of the reviewed draft, with its historical draft wording retained.
 After the coordinator publishes both files and the exact-code review on `main`, Compute checks the
@@ -41,7 +41,7 @@ carries the preflight record, harness `6adf3859` clean and `edit_sets` `equal` o
 ## Key block
 
 ```
-approved: false
+approved: true
 label: EVIDENCE
 phase: r1_screen_measure
 start_ruling: R1-SCREEN-MEASURE
