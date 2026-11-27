@@ -136,6 +136,8 @@ VERSIONS = Path("/opt/r1/VERSIONS.txt")
 SEALED_ROOT = Path("/ceph/srv/dwong/paperb/trackp_p4")
 ENV3_FREEZE = "docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt"
 ENV3_FREEZE_SHA256 = "50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08"
+ENV3_FREEZE_SORTED_SHA256 = "e607c1d87221999015c1cd988c38dbc2e8deb51938403e2ca2c0c2832755419b"
+VENV_LEASE_FD_ENV = "P4_VENV_LEASE_FD"
 HOST_CONFIG = "r1/scripts/configs/trackp_htcondor_v2.json"   # the nemo2_h200 class's host config
 ADA_HOST_CONFIG = "r1/scripts/configs/trackp_ada_v1.json"      # the ada_rtx6000 class's host config
 # R1-HOST-FREE (1): the admitted host classes. A job is told its class (``--host-class``); the landed GPU must be that
@@ -459,8 +461,12 @@ def threshold_report(proj: dict, charged: float | None = None) -> dict:
 
 # =============================================================================================== helpers
 def _sh(argv, *, cwd=None, env=None, timeout=3600) -> subprocess.CompletedProcess:
+    opts = {}
+    if os.environ.get("P4_VENV_PYTHON"):
+        # A native training subprocess retains the launcher flock if its parents exit first.
+        opts["pass_fds"] = (venv_lease_fd(),)
     return subprocess.run(list(map(str, argv)), cwd=cwd, env=env, capture_output=True, text=True, encoding="utf-8",
-                          errors="replace", timeout=timeout)       # UTF-8 whatever the locale; never a decode error
+                          errors="replace", timeout=timeout, **opts)
 
 
 def _git(repo: Path, *args: str, timeout: int = 600) -> subprocess.CompletedProcess:
@@ -538,6 +544,47 @@ def _write_sums(root: Path, names) -> None:
 
 
 # =============================================================================================== host checks
+def ada_venv_config(block: dict | None) -> dict:
+    """Read the reviewed native runtime from the Ada host configuration."""
+    venv = (block or {}).get("venv") or {}
+    python = venv.get("python")
+    if not isinstance(python, str) or not Path(python).is_absolute() or ".." in Path(python).parts or \
+            not python.endswith("/bin/python") or venv.get("version") != "3.12.10":
+        raise Stop("STOP: the Ada venv needs its reviewed absolute Python 3.12.10 interpreter")
+    return {"python": python, "version": venv["version"]}
+
+
+def job_python() -> str:
+    return os.environ.get("P4_VENV_PYTHON") or ENV3_PYTHON
+
+
+def venv_lease_fd() -> int:
+    try:
+        fd = int(os.environ[VENV_LEASE_FD_ENV])
+        if fd < 3:
+            raise ValueError("reserved standard descriptor")
+        os.fstat(fd)
+    except (KeyError, ValueError, OSError):
+        raise Stop("STOP: the Ada venv job did not inherit the launcher lease descriptor") from None
+    return fd
+
+
+def verify_ada_venv(spec: dict, clone: Path) -> dict:
+    """Bind this process and its subprocesses to the venv in the pinned Ada host config."""
+    host = host_class_of(spec, "ada_rtx6000", launch="direct")["host_config"]
+    path = clone / host["path"]
+    if _sha_file(path) != host["sha256"]:
+        raise Stop("STOP: the Ada host configuration differs from the spec")
+    block = json.loads(_read_utf8(path)).get("direct") or {}
+    want = ada_venv_config(block)
+    actual = {"python": sys.executable, "version": ".".join(map(str, sys.version_info[:3]))}
+    if job_host_class() != "ada_rtx6000" or block.get("container_runtime") != "venv" or actual != want or \
+            job_python() != want["python"] or sys.prefix == sys.base_prefix or \
+            Path(sys.prefix) != Path(want["python"]).parent.parent:
+        raise Stop("STOP: this job is not running the venv named in the pinned Ada host configuration")
+    return actual
+
+
 def image_identity(spec: dict, versions: Path = VERSIONS) -> dict:
     if not versions.is_file():
         raise Stop(f"STOP: {versions} missing: not the pinned image")
@@ -556,8 +603,14 @@ def gpu_identity(sh=_sh, host_class: str | None = None) -> dict:
     another class: a GPU of another model is a STOP, whatever class it would fit."""
     cls = host_class or job_host_class()
     want = HOST_CLASSES[cls]
-    res = sh(["nvidia-smi", "--query-gpu=name,uuid,driver_version,memory.total,compute_cap",
-              "--format=csv,noheader"], timeout=120)
+    argv = ["nvidia-smi", "--query-gpu=name,uuid,driver_version,memory.total,compute_cap", "--format=csv,noheader"]
+    if os.environ.get("P4_VENV_PYTHON"):
+        leased = os.environ.get(LEASED_GPU_ENV, "")
+        if cls != "ada_rtx6000" or not re.fullmatch(r"GPU-[0-9a-fA-F-]+", leased) or \
+                os.environ.get("CUDA_VISIBLE_DEVICES") != leased:
+            raise Stop("STOP: an Ada venv job must bind CUDA visibility to exactly the leased GPU UUID")
+        argv.insert(1, f"--id={leased}")
+    res = sh(argv, timeout=120)
     if res.returncode != 0:
         raise Stop(f"STOP: nvidia-smi failed: {res.stderr.strip()[:200]}")
     gpus = [[x.strip() for x in line.split(",")] for line in res.stdout.strip().splitlines() if line.strip()]
@@ -645,16 +698,31 @@ def env3_freeze(spec: dict, clone: Path, sh=_sh) -> dict:
     pinned = clone / ENV3_FREEZE
     if not pinned.is_file() or _sha_file(pinned) != ENV3_FREEZE_SHA256:
         raise Stop(f"STOP: {ENV3_FREEZE} at the clone is not the R1-ENV-PIN freeze {ENV3_FREEZE_SHA256}")
-    res = sh([UV, "pip", "freeze", "--python", ENV3_PYTHON], timeout=600)
+    native = bool(os.environ.get("P4_VENV_PYTHON"))
+    res = sh(["uv" if native else UV, "pip", "freeze", "--python", job_python()], timeout=600)
     if res.returncode != 0:
         raise Stop(f"STOP: uv pip freeze of env3 failed: {res.stderr.strip()[:200]}")
     try:
-        return {**_phase1(clone).check_env3_freeze(res.stdout, _read_utf8(pinned)), "pinned_sha256": ENV3_FREEZE_SHA256,
-                "image_freeze_sha256": hashlib.sha256(res.stdout.encode()).hexdigest()}
+        record = _phase1(clone).check_env3_freeze(res.stdout, _read_utf8(pinned))
+        if native and (record["status"] != "identical" or record["sha256_sorted"] != ENV3_FREEZE_SORTED_SHA256):
+            raise Stop("STOP: the Ada venv freeze must equal the pinned package lock")
+        freeze_key = "venv_freeze_sha256" if native else "image_freeze_sha256"
+        return {**record, "pinned_sha256": ENV3_FREEZE_SHA256,
+                freeze_key: hashlib.sha256(res.stdout.encode()).hexdigest()}
     except Exception as exc:         # P4Stop of the clone's module
         if str(exc).startswith("STOP"):
             raise Stop(str(exc)) from None
         raise
+
+
+def check_venv_gpu(gpu: dict, sh=_sh) -> None:
+    """Check actual CUDA visibility after the venv freeze has passed."""
+    code = ("import torch\n"
+            "if torch.cuda.device_count() != 1: raise SystemExit(2)\n"
+            "print(f'GPU-{torch.cuda.get_device_properties(0).uuid}')")
+    result = sh([job_python(), "-B", "-c", code], timeout=120)
+    if result.returncode != 0 or result.stdout.strip() != gpu["uuid"]:
+        raise Stop("STOP: the Ada venv does not see exactly the leased GPU through CUDA")
 
 
 def clone_full(commit: str, dest: Path, git=_git, sh=_sh) -> dict:
@@ -688,7 +756,7 @@ def configs(spec: dict, clone: Path, sh=_sh, host_class: str | None = None) -> d
         if got != block["sha256"]:
             raise Stop(f"STOP: {block['path']} sha256 {got} is not the spec's {block['sha256']}")
         out[key] = {"path": block["path"], "sha256": got}
-    res = sh([ENV3_PYTHON, "-B", str(clone / TRACKP_SCRIPT), "--config", str(clone / blocks["host_config"]["path"]),
+    res = sh([job_python(), "-B", str(clone / TRACKP_SCRIPT), "--config", str(clone / blocks["host_config"]["path"]),
               "--check-config"], cwd=clone, timeout=600)
     if res.returncode != 0:
         raise Stop(f"STOP: trackp.py --check-config is not clean on the host config: {res.stdout.strip()[:400]}")
@@ -782,7 +850,7 @@ def stage(spec: dict, arm: str, clone: Path, job_dir: Path, sh=_sh) -> dict:
                 raise Stop(f"STOP: registry size or sha256 mismatch for {key}/{name}")
             staged[f"{key}/{name}"] = pin["sha256"]
     env = dict(os.environ, HF_HOME=str(job_dir / "hf"), HF_HUB_OFFLINE="0", TRANSFORMERS_OFFLINE="0")
-    res = sh([ENV3_PYTHON, "-B", "-c", TOKENIZER_STAGE], cwd=clone, env=env, timeout=3600)
+    res = sh([job_python(), "-B", "-c", TOKENIZER_STAGE], cwd=clone, env=env, timeout=3600)
     if res.returncode != 0:
         raise Stop(f"STOP: staging the pool tokenizers failed: {res.stderr.strip()[-300:]}")
     return {"weights": staged, "tokenizers": tokenizer_record(job_dir, res.stdout)}
@@ -875,7 +943,7 @@ def trackp(clone: Path, job_dir: Path, args: list, sh=_sh, timeout: int = 86400)
     with the host config, offline. A refusal of the SFT pipeline (``trackp.py`` prints ``STOP: …`` and exits 2) is a
     protocol STOP, a CUDA OOM an arm STOP, anything else (a missing script, an argument error, a crash) an
     infrastructure STOP. The log is kept under ``out/logs/``."""
-    argv = [ENV3_PYTHON, "-B", str(clone / TRACKP_SCRIPT), "--config", str(clone / job_host_config()),
+    argv = [job_python(), "-B", str(clone / TRACKP_SCRIPT), "--config", str(clone / job_host_config()),
             *map(str, args)]
     res = sh(argv, cwd=job_dir, env={**offline_env(job_dir), "PYTHONPATH": str(clone)}, timeout=timeout)
     logs = job_dir / "out" / "logs"
@@ -998,7 +1066,8 @@ def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str
     out.mkdir(exist_ok=True)
     clone = job_dir / "paper"
     try:
-        record["image"] = image_identity(spec)
+        native = bool(os.environ.get("P4_VENV_PYTHON"))
+        record["image"] = None if native else image_identity(spec)
         record["gpu"] = gpu_identity(sh)
         record["lease"] = lease_binding(record["gpu"])
         record["card_processes_start"] = card_processes(sh, record["gpu"].get("uuid"))   # R1-CARD-SHARE (4)
@@ -1006,7 +1075,11 @@ def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str
         record["steps"].append("identity")
         record["clone"] = clone_full(spec["paper"]["commit"], clone, git, sh)
         record["steps"].append("clone")
+        if native:
+            record["venv"] = verify_ada_venv(spec, clone)
         record["env3_freeze"] = env3_freeze(spec, clone, sh)
+        if native:
+            check_venv_gpu(record["gpu"], sh)
         record["steps"].append("env3_freeze")
         record["configs"] = configs(spec, clone, sh)
         record["steps"].append("configs")
@@ -1093,7 +1166,7 @@ def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh) -> dict:
     code = ("import json, sys\nfrom pathlib import Path\n"
             "from r1.scripts import trackp_p4_test_path as T\n"
             "print(json.dumps(T.main(sys.argv[1:])))\n")
-    res = sh([ENV3_PYTHON, "-B", "-c", code, "--data", str(syn), "--table", ins["table_dir"], "--run", str(run),
+    res = sh([job_python(), "-B", "-c", code, "--data", str(syn), "--table", ins["table_dir"], "--run", str(run),
               "--arm", arm, "--sweep", str(clone / SWEEP_INDEX), "--paper-root", str(clone),
               "--classification", str(clone / CLASSIFICATION), "--host-config", str(clone / job_host_config()),
               "--ledger-dir", str(ledger), "--out", str(job_dir / "out" / "test_path" / "report")],
@@ -1340,7 +1413,8 @@ def _run_probe(spec_path: Path, spec: dict, loaded: dict, arm: str, job_dir: Pat
     pdir.mkdir(parents=True, exist_ok=True)
     clone = job_dir / "paper"
     try:
-        record["image"] = image_identity(spec)
+        native = bool(os.environ.get("P4_VENV_PYTHON"))
+        record["image"] = None if native else image_identity(spec)
         record["gpu"] = gpu_identity(sh)                 # unscoped, as the P.4 job runs it (F3; T7)
         record["lease"] = lease_binding(record["gpu"], environ)
         record["card_processes_start"] = card_processes(sh, record["gpu"].get("uuid"))   # R1-CARD-SHARE (4)
@@ -1351,7 +1425,11 @@ def _run_probe(spec_path: Path, spec: dict, loaded: dict, arm: str, job_dir: Pat
         record["clone"] = clone_full(spec["paper"]["commit"], clone, git, sh)
         record["code"] = probe_code_binding(spec, clone, lib_file)
         record["steps"].append("clone")
+        if native:
+            record["venv"] = verify_ada_venv(spec, clone)
         record["env3_freeze"] = env3_freeze(spec, clone, sh)
+        if native:
+            check_venv_gpu(record["gpu"], sh)
         record["steps"].append("env3_freeze")
         record["configs"] = configs(spec, clone, sh)
         record["steps"].append("configs")
@@ -2133,7 +2211,7 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
                        f"({order['first']}, by {order['basis']}): the record uses that one, never one chosen by result")
         extras[arm] = order["extra"]
         jobs[arm] = (d, rec)
-        for k, v in {"paper_commit": rec.get("paper_commit"), "image": rec.get("image"),
+        for k, v in {"paper_commit": rec.get("paper_commit"), "image": rec.get("image"), "venv": rec.get("venv"),
                      "configs": {x: rec["configs"][x] for x in ("host_config", "sft_config")},
                      "data": rec["data"]["identity"], "n_train": rec["data"]["n_train"],
                      "env3": {x: rec["env3_freeze"].get(x) for x in ("status", "image_line", "local_label")}}.items():
@@ -2153,10 +2231,13 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
             "arm": arm, "registry_keys": list(ARMS[arm]), "attempt": d.name, "condor_job": rec.get("condor"),
             "host_class": rec.get("host_class"), "launch": rec.get("launch"),
             "hostname": (rec.get("host") or {}).get("hostname"), "gpu": rec.get("gpu"),
-            "image_digest": rec["image"]["digest"], "versions_sha256": rec["image"]["versions_sha256"],
+            "image_digest": (rec.get("image") or {}).get("digest"),
+            "versions_sha256": (rec.get("image") or {}).get("versions_sha256"),
+            **({"venv": rec["venv"]} if rec.get("venv") else {}),
             "paper_commit": rec["paper_commit"], "host_config_sha256": rec["configs"]["host_config"]["sha256"],
             "sft_config_sha256": rec["configs"]["sft_config"]["sha256"],
             "env3_freeze": {x: rec["env3_freeze"].get(x) for x in ("status", "image_line", "local_label")},
+            **({"venv_freeze_sha256": rec["env3_freeze"]["venv_freeze_sha256"]} if rec.get("venv") else {}),
             "staging_seconds": rec["staging"].get("seconds"), "staged_bytes": rec["staging"].get("bytes"),
             "labels": rec["data"]["labels"], "sft_data_sha256": rec["data"]["sft_data_sha256"],
             "n_train": rec["data"]["n_train"], "micro_batch": run["protocol"]["micro_batch"],
@@ -2238,8 +2319,9 @@ def _read_record(path: Path):
     return rec if isinstance(rec, dict) else None
 
 
-LOG_HEADER = {"probe": "P4 probe container job start", "p4": "P4 container job start"}   # p4_probe.sh, p4_job.sh
-CLEAN_END = re.compile(r"^P4 (?:probe )?container job end \S+ rc=0\s*$", re.M)   # the wrappers' last line on rc 0
+LOG_HEADER = {"probe": ("P4 probe container job start", "P4 probe venv job start"),
+              "p4": ("P4 container job start", "P4 venv job start")}
+CLEAN_END = re.compile(r"^P4 (?:probe )?(?:container|venv) job end \S+ rc=0\s*$", re.M)
 
 
 def logged_host_class(src: Path) -> str | None:
@@ -2248,7 +2330,7 @@ def logged_host_class(src: Path) -> str | None:
     if not log.is_file():
         return None
     for line in log.read_bytes().decode("utf-8", "replace").splitlines():
-        if line.startswith((LOG_HEADER["probe"], LOG_HEADER["p4"])):
+        if line.startswith(LOG_HEADER["probe"] + LOG_HEADER["p4"]):
             m = re.search(r"\shost_class=(\S+)", line)
             return m.group(1) if m else None
     return None
@@ -2390,7 +2472,7 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
         HOST_CLASSES[cls]["launch"] == ("direct" if launch is not None else "htcondor") and \
         (record.get("gpu") or {}).get("name") == HOST_CLASSES[cls]["gpu_name"] and \
         (record.get("gpu") or {}).get("compute_capability") == HOST_CLASSES[cls]["compute_capability"] and \
-        (record.get("image") or {}).get("digest") == spec["image"]["digest"] and \
+        launch_runtime_verified(launch, record, spec) and \
         (launch is None or launch.get("status") == "finished")
     hours = (record or {}).get("gpu_hours")
     wall_h = round(_requested_walltime_s(spec, arm) / 3600, 4)
@@ -2411,6 +2493,9 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
     outcome = {"stop": (record or {}).get("stop", no_record),
                "stop_class": (record or {}).get("stop_class", "infrastructure"), **{
                    k: (record or {}).get(k) for k in ("card_processes_start", "card_processes_end")}}
+    if unfinished_venv_launch(launch):
+        outcome.update(stop=(launch.get("refusal") or "STOP: the native launcher did not finish"),
+                       stop_class="infrastructure")
     if launch is not None:                  # R1-CARD-SHARE (3), (4): the launcher's host-side counts of the card
         direct.update(other_processes_start=launch.get("other_processes_start"),
                       other_processes_end=launch.get("other_processes_end"), card_shared=launch.get("card_shared"))
@@ -2493,8 +2578,25 @@ def direct_launch_matches(launch: dict, spec: dict, arm: str, kind: str, record:
             bad.append(f"job record host_class {record.get('host_class')!r}")
         if record.get("gpu") is not None and (record.get("gpu") or {}).get("uuid") != uuid:
             bad.append("job record GPU uuid is not the leased card's")
+        if record.get("venv") and record["venv"] != launch.get("venv"):
+            bad.append("job record venv path and version differ from the launcher")
+        if launch.get("runtime") == "venv" and not record.get("stop") and \
+                not launch_runtime_verified(launch, record, spec):
+            bad.append("job record venv identity")
     if bad:
         raise Stop(f"STOP: {DIRECT_LAUNCH_FILE} does not belong to this attempt: {bad}")
+
+
+def launch_runtime_verified(launch: dict | None, record: dict, spec: dict) -> bool:
+    if (launch or {}).get("runtime") != "venv":
+        return (record.get("image") or {}).get("digest") == spec["image"]["digest"]
+    venv = record.get("venv")
+    freeze = record.get("env3_freeze") or {}
+    return (record.get("host_class") == "ada_rtx6000" and record.get("image") is None and
+            launch.get("image_executed") is False and isinstance(venv, dict) and venv == launch.get("venv") and
+            freeze.get("status") == "identical" and freeze.get("pinned_sha256") == ENV3_FREEZE_SHA256 and
+            freeze.get("sha256_sorted") == ENV3_FREEZE_SORTED_SHA256 and
+            re.fullmatch(r"[0-9a-f]{64}", str(freeze.get("venv_freeze_sha256"))) is not None)
 
 
 def _utc_epoch(text) -> float | None:
@@ -2505,14 +2607,20 @@ def _utc_epoch(text) -> float | None:
         return None
 
 
+def unfinished_venv_launch(launch: dict | None) -> bool:
+    return bool(launch and launch.get("runtime") == "venv" and launch.get("status") != "finished")
+
+
 def direct_charge(launch: dict, record_hours: float | None, walltime_h: float, now: float) -> tuple:
     """(charged GPU-hours, basis, receipt fields) of a direct attempt (``seal``; R1-HOST-FREE (5), P4-CAP A,
     P4-PROBECAP A): one card, so GPU-hours = the launcher's ``wall_clock_s`` / 3600 (the lease span), or the record's
     ``gpu_hours`` if larger. An incomplete launcher record (no end, wall clock or exit code: the launcher was killed)
-    charges the largest of launch start to ``now`` (the seal), ``walltime_h`` and the record's hours; a record without
+    and an unfinished native launch use the largest of launch start to ``now`` (the seal), ``walltime_h`` and the
+    record's hours. A record without
     a readable ``started_utc`` cannot be bounded and is a STOP."""
     wall = launch.get("wall_clock_s")
-    complete = isinstance(wall, (int, float)) and not isinstance(wall, bool) and 0 <= wall <= 30 * 86400 and \
+    complete = not unfinished_venv_launch(launch) and \
+        isinstance(wall, (int, float)) and not isinstance(wall, bool) and 0 <= wall <= 30 * 86400 and \
         isinstance(launch.get("exit_code"), int) and not isinstance(launch.get("exit_code"), bool) and \
         _utc_epoch(launch.get("ended_utc")) is not None
     fields = {"direct_launch_sha256": None, "launcher_status": launch.get("status"),
@@ -2604,6 +2712,7 @@ def comparable(rec: dict) -> dict:
     config is shared per host class (``host_config[<class>]``): jobs of one class must agree, jobs of two classes
     carry their own class's config (R1-HOST-FREE; each job checked its class's sha256 against the spec)."""
     return {"paper_commit": rec.get("paper_commit"), "image": rec.get("image"),
+            **({"venv": rec["venv"]} if rec.get("venv") else {}),
             "configs": {"sft_config": rec["configs"]["sft_config"]},
             f"host_config[{rec.get('host_class')}]": rec["configs"]["host_config"],
             "data": (rec.get("data") or {}).get("identity"),

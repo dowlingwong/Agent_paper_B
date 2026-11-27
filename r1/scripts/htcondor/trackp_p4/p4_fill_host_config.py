@@ -47,7 +47,7 @@ from the compute agent's survey of Ada) has 26 values:
   - **job-relative path** and **free text**: as for H200 (``work_dir``, ``gpu.lock_path``, the four unused bases;
     ``venv.causal_conv1d``);
   - **host values of the direct launch** (read by ``p4_render_jdl.render_direct`` into the stage descriptor, then by
-    ``p4_direct.py`` on the host): ``direct.container_runtime`` ``apptainer`` or ``docker`` (anything else is refused);
+    ``p4_direct.py`` on the host): ``direct.container_runtime`` ``apptainer``, ``docker``, or ``venv`` for the reviewed Ada host environment;
     ``direct.work_root`` (the root of the fresh job directories) and ``direct.lock_dir`` (the host's GPU lease files
     ``gpu<N>.lock``), each an absolute path or one under ``~/`` without ``..``; ``direct.hostname`` (what ``hostname``
     prints on the host, e.g. ``ucrtasl``); ``direct.shm_size`` (docker's ``--shm-size``, e.g. ``16g``);
@@ -97,13 +97,13 @@ ADA_FIXED = {**{k: v for k, v in FIXED.items() if k not in ("gpu.name", "gpu.com
              "gpu.name": lib.HOST_CLASSES["ada_rtx6000"]["gpu_name"],
              "gpu.compute_capability": lib.HOST_CLASSES["ada_rtx6000"]["compute_capability"],
              "direct.ssh_alias": "experiment_zhixu"}
-ADA_CHOICE = {"direct.container_runtime": ("apptainer", "docker")}
+ADA_CHOICE = {"direct.container_runtime": ("apptainer", "docker", "venv")}
 ADA_ABSOLUTE = ("direct.work_root", "direct.lock_dir")
 ADA_PATTERN = {"direct.hostname": r"^[A-Za-z0-9][A-Za-z0-9.-]*$", "direct.shm_size": r"^[1-9][0-9]*[mg]$",
                "direct.min_free_mib": r"^[1-9][0-9]*$"}
 ADA_HINTS = {**HINTS,
-             "direct.container_runtime": "FILL: 'apptainer' or 'docker', whichever the survey shows usable by the "
-                                         "account without sudo (docker needs the docker group; apptainer needs --nvccli)",
+             "direct.container_runtime": "FILL: 'apptainer', 'docker', or the reviewed Ada 'venv', as confirmed by "
+                                         "the launch account's host survey",
              "direct.work_root": "FILL: an absolute directory for the fresh job directories, e.g. "
                                  "'/data1/dowling/r1_trackp_p4/jobs'",
              "direct.lock_dir": "FILL: the host's GPU lease directory (files gpu<N>.lock), e.g. '~/r1_locks'",
@@ -179,7 +179,8 @@ def check_value(path: str, value, host_class: str = "nemo2_h200") -> None:
         raise FillStop(f"STOP: {path}: a non-empty string without surrounding blanks is required")
     if value.startswith("TODO_VERIFY") or lib._placeholder(value):
         raise FillStop(f"STOP: {path}: {value!r} is still a placeholder")
-    if path in r["fixed"] and value != r["fixed"][path]:
+    ada_alias = host_class == "ada_rtx6000" and path == "direct.ssh_alias" and value == "ada_server"
+    if path in r["fixed"] and value != r["fixed"][path] and not ada_alias:
         raise FillStop(f"STOP: {path} must be {r['fixed'][path]!r} (forced by the job), not {value!r}")
     if path in r["relative"] and not _relative_ok(value):
         raise FillStop(f"STOP: {path}: {value!r} is not a relative path inside the job directory")
@@ -242,6 +243,8 @@ def fill(values_path: Path, config: Path | None = None, *, dry_run: bool = False
                        f"{sorted(want_paths - set(given))}, unknown {sorted(set(given) - want_paths)} (no partial fill)")
     for path in sorted(given):
         check_value(path, given[path], cls)
+    if given.get("direct.container_runtime") == "venv":
+        lib.ada_venv_config(cfg.get("direct"))
     keys = _paths(cfg)
     new = json.loads(raw)
     for path, value in given.items():
