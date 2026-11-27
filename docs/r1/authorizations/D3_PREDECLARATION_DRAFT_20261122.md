@@ -253,7 +253,7 @@ computation. The P3 dev instances come from the split file (`r1/c3/splits/c3_p3_
 search table, the σ values used, and the receipt, table and split-file sha256s. The reviewed artifact is
 `docs/r1/reports/d3_g2_20261127/d3_constants.json`, sha256
 `4f5f686be8f0210bcb27dfe0968296d68cf54e7266fb72c9038e741163776a93`. The independent re-fit was byte-identical,
-and `docs/r1/reviews/D3_G2_CONSTANTS_REVIEW_20261127.md` records acceptance. The same hash is bound in §14.
+and `docs/r1/reviews/D3_G2_CONSTANTS_FIT_REVIEW_20261127.md` records acceptance. The same hash is bound in §14.
 - **Population (PRE-A2 C):** the full dev population of sweep 2 (both memory modes, all labelled proposals; duplicates
   have no label and do not enter), as `r1/c3/gate_input_builder.py` `fit_a2` fits A2 for the gate. A test shows the
   fitter's per-node A2 vectors equal `fit_a2`'s on the same rows. The comparison is per node, not by `arm_digest`: the
