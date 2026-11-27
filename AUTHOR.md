@@ -1,4 +1,4 @@
-# Waiting on the author — 27 Nov 2026, 01:45 CET (`main` `bd406db9`). Decided 27 Nov: P10 B, P11 (b), S9 A + a → rows `e9c29a16`.
+# Waiting on the author — 27 Nov 2026, 02:05 CET (`main` `bd406db9`). Decided 27 Nov: P10 B, P11 (b), S9 A + a → rows `e9c29a16`.
 
 Answered on 26 Nov: D1 (rows (f)(g), TIMEOUT A, the three additions) → published `95249de3`. D2 (this tmux session
 coordinates; Codex does not push `main`; `canon/README.md` rule 1 stands, so no row is needed) → recorded. D3 (P.4 on Ada:
@@ -7,6 +7,8 @@ D4 (start order) → see the agents row. **G.5 signed** ("签 G.5：S1–S14 按
 
 | Item | Recommendation | The reply that decides | Blocks |
 |---|---|---|---|
+| **Ada access** for compute (27 Nov 01:50) | SSH to Ada as `dowling` (via the TASL-2 jump) refuses compute's session key; compute correctly did not use another user's account. Add compute's public key to our account on Ada, or give the route compute should use. The coordinator does not handle keys | (your action) | The Ada P.4 venv, then the P.4 probe and SFT (A5) |
+| **D.3 verify seeds collide with the D21 seed block** (compute's G1 report, blocker 1) | The pinned harness fixes verify seeds at `1000 + 10*budget_index + index` (`campaign.py:721`), i.e. 1010–1031, inside the D21 block 1001–1030. Revision 4 declares the namespaces disjoint. **Recommended (A):** a reviewed harness unit on top of `a3fedbbd` that adds a verify-seed base parameter whose default reproduces today's seeds bit for bit (tested), and D.3 sets a declared disjoint block; revision 4 names the new pin before you sign it. (B): keep the pin, and amend revision 4 to accept the overlap with a stated argument. Not recommended: the disjointness was declared for a reason, and B weakens it | "签 D3-verify-seed A" | D.3 G1 for every verify arm (A1, A2, A3, A5, A6) |
 | **Compute agent cannot authenticate** (23:26): `deepseek-flash` → `Authentication Fails, Your api key: ****a92e is invalid` | Renew or replace the DeepSeek key in OpenCode yourself (for example `opencode auth login`, provider DeepSeek), then `python3 tools/start_workers.py --role compute --compute-model deepseek/deepseek-flash`. Or use the OpenCode provider: `--compute-model opencode/deepseek-v4.1-flash` (its own login). The coordinator does not read or handle keys | fix the key, restart | Compute's whole queue: kit c1 (launch by 30 Nov 20:33), the REL copy for G.5, the P.4 survey |
 | Roles row: design agent; E-INT census choice (Codex commits on `main`, no PLAN row) | Defer until G.5 is signed; then one row for the roles (coordinator, writer, design, local, compute) and one for the census | — | Paper C; design-agent tasks |
 | S9: how an expansion node joins the frozen eight-node split | Sheet due from the local worker (`local/20261126-04`) | — | The G.5 addendum for expansion nodes |
