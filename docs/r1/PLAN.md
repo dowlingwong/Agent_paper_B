@@ -1727,6 +1727,12 @@ preregistration, the gate code and every signed note are unchanged.
 |---|---|
 | R1-SCREEN-COTENANCY-INFRA | **A screening run stopped by deepthought's co-tenancy guard is an infrastructure loss and is rerun under the same signed note with a new stamp** (author, 27 Nov 2026: "screening 按基础设施重跑"; `AUTHOR.md` on `coord/coordinator` @ `4dea2050`). The run `SMEAS_EVIDENCE_20261127T1550Z` under `screen_measure_20261127_reissue_2.md` stopped at 15:51:53Z with 186 of 10,164 runs written and 0 failed, when other users' load left 9.87 cores free (the note requires 10). (1) As R1-CARD-SHARE (3) treats an attempt lost to the host, the stop is not an outcome: its scene stays sealed as a record, and no row of it enters the analysis. (2) The rerun uses the same signed note, code, cache, design and seeds, with a new `SMEAS_EVIDENCE_<stamp>` directory, started when the strict preflight finds room on deepthought; the guard stays on during the run. (3) A later co-tenancy stop is handled the same way and recorded each time. Any other STOP still returns to the author. |
 
+### 27 November 2026 (j) — screening on deepthought2 (author)
+
+| ID | Decision |
+|---|---|
+| R1-SCREEN-DEEPTHOUGHT2 | **Move the screening evidence measurement to deepthought2, CPU only, using at most 64 CPUs** (author, 27 Nov 2026, in Codex chat, “换到deepthought2上跑，最多可以用64个核，又多又快，现在就能跑”). This is the host and resource decision under R1-HOST-FREE (3). The coordinator routes the host-specific runner and note re-issue for review, publishes the reviewed authorization, and dispatches Compute promptly. Verify the host, environment, harness and cache bindings, the effective CPU capacity and co-tenancy headroom at preflight. The worker count must fit the reviewed launch binding and the 64-CPU cap. Keep the existing design, seeds, analysis, and STOP rules. Use a fresh run stamp, preserve the old STOP records, and carry no rows from those attempts into the analysis. The deepthought retry route is superseded for the new run. D.3 step (8) and campaigns still wait under R1-D3-STEP8-HOLD. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
