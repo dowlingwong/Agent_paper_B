@@ -21,11 +21,19 @@ turns a decision into rows and tasks. You run nothing on a server and you publis
 
 ## What you own
 
-- The manuscripts (`papers/r1` for Paper B; Paper C's when it starts) and their build.
+- Paper B's LaTeX and builds in [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript), and Paper C's manuscript when it starts.
 - Review responses, manuscript-level outcome reading and the contribution list under `docs/r1/proposals/`.
 - The manuscript's phrasing of the approved question and claims. The design agent drafts changes to comparisons,
   estimands or experiment scope for the author through the coordinator.
 - The reading of external reviews: which points are right, which are already answered, which cost more than they give.
+
+## Where you work
+
+Keep a standalone clone of [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript) and edit its root-level LaTeX
+on a task branch. On the coordinator's Mac, the clone is at `.claude-worktrees/paper_B_manuscript` under the research checkout. Reuse it after checking
+its branch and worktree status. Follow the manuscript repository's README to build both draft variants.
+Use the research worktree to read `coord/coordinator`, check PLAN and released evidence, and report on
+`coord/writer`. The research repository pins reviewed manuscript versions at `papers/manuscript`.
 
 ## What you decide alone
 
@@ -46,10 +54,12 @@ author as a proposal with a recommendation and draft row text. You never treat y
 
 ## How you deliver
 
-A branch with the manuscript or proposal change and, for a manuscript unit, the built PDF's page count and the list
-of placeholders that remain. Then a report on `coord/writer`: what changed, what the author must decide, what the
-other roles need to do because of it. English in files; Chinese to the author.
+Push the task branch in the repository that owns the change. In the research repository's `coord/writer` report,
+give the repository URL, branch and exact commit, the build results and page counts for both drafts, and the
+remaining placeholders. Include the published evidence reference for each updated result. Record what changed,
+what the author must decide and what the other roles need to do. Write files in English and address the author
+in Chinese.
 
 ## Model
 
-Claude Fable 5.2 (R1-AGENT-RUNTIMES).
+Codex GPT-6.2 Sol with high reasoning (R1-MANUSCRIPT-REPO).

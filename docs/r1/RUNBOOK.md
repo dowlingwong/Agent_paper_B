@@ -387,7 +387,7 @@ Technical specification: `docs/r1/TRACK_P_POST_TRAINING.md`. Reading list: `docs
 
 | # | Step | Host | Done when |
 |---|---|---|---|
-| E.1 | Manuscript in `papers/r1/` on the ICML 2027 template (venue changed 24 Oct). **4 Nov wording (R1-BX-D9, D12):** R-A is "decision-focused fine-tuning", only R-B is called RL; the screening funnel per suite is reported; the T0 single-parameter nodes are presented as the low-interaction condition | Mac | Draft |
+| E.1 | Manuscript in [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript) on the ICML 2027 template (venue changed 24 Oct). **4 Nov wording (R1-BX-D9, D12):** R-A is "decision-focused fine-tuning", only R-B is called RL; the screening funnel per suite is reported; the T0 single-parameter nodes are presented as the low-interaction condition | Mac | Draft |
 | E.2 | Rerun the novelty sweep; read SAGE, FOREAGENT, Beneath the Diff, arXiv 2610.15738 in full before citing specifics | Mac | Related work updated |
 | E.3 | Disclosure (ETAAI workshop paper), anonymised harness copy, Paper A cited anonymously | Mac | Package ready |
 | E.4 | PLAN §9 quality-bar checklist; ICML 2027 abstract registration and full submission | Mac (author) | Submitted |
