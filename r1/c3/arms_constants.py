@@ -79,7 +79,7 @@ from r1.c3.labels import INERT, N_BINS
 SCHEMA = "r1_c3_rule_arm_constants/v1"
 SCHEMA_PREFIX = "r1_c3_rule_arm_constants/"
 FITTER_PATH = "r1/c3/arms_constants.py"
-SPLIT_PATH = "r1/c3/splits/c3_p3_split_v1.json"
+SPLIT_PATH = "r1/c3/splits/c3_p3_split_v1.json"        # v1; a constants file over a joining node names v2 (pin_for_nodes)
 BUILDER_PATH = "r1/c3/gate_input_builder.py"
 FIT_POPULATION = "dev label block, full dev population, gate sources"       # amendment A§9
 A1_OFFLINE = "no rule layer; no verify offline"                              # amendment A§9
@@ -178,7 +178,7 @@ def node_info(items, node: str) -> dict:
 
 def fit_sources(sources: dict, *, t1: B.Tier1 | None = None, assign=None) -> tuple[dict, list[dict]]:
     """``sources``: {source: (table rows, released train/dev label rows)}. Returns ({node: {"A1", "A2"}}, items)."""
-    assign = assign if assign is not None else p3_split.assignment(p3_split.load())
+    assign = assign if assign is not None else AF._assign()           # v2's (R1-G5-S9 (1); v1 entries identical)
     t1_nodes = set(t1.suites) if t1 is not None else set()
     want = {"sweep2"} | ({"g5"} if t1_nodes else set())
     if set(sources) != want:
@@ -224,7 +224,7 @@ def document(fitted: dict, items, *, sources_meta: dict, t1: B.Tier1 | None, fit
            "written_by": "r1/c3/arms_constants.py (AI-assisted, Claude); post-freeze reads amendment A§8 unit 1, "
                          "D.3 pre-declaration gap G2 (A1 and A2)",
            "fitter": dict(fitter), "fit_population": FIT_POPULATION, "rules": dict(RULES), "row_order": "proposal_id",
-           "split_file": {"path": SPLIT_PATH, "sha256": p3_split.P3_SPLIT_SHA256},
+           "split_file": p3_split.pin_for_nodes(t1_nodes),               # v1 unless a joining node (R1-G5-S9)
            "gate_input_builder": {"path": BUILDER_PATH, "sha256": builder_sha256},
            "toolchain": dict(tools) if tools is not None else toolchain(),
            "sources": {s: dict(m) for s, m in sorted(sources_meta.items())},
@@ -294,7 +294,7 @@ def parse(data: bytes) -> dict:
         _refuse(f"constants file: fitter must be {{path: {FITTER_PATH}, sha256, code_commit (40 hex)}}")
     if c.get("fit_population") != FIT_POPULATION:
         _refuse(f"constants file: fit_population must be {FIT_POPULATION!r}")
-    if c.get("split_file") != {"path": SPLIT_PATH, "sha256": p3_split.P3_SPLIT_SHA256}:
+    if c.get("split_file") not in p3_split.SPLIT_FILES.values():
         _refuse("constants file: split_file is not the pinned P3 split file")
     if c.get("rules") != RULES or c.get("row_order") != "proposal_id":
         _refuse("constants file: rules and row_order are not this fitter's")
@@ -311,6 +311,12 @@ def parse(data: bytes) -> dict:
     t1 = c.get("t1")
     if not isinstance(t1, dict) or set(t1) != {"suites", "modes", "d3_k6"} or not isinstance(t1["suites"], dict):
         _refuse("constants file: t1 must be {suites, modes, d3_k6}")
+    try:
+        want_split = p3_split.pin_for_nodes(t1["suites"])
+    except p3_split.SplitError as exc:
+        _refuse(f"constants file: t1: {exc}")
+    if c["split_file"] != want_split:
+        _refuse(f"constants file: split_file must be {want_split} for this T1 set (R1-G5-S9 (1))")
     srcs = c.get("sources")
     want = {"sweep2"} | ({"g5"} if t1["suites"] else set())
     if not isinstance(srcs, dict) or set(srcs) != want:
@@ -352,6 +358,7 @@ def _code_commit() -> tuple[str, str]:
 
 
 def _fit_cmd(a) -> dict:
+    from r1.c3 import release
     from r1.harness import REPO
     tables, receipts, roots = AF._kv(a.table), AF._kv(a.receipt), AF._kv(a.release_root)
     if not (set(tables) == set(receipts) == set(roots)):
@@ -367,7 +374,7 @@ def _fit_cmd(a) -> dict:
     builder_sha = AF._sha_file(REPO / BUILDER_PATH)
     if builder_sha != AF._prereg_block(REPO)["gate_input_builder_sha256"]:
         _refuse("the checkout's gate_input_builder.py is not the one the preregistration binds (fit_a2 is its code)")
-    assign = p3_split.assignment(p3_split.load())
+    assign = AF._assign()
     sources, meta = {}, {}
     for src in sorted(tables):
         if src not in B.GATE_SOURCES:
@@ -380,7 +387,11 @@ def _fit_cmd(a) -> dict:
         if src == "sweep2" and table_sha != SWEEP2_PROPOSALS_SHA256:
             _refuse(f"sweep2: the table is not the pinned sweep-2 table {SWEEP2_PROPOSALS_SHA256[:12]}… "
                     "(D.3 draft §5.0)")
-        sources[src] = (rows, labels)
+        if src == "g5" and t1 is not None and t1.needs_tail_binding:
+            t1 = B.bind_g5_tail_laws(t1, tables[src], receipt)
+        sources[src] = (release.g5_consumer_rows(receipt, rows), labels)
+        if src == "g5" and "split_sha256" in receipt:
+            assign = release._row_assignment(receipt)  # both split versions preserve T0 membership
         configs = Path(tables[src]) / "configs.json"          # recorded for D.3 §5.0's table pin; not read further
         meta[src] = {"receipt_sha256": receipts[src],
                      "traindev_partition_sha256": receipt["outputs"]["label_block.traindev.jsonl"],

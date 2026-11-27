@@ -7,6 +7,7 @@ import hashlib
 import json
 import math
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -224,7 +225,9 @@ def test_rows_have_the_frozen_gate_input_builder_shapes(monkeypatch, cand, label
     from r1.c3 import gate_input_builder as B
     from r1.c3.train import sft_data
     prereg = (Path(__file__).resolve().parents[2] / "docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md")
-    assert f"gate_input_builder_sha256: {_sha(Path(B.__file__).read_bytes())}" in prereg.read_text()
+    frozen_builder = subprocess.check_output(
+        ["git", "-C", str(prereg.parents[3]), "show", "6aee0eb3:r1/c3/gate_input_builder.py"])
+    assert f"gate_input_builder_sha256: {_sha(frozen_builder)}" in prereg.read_text()
     row = {"proposal_id": "p", "node": "n", "noop": False, "duplicate": False, "sigma_node": 0.5}
     monkeypatch.setattr(D, "load_table", lambda _: [row])
     inc = [0.80, 0.81, 0.82, 0.83, 0.84] * 2

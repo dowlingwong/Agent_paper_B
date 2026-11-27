@@ -72,9 +72,14 @@ RAW_STATE_FIELDS = ("cfg_equals_incumbent", "full_seen_before")
 # ``g5_assemble.node_metric``) -> the names of ``r1.c3.gate.SUITES`` (R1-BX-D2 as amended by R1-1GC-FALLBACK), which
 # the arms-frozen record's ``Tier1.suites`` must use. The one place this mapping lives.
 SUITE_NAMES = {"autoresearch": "autoresearch", "mlagentbench": "MLAgentBench", "mlgym": "MLGym"}
+# Node-spec suites that are not suites (R1-1GC-FALLBACK): their nodes are extra tasks, with no gate suite;
+# ``gate_suite`` and ``tier1_suites`` refuse them, so such a node never reaches ``Tier1.suites`` (R1-G5-S9 (2)).
+EXTRA_TASK_SUITES = ("1gc7rc",)
 
-# The eight G.5 nodes (sweep2/t1_tasl/g5_tasl_spec.json, in its order) with the suite their node spec names. Codes are
-# appended after the T0 codes 0-10 of r1.c3.features.NODE_CODES and never reused.
+# The eight G.5 nodes (sweep2/t1_tasl/g5_tasl_spec.json, in its order) with the suite their node spec names, then the
+# four R1-T1-NODE-EXPANSION candidates of the split file v2 (R1-G5-S9; sweep2/t1_tasl/g1b_tasl_x_spec.json order),
+# which join G.5 through addendum notes. Codes are appended after the T0 codes 0-10 of r1.c3.features.NODE_CODES and
+# never reused; a code for a node with no labels is never used in a table.
 FIRST_T1_CODE = 11
 T1_NODE_INFO = {
     "mlab_cifar10": {"suite": "mlagentbench", "code": 11},
@@ -85,7 +90,12 @@ T1_NODE_INFO = {
     "mlgym_breakout_minatar": {"suite": "mlgym", "code": 16},
     "mlgym_houseprice": {"suite": "mlgym", "code": 17},
     "autoresearch_fixedtokens": {"suite": "autoresearch", "code": 18},
+    "mlgym_titanic": {"suite": "mlgym", "code": 19},
+    "mlgym_metamaze": {"suite": "mlgym", "code": 20},
+    "gc7rc_etth1": {"suite": "1gc7rc", "code": 21},
+    "gc7rc_forestcover": {"suite": "1gc7rc", "code": 22},
 }
+SIGNED_NOTE_NODES = tuple(T1_NODE_INFO)[:8]          # the signed G.5 note's eight nodes (the spec's ``nodes``)
 T1_NODE_CODES = {n: v["code"] for n, v in T1_NODE_INFO.items()}
 assert len(set(T1_NODE_CODES.values())) == len(T1_NODE_CODES) and min(T1_NODE_CODES.values()) == FIRST_T1_CODE
 
@@ -107,6 +117,9 @@ def tier_of_code(code: int) -> str:
 
 def gate_suite(spec_suite: str) -> str:
     """The ``gate.SUITES`` name of a node spec's suite; an unknown suite is an error, never a guess."""
+    if spec_suite in EXTRA_TASK_SUITES:
+        raise FeatureError(f"node-spec suite {spec_suite!r} is not a suite (R1-1GC-FALLBACK): its nodes are extra "
+                           "tasks, never supplied to the arms or the gate (R1-G5-S9 (2))")
     if spec_suite not in SUITE_NAMES:
         raise FeatureError(f"no gate suite for node-spec suite {spec_suite!r} (SUITE_NAMES)")
     return SUITE_NAMES[spec_suite]
@@ -133,9 +146,11 @@ def tier1_suites(node_suites: dict) -> dict:
     return out
 
 
-def describe() -> dict:
-    """What the table's ``build.json`` records about the featurizer."""
-    return {"version": FEATURIZER, "fields": list(FEATURES_V3), "node_codes": dict(T1_NODE_CODES),
+def describe(nodes=SIGNED_NOTE_NODES) -> dict:
+    """What the table's ``build.json`` records about the featurizer, including codes of any addendum nodes."""
+    active = set(SIGNED_NOTE_NODES) | set(nodes)
+    return {"version": FEATURIZER, "fields": list(FEATURES_V3),
+            "node_codes": {node: code for node, code in T1_NODE_CODES.items() if node in active},
             "missing_categorical": MISSING_CATEGORICAL, "no_t1_source": list(NO_T1_SOURCE),
             "raw_state_fields": list(RAW_STATE_FIELDS), "suite_names": dict(SUITE_NAMES)}
 

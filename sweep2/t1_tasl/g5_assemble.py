@@ -53,6 +53,16 @@ seeds where the candidate diverged; at most half: Δ_true over the rest; more th
 evaluation seed where only the parent diverged is a STOP for the author (the frozen builder ties ``k_evaluation`` to
 ``divergent_seeds``).
 
+**Tail law** (E5, P10, R1-G5-TAILS and R1-G5-TAILS-CONSUMERS). Each
+assembled node's declared ``tails`` (``gaussian`` or ``student_t``, with ``tails_nu`` for the latter) is read before
+its labels (``tail_law``): the seven nodes' from the spec, autoresearch's from the completion record under G5-ARPEND A
+(``check_ar_record``) or the spec under B. An undeclared node (a PENDING marker) is a STOP. A ``gaussian`` node's rows
+and ``build.json`` entry are unchanged byte for byte; a ``student_t`` node's audit label rows carry ``"tails":
+"student_t"`` and ``"nu"`` in ``soft_parameters`` and its ``build.json`` node entry ``tails``, ``nu`` and ``t_scale``
+(``r1.c3.labels.STUDENT_T_SCALE``: the parametric soft label is ``labels.soft_label(..., tails="student_t", nu=nu)``, a
+Student-t whose sd is s = σ_node / √k_label, the Gaussian path's width). Delta_label, se_label and E5 do not depend on
+the tail law.
+
 **Readings** (``g5_tasl.TABLE_READINGS``; review M2). They are signed in the note's ``t1_table_readings`` line, which
 also carries the author's choice for the logged Δ̂ of a proposal that diverged or timed out in its campaign:
 ``refuse`` (the assembly STOPs on such a proposal), ``neg_inf`` (−∞, "never kept"; the frozen builder handles it, but
@@ -270,6 +280,32 @@ def noise_by_node(spec: dict, row: dict, *, ar_record=None) -> dict:
     return out
 
 
+STUDENT_T_SCALE = "sd_matched"     # = r1.c3.labels.STUDENT_T_SCALE (a test checks they are equal)
+
+
+def tail_law(spec: dict, node: str, *, ar_record=None) -> dict:
+    """The node's declared tail law (P10, R1-G5-TAILS): ``{"tails": "gaussian"}`` or ``{"tails": "student_t", "nu":
+    ν}``. Autoresearch's comes from its completion record under G5-ARPEND A. A node not yet declared is a STOP: the
+    declaration precedes its labels (E5)."""
+    n = S.node_entry(spec, node)
+    if node == S.AR and S.options(spec)["G5-ARPEND"] == "A":
+        if ar_record is None:
+            raise Stop("STOP: autoresearch under G5-ARPEND A needs its completion record for its tails "
+                       "(check_ar_record)")
+        rec = ar_record()
+        tails, nu = rec.get("tails"), rec.get(S.TAILS_NU)
+    else:
+        tails, nu = n.get("tails"), n.get(S.TAILS_NU)
+    if tails not in S.TAILS:
+        raise Stop(f"STOP: {node}'s tails is not declared gaussian or student_t (P10; E5: declared before labels are "
+                   f"built)")
+    if tails == "student_t" and not S._nu_ok(nu):
+        raise Stop(f"STOP: {node}'s tails_nu must be a finite number > 2 where tails is student_t (R1-G5-TAILS)")
+    if tails == "gaussian" and nu is not None:
+        raise Stop(f"STOP: {node}'s tails_nu is refused where tails is gaussian (R1-G5-TAILS)")
+    return {"tails": "gaussian"} if tails == "gaussian" else {"tails": "student_t", "nu": float(nu)}
+
+
 def _one_attempt(d: Path) -> Path:
     """The one complete sealed attempt of a job or chunk directory; every other sealed attempt ended in an
     infrastructure STOP (one attempt per job, chosen by the rule, never by result)."""
@@ -376,8 +412,10 @@ def _mean_se(d: list[float]) -> tuple[float, float | None]:
     return mean, se
 
 
-def group_label(values: dict, cu: str, pu: str, seeds: list[int], sign: float, sigma: float, group: str) -> dict:
-    """E5 and the paired label of one group on the label seeds."""
+def group_label(values: dict, cu: str, pu: str, seeds: list[int], sign: float, sigma: float, group: str,
+                law: dict | None = None) -> dict:
+    """E5 and the paired label of one group on the label seeds; a ``student_t`` law (``tail_law``) is recorded in
+    ``soft_parameters`` (a ``gaussian`` law, or none, leaves the row as before)."""
     cand_div, par_only, ok = _pairs(values, cu, pu, seeds)
     n = len(seeds)
     if len(cand_div) > n / 2:
@@ -387,10 +425,11 @@ def group_label(values: dict, cu: str, pu: str, seeds: list[int], sign: float, s
                    f"E5 gives no rule; the author decides")
     d = [sign * (values[(cu, s)][1] - values[(pu, s)][1]) for s in ok]
     mean, se = _mean_se(d)
+    soft = {"inert": False, "sigma_node": sigma, "k_label": len(ok), "delta_label": mean, "se_label": se}
+    if law is not None and law["tails"] == "student_t":
+        soft.update(tails="student_t", nu=law["nu"])
     return {"label_kind": "audit", "seeds": list(seeds), "delta_label": mean, "se_label": se,
-            "soft_parameters": {"inert": False, "sigma_node": sigma, "k_label": len(ok), "delta_label": mean,
-                                "se_label": se},
-            "divergent_seeds": sorted(cand_div + par_only), "audit_group": group}
+            "soft_parameters": soft, "divergent_seeds": sorted(cand_div + par_only), "audit_group": group}
 
 
 def group_evaluation(values: dict, cu: str, pu: str, seeds: list[int], sign: float, group: str) -> dict:
@@ -410,7 +449,7 @@ def group_evaluation(values: dict, cu: str, pu: str, seeds: list[int], sign: flo
 
 # =============================================================================================== the table
 def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, stage: str,
-              divergent_delta_hat: str) -> dict:
+              divergent_delta_hat: str, law: dict | None = None) -> dict:
     """Table, label and (test stage) evaluation rows of one node, and the counts."""
     if S.options(spec)["G5-AUDIT"] != "A":
         raise Stop("STOP: the assembly under G5-AUDIT B is not built (no table rule for unaudited in-campaign "
@@ -490,7 +529,7 @@ def node_rows(spec: dict, node: str, data: dict, metric: dict, sigma: float, sta
                         row["delta_hat"] = sign * (float(value) - float(best_before))
                     if g["group"] not in labels_by_group:
                         labels_by_group[g["group"]] = group_label(values, g["candidate_unit"], g["parent_unit"],
-                                                                  seeds["label"], sign, sigma, g["group"])
+                                                                  seeds["label"], sign, sigma, g["group"], law)
                         if stage == "test":
                             evals_by_group[g["group"]] = group_evaluation(values, g["candidate_unit"],
                                                                           g["parent_unit"], seeds["evaluation"],
@@ -562,13 +601,15 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
     SE.check_seal_mode(spec)
     run = sealed_run_checks(spec)
     noise = noise_by_node(spec, row, ar_record=ar_record)
+    laws = {node: tail_law(spec, node, ar_record=ar_record) for node in sorted(noise)}   # P10 before any label
     table, labels, evals, nodes, ks, eval_counts = [], [], [], {}, set(), {}
     for node in sorted(noise):
         inputs = sealed_node(spec, node, spec_sha256)
         metric = node_metric(spec, node, git=git)
         data = read_node(spec, node, inputs, tree, stage, purpose_head=purpose_head)
         ks.add(data["K"])
-        got = node_rows(spec, node, data, metric, noise[node]["sigma_node"], stage, divergent_delta_hat)
+        got = node_rows(spec, node, data, metric, noise[node]["sigma_node"], stage, divergent_delta_hat,
+                        laws[node])
         d9 = [k for k in D9_COUNTS if got["features"][k] != 0]
         if d9:
             raise Stop(D9_STOP.format(node=node, counts=" and ".join(d9)))
@@ -580,6 +621,8 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
                        "counts": got["counts"], "features": got["features"],
                        "attempts": sorted(str(p) for p in [*inputs["campaigns"].values(),
                                                            *inputs["chunks"][1], *inputs["chunks"][2]])}
+        if laws[node]["tails"] == "student_t":         # a gaussian node's entry stays as before (R1-G5-TAILS)
+            nodes[node].update(tails="student_t", nu=laws[node]["nu"], t_scale=STUDENT_T_SCALE)
     if len(ks) != 1:
         raise Stop(f"STOP: the assembled nodes were audited at different K {sorted(ks)} (P4)")
     k = ks.pop()
@@ -592,7 +635,7 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
              "spec_path": SPEC_REL, "spec_sha256": spec_sha256, "sealed_run": str(SE.sealed_run(spec)),
              "K": k, "label_seeds": seeds["label"], "evaluation_seeds": seeds["evaluation"],
              "memory_modes": spec["memory"]["modes"], "options": S.options(spec), "nodes": nodes,
-             "featurizer": F.describe(), "proposal_diff": dict(PROPOSAL_DIFF),
+             "featurizer": F.describe(nodes), "proposal_diff": dict(PROPOSAL_DIFF),
              "train_dev_row": {"row_id": row["row_id"], "decision_sha256": row["decision_sha256"]},
              "readings": {**readings["readings"], "campaign_divergent_delta_hat": divergent_delta_hat,
                           "note": readings["note"], "note_sha256": readings["note_sha256"]},

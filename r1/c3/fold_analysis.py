@@ -60,7 +60,9 @@ def node_subset(sources: list, nodes) -> list:
         rows = [r for r in s.rows if r["node"] in nodes]
         pids = {r["proposal_id"] for r in rows}
         out.append(B.Source(s.name, rows, [x for x in s.labels if x["proposal_id"] in pids],
-                            [x for x in s.evaluations if x["proposal_id"] in pids]))
+                            [x for x in s.evaluations if x["proposal_id"] in pids],
+                            split_sha256=s.split_sha256,
+                            tail_laws={node: law for node, law in s.tail_laws.items() if node in nodes}))
     return out
 
 
@@ -90,7 +92,8 @@ def fold_input(sources, predictions, noise, *, nodes, t1=None, g_units=B.G_PRIMA
     t0 = [n for n in nodes if n in G.T0_NODES]
     t1_sub = None
     if t1 is not None:
-        t1_sub = B.Tier1(suites={n: s for n, s in t1.suites.items() if n in nodes}, modes=t1.modes, d3_k6=t1.d3_k6)
+        t1_sub = B.Tier1(suites={n: s for n, s in t1.suites.items() if n in nodes}, modes=t1.modes,
+                         d3_k6=t1.d3_k6, tail_laws={n: law for n, law in t1.tail_laws.items() if n in nodes})
     subset = node_subset(sources, nodes)
     if not t0:                                   # no T0 node: the sweep1 key source carries nothing for the fold
         subset = [s for s in subset if s.name != "sweep1"]
