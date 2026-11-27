@@ -22,6 +22,22 @@ NODES = B.ALL_T0
 BASE_COMMIT = "1402f466497c29638c53a3397f44ab9a3e6717ec"
 
 
+@pytest.fixture(autouse=True)
+def synthetic_builder_binding(monkeypatch):
+    """Use the tested builder in synthetic records, without claiming an author decision.
+
+    The actual signed-amendment and historical receipt checks run in test_c3_release.
+    """
+    def block(repo):
+        data = (repo / AF.PREREG_PATH).read_bytes()
+        assert AF._sha(data) == AF.PREREG_SHA256
+        result = dict(line.split(": ", 1) for line in release._final_block(data.decode()))
+        result["gate_input_builder_sha256"] = AF._sha_file(repo / release.BUILDER_PATH)
+        return result
+
+    monkeypatch.setattr(AF, "_prereg_block", block)
+
+
 def _features(node, pid):
     rng = random.Random("F" + pid)
     f = {c: rng.random() for c in FEATURES}

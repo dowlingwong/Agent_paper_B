@@ -115,6 +115,11 @@ def test_the_eight_keep_their_t1_check_and_their_suites():
 
 
 def test_the_record_may_cite_v2_and_then_needs_the_published_amendment(monkeypatch):
+    from r1.harness import REPO
+
+    monkeypatch.setattr(AF, "_prereg_block", lambda repo: {
+        "gate_sha256": AF._sha_file(REPO / "r1/c3/gate.py"),
+        "gate_input_builder_sha256": AF._sha_file(REPO / "r1/c3/gate_input_builder.py")})
     rec = TA._record()
     rec["split_file"] = dict(V2)
     assert AF.check_record(rec, plan_text=TA.PLAN)["pass"]               # structure: v2 is a pinned split file
@@ -174,16 +179,20 @@ def test_v2_gate_source_uses_its_exact_split_and_omits_descriptive_nodes(monkeyp
     raw = (json.dumps(rows) + "\n").encode()
     (tmp_path / "proposals.jsonl").write_bytes(raw)
     monkeypatch.setattr(dataset, "load_table", lambda path: rows)
-    v2_receipt = {"source": "g5", "split_sha256": V2["sha256"],
-                  "inputs": {"label_block_sha256": "0" * 64,
-                             "proposals_sha256": hashlib.sha256(raw).hexdigest()}}
+    proposals_sha = hashlib.sha256(raw).hexdigest()
+    build = json.dumps({"source": "g5", "schema": "g5_t1_table/2", "proposals_sha256": proposals_sha,
+                        "nodes": {node: {} for node in nodes}}).encode()
+    (tmp_path / "build.json").write_bytes(build)
+    v2_receipt = {"source": "g5", "split_sha256": V2["sha256"], "g5_tail_amendment_sha256": "a" * 64,
+                  "inputs": {"label_block_sha256": "0" * 64, "proposals_sha256": proposals_sha},
+                  "integrity": {"completion": {"build_sha256": hashlib.sha256(build).hexdigest()}}}
 
     def partition(path, *, expect_source, expect_stage):
         labels = [W._label(row) for row in rows if (A2[row["instance"]]["split"] == "test") == (expect_stage == "test")]
         parts = {f"label_block.{expect_stage}.jsonl": labels}
         if expect_stage == "test":
             parts["evaluation_block.all.jsonl"] = [W._evaluation(row) for row in rows]
-        return parts, v2_receipt
+        return parts, {**v2_receipt, "stage": expect_stage}
 
     monkeypatch.setattr(release, "open_partition", partition)
     source = release.builder_source(tmp_path, "g5", tmp_path)

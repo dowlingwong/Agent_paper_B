@@ -387,6 +387,8 @@ def _fit_cmd(a) -> dict:
         if src == "sweep2" and table_sha != SWEEP2_PROPOSALS_SHA256:
             _refuse(f"sweep2: the table is not the pinned sweep-2 table {SWEEP2_PROPOSALS_SHA256[:12]}… "
                     "(D.3 draft §5.0)")
+        if src == "g5" and t1 is not None and t1.needs_tail_binding:
+            t1 = B.bind_g5_tail_laws(t1, tables[src], receipt)
         sources[src] = (release.g5_consumer_rows(receipt, rows), labels)
         if src == "g5" and "split_sha256" in receipt:
             assign = release._row_assignment(receipt)  # both split versions preserve T0 membership

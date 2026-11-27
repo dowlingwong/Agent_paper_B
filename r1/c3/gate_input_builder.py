@@ -60,14 +60,14 @@ partial and divergent counts, unsupplied T1 nodes); it holds no utility or label
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 
 from r1.c3 import gate as G
 from r1.c3 import p3_split
 from r1.c3.arms import RulesPrior, is_duplicate, is_noop
-from r1.c3.labels import INERT, N_BINS, soft_label
+from r1.c3.labels import G5_GAUSSIAN_NODES, G5_STUDENT_T_NU, INERT, N_BINS, label_tail_options, soft_label
 from r1.c3.offline_eval import CAMPAIGN_RUNS, G_PRIMARY, decisions
 
 BUILDER_VERSION = "2"
@@ -99,6 +99,7 @@ class Source:
     labels: list = field(default_factory=list)        # label-block rows (label_block.jsonl format)
     evaluations: list = field(default_factory=list)   # evaluation-block rows (evaluation_block.jsonl format)
     split_sha256: str | None = None                   # G.5 release receipt's exact split binding
+    tail_laws: dict[str, tuple[str, float | None]] = field(default_factory=dict)  # receipted G.5 build
 
     @property
     def gate(self) -> bool:
@@ -111,6 +112,20 @@ class Tier1:
     suites: dict                     # {node: suite}, suite in gate.SUITES: the frozen T1 node set
     modes: tuple                     # the declared memory mode(s) under G5-MEM
     d3_k6: bool = False              # the R1-BX-D3 row exists: K = 6
+    # Verified from the completion or addendum, never inferred from a label row.
+    tail_laws: dict[str, tuple[str, float | None]] = field(default_factory=dict)
+
+    @property
+    def needs_tail_binding(self) -> bool:
+        return bool(self.suites.keys() - (G5_STUDENT_T_NU.keys() | G5_GAUSSIAN_NODES))
+
+
+def bind_g5_tail_laws(t1: Tier1, table_dir, receipt: dict) -> Tier1:
+    """Bind the frozen node context to already verified G.5 build metadata."""
+    from r1.c3.release import g5_tail_laws
+
+    laws = g5_tail_laws(table_dir, receipt)
+    return replace(t1, tail_laws={node: laws[node] for node in t1.suites if node in laws})
 
 
 def _finite(x) -> bool:
@@ -151,6 +166,14 @@ def _instance(row: dict, assign: dict) -> tuple[str, str]:
     return inst, assign[inst]["split"]
 
 
+def _tail_options(lab: dict, tier: str, t1: Tier1 | None = None) -> dict:
+    expected = t1.tail_laws.get(lab.get("node")) if tier == "T1" and t1 is not None else None
+    try:
+        return label_tail_options(lab, tier=tier, expected=expected)
+    except ValueError as exc:
+        raise BuilderError(f"{lab['proposal_id']}: {exc}") from exc
+
+
 def _label_ok(lab: dict, row: dict, label_seeds: tuple) -> str:
     """Validate a label row against its table row; returns its kind (rule_noop, audit, divergent)."""
     kind = lab.get("label_kind")
@@ -161,6 +184,7 @@ def _label_ok(lab: dict, row: dict, label_seeds: tuple) -> str:
     if is_noop(row):
         if kind != "rule_noop":
             raise BuilderError(f"{row['proposal_id']}: a no-op needs a rule_noop label row")
+        _tail_options(lab, _tier_of(row["node"]))
         return kind
     if kind not in ("audit", "divergent"):
         raise BuilderError(f"{row['proposal_id']}: label kind {kind!r} is not audit/divergent")
@@ -175,6 +199,8 @@ def _label_ok(lab: dict, row: dict, label_seeds: tuple) -> str:
             raise BuilderError(f"{row['proposal_id']}: label value missing or inconsistent")
         if sp.get("sigma_node") != row["sigma_node"]:
             raise BuilderError(f"{row['proposal_id']}: soft-label sigma_node differs from the table's")
+    else:
+        _tail_options(lab, _tier_of(row["node"]))
     return kind
 
 
@@ -225,6 +251,15 @@ def _prepare(sources: list[Source], assign: dict, t1: Tier1 | None) -> tuple[lis
     out = []
     for src in sources:
         tier = GATE_SOURCES.get(src.name) or KEY_SOURCES[src.name]
+        context = t1
+        if src.tail_laws:
+            if src.name != "g5" or t1 is None:
+                raise BuilderError("the receipted G.5 tail laws require a frozen T1 context")
+            if any(law != src.tail_laws[node] for node, law in t1.tail_laws.items() if node in src.tail_laws):
+                raise BuilderError("the frozen context and G.5 receipt give different tail laws")
+            if any(row["node"] not in src.tail_laws for row in src.rows):
+                raise BuilderError("the G.5 receipt lacks a tail law for a source node")
+            context = replace(t1, tail_laws=src.tail_laws)
         labels, evals = {}, {}
         for lab in src.labels:
             if lab["proposal_id"] in labels:
@@ -283,7 +318,8 @@ def _prepare(sources: list[Source], assign: dict, t1: Tier1 | None) -> tuple[lis
                 soft = None
                 if kind == "audit":
                     k = lab["soft_parameters"]["k_label"]
-                    soft = soft_label(lab["delta_label"], None, row["sigma_node"], sigma_mode="pooled_node", k_label=k)
+                    soft = soft_label(lab["delta_label"], None, row["sigma_node"], sigma_mode="pooled_node",
+                                      k_label=k, **_tail_options(lab, tier, context))
                     r["label_partial"] = k < len(label_seeds)
                 r.update(label_kind=kind, delta_true=dt, status=status, soft=soft)
                 used.add(pid)

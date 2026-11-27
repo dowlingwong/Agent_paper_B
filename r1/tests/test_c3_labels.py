@@ -46,3 +46,71 @@ def test_prob_positive_and_log_score():
     p = L.soft_label(1.0, 0.01, 1.0, sigma_mode="se_audit")
     assert L.prob_positive(p) == pytest.approx(1.0)
     assert L.log_score(p, p) <= L.log_score(p, np.full(12, 1 / 12))
+
+
+# ---------------------------------------------------------------------------------- tail law (E5, R1-G5-TAILS)
+def _gaussian_reference(zm, zs):
+    """The Gaussian path exactly as on main before the Student-t unit (``_gaussian_bins`` at 6684e840)."""
+    from scipy.stats import norm
+    p = np.zeros(L.N_BINS)
+    if zs <= 0:
+        p[L.hard_bin(zm)] = 1.0
+        return p
+    p[1:] = np.diff(norm.cdf((L.EDGES - zm) / zs))
+    p = np.clip(p, 0.0, None)
+    return p / p.sum()
+
+
+def test_gaussian_soft_label_unchanged_bit_for_bit():
+    """The default (and explicit ``tails="gaussian"``) path returns the very bytes of the pre-unit Gaussian code, over
+    both sigma modes, partial K, zero width and the inert label."""
+    for d in np.linspace(-0.05, 0.05, 41):
+        for sig in (0.003, 0.01, 0.0217):
+            for k in (1, 2, 3, 5, 6):
+                want = _gaussian_reference(float(d) / sig, sig / np.sqrt(k) / sig)
+                for kw in ({}, {"tails": "gaussian"}, {"tails": "gaussian", "nu": None}):
+                    got = L.soft_label(float(d), None, sig, sigma_mode="pooled_node", k_label=k, **kw)
+                    assert got.tobytes() == want.tobytes()
+            for se in (0.0, 0.001, 0.004):
+                want = _gaussian_reference(float(d) / sig, se / sig)
+                assert L.soft_label(float(d), se, sig, sigma_mode="se_audit").tobytes() == want.tobytes()
+    assert L.soft_label(None, None, 0.01, inert=True).tobytes() == L.soft_label(
+        None, None, 0.01, inert=True, tails="student_t", nu=5).tobytes()
+
+
+def test_student_t_soft_label_against_scipy_reference():
+    """Student-t of location Δ/σ and sd s (scale s·sqrt((ν−2)/ν)), integrated over the bins: checked against
+    scipy.stats.t directly and against fixed reference values (ν = 5, Δ = 0, k = 1: s = 1 in z units)."""
+    from scipy.stats import norm, t
+    nu = 5
+    p = L.soft_label(0.0, None, 0.01, sigma_mode="pooled_node", k_label=1, tails="student_t", nu=nu)
+    scale = np.sqrt((nu - 2) / nu)
+    assert t.std(nu, scale=scale) == pytest.approx(1.0, abs=1e-15)             # σ̂ keeps its sd meaning
+    assert p[6] == pytest.approx(2 * t.cdf(0.15 / scale, nu) - 1, abs=1e-15)
+    assert p[6] == pytest.approx(0.1459282170706906, abs=1e-12)                 # central bin (−0.15, 0.15]
+    assert p[11] == pytest.approx(t.sf(3 / scale, nu), abs=1e-15)
+    assert p[11] == pytest.approx(0.0058624055019772525, abs=1e-12)             # z > 3
+    assert p[11] > 1 - norm.cdf(3)                                               # heavier than the Gaussian at equal sd
+    assert p[0] == 0 and p.sum() == pytest.approx(1.0, abs=1e-15)
+    assert np.allclose(p[1:], p[1:][::-1], atol=1e-15)                          # symmetric about Δ = 0
+    for d, sig, k, v in ((0.012, 0.01, 3, 5), (-0.004, 0.0217, 6, 3.5), (0.0, 0.003, 2, 30)):
+        zm, zs = d / sig, (sig / np.sqrt(k)) / sig
+        sc = zs * np.sqrt((v - 2) / v)
+        ref = np.diff(t.cdf(L.EDGES, v, loc=zm, scale=sc))
+        got = L.soft_label(d, None, sig, sigma_mode="pooled_node", k_label=k, tails="student_t", nu=v)
+        assert np.allclose(got[1:], ref / ref.sum(), atol=1e-14, rtol=0)
+        assert L.student_t_scale(zs, v) == pytest.approx(sc, rel=1e-15)
+    big = L.soft_label(0.012, None, 0.01, sigma_mode="pooled_node", k_label=3, tails="student_t", nu=1e7)
+    assert np.allclose(big, L.soft_label(0.012, None, 0.01, sigma_mode="pooled_node", k_label=3), atol=1e-6)
+    hard = L.soft_label(0.004, 0.0, 0.004, sigma_mode="se_audit", tails="student_t", nu=5)
+    assert hard[L.hard_bin(1.0)] == 1.0                                          # zero width: the hard bin, as Gaussian
+
+
+@pytest.mark.parametrize("tails, nu", [("student_t", None), ("student_t", 2), ("student_t", 1.5),
+                                       ("student_t", True), ("student_t", "5"), ("student_t", float("nan")),
+                                       ("student_t", float("inf")), ("gaussian", 5), ("laplace", None)])
+def test_tail_law_refusals(tails, nu):
+    with pytest.raises(ValueError):
+        L.soft_label(0.01, None, 0.01, sigma_mode="pooled_node", k_label=3, tails=tails, nu=nu)
+    with pytest.raises(ValueError):
+        L.check_tail_law(tails, nu)

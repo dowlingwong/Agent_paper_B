@@ -622,3 +622,132 @@ def test_a_v1_receipt_keeps_partitioning_by_v1(paper, data):
     assert "mlgym_titanic__s5101" not in R._row_assignment({"split_sha256": p3_split.P3_SPLIT_SHA256})
     with pytest.raises(R.ReleaseStop, match="cannot be loaded"):
         R._row_assignment({"split_sha256": "0" * 64})
+
+
+def test_tail_amendment_preserves_historical_receipts_and_binds_future_test(paper, data, monkeypatch):
+    from r1.c3 import arms_freeze as AF
+
+    legacy_row = (R.ROWS[("T0", "traindev")], paper.row("T0", "traindev"))
+    paper.plan([legacy_row])
+    _release("traindev", data)
+    partition = data[2] / "sweep2" / "traindev"
+    legacy = R.open_partition(partition, expect_source="sweep2", expect_stage="traindev")
+
+    original = (paper.root / R.BUILDER_PATH).read_bytes()
+    for path in R.G5_TAILS_CODE_PINS.values():
+        if not (paper.root / path).exists():
+            paper.write(path, "# synthetic implementation dependency\n")
+    paper.write(R.BUILDER_PATH, (paper.root / R.BUILDER_PATH).read_text() + "# synthetic tail-law builder\n")
+    implementation = paper.commit("synthetic tail-law implementation")
+    paper.publish()
+    with pytest.raises(R.ReleaseStop, match="exact signed G.5 tail-law amendment"):
+        R.prereg_frozen()
+    assert R.open_partition(partition, expect_source="sweep2", expect_stage="traindev") == legacy
+    with pytest.raises(AF.ArmsFreezeError, match="exact signed G.5 tail-law amendment"):
+        monkeypatch.setattr(AF, "PREREG_SHA256", paper.prereg_sha)
+        AF._prereg_block(paper.root)
+
+    fields = {"frozen": "true", "base_preregistration_sha256": paper.prereg_sha,
+              "original_gate_input_builder_sha256": paper.builder_sha,
+              **{key: _sha((paper.root / path).read_bytes()) for key, path in R.G5_TAILS_CODE_PINS.items()},
+              "signed_by": "synthetic", "frozen_utc": "2026-11-27T00:00:00Z"}
+    amendment = "# Synthetic amendment\n\n```\n" + "".join(f"{k}: {v}\n" for k, v in fields.items()) + "```\n"
+    amendment_sha = _sha(amendment.encode())
+    paper.write(R.G5_TAILS_AMENDMENT_PATH, amendment)
+    decision = (f"Use the reviewed G.5 tail-law amendment `{R.G5_TAILS_AMENDMENT_PATH}` "
+                f"sha256 `{amendment_sha}` with implementation commit `{implementation}`.")
+    test_row = (R.ROWS[("T0", "test")], paper.row("T0", "test", tail_amendment=amendment_sha, commit=implementation))
+    rows = [legacy_row, test_row, (R.G5_TAILS_AMENDMENT_ROW, decision)]
+    paper.plan(rows, publish=False)
+    with pytest.raises(R.ReleaseStop, match="must match published main"):
+        R.prereg_frozen()
+    paper.publish()
+
+    assert R.open_partition(partition, expect_source="sweep2", expect_stage="traindev") == legacy
+    with pytest.raises(R.ReleaseStop, match="does not cite the effective G.5 tail-law amendment"):
+        R.release_row("T0", "traindev", writing=True)
+    assert R.release_row("T0", "test")["prereg_sha256"] == paper.prereg_sha
+    assert R.release_row("T0", "test")["g5_tail_amendment_sha256"] == amendment_sha
+    assert R.release_row("T0", "test")["builder_sha256"] == fields["gate_input_builder_sha256"]
+    monkeypatch.setattr(AF, "PREREG_SHA256", paper.prereg_sha)
+    block = AF._prereg_block(paper.root)
+    assert block["g5_tail_amendment_sha256"] == amendment_sha
+    assert block["gate_input_builder_sha256"] == fields["gate_input_builder_sha256"]
+
+    revised = (paper.root / R.BUILDER_PATH).read_text()
+    (paper.root / R.BUILDER_PATH).write_bytes(original)
+    paper.commit("synthetic rollback")
+    assert _sha((paper.root / R.BUILDER_PATH).read_bytes()) == paper.builder_sha
+    with pytest.raises(R.ReleaseStop, match="does not bind r1/c3/gate_input_builder.py"):
+        R.prereg_frozen()
+    paper.write(R.BUILDER_PATH, revised)
+    paper.write("r1/c3/labels.py", "# another implementation\n")
+    paper.commit("synthetic code change after approval")
+    with pytest.raises(R.ReleaseStop, match="does not bind r1/c3/labels.py"):
+        R.prereg_frozen()
+
+
+def test_g5_tail_laws_come_from_the_receipted_build(tmp_path):
+    node = "autoresearch_fixedtokens"
+    table_sha = "a" * 64
+    build = {"source": "g5", "schema": "g5_t1_table/2", "proposals_sha256": table_sha,
+             "nodes": {node: {"tails": "student_t", "nu": 7, "t_scale": "sd_matched"},
+                       "mlab_imdb": {}}}
+    raw = json.dumps(build).encode()
+    path = tmp_path / "build.json"
+    path.write_bytes(raw)
+    receipt = {"source": "g5", "stage": "traindev", "inputs": {"proposals_sha256": table_sha},
+               "integrity": {"completion": {"build_sha256": _sha(raw)}}}
+    assert R.g5_tail_laws(tmp_path, receipt) == {node: ("student_t", 7), "mlab_imdb": ("gaussian", None)}
+    t1 = B.Tier1(suites={node: "autoresearch"}, modes=("history",))
+    assert B.bind_g5_tail_laws(t1, tmp_path, receipt).tail_laws == {node: ("student_t", 7)}
+    assert t1.tail_laws == {}
+
+    tampered = copy.deepcopy(build)
+    tampered["nodes"][node]["t_scale"] = "fixed_scale"
+    path.write_text(json.dumps(tampered))
+    with pytest.raises(R.ReleaseStop, match="differs from the receipt"):
+        R.g5_tail_laws(tmp_path, receipt)
+    receipt["integrity"]["completion"]["build_sha256"] = _sha(path.read_bytes())
+    with pytest.raises(R.ReleaseStop, match="does not record sd matching"):
+        R.g5_tail_laws(tmp_path, receipt)
+
+
+def test_gate_reader_and_fold_use_the_receipted_noninitial_tail_law(tmp_path, monkeypatch):
+    from r1.c3 import dataset, fold_analysis
+    from r1.c3.labels import soft_label
+
+    node = "autoresearch_fixedtokens"
+    row = W._row(node, 10, "history", 1, src="g5")
+    lab = W._label(row)
+    lab["soft_parameters"].update(tails="student_t", nu=7)
+    evaluation = W._evaluation(row)
+    proposals = json.dumps(row).encode() + b"\n"
+    (tmp_path / "proposals.jsonl").write_bytes(proposals)
+    build = {"source": "g5", "schema": "g5_t1_table/2", "proposals_sha256": _sha(proposals),
+             "nodes": {node: {"tails": "student_t", "nu": 7, "t_scale": "sd_matched"}}}
+    raw = json.dumps(build).encode()
+    (tmp_path / "build.json").write_bytes(raw)
+
+    def partition(path, *, expect_source, expect_stage):
+        receipt = {"source": expect_source, "stage": expect_stage, "g5_tail_amendment_sha256": "a" * 64,
+                   "split_sha256": p3_split.P3_SPLIT_SHA256,
+                   "inputs": {"proposals_sha256": _sha(proposals), "label_block_sha256": "b" * 64},
+                   "integrity": {"completion": {"build_sha256": _sha(raw)}}}
+        parts = {"label_block.traindev.jsonl": [lab]} if expect_stage == "traindev" else {
+            "label_block.test.jsonl": [], "evaluation_block.all.jsonl": [evaluation]}
+        return parts, receipt
+
+    monkeypatch.setattr(R, "open_partition", partition)
+    monkeypatch.setattr(dataset, "load_table", lambda path: [row])
+    source = R.builder_source(tmp_path, "g5", tmp_path)
+    assert source.tail_laws == {node: ("student_t", 7)}
+    fold, = fold_analysis.node_subset([source], [node])
+    assignment = {row["instance"]: {"node": node, "split": "dev"}}
+    t1 = B.Tier1(suites={node: "autoresearch"}, modes=("history",))
+    prepared, _, _ = B._prepare([fold], assignment, t1)
+    expected = soft_label(lab["delta_label"], None, row["sigma_node"], k_label=5, tails="student_t", nu=7)
+    assert prepared[0]["soft"].tobytes() == expected.tobytes()
+    t1.tail_laws[node] = ("gaussian", None)
+    with pytest.raises(B.BuilderError, match="different tail laws"):
+        B._prepare([fold], assignment, t1)

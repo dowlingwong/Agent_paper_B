@@ -407,12 +407,13 @@ class G5LabelSource:
     ``loader`` replaces ``load_traindev`` in tests only."""
 
     def __init__(self, release_root: Path | str, *, receipt_sha256: str, table_rows: Sequence[dict], t1,
-                 table_sha256: str, loader=None) -> None:
+                 table_sha256: str, table_dir: Path | str | None = None, loader=None) -> None:
         if not (isinstance(table_sha256, str) and len(table_sha256) == 64
                 and all(c in "0123456789abcdef" for c in table_sha256)):
             raise SFTDataError("G5LabelSource needs the sha256 of the G.5 table the rows come from")
         self.release_root, self.receipt_sha256 = release_root, receipt_sha256
         self.table_rows, self.t1, self.table_sha256 = list(table_rows), t1, table_sha256
+        self.table_dir = table_dir
         self.loader = loader
         self._records: list[dict] | None = None
         self._prov: dict | None = None
@@ -425,6 +426,11 @@ class G5LabelSource:
         if inputs.get("proposals_sha256") != self.table_sha256:
             raise SFTDataError("the G.5 table is not the one its train/dev partition was released from")
         try:
+            if self.t1 is not None:
+                if self.table_dir is not None:
+                    self.t1 = AF.B.bind_g5_tail_laws(self.t1, self.table_dir, receipt)
+                elif self.loader is None and self.t1.needs_tail_binding:
+                    raise SFTDataError("noninitial T1 nodes require the receipted G.5 build metadata")
             rows = release.g5_consumer_rows(receipt, self.table_rows)
             labels = release.g5_consumer_rows(receipt, labels)
             assign = release._row_assignment(receipt) if "split_sha256" in receipt else None
@@ -442,9 +448,10 @@ class G5LabelSource:
                 lab = by_pid[r["proposal_id"]]
                 k = int(lab["soft_parameters"]["k_label"])
                 partial += k < len(lab["seeds"])
+                tails = {"tails": r["tails"], "nu": r["nu"]} if "tails" in r else {}
                 records.append({"proposal_id": r["proposal_id"], "node": r["node"], "label_kind": kind,
                                 "delta_label": float(lab["delta_label"]), "k_label": k,
-                                "sigma_node": float(lab["soft_parameters"]["sigma_node"])})
+                                "sigma_node": float(lab["soft_parameters"]["sigma_node"]), **tails})
             elif kind == "divergent":
                 divergent += 1
         self._records = records
@@ -504,8 +511,9 @@ def soft_target(record: Mapping, table_row: Mapping) -> np.ndarray:
         raise SFTDataError(f"{record['proposal_id']}: audit label on an inert table row")
     if float(record["sigma_node"]) != float(table_row["sigma_node"]):
         raise SFTDataError(f"{record['proposal_id']}: label sigma_node differs from the table's")
+    tails = {key: record[key] for key in ("tails", "nu") if key in record}
     return LB.soft_label(record["delta_label"], None, float(table_row["sigma_node"]), inert=False,
-                         sigma_mode=SIGMA_MODE, k_label=int(record["k_label"]))
+                         sigma_mode=SIGMA_MODE, k_label=int(record["k_label"]), **tails)
 
 
 # ---------------------------------------------------------------------------------------------- prompts
