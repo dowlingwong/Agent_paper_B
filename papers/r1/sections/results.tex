@@ -13,14 +13,26 @@
 % The five declared readings, each written once. They are selected below by the switches.
 % Note for the author (not paper text): the proposal's section 6 adds to the fifth reading
 % "Not an ICML submission in the present form."
-\newcommand{\ReadingLearnedPass}{Learned control raises the audited gain of a campaign at a matched budget. On the seven controlled nodes, \LoopHeadline{} The decomposition of Table~\ref{tab:decomp} says how much the rule layer, the one-step rule and the learned forecast each add. The offline gate passes for \GatePassingArms, so the one-step claim and the campaign-level result point the same way.}
-\newcommand{\ReadingLearnedFail}{Learned control raises the audited gain of a campaign at a matched budget. On the seven controlled nodes, \LoopHeadline{} The decomposition of Table~\ref{tab:decomp} says how much the rule layer, the one-step rule and the learned forecast each add. The offline gate does not pass. We report it as measured, with its power (Section~\ref{sec:results-gate}). The two levels disagree, and we report the disagreement as a finding (Section~\ref{sec:results-agree}).}
-% Review m1: the switch is A2 > A0, which the rule layer alone can produce. The two readings below therefore say
-% "rule-based control" and point to the decomposition; the declared wording ("noise-aware rule control") is in
-% Table tab:readings. Which words stand when the gain is de-duplication alone is the author's decision.
-\newcommand{\ReadingRulePass}{Rule-based control raises the audited gain of a campaign at a matched budget, and the learned forecasts add no demonstrated gain to it. \TBD{From Table~\ref{tab:decomp}: how much of the gain is the rule layer (A0R $-$ A0) and how much the noise-aware one-step rule (A2 $-$ A0R).} On the seven controlled nodes, \LoopHeadline{} The offline gate passes for \GatePassingArms: the learned forecast improves one-step decisions on logged proposals, and that gain does not carry into the loop. The mechanism counts and the agreement table say where it is lost (Section~\ref{sec:results-agree}).}
-\newcommand{\ReadingRuleFail}{Rule-based control raises the audited gain of a campaign at a matched budget, and at this task complexity we find no gain from learning, in the loop or offline. \TBD{From Table~\ref{tab:decomp}: how much of the gain is the rule layer (A0R $-$ A0) and how much the noise-aware one-step rule (A2 $-$ A0R).} On the seven controlled nodes, \LoopHeadline{} The effect sizes and intervals of Tables~\ref{tab:decomp} and~\ref{tab:gate} bound what learning could add. The tier table says whether this changes with code-level edits (Table~\ref{tab:app-tier}).}
-\newcommand{\ReadingNegative}{The rule arms show no gain over the default loop: \LoopHeadline{} This is the measured negative. On these tasks, at this budget, the loop is not limited by its keep and screen decisions. The control errors of the default loop (Section~\ref{sec:results-c1}) and the theory (Section~\ref{sec:theory}) stand.}
+\newcommand{\ReadingLearnedPass}{Learned control raises the audited gain of a campaign at a matched
+budget. On the seven controlled nodes, \LoopHeadline{} Table~\ref{tab:decomp} gives the effect of each
+component. The offline gate passes for \GatePassingArms.}
+\newcommand{\ReadingLearnedFail}{Learned control raises the audited gain of a campaign at a matched
+budget. On the seven controlled nodes, \LoopHeadline{} Table~\ref{tab:decomp} gives the effect of each
+component. The offline gate does not pass. Section~\ref{sec:results-gate} reports its estimates, intervals
+and design power.}
+\newcommand{\ReadingRulePass}{The rule arm improves audited campaign gain at the matched budget.
+\LoopHeadline{} \TBD{Attribute the supported gain using A0R $-$ A0 and A2 $-$ A0R.}
+The offline gate passes for \GatePassingArms. Table~\ref{tab:decomp} gives the closed-loop
+effects and intervals for A3 $-$ A2 and A5 $-$ A2.}
+\newcommand{\ReadingRuleFail}{The rule arm improves audited campaign gain at the matched budget.
+\LoopHeadline{} \TBD{Attribute the supported gain using A0R $-$ A0 and A2 $-$ A0R.}
+The offline gate does not pass. Table~\ref{tab:decomp} and Section~\ref{sec:results-gate}
+report the closed-loop and offline learning contrasts with their uncertainty.}
+\newcommand{\ReadingNegative}{The closed-loop comparison shows the following estimated difference between
+A2 and the default loop A0 at the matched budget. \LoopHeadline{}
+\TBD{Report the paired interval and any supported deterioration. If the interval still allows a practically
+meaningful improvement, say that the evidence for an improvement is inconclusive. Report any supported
+A3 or A5 contrast separately.}}
 
 \section{Results}
 \label{sec:results}
@@ -51,7 +63,7 @@
 \subsection{The closed loop at a matched budget}
 \label{sec:results-closed}
 
-Every arm controlled \LoopInstances{} fresh campaigns per node on the seven primary T0 nodes, with \LoopW{} worker runs and at most \LoopCalls{} manager calls. Table~\ref{tab:decomp} gives the contrasts of the decomposition. Table~\ref{tab:closed} in the appendix gives every arm, with the reference rules, worker runs and manager calls.
+Every arm controlled \LoopInstances{} fresh campaigns per node on the seven primary T0 nodes, with at most \LoopW{} worker runs and \LoopCalls{} manager calls. Table~\ref{tab:decomp} gives the contrasts of the decomposition. Table~\ref{tab:closed} in the appendix gives every arm, with the reference rules, worker runs and manager calls.
 
 \begin{table}[t]
 \caption{The decomposition (closed loop, T0). Reading guide: each row is a paired difference in $Y$, the audited improvement of the final incumbent over the start in units of $\sigma_{\mathrm{node}}$, averaged over nodes, with its 95\% interval; a star marks a rejection by the two-sided Holm step-down within the row's family. The first two rows separate the rule layer from the one-step rule. A5 $-$ A3 compares the two full forecasting arms, which differ in the model and in what it reads.}
@@ -78,9 +90,9 @@ A5 $-$ A3 & the two forecasting arms & \LoopDAFivevAThree \\
 \end{table}
 
 \paragraph{What the rule layer and the one-step rule add.}
-% Prompt: A0R - A0 and A2 - A0R with intervals and Holm decisions. If most of A2 - A0 comes from the rule layer, say
-% so in those words. Then A1 - A0, the one-step rule without de-duplication.
-\TBD{One paragraph from Table~\ref{tab:decomp}: the rule layer, then the one-step rule.} Under A0, \LoopDupShareAZero. The rule layer made \LoopRuleSkips, and the screen made \LoopValueSkips.
+\TBD{Report A0R $-$ A0 and A2 $-$ A0R with their paired intervals and Holm decisions. When only the
+first contrast supports a gain, attribute that gain to de-duplication and describe the uncertainty in the
+added value of the one-step rule. Then report A1 $-$ A0.} Under A0, \LoopDupShareAZero. The rule layer made \LoopRuleSkips, and the screen made \LoopValueSkips.
 % Prompt: if the screen with a constant forecast makes no value skip at this run price, say that A2 - A0R is then
 % the effect of the keep threshold alone.
 
@@ -102,7 +114,7 @@ A5 $-$ A3 & the two forecasting arms & \LoopDAFivevAThree \\
 \begin{figure}[t]
 \centering
 \FigShell{budget curve: mean $Y(w)$ at $w=5,10,15,20$ per arm, with intervals}
-\caption{Reading guide: one line per arm; the audited improvement of the incumbent after the $w$-th charged worker run. Descriptive.}
+\caption{Audited improvement after the $w$-th charged worker run. At each point, show the number of campaigns that reached $w$. The curves are descriptive.}
 \label{fig:budget}
 \end{figure}
 

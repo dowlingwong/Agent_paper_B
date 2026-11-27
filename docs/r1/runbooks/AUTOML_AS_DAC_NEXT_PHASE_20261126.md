@@ -28,28 +28,29 @@ proposal process and prices the remaining runs and calls. A sequential controlle
 action changes future proposals, incumbent-dependent edits or information. SFT and distillation are ways to
 implement a controller with a specified target.
 
-**Snapshot of published `main` at `53b72f1d`.** The Paper B source has both gate outcome templates. Its setup and
-results still make A3/A5 closed-loop deployment conditional on the gate. R1-D3B-UNCONDITIONAL supersedes this.
-The gate is unread, the manuscript's result tables contain placeholders, and D.3 has yet to run. Both T0
-sweeps are audited. Train/dev releases contain 850/422 labels from sweep 2 and 593/276 from sweep 1, with A3
-reviewed on T0. T1 noise floors are sealed. G.4b passed for its pilot nodes and G.5 is being prepared.
-Paper C has engineering runs and E-SYN tooling, with real-node evidence still to collect.
+**Evidence status on 27 Nov.** Both T0 sweeps are audited. Train/dev releases contain 850/422 labels from sweep 2
+and 593/276 from sweep 1, with A3 reviewed on T0. G.4b passed for its pilot nodes. G.5 awaits reviewed assembly
+and the launch note checks. D.3 rev 4 and its verify-seed option are signed, with engineering work still in progress.
+The gate is unread and the campaign result tables are placeholders. Run the frozen A3/A5 arms after arms freeze
+regardless of the gate verdict (R1-D3B-UNCONDITIONAL). Paper C has engineering runs and E-SYN tooling, with real-node
+evidence still to collect.
 Sources are the [current B plan](../../../canon/PAPER_B_PLAN.md), [A3 review](../reviews/ARMS_A3_RUN_REVIEW_20261123.md),
 [Track S stop](../reports/TRACKS_PILOT_FINDINGS_APPENDIX_DRAFT_20261115.md), and the [C plan](../../../canon/PAPER_C_PLAN.md).
 
 ## 2. Work order and ownership
 
 The coordinator issues one task per deliverable. The design agent supplies the claim, comparator, estimand and
-acceptance check. The writer handles manuscript changes. The local worker implements and reviews runner changes.
-The cluster and experiment agents own the live hosts listed in [COMPUTE.md](../../../canon/COMPUTE.md).
+acceptance check. The writer handles manuscript changes. Local and compute implement their assigned units and
+a fresh reviewer checks each unit at its required tier. Compute operates the live hosts in
+[COMPUTE.md](../../../canon/COMPUTE.md).
 
 | Order | Task and owner | Depends on | Done when |
 |---|---|---|---|
 | 0 | **Repository hygiene**, design + coordinator + each checkout owner | Branch inventory on the published base | Current paths resolve. Each proposed retirement has an exact tip, owner and recovery route. Retained refs are accounted for. See [hygiene audit](../reports/REPO_HYGIENE_AUDIT_20261126.md). |
 | 1 | **Paper B manuscript correction**, writer + design | R1-ALIGN-OUTCOME, R1-D3B-UNCONDITIONAL, R1-D3-DECOMP and R1-D3-ORDER | Both draft builds show the same D.3a/b design and separate the offline gate verdict from the campaign outcome. Revised outline and claim-to-table sheet reviewed. |
-| 2A | **T0 screening smoke and D.3**, local worker + cluster | Resolve the screening smoke `determinism_unverifiable` on breast-w, complete the signed screening step, review/sign D.3 pre-declaration revision 4, runner and audit checks | The complete D.3a/b arm list and accounting pass on the pinned harness. One matched GPU layout works in smoke. The designated audit computes the paired terminal outcome from fresh seeds. |
-| 2B | **T1 labels and A5 readiness**, experiment + cluster | G.5 note, per-node host and lease checks, Track P probe and assigned GPU | Eligible G.5 label tables and receipts follow the signed release sequence. Houseprice's three-attempt procedure is repaired and verified before that node uses TASL-2. Any late table follows the existing freeze rule. |
-| 2C | **D.3c descriptive transfer**, experiment + design | G.5 completion, own pre-declaration and authorization, code-diff sidecar smoke | New disjoint instances of CIFAR-10, Fashion-MNIST and MinAtar Breakout use A0, A2, A3 and A5. Report cost and paired outcomes with descriptive scope. |
+| 2A | **T0 screening smoke and D.3**, local + compute | Repeat the screening smoke after the reviewed cache fix merges. Close the remaining D.3 rev 4 freeze prerequisites and the runner and audit checks. | The complete D.3a/b arm list and accounting pass on the pinned harness. One matched GPU layout works in smoke. The designated audit computes the paired terminal outcome from fresh seeds. |
+| 2B | **T1 labels and A5 readiness**, compute + local | Review the sd-matched G.5 assembly, complete the per-node checks and publish the note. Advance the Ada Track P probe in parallel. | Eligible G.5 label tables and receipts follow the signed release sequence. Passing expansion nodes join by addendum under S9. |
+| 2C | **D.3c descriptive transfer**, compute + design | G.5 completion, frozen arms, own pre-declaration and authorization, code-diff sidecar smoke | New disjoint instances of CIFAR-10, Fashion-MNIST and MinAtar Breakout use the approved D.3c arms. Report cost and paired outcomes with descriptive scope. |
 | 3A | **Paper C E-SYN and CPU census**, local worker + design | Consolidate Paper C work and the existing PLAN rows, then apply R1-PAPERC-MEASURE-FIRST | An exact or certified oracle checks each synthetic channel. CPU report measures retention stakes and decision relevance before fixing the real-node design. |
 | 3B | **Paper C fixed-memory census**, design + experiment | One approved development task, cap, pin, and a host lease that fits Paper B's schedule | Reproducible baseline, measured headroom and evidence about whether the first edit changes follow-up feasibility or quality. See §5. |
 | 4 | **Paper C core decision and new trajectories**, design + coordinator + author | CPU census and, where available, development results from E-INT | Approve R1-PAPERC-CORE with eligible nodes/actions, frozen comparators, practical margin, supported interventions, audit, budget/power statement and test split. Then collect evidence under the signed runbooks. |
@@ -60,11 +61,9 @@ start while G1/G6 are being implemented. Paper B remains the first call on its s
 Paper C's CPU work and task specification can proceed while the batch GPU is unavailable. The coordinator
 tracks departures in the existing queue.
 
-Calendar checks from the adopted rows are the expansion G.1b cutoff (2 Dec at 00:00 CET), latest T1
-train/dev release (17 Dec), and latest arms freeze (20 Dec). Read the offline gate once after freeze.
-The existing optional-evidence review cutoff is 3 Jan 2027. The abstract and paper dates are 14 and 22 Jan
-anywhere on earth. A late node follows R1-ARMS-FREEZE-CUTOFF and the signed release rules. A forecast date
-moving is a coordinator decision sheet, with the affected lane and an updated cost and schedule.
+Advance by reviewed prerequisites under R1-STEP-ORDER. Complete the G.5 labels for the eligible set, publish the
+train/dev release, freeze the trained and calibrated arms and then read the gate once. Include optional evidence
+when it is complete and reviewed at the submission decision. Venue dates govern submission scheduling.
 
 ## 3. Paper B manuscript and results
 
@@ -97,7 +96,7 @@ The writer starts with [introduction](../../../papers/r1/sections/introduction.t
 
 | Work | Route and existing limits | Verification and handoff |
 |---|---|---|
-| D.3a/b Paper B | Seven T0 nodes × 18 fresh instances per node, same start/instance pairing across arms, 20 charged worker runs and 80 manager calls, ten fresh audit seeds. deepthought for the CPU audit within its 16-worker / 10-free-CPU rule. Proposer GPU from the declared layout. | Cluster reports the job/event accounting, SHA and schema. Verify rules skips consume no worker run but still count the manager call. Charge any repeat training. D.3a's 140 GPU-hour projection stop remains the existing planning check. |
+| D.3a/b Paper B | Seven T0 nodes × 18 fresh instances per node, same start/instance pairing across arms, 20 charged worker runs and 80 manager calls, ten fresh audit seeds. deepthought for the CPU audit within its 16-worker / 10-free-CPU rule. Proposer GPU from the declared layout. | Compute reports the job/event accounting, SHA and schema. Verify that rule skips count the manager call and consume zero worker runs. Report D.3a's projection against the 140 GPU-hour threshold. |
 | G.5 Paper B | TASL pair under reviewed per-node routing, projected 216.9 GPU-h against 425 GPU-h in the current plan. TASL-2 excludes CPUs 8–11. TASL-7's eligible audit chunks follow the cross-host checks. | Experiment reports correct pin and lease, per-node completions and any failures. The houseprice procedure stops that node on the affected host. Test and evaluation partitions follow the release notes. |
 | P.4 Paper B | Run the probe on one RTX 6000 Ada through the direct launcher. The existing H200 queue request is independent of this route. The phase-1 reporting threshold includes the probe charge. | Compute confirms the approved launch account, finishes the reviewed Ada host configuration, verifies the environment and lease, and delivers timing, peak GPU memory and charges for the phase-1 note. |
 | Paper C E-SYN and E-T0 | Desk/CPU work with pinned harness and separate seed registry. R1-PAPERC-MEASURE-FIRST specifies new audits of retained/final configurations on four nodes and a guarded first-accept check on digits and tabular. | Report decision relevance, immediate stakes and expected paired precision first. Compare E1 and E2 separately. E1 only enters the proposed core where its declared threshold produces decision-relevant variation. |

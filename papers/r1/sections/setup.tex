@@ -52,15 +52,12 @@ The gate has low power. In the simulation that fixed the pass rule, the mean two
 
 \subsection{Declared readings}
 \label{sec:setup-readings}
-% The four open points named in the caption of Table tab:readings (27 Nov, trim; full text in the claim sheet,
-% section 5, items 1, 2a, 2b and the reviewer's note N2): the operational definition of the first two columns in
-% terms of the pre-declared contrasts; the reading when A2 > A0 comes from the rule layer alone; the reading when a
-% learned arm gains over A0 and A2 does not; the reading of a statistical stop of the gate.
+% The signed revision 4 of the D.3 pre-declaration defines these readings in section 7.4.
 
-The gate does not decide which arms run in the closed loop; this was fixed before the gate was read, before any arm was frozen and before any closed-loop campaign ran (Table~\ref{tab:dev-nov}). Table~\ref{tab:readings} gives the reading of every combination of outcomes, written before any of them was known.
+The gate does not decide which arms run in the closed loop; this was fixed before the gate was read, before any arm was frozen and before any closed-loop campaign ran (Table~\ref{tab:dev-nov}). Table~\ref{tab:readings} gives the declared readings for these outcomes.
 
 \begin{table}[t]
-\caption{Declared readings. Reading guide: each row is one combination of the closed-loop outcome of the rule arms, the closed-loop outcome of the learned arms and the offline gate; the last column is what the paper says. \TBD{Four open points of the readings, from the signed pre-declaration.}}
+\caption{Declared readings. The signed D.3 pre-declaration defines the contrast decisions. The paired intervals give the precision of the estimated gains.}
 \label{tab:readings}
 \centering
 \footnotesize
@@ -70,10 +67,13 @@ The gate does not decide which arms run in the closed loop; this was fixed befor
 Rule arms & Learned arms & Gate & Reading \\
 \midrule
 A2 $>$ A0 & A3 or A5 $>$ A2 & pass & Learned control raises audited gain at a matched budget; the decomposition says how much each part adds. \\
-A2 $>$ A0 & A3 or A5 $>$ A2 & fail & The same reading, from the closed loop. The gate is reported as measured, with its power. The disagreement between the two levels is a finding. \\
-A2 $>$ A0 & no gain over A2 & pass & One-step gains do not carry into the loop; the mechanism counts and the agreement table say where they are lost. \\
-A2 $>$ A0 & no gain over A2 & fail & Noise-aware rule control is enough at this task complexity. Effect sizes and intervals bound what learning could add; the tier table says whether this changes with code-level edits. \\
-no gain over A0 & any & any & The measured negative: on these tasks the loop is not limited by its keep and screen decisions. The control errors and the theory stand. \\
+A2 $>$ A0 & A3 or A5 $>$ A2 & fail & The closed loop supports a learned-control gain. Report the offline estimates and design power separately. \\
+A2 $>$ A0 & no demonstrated gain over A2 & pass & The gate supports a one-step gain. Report the learned-arm effects and intervals in the loop. \\
+A2 $>$ A0 & no demonstrated gain over A2 & fail & The rule arm improves the closed-loop outcome. Report how large an added benefit from learning the intervals allow. \\
+no demonstrated gain over A0 & any & any & Report the A2 $-$ A0 effect and interval, including any supported deterioration. An interval that still allows a meaningful gain leaves the improvement claim inconclusive. \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+For attribution, use the component contrasts. If only A0R $-$ A0 supports an improvement, attribute the evidence of
+a gain to de-duplication. A statistical STOP leaves the closed-loop reading in force.
