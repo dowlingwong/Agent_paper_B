@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 17:00 CET, `main` at `35c42b81`
+# State — 27 Nov 2026, 17:25 CET, `main` at `35c42b81`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -22,7 +22,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | 1b | `compute/20261127-05` with `-08`: G.5 P11 host tests | §2 2B | TASL-7 part done (C7, C10 short, C11 server side; ACCEPTED), merging; C2, C4, C5, C6, C9, C14, C15 pre-run, C11 chunk side still to run (TASL-2 needs the 0-7 leases) |
 | 1a | `compute/20261127-20`: G1 final-snapshot fix **ACCEPTED** (`ff244366`, review `d5acf3ab`; G6/G7/analysis unchanged) | §2 2A | merged `2d88fe1b` |
 | done | `compute/20261127-23`: D.3 integration merged `e92f3c73`; launchers merged `cd9af2af` | §2 2A | integration review next |
-| 1b0 | `compute/20261127-22`: screening evidence run | §2 2A | **STOP** at the first worker-runtime probe (`python` vs `python3`, same interpreter; 0 runs); re-issued note published `b2f94c29`; run `compute/20261127-25` **STOPPED** (30 runs; cache tree changes under fetch_openml); fix merged `83425c70`; cache rebuilt (tree `3843b53c…`) and smoke 168/168 PASS, merged `523ccfbc`; second re-issue **signed and published** `280c0015` (R1-SCREEN-MEASURE-REISSUE-2); run `compute/20261127-30` (first); then a second re-issue for the author. Earlier: re-issue signed (R1-SCREEN-MEASURE-REISSUE, `96eb63da`); note prepared by `local/20261127-21`, then publication and a new launch |
+| 1b0 | `compute/20261127-22`: screening evidence run | §2 2A | **STOP** at the first worker-runtime probe (`python` vs `python3`, same interpreter; 0 runs); re-issued note published `b2f94c29`; run `compute/20261127-25` **STOPPED** (30 runs; cache tree changes under fetch_openml); fix merged `83425c70`; cache rebuilt (tree `3843b53c…`) and smoke 168/168 PASS, merged `523ccfbc`; second re-issue **signed and published** `280c0015` (R1-SCREEN-MEASURE-REISSUE-2); run `compute/20261127-30` **RUNNING** since 15:50Z (`SMEAS_EVIDENCE_20261127T1550Z`, deepthought, strict preflight passed); then a second re-issue for the author. Earlier: re-issue signed (R1-SCREEN-MEASURE-REISSUE, `96eb63da`); note prepared by `local/20261127-21`, then publication and a new launch |
 | done | `compute/20261127-24`: 4B re-probe **PASS** (14.1 / 17.0 GB peak; total probe 3.10 GPU-h; projection 23.67), merged `85b2421f`; phase-1 draft merged `e56de25b`; P2 done (both Kev bases eligible; merged `523ccfbc`); P3 launch unit merged `a3c8284d`; choices signed (R1-P4-PHASE1-SIGNATURE, `280c0015`); Ada P5 records `compute/20261127-29`, then the coordinator publishes the note | §4 | — |
 | 1c | `compute/20261127-19`: Ada P.4 probe: **0.8B bases PASS; 4B bases OOM at micro-batch 8 (STOP, author)**; record reviewed and merged `ebc28ec0`; 4B choice with the author | §4 | **ready** (host config on `main` `91cfd48a`) |
 | 1c3 | Ada P5 (`compute/20261127-29`) | §4 | **blocked**: Track P `gpu_lease` checks all GPUs; per-card lease `local/20261127-28` |
@@ -42,7 +42,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | done | `compute/20261127-14`: screening smoke **PASS** (168/168, no STOP) | §2 2A | merged `98c571d2`; note completion `local/20261127-12`, then the author signs |
 | done | `compute/20261127-17`: G2 constants artifact (sha256 `4f5f686b…`, re-fit byte-identical, review ACCEPTED) | §2 2A | merged `98c571d2`; revision 4 fill `local/20261127-13` |
 | 1d2 | `compute/20261127-28`: E-INT census on a second Ada card (R1-PAPERC-EINT-CENSUS, `d669b0bf`); smoke first; yields to Paper B | §2 3B | ready after `-27` has its card |
-| done | `compute/20261127-27`: D.3 engineering smoke (TASL-2; G1/G6 chain PASS; G7 refused the smoke seed) merged `35c42b81`. **Coordinator errors:** the card asked for a G6 audit the frozen pre-declaration excludes for the smoke, and the merge included a G6 code change that was merged as documentation without the full suite (suite now running). G6 smoke path removed by `compute/20261127-31` | §2 2A | — |
+| done | `compute/20261127-27`: D.3 engineering smoke (TASL-2; G1/G6 chain PASS; G7 refused the smoke seed) merged `35c42b81`. **Coordinator errors:** the card asked for a G6 audit the frozen pre-declaration excludes for the smoke, and the merge included a G6 code change that was merged as documentation without the full suite; the suite was run afterwards: zero new failures, 6 more passing. G6 smoke path removed by `compute/20261127-31` | §2 2A | — |
 | 1b | `compute/20261127-32`: G.5 P11 TASL-2 items (CPU sets free) | §2 2B | ready, after the screening launch |
 
 ## Local (Claude on the Mac)
@@ -93,7 +93,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 
 **Process incident (27 Nov 13:05, coordinator):** D.3 revision 4 was frozen (`9cd5863c`) before the screening result that R1-SCREEN-MEASURE and R1-SCREEN-MEASURE-SIGNATURE place before the D.3 binding freeze. No campaign has started; step (8) is held; the author is informed.
 
-**Process incident (27 Nov 16:55, coordinator):** the D.3 smoke card asked for a G6 audit of the smoke, which the frozen pre-declaration excludes; and the coordinator merged the smoke branch, which carried a G6 code change, as documentation without the full suite. No pinned hash is affected (revision 4 pins `d3_analysis.py` only), no Y value is used, the new block 6391–6410 overlaps no declared block; the full suite is running and the G6 path is being removed.
+**Process incident (27 Nov 16:55, coordinator):** the D.3 smoke card asked for a G6 audit of the smoke, which the frozen pre-declaration excludes; and the coordinator merged the smoke branch, which carried a G6 code change, as documentation without the full suite. No pinned hash is affected (revision 4 pins `d3_analysis.py` only), no Y value is used, the new block 6391–6410 overlaps no declared block; the full suite run afterwards shows zero new failures; the G6 path is being removed.
 
 **Departure from the runbook (recorded, not changed):** §2 says the local worker implements runner changes. The existing card
 `cluster/20261126-02` gives the D.3 G1/G6 code to the agent that designed it, and R1-AGENT-COMPUTE passes that card to compute.
