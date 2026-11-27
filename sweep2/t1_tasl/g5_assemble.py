@@ -53,13 +53,13 @@ seeds where the candidate diverged; at most half: Δ_true over the rest; more th
 evaluation seed where only the parent diverged is a STOP for the author (the frozen builder ties ``k_evaluation`` to
 ``divergent_seeds``).
 
-**Tail law** (E5: "a heavy-tailed node uses a Student-t, declared before labels are built"; P10, R1-G5-TAILS). Each
+**Tail law** (E5, P10, R1-G5-TAILS and R1-G5-TAILS-CONSUMERS). Each
 assembled node's declared ``tails`` (``gaussian`` or ``student_t``, with ``tails_nu`` for the latter) is read before
 its labels (``tail_law``): the seven nodes' from the spec, autoresearch's from the completion record under G5-ARPEND A
 (``check_ar_record``) or the spec under B. An undeclared node (a PENDING marker) is a STOP. A ``gaussian`` node's rows
 and ``build.json`` entry are unchanged byte for byte; a ``student_t`` node's audit label rows carry ``"tails":
 "student_t"`` and ``"nu"`` in ``soft_parameters`` and its ``build.json`` node entry ``tails``, ``nu`` and ``t_scale``
-(``r1.c3.labels.STUDENT_T_SCALE``: the soft label is ``labels.soft_label(..., tails="student_t", nu=nu)``, a
+(``r1.c3.labels.STUDENT_T_SCALE``: the parametric soft label is ``labels.soft_label(..., tails="student_t", nu=nu)``, a
 Student-t whose sd is s = σ_node / √k_label, the Gaussian path's width). Delta_label, se_label and E5 do not depend on
 the tail law.
 

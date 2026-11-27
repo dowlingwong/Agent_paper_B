@@ -818,9 +818,14 @@ def test_tails_student_t_assembly_records_the_law(world):
                       tails=lab["tails"], nu=lab["nu"])
     from scipy.stats import t as student_t
     zs = 1 / math.sqrt(lab["k_label"])
+    scale = LB.student_t_scale(zs, lab["nu"])
+    assert scale == pytest.approx(zs * math.sqrt(3 / 5), rel=1e-15)
+    assert student_t.std(lab["nu"], scale=scale) == pytest.approx(zs, rel=1e-15)
     ref = np.diff(student_t.cdf(LB.EDGES, 5, loc=lab["delta_label"] / lab["sigma_node"],
                                 scale=zs * math.sqrt(3 / 5)))
     assert np.allclose(p[1:], ref / ref.sum(), atol=1e-14, rtol=0)
+    gaussian = LB.soft_label(lab["delta_label"], None, lab["sigma_node"], k_label=lab["k_label"])
+    assert not np.allclose(p, gaussian, atol=1e-14, rtol=0)
     # open item (report): the T1 training reader's schema does not yet admit the two fields, so it refuses rather
     # than silently building a Gaussian label for a student_t node
     assert set(lab) - sft_data.SOFT_PARAMETER_KEYS == {"tails", "nu"}

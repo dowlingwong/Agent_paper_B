@@ -2611,6 +2611,10 @@ def test_tails_nu_spec_field_validated():
                      "gaussian, mlgym_fmnist gaussian, mlgym_breakout_minatar student_t (nu = 5), mlgym_houseprice "
                      "gaussian, autoresearch_fixedtokens from the completion record (G5-ARPEND A)")
     assert "student_t (nu = 5.5)" in T.note_lines(_declared(nu=5.5))["tails"]
+    precise_nu = 5.12345678912345
+    rendered = T.note_lines(_declared(nu=precise_nu))["tails"]
+    assert f"student_t (nu = {precise_nu})" in rendered
+    assert T._parse_nu(T.NU_SAID.search(rendered).group(1)) == precise_nu
     for bad in (2, 1.5, 0, -3, True, "5", float("nan"), float("inf"), None):
         stop(r"mlab_ogbn_arxiv.tails_nu must be a finite number > 2", T.validate_spec, _declared(nu=bad))
     s = _declared()
@@ -2652,15 +2656,21 @@ def test_stop_15_tails_nu(tmp_path, keys):
     go(sp, note, m, node=T.AR, calls=calls)
     assert calls[0][2]["ar_record"]["tails_nu"] == 5.0 and calls[0][2]["ar_tails"] == "student_t"
     for edit in (lambda f: f.pop("tails_nu"), lambda f: f.update(tails_nu="2"), lambda f: f.update(tails_nu="five"),
-                 lambda f: f.update(tails_nu="1e9"), lambda f: f.update(tails_nu="-6")):
+                 lambda f: f.update(tails_nu="1e999"), lambda f: f.update(tails_nu="-6")):
         ar_record_world(m, s, sp, edit=edit)
         stop("STOP 15: tails_nu must be a finite number > 2", go, sp, note, m, node=T.AR)
     for decl in (b"autoresearch_fixedtokens: student_t (from the G.1b summary)\n",
                  b"autoresearch_fixedtokens: student_t, nu = 4\n",
+                 b"autoresearch_fixedtokens: student_t, nu = 5xyz\n",
+                 b"autoresearch_fixedtokens: student_t, nu = 5e1\n",
+                 b"autoresearch_fixedtokens: student_t, nu = 5xyz; nu = 5\n",
                  b"autoresearch_fixedtokens: student_t, nu = 5\nautoresearch_fixedtokens: student_t\n"):
         ar_record_world(m, s, sp, decl=decl)
         stop("must state nu = 5 for autoresearch_fixedtokens", go, sp, note, m, node=T.AR)
     ar_record_world(m, s, sp, decl="autoresearch_fixedtokens: student_t, ν = 5.0\n".encode())
+    assert go(sp, note, m, node=T.AR)["ran"] == T.AR
+    ar_record_world(m, s, sp, decl=b"autoresearch_fixedtokens: student_t (nu = 5e0)\n",
+                    edit=lambda f: f.update(tails_nu="5e0"))
     assert go(sp, note, m, node=T.AR)["ran"] == T.AR
     gauss = b"autoresearch_fixedtokens: gaussian\n"
     ar_record_world(m, s, sp, decl=gauss, edit=lambda f: f.update(tails="gaussian"))

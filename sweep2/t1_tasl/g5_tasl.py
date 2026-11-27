@@ -224,8 +224,8 @@ ROW_ID = re.compile(r"^R1-[A-Z0-9][A-Z0-9-]*[A-Z0-9]$")
 CITED = re.compile(r"^(\S+) sha256 ([0-9a-f]{64})$")
 VERDICT_ACCEPTED = re.compile(r"^Verdict: ACCEPTED\s*$", re.M)
 PLACEHOLDER = re.compile(r"<[^>]*>")
-NU_TEXT = re.compile(r"[0-9]+(?:\.[0-9]+)?")                         # a completion record's tails_nu (R1-G5-TAILS)
-NU_SAID = re.compile(r"(?<![A-Za-z0-9_])(?:nu|\u03bd)\s*=\s*([0-9]+(?:\.[0-9]+)?)(?![0-9.])")
+NU_TEXT = re.compile(r"[0-9]+(?:\.[0-9]*)?(?:[eE][+-]?[0-9]+)?")
+NU_SAID = re.compile(r"(?<![\w-])(?:nu|\u03bd)\s*=\s*([^\s,;)\]}`|]*)")
 # The T1 table readings of part 3b-2 (g5_assemble), signed in the note's t1_table_readings line (review M2); the
 # assembly refuses a note whose line differs, and without a signed note it allows only "refuse".
 TABLE_READINGS = {
@@ -288,6 +288,13 @@ def _nu_ok(nu) -> bool:
     return not isinstance(nu, bool) and isinstance(nu, (int, float)) and math.isfinite(nu) and nu > 2
 
 
+def _parse_nu(token: str) -> float | None:
+    if NU_TEXT.fullmatch(token) is None:
+        return None
+    value = float(token)
+    return value if _nu_ok(value) else None
+
+
 def check_tails_nu(n: dict, *, allow: bool = False) -> None:
     """R1-G5-TAILS: ``tails_nu`` (the Student-t degrees of freedom) is required where ``tails`` is ``student_t``, a
     finite real number > 2 (the label's sd is then finite, ``r1.c3.labels.STUDENT_T_SCALE``; a draft may leave it a
@@ -309,7 +316,8 @@ def tails_text(n: dict) -> str:
     if n.get("tails") != "student_t":
         return str(n["tails"])
     nu = n.get(TAILS_NU)
-    return f"student_t (nu = {nu:g})" if _nu_ok(nu) else f"student_t (nu = {nu})"
+    display = str(nu).removesuffix(".0") if _nu_ok(nu) else str(nu)
+    return f"student_t (nu = {display})"
 
 
 def _rel_ok(rel) -> bool:
@@ -2367,8 +2375,8 @@ def check_ar_record(spec: dict, spec_path: Path, *, read_main, list_main=list_ma
         raise Stop("STOP 15: tails must be gaussian or student_t (P10)")
     nu = None                                      # R1-G5-TAILS: tails_nu beside a student_t declaration only
     if f["tails"] == "student_t":
-        nu = float(f[TAILS_NU]) if NU_TEXT.fullmatch(f.get(TAILS_NU, "")) else None
-        if nu is None or not _nu_ok(nu):
+        nu = _parse_nu(f.get(TAILS_NU, ""))
+        if nu is None:
             raise Stop(f"STOP 15: {TAILS_NU} must be a finite number > 2 where tails is student_t (R1-G5-TAILS)")
     elif TAILS_NU in f:
         raise Stop(f"STOP 15: {TAILS_NU} is refused where tails is gaussian (R1-G5-TAILS)")
@@ -2379,9 +2387,10 @@ def check_ar_record(spec: dict, spec_path: Path, *, read_main, list_main=list_ma
     if not lines or not all(word(f["tails"], ln) and not word(other, ln) for ln in lines):
         raise Stop(f"STOP 15: the tails declaration {decl_path} must name {AR} with {f['tails']} (P10)")
     if nu is not None:                             # the declaration states the same nu on every line naming AR
-        said = [[float(m.group(1)) for m in NU_SAID.finditer(ln)] for ln in lines]
+        said = [[_parse_nu(m.group(1)) for m in NU_SAID.finditer(ln)] for ln in lines]
         if not all(v and all(x == nu for x in v) for v in said):
-            raise Stop(f"STOP 15: the tails declaration {decl_path} must state nu = {nu:g} for {AR} on each line "
+            display = str(nu).removesuffix(".0")
+            raise Stop(f"STOP 15: the tails declaration {decl_path} must state nu = {display} for {AR} on each line "
                        f"naming it (R1-G5-TAILS)")
     # P9: the environment
     m = ENV_LINE.fullmatch(f.get("environment", ""))
