@@ -75,18 +75,31 @@ def test_cpu_override_reaches_engine_only_for_the_declared_node(tmp_path, comman
 
 
 def test_successful_expansion_receipt_matches_exact_assembly():
-    pin = "a" * 64
+    pin, canonical = "a" * 64, "c" * 64
     receipt = {"schema": A.G.RECEIPT_SCHEMA, "node": MLGYM, "host": S.WORKER_HOST, "run_id": "g1b-x-fixture",
                "attempt": 1, "job_record_sha256": "b" * 64, "sealed_path": "/test/attempt-1"}
     job = dict(receipt, spec_sha256=pin, sealed=receipt["sealed_path"], device="cpu")
-    assembly = {"schema": A.G.X_ASSEMBLY_SCHEMA, "run_id": receipt["run_id"], "spec_json_sha256": pin, "jobs": [job]}
-    A._receipt(receipt, assembly, MLGYM, receipt["run_id"], pin)
+    assembly = {"schema": A.G.X_ASSEMBLY_SCHEMA, "run_id": receipt["run_id"], "spec_json_sha256": canonical, "jobs": [job]}
+    A._receipt(receipt, assembly, MLGYM, receipt["run_id"], pin, canonical)
     with pytest.raises(S.Stop, match="no successful"):
-        A._receipt(dict(receipt, stop="synthetic failure"), assembly, MLGYM, receipt["run_id"], pin)
+        A._receipt(dict(receipt, stop="synthetic failure"), assembly, MLGYM, receipt["run_id"], pin, canonical)
     with pytest.raises(S.Stop, match="different attempts"):
-        A._receipt(dict(receipt, attempt=2), assembly, MLGYM, receipt["run_id"], pin)
+        A._receipt(dict(receipt, attempt=2), assembly, MLGYM, receipt["run_id"], pin, canonical)
     with pytest.raises(S.Stop, match="published G.1b spec/run"):
-        A._receipt(receipt, dict(assembly, jobs=[]), MLGYM, receipt["run_id"], pin)
+        A._receipt(receipt, dict(assembly, jobs=[]), MLGYM, receipt["run_id"], pin, canonical)
+
+
+def test_published_g1b_engineering_receipts_bind_raw_and_canonical_digests():
+    directory = ROOT / "docs/r1/reports/g1b_x_20261127"
+    assembly = json.loads((directory / "ASSEMBLY.json").read_bytes())
+    raw = S._sha_bytes((ROOT / A.G1B_SPEC).read_bytes())
+    canonical = S._sha_bytes(json.dumps(G1B, sort_keys=True).encode())
+    assert raw != canonical
+    for node in G1B["nodes"]:
+        name = node["node"]
+        stem = "titanic" if name == "mlgym_titanic" else name
+        receipt = json.loads((directory / f"SEAL_RECEIPT_{stem}.json").read_bytes())
+        A._receipt(receipt, assembly, name, G1B["run_id"], raw, canonical)
 
 
 @pytest.fixture
@@ -133,7 +146,7 @@ def filled(tmp_path, monkeypatch):
         review = "docs/r1/reviews/addendum.md"
         files[review] = f"Verdict: ACCEPTED\n{RUN} {sha} {config['paper']['commit']}\n".encode()
         bind.update(approved=approved, paper_commit=config["paper"]["commit"], spec_sha256=sha, review=citation(review),
-                    instance_split=f"{p3_split.V2_PATH} sha256 {p3_split.P3_SPLIT_V2_SHA256}")
+                    instance_split=f"r1/c3/splits/c3_p3_split_v2.json sha256 {p3_split.P3_SPLIT_V2_SHA256}")
         bind.update(fields or {})
         note_path.write_text("".join(f"{key}: {value}\n" for key, value in bind.items()))
         if publish:
@@ -265,3 +278,98 @@ def test_published_launch_checkout_checks_its_own_parent_and_spec(tmp_path):
     git(repo, "fetch", "-q", "origin")
     with pytest.raises(S.Stop, match="differs from the paper commit"):
         A.G.verify_launch_tasl(repo, spec, ("R1-G5-S9",), spec_path=path)
+
+
+def test_switch_uses_full_pilot_and_own_launch_pin(filled, tmp_path, monkeypatch):
+    from datetime import date
+    from types import SimpleNamespace
+
+    config, base, render = filled
+    spec = render()
+    published_noise = b"synthetic engineering noise summary"
+    spec["_addendum"]["noise"] = {"copy": "fixture.json", "scope": {MLGYM: {"d21": False}},
+                                  "sha256": S._sha_bytes(published_noise)}
+    monkeypatch.setenv(S.ENABLE_ENV, "1")
+    monkeypatch.setattr(S, "load_spec", lambda *a, **kw: spec)
+    monkeypatch.setattr(S, "plan_row", lambda *a, **kw: "fixture")
+    monkeypatch.setattr(S, "noise_precheck", lambda *a, **kw: {})
+    monkeypatch.setattr(S, "freeze_wait_check", lambda *a, **kw: {})
+    monkeypatch.setattr(J, "check_engines", lambda *a, **kw: {})
+    monkeypatch.setattr(S.G, "_sh", lambda *a, **kw: SimpleNamespace(returncode=0))
+    seen = []
+
+    def pilot(actual, read_main):
+        assert actual == base and [n["node"] for n in actual["nodes"]] == list(S.T1_NODES)
+        seen.append("pilot")
+        return {"passed": True}
+
+    def bind(repo, bound, rows, *, spec_path):
+        assert bound["paper"] == config["paper"] and bound["run_id"] == RUN
+        assert spec_path == tmp_path / "addendum.json" and "R1-G5-S9" in rows
+        seen.append("pin")
+        return {"paper_commit": bound["paper"]["commit"]}
+
+    def run(spec_path, node, job, context):
+        assert (node, job, context["K"], context["host"]) == (MLGYM, "campaigns-wave1", 10, S.WORKER_HOST)
+        seen.append("runner")
+        return {"started": True}
+
+    monkeypatch.setattr(S.G, "verify_launch_tasl", bind)
+    got = S.launch(tmp_path / "addendum.json", tmp_path / ADD_NOTE, MLGYM, job="campaigns-wave1",
+                   enable=True, today=date(2026, 11, 27), read_main=lambda path: published_noise, pilot_check=pilot,
+                   checkout=lambda *a: {}, mpath_check=lambda *a: {"g5_commit": config["harness"]["g5_commit"]},
+                   runner=run)
+    assert got["started"] and seen == ["pilot", "pin", "runner"]
+
+
+def test_audit_plan_refuses_foreign_attempt_and_index(filled, tmp_path, monkeypatch):
+    spec = filled[2]()
+    node = spec["nodes"][0]
+    spec["worker"]["runs_root"] = str(tmp_path / "runs")
+    camp = J.job_dir(spec, MLGYM, "campaigns-wave1") / "attempt-1"
+    camp.mkdir(parents=True)
+    (camp / "job_record.json").write_text(json.dumps({"run_id": BASE, "stop": None}))
+    (camp / "diagnostics.json").write_text("{}")
+
+    def must_not_open(*args, **kwargs):
+        pytest.fail("unbound archive was opened")
+
+    monkeypatch.setattr(J, "tar_members", must_not_open)
+    with pytest.raises(S.Stop, match="another G.5 addendum spec, note or run"):
+        J.next_chunk(spec, node, 1, 10)
+    index = J.plan_path(spec, MLGYM, 1)
+    index.parent.mkdir(parents=True)
+    index.write_text(json.dumps({"run_id": BASE, "K": 10}))
+    monkeypatch.setattr(J, "access", must_not_open)
+    with pytest.raises(S.Stop, match="another G.5 addendum spec, note or run"):
+        J.next_chunk(spec, node, 1, 10)
+
+
+def test_gate_noise_uses_only_exact_mlgym_addendum_bindings(tmp_path, monkeypatch):
+    from g5_noise import builder_noise, derive
+
+    base = {"run_id": BASE}
+    path = tmp_path / "main_spec.json"
+    path.write_text(json.dumps(base))
+    row = {"split_sha256": p3_split.P3_SPLIT_V2_SHA256,
+           "g1b_summaries": {name: {"path": name} for name in ("mlgym_fmnist", MLGYM, EXTRA)}}
+    addenda = {MLGYM: {"run_id": RUN}, EXTRA: {"run_id": BASE + "_addendum_2"}}
+
+    def specs(spec, sha, signed, paths):
+        assert spec == base and sha == S._sha_bytes(path.read_bytes())
+        assert signed == row and paths == ["signed specs"]
+        return addenda, {}
+
+    def noise(spec, narrowed, **kwargs):
+        name, = narrowed["g1b_summaries"]
+        assert name != EXTRA and spec == (base if name == "mlgym_fmnist" else addenda[MLGYM])
+        return {name: {"delta_n": 0.25, "sigma_node": 2.0, "sigma_node_t0_definition": 2.0,
+                       "sigma_node_rule": AS.N.T1_SIGMA_NODE}}
+
+    monkeypatch.setattr(AS, "_addendum_specs", specs)
+    monkeypatch.setattr(AS, "noise_by_node", noise)
+    record = derive(base, row, spec_path=path, addendum_paths=["signed specs"])
+    assert set(builder_noise(record)) == {"mlgym_fmnist", MLGYM}
+    record["nodes"][EXTRA] = record["nodes"][MLGYM]
+    with pytest.raises(S.Stop, match="outside the gate noise record"):
+        builder_noise(record)

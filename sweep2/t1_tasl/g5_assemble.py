@@ -339,6 +339,7 @@ def sealed_node(spec: dict, node: str, spec_sha256: str) -> dict:
         if not idx_path.is_file():
             raise Stop(f"STOP: {node} wave {wave} has no sealed plan index")
         idx = json.loads(idx_path.read_text())
+        SE.addendum_binding(spec, idx)
         crec = json.loads((camp / "job_record.json").read_text())
         if idx.get("campaign_out_tar_sha256") != crec.get("out_tar_sha256") or \
                 idx.get("campaign_out_tar_sha256") != L._sha_file(camp / "out.tar"):
@@ -813,9 +814,10 @@ def assemble(spec_path: Path, stage: str, table_dir: Path, evidence_dir: Path, *
     readings = bind_readings(spec, spec_path, note_path, on_main=on_main)
     ar_record = ar_record or default_ar_record(spec, spec_path)
     table_dir, evidence_dir = Path(table_dir), Path(evidence_dir)
+    sealed = Path(spec["worker"]["sealed_root"]).resolve() if addendum_paths else SE.sealed_run(spec).resolve()
     for d in (table_dir, evidence_dir):
         if any(part.casefold() == "r1_sealed" for part in d.resolve().parts) or (
-                SE.sealed_run(spec).resolve() in [d.resolve(), *d.resolve().parents]):
+                sealed in [d.resolve(), *d.resolve().parents]):
             raise Stop(f"STOP: {d} is inside a sealed tree (the release step refuses sealed paths)")
     if stage == "traindev" and (table_dir.exists() or evidence_dir.exists()):
         raise Stop("STOP: the table and evidence directories are written once (they exist)")

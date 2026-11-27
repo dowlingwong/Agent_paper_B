@@ -593,7 +593,7 @@ class SealedTree:
         if what not in ("ledgers", "plan", "chunk") or \
                 (what == "plan") != bool(PLAN_TAR.fullmatch(tar_name)) or (what != "plan" and tar_name != "out.tar"):
             raise Stop(f"STOP 11: {what!r} is not read from {tar_name}")
-        verify_sealed(sealed_dir)
+        addendum_binding(self.spec, verify_sealed(sealed_dir))
         tar_path = sealed_dir / tar_name
         with tarfile.open(tar_path) as tar:
             names = [m.name for m in tar if m.isfile() and _member_ok(what, m.name)]
@@ -727,6 +727,9 @@ def seal_server(spec: dict, server_dir: Path, *, alive=None) -> dict:
     end = json.loads((src / "server_end.json").read_text())
     if rec.get("run_id") != spec["run_id"] or Path(str(rec.get("server_dir"))).resolve() != src.resolve():
         raise Stop("STOP: the server record names another run or directory")
+    binding = addendum_binding(spec)
+    if binding and rec.get("spec_sha256") != binding["spec_sha256"]:
+        raise Stop("STOP: the server record names another G.5 addendum spec")
     if end.get("server_record_sha256") != L._sha_file(src / "server_record.json") or \
             end.get("server_log_sha256") != L._sha_file(src / "llama-server.log"):
         raise Stop("STOP: server_end.json does not bind this record and log (changed after the server stopped)")
@@ -763,9 +766,12 @@ def open_server_log(spec: dict, server: str, purpose: str, *, lock=None) -> byte
         raise Stop("STOP 11: a server log is opened only for the 'server log:' purpose")
     grant = require(purpose, lock=lock)
     root = proposer_sealed_run(spec)
+    if not SERVER.fullmatch(server):
+        raise Stop("STOP: the sealed server log needs a server-N name from this run")
     check_access_log(spec, root=root)                               # m6
     d = root / server
     receipt = verify_sealed(d)
+    addendum_binding(spec, receipt)
     member = f"{receipt['server']}/llama-server.log"
     tree = SealedTree(spec, lock=lock)
     tree.root = root

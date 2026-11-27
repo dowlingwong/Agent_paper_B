@@ -54,8 +54,10 @@ already published.
 ## Worker deployments
 
 The switch takes the census interpreter and freeze from the published G.1b spec.
-TASL-2 runs both campaign and audit waves with the main worker slot lease and the
-node's CPU-set lease. TASL-7 runs the proposer with the addendum's run ID and spec digest.
+TASL-2 runs both campaign and audit waves. The runner takes the main worker slot lease,
+the two S13 CPU-set leases and the node's own CPU-set lease when it differs from those two.
+Wait for the leases to clear before retrying a refusal. TASL-7 runs the proposer with
+the addendum's run ID and spec digest.
 
 | Node | TASL-2 CPUs | Lease under `~/r1_locks/` | Environment | CPU admission | Release route |
 |---|---|---|---|---|---|
@@ -72,3 +74,7 @@ Under the signed v2 release rows, pass the published expansion specs to the main
 `g5_tasl.py assemble` command with a separate `--addendum-spec SPEC` for each node cited
 by the release row. MLGym enters the main T1 output. Each 1GC node has separate
 `extra_tasks/<node>/` outputs under both assembly roots.
+
+For the D6 gate-noise record, call `g5_noise.derive` with the exact main spec,
+the signed train/dev row and the same `addendum_paths`. The record includes the
+MLGym expansion nodes. The two 1GC nodes stay in their separate assembly outputs.

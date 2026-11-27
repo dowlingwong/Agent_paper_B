@@ -672,12 +672,17 @@ def job_dir(spec: dict, node: str, job: str, chunk: int | None = None) -> Path:
     return d / f"chunk-{chunk}" if chunk is not None else d
 
 
-def complete_attempt(d: Path) -> tuple[dict, dict] | None:
+def complete_attempt(d: Path, spec: dict | None = None) -> tuple[dict, dict] | None:
     """The completed attempt of a job directory (stop None), with its record and diagnostics; None if none."""
     for _, p in G.attempts(d):
         rec_path, diag_path = p / "job_record.json", p / "diagnostics.json"
         if rec_path.is_file() and diag_path.is_file():
             rec = json.loads(rec_path.read_text())
+            if spec is not None and spec.get("_addendum"):
+                SE.addendum_binding(spec, rec)
+                parts = SE._attempt_parts(spec, p)
+                if any(rec.get(key) != parts[key] for key in ("node", "job", "chunk", "attempt")):
+                    raise Stop("STOP: the completed addendum attempt record names another job or chunk")
             if rec.get("stop") is None:
                 return rec, json.loads(diag_path.read_text())
     return None
@@ -723,14 +728,14 @@ def node_diagnostics(spec: dict, node: str) -> list[dict]:
     for job in S.JOBS:
         kind, _ = job_parts(job)
         if kind == "campaigns":
-            got = complete_attempt(job_dir(spec, node, job))
+            got = complete_attempt(job_dir(spec, node, job), spec)
             if got:
                 out.append(got[1])
         else:
             base = job_dir(spec, node, job)
             if base.is_dir():
                 for c in sorted(base.glob("chunk-*")):
-                    got = complete_attempt(c)
+                    got = complete_attempt(c, spec)
                     if got:
                         out.append(got[1])
     return out
@@ -740,8 +745,8 @@ def audits_done(spec: dict, node: str, wave: int) -> bool:
     index = plan_path(spec, node, wave)
     if not index.is_file():
         return False
-    n = json.loads(index.read_text())["chunks"]
-    return all(complete_attempt(job_dir(spec, node, f"audits-wave{wave}", c)) for c in range(n))
+    n = read_plan_index(spec, node, wave)["chunks"]
+    return all(complete_attempt(job_dir(spec, node, f"audits-wave{wave}", c), spec) for c in range(n))
 
 
 def wave_checks_path(spec: dict, node: str, wave: int) -> Path:
@@ -773,7 +778,7 @@ def check_order(spec: dict, node: str, job: str) -> None:
         raise Stop(f"STOP 9: consumed GPU-hours {consumed} above the cap {spec['key_values']['cap_gpu_hours']} "
                    f"(counted per G5-TASL-GPUH)")
     if kind == "campaigns":
-        if complete_attempt(job_dir(spec, node, job)):
+        if complete_attempt(job_dir(spec, node, job), spec):
             raise Stop(f"STOP: {node} {job} is complete")
         if wave == 2:
             if not audits_done(spec, node, 1):
@@ -782,7 +787,7 @@ def check_order(spec: dict, node: str, job: str) -> None:
             if checks["stops"]:
                 raise Stop(f"STOP: {node} wave-1 checks STOPped the node before wave 2: {checks['stops']}")
     else:
-        if not complete_attempt(job_dir(spec, node, f"campaigns-wave{wave}")):
+        if not complete_attempt(job_dir(spec, node, f"campaigns-wave{wave}"), spec):
             raise Stop(f"STOP: {node} {job} needs campaigns-wave{wave} complete (§3)")
 
 
@@ -874,7 +879,7 @@ RECORD_KEYS = {"schema", "label", "run_id", "node", "family", "job", "wave", "ch
                "ptrace_scope", "cgroup", "harness", "environment", "data", "server_record", "server_props_before",
                "server_props_after", "server_stopped", "latency_probe_before", "latency_probe_after", "deadline_epoch",
                "started_utc", "finished_utc", "gpu_seconds", "engine", "engine_rc", "out_tar_sha256", "plan_sha256",
-               "cpu_lease", "cpu_preflight", "addendum_note_sha256",
+               "cpu_leases", "cpu_preflight", "addendum_note_sha256",
                "stop", "stop_class", "node_log", "output_use", "owner", "worker_host", "claim_sha256", "crosshost_pass"}
 
 
@@ -1374,7 +1379,10 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         # Keep the main G.5 worker slot even for CPU-only expansion jobs. The census CPU lease also excludes G.1b.
         record["lease"] = leases.enter_context(G.gpu_lease(w["lease"]))
         if addendum:
-            record["cpu_lease"] = leases.enter_context(G.gpu_lease(addendum["cpu_lease"], "CPU-set lease", "G.1b census CPU set"))
+            # S13 takes both worker CPU-set leases before taking any distinct census-set lease.
+            cpu_leases = ("~/r1_locks/cpus-0-3.lock", "~/r1_locks/cpus-4-7.lock", addendum["cpu_lease"])
+            record["cpu_leases"] = [leases.enter_context(G.gpu_lease(path, "CPU-set lease", "G.5 S13 and census set"))
+                                    for path in dict.fromkeys(cpu_leases)]
             record["addendum_note_sha256"] = addendum["note_sha256"]
     except Exception as exc:  # noqa: BLE001
         leases.close()
@@ -1827,12 +1835,23 @@ def _write_plan(spec: dict, node: str, wave: int, plan: dict) -> dict:
              "chunks": plan["chunks"], "groups": len(plan["groups"]), "units": len(plan["units"]),
              "plan_json_sha256": hashlib.sha256(raw).hexdigest(), "plan_tar_sha256": L._sha_file(tar_path),
              "campaign_attempt": plan["campaign_attempt"], "campaign_out_tar_sha256": plan["campaign_out_tar_sha256"]}
+    if spec.get("_addendum"):
+        index.update(run_id=spec["run_id"], **SE.addendum_binding(spec))
     _write_json(plan_path(spec, node, wave), index)
     return index
 
 
-def load_plan(spec: dict, node: str, wave: int, purpose: str) -> dict:
+def read_plan_index(spec: dict, node: str, wave: int) -> dict:
     index = json.loads(plan_path(spec, node, wave).read_text())
+    if spec.get("_addendum"):
+        SE.addendum_binding(spec, index)
+        if (index.get("node"), index.get("wave")) != (node, wave):
+            raise Stop("STOP: the addendum plan index names another node or wave")
+    return index
+
+
+def load_plan(spec: dict, node: str, wave: int, purpose: str) -> dict:
+    index = read_plan_index(spec, node, wave)
     tar_path = plan_path(spec, node, wave).parent / "plan.tar"
     if L._sha_file(tar_path) != index["plan_tar_sha256"]:
         raise Stop(f"STOP: {tar_path} differs from its index")
@@ -1851,10 +1870,12 @@ def next_chunk(spec: dict, node: dict, wave: int, k: int) -> tuple[dict, int, li
     access-log line) and the first chunk without a completed attempt."""
     if not plan_path(spec, node["node"], wave).is_file():
         camp = job_dir(spec, node["node"], f"campaigns-wave{wave}")
-        got = complete_attempt(camp)
+        got = complete_attempt(camp, spec)
         if not got:
             raise Stop(f"STOP: no completed campaigns-wave{wave} attempt")
         tar = camp / f"attempt-{got[0]['attempt']}" / "out.tar"
+        if spec.get("_addendum") and L._sha_file(tar) != got[0].get("out_tar_sha256"):
+            raise Stop("STOP: the addendum campaign archive differs from the bound job record")
         ledgers = tar_members(spec, tar, LEDGER_MEMBER, f"audit planning: campaign ledgers of {node['node']} "
                                                        f"wave {wave}")
         prior, prior_groups = {}, set()
@@ -1867,11 +1888,12 @@ def next_chunk(spec: dict, node: dict, wave: int, k: int) -> tuple[dict, int, li
         plan.update(chunks=len(chunks), chunk_runs=chunks, campaign_attempt=got[0]["attempt"],
                     campaign_out_tar_sha256=got[0].get("out_tar_sha256"))
         _write_plan(spec, node["node"], wave, plan)
-    index = json.loads(plan_path(spec, node["node"], wave).read_text())
+    index = read_plan_index(spec, node["node"], wave)
     if index["K"] != k:
         raise Stop(f"STOP: the wave's plan was made at K = {index['K']}, the note now says K = {k}")
     claimed = claimed_chunks(spec, node["node"], wave)       # R1-G5-AUDIT-TWO-CARDS: claimed chunks run on TASL-7
-    done = {i for i in range(index["chunks"]) if complete_attempt(job_dir(spec, node["node"], f"audits-wave{wave}", i))}
+    done = {i for i in range(index["chunks"])
+            if complete_attempt(job_dir(spec, node["node"], f"audits-wave{wave}", i), spec)}
     for i in range(index["chunks"]):
         if i in done or i in claimed:
             continue
@@ -1938,7 +1960,7 @@ def audit_diagnostics(spec: dict, node: dict, wave: int, record: dict, plan: dic
     elif index == plan["chunks"] - 1:                          # the wave's last chunk: E5 over all chunks
         all_rows = rows + _chunk_rows(spec, node["node"], wave, range(plan["chunks"] - 1))
         if plan.get("reused_units"):                            # reused units' rows come from wave 1
-            p1 = json.loads(plan_path(spec, node["node"], 1).read_text())
+            p1 = read_plan_index(spec, node["node"], 1)
             reused = set(plan["reused_units"])
             all_rows += [r for r in _chunk_rows(spec, node["node"], 1, range(p1["chunks"]), reused=True)
                          if r["unit"] in reused]
@@ -1950,7 +1972,7 @@ def _chunk_rows(spec: dict, node: str, wave: int, chunks, *, reused: bool = Fals
     out = []
     for i in chunks:
         cdir = job_dir(spec, node, f"audits-wave{wave}", i)
-        got = complete_attempt(cdir)
+        got = complete_attempt(cdir, spec)
         tar = cdir / f"attempt-{got[0]['attempt']}" / "out.tar"
         members = tar_members(spec, tar, CHUNK_MEMBERS, f"wave E5: audit rows of {node} wave {wave}"
                                                         + (" (reused units)" if reused else ""))

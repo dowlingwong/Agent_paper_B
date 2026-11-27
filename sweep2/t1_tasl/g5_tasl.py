@@ -2844,7 +2844,7 @@ def launch_addendum(spec_path: Path, spec: dict, node: dict, *, job: str, today:
         rows += (a["_K_row"],)
     context = {"job": job, "K": a["_K"], "K_row": a["_K_row"], "options": o, "host": WORKER_HOST,
                "host_check": {family: a["host_check"]}, "d21": a["noise"]["scope"][name]["d21"],
-               "pilot_basis": (pilot_check or pilot_basis_check)(spec, read_main)}
+               "pilot_basis": (pilot_check or pilot_basis_check)(a["base_spec"], read_main)}
     if spec["key_values"]["cuda_ipc"]["mode"] == "c12":
         context["cuda_ipc"] = check_c12(spec, read_main)
     # Read the published engineering summary again through the same noise checks as the main node path.

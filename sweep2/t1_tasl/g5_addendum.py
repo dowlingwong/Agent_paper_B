@@ -67,14 +67,14 @@ def deployment(g1b: dict, name: str) -> dict:
             "cpu_preflight": g1b["cpu_preflight"], "role": p3_split.role_of(name)}
 
 
-def _receipt(receipt: dict, assembly: dict, name: str, run: str, spec_sha: str) -> None:
+def _receipt(receipt: dict, assembly: dict, name: str, run: str, spec_sha: str, canonical_spec_sha: str) -> None:
     """Require a successful receipt and the same attempt in the exact assembly."""
     if receipt.get("schema") != G.RECEIPT_SCHEMA or receipt.get("node") != name or receipt.get("host") != S.WORKER_HOST \
             or receipt.get("run_id") != run or receipt.get("stop") is not None or receipt.get("stop_class") is not None:
         raise S.Stop(f"STOP: {name} has no successful G.1b seal receipt")
     jobs = [job for job in assembly.get("jobs", ()) if job.get("node") == name]
     if (assembly.get("schema"), assembly.get("run_id"), assembly.get("spec_json_sha256")) != \
-            (G.X_ASSEMBLY_SCHEMA, run, spec_sha) or len(jobs) != 1:
+            (G.X_ASSEMBLY_SCHEMA, run, canonical_spec_sha) or len(jobs) != 1:
         raise S.Stop(f"STOP: the expansion assembly does not bind {name} to the published G.1b spec/run")
     job = jobs[0]
     keys = ("node", "attempt", "host", "job_record_sha256", "stop_class")
@@ -98,7 +98,9 @@ def _g1b(config: dict, name: str, root: Path, read_main) -> tuple[dict, dict]:
                              nodes=[n["node"] for n in g1b["nodes"]], read_main=read_main)
     _, assembly_raw = published(f"{copied['assembly_copy']} sha256 {copied['assembly_sha256']}",
                                 "docs/r1/reports", read_main)
-    _receipt(json.loads(receipt_raw), json.loads(assembly_raw), name, g1b["run_id"], S._sha_bytes(spec_raw))
+    canonical_spec_sha = S._sha_bytes(json.dumps(g1b, sort_keys=True).encode())
+    _receipt(json.loads(receipt_raw), json.loads(assembly_raw), name, g1b["run_id"], S._sha_bytes(spec_raw),
+             canonical_spec_sha)
     S.require_deterministic(name, json.loads(copied["raw"])["verdicts"].get(name))
     copied.update(schema=G.X_SUMMARY_SCHEMA, run_id=g1b["run_id"])
     return layout, copied
@@ -140,7 +142,7 @@ def _launch_fields(config: dict, spec_path: Path, note_path: Path | None, *, dra
         raise S.Stop("STOP: the addendum needs its own full paper commit")
     want = {"run_id": run_id, "node": config["node"], "paper_commit": commit, "spec_sha256": sha,
             "base_g5_note": config["base_g5_note"], "base_g5_spec": config["base_g5_spec"],
-            "instance_split": f"{p3_split.V2_PATH} sha256 {p3_split.P3_SPLIT_V2_SHA256}",
+            "instance_split": f"{p3_split.V2_REL} sha256 {p3_split.P3_SPLIT_V2_SHA256}",
             "pre_split_amendment": config["pre_split_amendment"], "supply": config["supply"]}
     bad = [key for key, value in want.items() if fields.get(key) != value]
     if bad:
@@ -202,7 +204,7 @@ def bind(spec_path: Path, note_path: Path | None = None, *, draft: bool = False,
                             "note_sha256": S._sha_bytes(note_raw), "role": layout["role"],
                             "cpu_lease": layout["lease"], "cpu_preflight": layout["cpu_preflight"],
                             "noise": {key: value for key, value in noise.items() if key != "raw"},
-                            "base_spec_sha256": S._sha_bytes(base_raw), "base_note": base_note,
+                            "base_spec_sha256": S._sha_bytes(base_raw), "base_note": base_note, "base_spec": base,
                             "base_run_id": base["run_id"],
                             "host_check": host_check, "_K": base_fields["_K"], "_K_row": base_fields["_K_row"],
                             "_freeze": base_fields["_freeze"]}
