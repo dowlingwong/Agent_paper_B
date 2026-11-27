@@ -429,7 +429,8 @@ def _probe_tree(root: Path) -> Path:
 
 # The spec fields the cluster and the chat fill (cluster test plan §5.1), in validate_spec's order, with the pattern a
 # filled value must match. F5: the shipped-spec tests hold both before and after the spec-fill commit.
-SPEC_FILL_FIELDS = ((("paper", "commit"), L.COMMIT), (("image", "versions_sha256"), L.SHA),
+SPEC_FILL_FIELDS = ((("paper", "commit"), L.COMMIT), (("harness_commit",), L.COMMIT),
+                    (("image", "versions_sha256"), L.SHA),
                     (("hosts", H, "host_config", "sha256"), L.SHA), (("labels", "partition_sha256"), L.SHA),
                     (("labels", "receipt_sha256"), L.SHA), (("labels", "freeze_record", "path"),
                                                              re.compile(r"docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_\d{8}\.md")),
@@ -464,6 +465,11 @@ def test_shipped_spec_validates_and_refuses_launch_until_filled():
     else:
         assert L.validate_spec(copy.deepcopy(SPEC), launch=True)["projection"]["within_cap"]
     assert L.validate_spec(filled(), launch=True)["run_id"] == SPEC["run_id"]
+    for invalid in ("none", "f" * 8, None):
+        s = filled()
+        s["harness_commit"] = invalid
+        with pytest.raises(L.Stop, match="harness_commit"):
+            L.validate_spec(s, launch=True)
     for path, value, match in ((("hosts", H, "estimate", "source"), "assumed", "h200_sft_probe"),
                                (("hosts", H, "estimate", "source"), "h200_sft_probe:", "h200_sft_probe"),
                                (("image", "digest"), "TODO", "image.digest"),
@@ -1013,6 +1019,7 @@ def job_world(sweep, tmp_path, monkeypatch):
         return {"commit": commit}
     monkeypatch.setattr(L, "clone_full", clone_full)
     monkeypatch.setattr(L, "env3_freeze", lambda spec, clone, sh: {"status": "identical"})
+    monkeypatch.setattr(L, "stage_harness", lambda commit, dest, git, sh: {"repo": L.HARNESS_REPO, "commit": commit})
     monkeypatch.setattr(L, "configs", lambda spec, clone, sh: {"host_config": {"sha256": "5" * 64},
                                                               "sft_config": {"sha256": "s"}})
     monkeypatch.setattr(L, "inputs", lambda spec, clone, job_dir: {
@@ -1026,10 +1033,11 @@ def job_world(sweep, tmp_path, monkeypatch):
     calls = []
     state = {"oom_at": None}
 
-    def trackp(clone, job_dir, args, sh=None, timeout=0):
+    def trackp(clone, job_dir, args, sh=None, *, harness=None):
         calls.append(args)
         a = {args[k]: args[k + 1] for k in range(1, len(args) - 1) if str(args[k]).startswith("--")}
         if args[0] == "sft-data":
+            assert harness == job_dir / "autoresearch_harness"
             out = Path(a["--run-dir"]) / "data"
             SD.build_sft_data(sweep["rows"], SD.SyntheticLabelSource(sweep["rows"], shift_z=1.5), _prompts(sweep), out,
                               table_record={"path": str(job_dir / "table"), "sha256": {"proposals.jsonl": "p"}},
@@ -1240,6 +1248,52 @@ def test_trackp_runs_the_clone_script_from_the_job_directory(tmp_path, monkeypat
     assert type(e2.value) is L.Stop and e2.value.stop_class == "infrastructure"
 
 
+def test_phase1_prompt_replay_uses_the_staged_harness_without_stage_deadlines(tmp_path, monkeypatch):
+    clone = tmp_path / "paper"
+    harness = tmp_path / "autoresearch_harness"
+    monkeypatch.setenv("AR_HARNESS_ROOT", str(tmp_path / "unrelated"))
+    ins = {"table_dir": "table", "partition_dir": "fixture", "label_freeze": {"path": "freeze.md"}}
+    (tmp_path / "out" / "logs").mkdir(parents=True)
+    calls = []
+
+    def sh(argv, *, cwd, env, timeout):
+        calls.append((argv, env, timeout))
+        return subprocess.CompletedProcess(argv, 0, stdout='{"labels": "synthetic"}\n', stderr="")
+
+    L.data_build(clone, tmp_path, ins, sh, harness=harness)
+    L.test_path(clone, tmp_path, "kev-0.8b", ins, sh, harness=harness)
+    real, synthetic, training, evaluator = calls
+    assert real[0][real[0].index("--labels") + 1].endswith("label_block.traindev.jsonl")
+    assert synthetic[0][synthetic[0].index("--labels") + 1] == "synthetic"
+    assert "sft-dev" in training[0]
+    assert any("trackp_p4_test_path" in token for token in evaluator[0])
+    assert all(env["AR_HARNESS_ROOT"] == str(harness) for _, env, _ in (real, synthetic, evaluator))
+    assert all(timeout is None for _, _, timeout in calls)
+
+
+def test_phase1_stages_only_the_clean_exact_harness_checkout(tmp_path, monkeypatch):
+    source = tmp_path / "source"
+    source.mkdir()
+    (source / "src/autoresearch/memory").mkdir(parents=True)
+    (source / "src/autoresearch/memory/summarizer.py").write_text("# replay fixture\n")
+
+    def git(*args):
+        return subprocess.check_output(["git", "-C", str(source), *args], text=True).strip()
+
+    git("init", "--quiet")
+    git("add", "src")
+    git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+        "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "Fixture")
+    commit = git("rev-parse", "HEAD")
+    monkeypatch.setattr(L, "HARNESS_REPO", str(source))
+    dest = tmp_path / "autoresearch_harness"
+    assert L.stage_harness(commit, dest) == {"repo": str(source), "commit": commit}
+    with pytest.raises(L.Stop, match="already exists"):
+        L.stage_harness(commit, dest)
+    with pytest.raises(L.Stop, match="cannot check out"):
+        L.stage_harness("0" * 40, tmp_path / "missing-pin")
+
+
 class _Parsed(Exception):
     pass
 
@@ -1379,7 +1433,7 @@ def _note_fields(s, spec_sha, **over):
          "split": "P3 (9 test / 3 dev / 6 train per node), the signed split file (P4-P1SPLIT A)",
          "lr_grid": "1e-5,3e-5,1e-4; seeds per lr: 3; learning curve: 250, 500 and the full set, seed 20261122 + n",
          "host": "R1-HOST-FREE: GPU model recorded per job, not fixed; one card per arm; admitted: nemo2_h200 "
-                 "(NVIDIA H200, HTCondor)", "harness_commit": "none (no harness import)",
+                 "(NVIDIA H200, HTCondor)", "harness_commit": s["harness_commit"],
          "P1": "PASS — docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md and the receipt",
          "P2": "PASS — P.3a records", "P3": "PASS — docs/r1/reviews/TRACKP_P4_RUNNER_REVIEW.md",
          "P4": "PASS — not applicable to phase 1 (T0 is one suite)",
@@ -1416,6 +1470,13 @@ def test_switch_check_binds_the_note_to_the_stage(stage_world, monkeypatch, tmp_
     yes = lambda rel, raw: True  # noqa: E731
     note = _note(tmp_path, _note_fields(s, spec_sha))
     got = SW.check(stage, note, on_main=yes)
+    assert man["harness_commit"] == s["harness_commit"]
+    manifest_path = stage / "STAGE_MANIFEST.json"
+    original = manifest_path.read_bytes()
+    manifest_path.write_text(json.dumps(dict(man, harness_commit="b" * 40)))
+    with pytest.raises(SW.Stop, match="stage harness_commit"):
+        SW.check(stage, note, on_main=yes)
+    manifest_path.write_bytes(original)
     with pytest.raises(SW.Stop, match="probe record docs/r1/reports/x.md is not on origin/main"):
         SW.check(stage, note, on_main=yes, blob_on_main=lambda rel: False)
     assert got["arms"] == s["arms"] and got["spec_sha256"] == spec_sha
@@ -1661,6 +1722,7 @@ def test_the_note_draft_parses_and_its_completion_binds_a_filled_spec(tmp_path):
     s = filled()
     spec_sha = "a" * 64
     fills = {"approved": "true", "spec_sha256": spec_sha, "code_commit": s["paper"]["commit"],
+             "harness_commit": s["harness_commit"],
              "labels": f"/release/sweep1/traindev/label_block.traindev.jsonl sha256 {s['labels']['partition_sha256']}",
              "label_receipt": f"/release/sweep1/traindev/RECEIPT.json sha256 {s['labels']['receipt_sha256']}",
              "label_freeze": f"{s['labels']['freeze_record']['path']} sha256 {s['labels']['freeze_record']['sha256']}",
@@ -2101,7 +2163,7 @@ def probe_world(sweep, tmp_path, monkeypatch):
     monkeypatch.setattr(L, "test_path", lambda *a: pytest.fail("the probe must not run the test path"))
     calls, state = [], {"oom": False, "labels": "synthetic"}
 
-    def trackp(clone, job_dir, args, sh=None, timeout=0):
+    def trackp(clone, job_dir, args, sh=None, *, harness=None):
         calls.append(args)
         a = {args[k]: args[k + 1] for k in range(1, len(args) - 1) if str(args[k]).startswith("--")}
         if args[0] == "sft-data":

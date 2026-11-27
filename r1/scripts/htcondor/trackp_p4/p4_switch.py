@@ -29,7 +29,7 @@ it launches the arm. ``check_cap`` reports usage against the 40 GPU-h figure and
     included in it), ``probe_charge_files:`` (the sha256 of
     ``caps.probe_charge_files``), ``label_table_binding:`` (P4-F2 A: the
     sealed v2 receipt table, the ``sweep1_v3`` pin and the FEAT-ONE identity result), ``job_layout:``,
-    ``real_label_test_read: none``, ``evaluation_seeds_read: none`` and ``harness_commit: none``; no ``<…>``
+    ``real_label_test_read: none``, ``evaluation_seeds_read: none`` and the exact ``harness_commit:``; no ``<…>``
     placeholder anywhere;
   * the staged spec validates at launch strength and its projection, with the probe's charged GPU-hours, is within the
     cap; the H200 SFT probe record is on ``origin/main``, its ``p4_estimate_hours: <arm> <hours>`` lines equal the
@@ -133,7 +133,7 @@ def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
     for a class the spec does not admit reads ``none``; ``gpu_hours_cap:`` cites R1-HOST-FREE (5) (GPU-hours on any
     card)."""
     exact = {"run_id": spec["run_id"], "spec_sha256": spec_sha256, "code_commit": spec["paper"]["commit"],
-             "versions_sha256": spec["image"]["versions_sha256"]}
+             "versions_sha256": spec["image"]["versions_sha256"], "harness_commit": spec["harness_commit"]}
     for key, value in exact.items():
         if fields[key] != value:
             raise Stop(f"STOP: note {key} {fields[key]!r} is not the spec's {value!r}")
@@ -155,7 +155,6 @@ def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
                 "lr_grid": ("1e-5,3e-5,1e-4", "seeds per lr: 3", "250, 500", "20261122"),
                 "host": ("R1-HOST-FREE", "GPU model recorded", "one card",
                          *(x for c in sorted(spec["hosts"]) for x in (c, lib.HOST_CLASSES[c]["gpu_name"]))),
-                "harness_commit": ("none",),
                 **{lib.HOST_CLASSES[c]["probe_label"]: (probe_record(spec, c),) for c in sorted(spec["hosts"])},
                 "label_table_binding": ("P4-F2 A", lib.SEALED_V2_PROPOSALS_SHA256, lib.V3_PROPOSALS_SHA256,
                                         lib.FEAT_ONE_IDENTITY["path"], lib.FEAT_ONE_IDENTITY["sha256"])}
@@ -332,6 +331,8 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main, blob_on_ma
     manifest = json.loads(manifest_raw)
     if manifest.get("preview") is not False:
         raise Stop("STOP: a preview stage is never submittable")
+    if manifest.get("harness_commit") != spec["harness_commit"]:
+        raise Stop("STOP: the stage harness_commit differs from the signed spec")
     host_class = manifest.get("host_class")
     host = lib.host_class_of(spec, host_class)       # the stage's class must be admitted by the spec (and the note)
     if manifest.get("launch") != host["launch"]:
@@ -500,13 +501,14 @@ def main(argv=None) -> int:
     s = sub.add_parser("submit"); s.add_argument("--stage", required=True); s.add_argument("--note", required=True)
     s.add_argument("--enable", action="store_true"); s.add_argument("--arm", default=None)
     s.add_argument("--first-record", type=Path, default=None)
+    s.add_argument("--spec", type=Path, default=None, help="committed launch spec matching the staged copy")
     a = ap.parse_args(argv)
     try:
         if a.cmd == "check":
             print(json.dumps(check(Path(a.stage), Path(a.note)), indent=1))
         else:
             print(json.dumps(submit(Path(a.stage), Path(a.note), enable=a.enable, arm=a.arm,
-                                    first_record=a.first_record), indent=1))
+                                    first_record=a.first_record, spec_path=a.spec), indent=1))
     except (Stop, lib.Stop) as exc:
         print(str(exc), file=sys.stderr)
         return 2
