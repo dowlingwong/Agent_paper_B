@@ -1,0 +1,22 @@
+{
+ "code_commit": "bad59593460a135ddbbf83d7a8c48eb64fc8a97f",
+ "fills": "D3_PREDECLARATION_DRAFT_20261122.md \u00a714 constants_file_sha256",
+ "fitter_sha256": "5ad96059245bf5a65b0f462f73e74028c77fec8d7dabfa5d0e4f74d0c329b027",
+ "ladder_c": {
+  "digits_mlp": -1.3,
+  "openml_breast_w": 0.3,
+  "openml_climate": 2.85,
+  "openml_credit_approval": -0.1,
+  "openml_ionosphere": -0.05,
+  "openml_sonar": -0.75,
+  "tabular_mlp": -0.8
+ },
+ "out": "/work/dwong/d3_g2_20261127_repeat.HLeZMw/d3_constants.json",
+ "sha256": "4f5f686be8f0210bcb27dfe0968296d68cf54e7266fb72c9038e741163776a93",
+ "toolchain": {
+  "interpreter": "/work/dwong/screen-smoke-20261127/venv/bin/python",
+  "numpy": "2.4.4",
+  "python": "3.13.15",
+  "scipy": "1.17.1"
+ }
+}
