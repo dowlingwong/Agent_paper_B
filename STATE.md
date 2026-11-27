@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 03:00 CET, `main` at `29099c4b`
+# State — 27 Nov 2026, 03:35 CET, `main` at `29099c4b`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -19,9 +19,9 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | # | Card | Runbook | State |
 |---|---|---|---|
 | 1 | `compute/20261126-10`: expansion G.1b | §2 2B | **running**: ETTh1 finished 00:34Z (460/460, determinism true, no STOP) and is sealed; MetaMaze, Forest Cover, Titanic in train. Next: seals, then `assemble` and `summarise` |
-| 1b | `compute/20261127-05` with `-08`: G.5 P11 host tests (they do not wait for the note) | §2 2B | ready; TASL-2 items wait for the 0-7 leases |
-| 1c | `compute/20261127-06` with `-11`: Ada P.4 venv via `ssh ada_server` | §4 | **ready** (author set up access 27 Nov) |
-| 1d | `compute/20261127-09`: G1 core review (`51cf07f7`); design revision 6c for FIXR3/EGATE | §2 2A | ready. Verify seeds decided (R1-D3-VERIFY-SEED: harness unit `local/20261127-07`); G2 with local |
+| 1b | `compute/20261127-05` with `-08`: G.5 P11 host tests | §2 2B | TASL-7 part done (C7, C10 short, C11 server side; ACCEPTED), merging; C2, C4, C5, C6, C9, C14, C15 pre-run, C11 chunk side still to run (TASL-2 needs the 0-7 leases) |
+| done | `compute/20261127-06`: Ada P.4 venv | §4 | ACCEPTED (`a1d0cf74`; freeze 121/121 equal to the lock; Python 3.12.10 vs the lock's 3.12.15). Login account is `zli538`, not `dowling`: merge and P.4 launch account wait for the author |
+| 1d | `compute/20261127-09`: G1 core review (running); design 6c **ACCEPTED FOR CODE** (merging) | §2 2A | then G1 adapter and replicate loop code |
 | 2 | `compute/20261127-01` (= `experiment/20261126-03`): houseprice CPU-set check on TASL-2 | §2 2B | next: ready (fix on `main` `47df6f55`); waits on the 0-3/4-7 leases while the expansion runs |
 | 2b | `compute/20261126-11`: survey redaction | §4 | delivered `f60a2225`, **incomplete** (truncated `ps` user column in `Ada.txt` l.49–62); fix in `compute/20261127-02` item 2, then merge |
 | 2c | `compute/20261127-03`: copy review's verdict case (G.5 B3); P11 evidence table | §2 2B | ready, after the launch |
@@ -32,7 +32,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | done | kit c1 record (`experiment/20261126-01`, `compute/20261126-04`); REL-T1-G1B copy (`compute/20261126-05`); survey (`compute/20261126-01`; Ada: LLM serving ready, P.4 training not ready: no torch env, no container runtime) | | merged `166db0eb` (survey: after item 2) |
 | — | `compute/20261126-06`: G.5 campaigns on the TASL pair | §2 2B | blocked: G.5 note published (coordinator), after `local/20261126-08` render and review (local) |
 | — | `compute/20261126-07`: P.4 probe on Ada | §2 2B, §4 | blocked: the Ada venv (`compute/20261127-06`) (the missing-runs STOP fix and the H200 fill are merged); the direct launcher and Ada host config are on `main` `bd406db9`. Earlier: a torch environment on Ada (the survey: a venv from the P.4 lock without sudo, or a container runtime from the host owner); the route goes to the author if a venv is not acceptable |
-| 1e | `compute/20261127-07`: screening smoke | §2 2A | **STOP** at `data-cache` (ARFF identified by suffix; sklearn 1.8 names it `<id>.gz`); fix `local/20261127-05`, then repeat |
+| 1e | `compute/20261127-07`: screening smoke | §2 2A | fix accepted (`cb684870`), merging; repeat after the merge (task file to follow) |
 | — | `compute/20261126-09`: D.3 per-arm smoke | §2 2A | blocked: item 4 (compute), `local/20261126-05` item 1 and `local/20261126-03` (local) |
 
 ## Local (Claude on the Mac)
