@@ -732,7 +732,7 @@ def _fields(s: dict, spec_sha: str, **over) -> dict:
                           "GPU-hours on any card, R1-HOST-FREE (5)); slot_hours_cap: 64",
          "job_layout": "one job per base", "table_pin": L.TABLE_PIN, "duplicate_policy": "heldout_excludes_seen",
          "split": "P3, P4-P1SPLIT A", "lr_grid": "1e-5,3e-5,1e-4; seeds per lr: 3; 250, 500; 20261122",
-         "host": host, "harness_commit": "none",
+         "host": host, "harness_commit": s["harness_commit"],
          "h200_sft_probe": "none: the spec does not admit nemo2_h200", "ada_sft_probe": "none: not admitted",
          "h200_smoke_e0": "none: the spec does not admit nemo2_h200", "ada_smoke_e0": "none: not admitted",
          "label_table_binding": f"P4-F2 A {L.SEALED_V2_PROPOSALS_SHA256} {L.V3_PROPOSALS_SHA256} "
