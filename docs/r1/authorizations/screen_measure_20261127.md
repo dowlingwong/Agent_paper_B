@@ -1,14 +1,12 @@
-# R1-SCREEN-MEASURE on deepthought — authorization for author signature
+# R1-SCREEN-MEASURE on deepthought — author-signed authorization
 
-AI-assisted (Codex, local worker, 27 Nov 2026). Signature candidate. The key block has
-`approved: false`. R1-SCREEN-MEASURE-CHOICES (1)–(9) fixes the design, with option (a)
-as primary and all triples reported as secondary.
+AI-assisted (Codex, local worker, 27 Nov 2026). The author signed this note and adopted the companion
+pre-declaration on 27 Nov 2026 under R1-SCREEN-MEASURE-SIGNATURE. R1-SCREEN-MEASURE-CHOICES (1)–(9) fixes
+the design, with option (a) as primary and all triples reported as secondary.
 
-The author signs this note and adopts the companion pre-declaration at the path and hash
-below. The companion is a byte-identical copy of the reviewed draft, with its historical
-draft wording retained. The coordinator records the signature, sets `approved: true`,
-and publishes both files and the exact-code review on `main`. Compute then checks
-published `main` and runs the strict preflight from `code_commit`.
+The companion is a byte-identical copy of the reviewed draft, with its historical draft wording retained.
+After the coordinator publishes both files and the exact-code review on `main`, Compute checks the
+publication and runs the strict preflight from `code_commit`.
 
 **How it launches.** On deepthought, from a clean paper checkout at exactly `code_commit` (an ancestor of published
 `main`), in the e1-replayed batch venv of the sweep-1 and sweep-2 B.2 audits, with `AR_HARNESS_ROOT` = the e1 batch
@@ -39,7 +37,7 @@ carries the preflight record, harness `6adf3859` clean and `edit_sets` `equal` o
 ## Key block
 
 ```
-approved: false
+approved: true
 label: EVIDENCE
 phase: r1_screen_measure
 start_ruling: R1-SCREEN-MEASURE
