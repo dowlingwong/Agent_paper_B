@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 02:20 CET, `main` at the P.4 merge (see below)
+# State — 27 Nov 2026, 02:30 CET, `main` at `5c901d19`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -48,7 +48,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | done | `local/20261126-11`: T5 correction round | — | `440a3dd9`; coordinator merge running (full suite) |
 | 8 | `local/20261126-07`: rows (g) inventory and the G.5 card monitor | §2 2B | ready |
 | done | `local/20261126-04`: S9 sheet | §2 2B | `016742b1`; to the author with P10/P11 |
-| 10 | `local/20261126-05`: controllers A0R, FIXR3, EGATE, LADDER, G7, G8, G9; test-only unit; HPO reference; D.3c memo; Paper C consolidation | §2 2A, 2C, 3A | ready, in its own order |
+| 10 | `local/20261126-05`: item 1 controllers **delivered** (`mac-d3-g9-sidecar-20261127` @ `27564dbb`; FIXR3/EGATE accepted as decision engines only), coordinator merge under test; item 2 test-only and item 4 D.3c memo merged; item 3 HPO reference pushed (`666320c9`, no report yet); item 5 Paper C last | §2 2A, 2C, 3A | in progress |
 | 11 | `local/20261126-06` units 2–3: further G.5 audit hosts; revision 4 under R1-HOST-FREE | §2 2B | ready after unit 1 |
 | done | `local/20261126-13`: hygiene inventory (`2005d0b0`: 72 worktrees proposed to retire, 14 keep, 6 active; 29 untracked dirs) | §2 0 | merged `bd406db9`; retirements are the author's |
 | 2b | `local/20261126-08` final render | §2 2B | **STOP for decisions** (`mac-g5-render-20261126` @ `2959b369`; review NOT ACCEPTED on B1–B4): P10 and P11 go to the author (`sheets/G5_P10_P11_S9_SHEET_20261127.md`); B3 (copy review's verdict case) → `compute/20261127-03`; `paper.commit` filled at publication |
@@ -71,6 +71,8 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
   `cluster/20261126-01`).
 - Not dispatched: §2 order 0 at repository level and order 4 (design and author); 3B (fixed-memory census: no PLAN row for the
   census or for the design role, see `AUTHOR.md`).
+
+**Process incident (27 Nov 01:49):** compute amended and force-pushed its G1 task branch (`121ba63d` → `51cf07f7`) before review. Against rule 1. Disclosed by compute; no `main` push. Correction card `compute/20261127-10`.
 
 **Departure from the runbook (recorded, not changed):** §2 says the local worker implements runner changes. The existing card
 `cluster/20261126-02` gives the D.3 G1/G6 code to the agent that designed it, and R1-AGENT-COMPUTE passes that card to compute.
