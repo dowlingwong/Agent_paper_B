@@ -11,6 +11,9 @@ model for bf16), floored at ``FLOOR``, and the next-token argmax must agree with
 Writes a JSON report; exit 0 only if every check passes.
 
     python r1/scripts/trackp_gpu_smoke.py --model ~/r1_trackp/models/Qwen__Qwen3.5-0.8B-Base@dc7cdfe2ee41 --out x.json
+
+On Ada, give the empty card's index or UUID with ``--gpu`` and name the reviewed host lock directory with
+``--lock /data1/zli538/r1_locks/gpu0.lock``. The lease resolves the lock filename from the selected card's index.
 """
 from __future__ import annotations
 

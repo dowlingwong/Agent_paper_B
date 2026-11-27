@@ -45,6 +45,8 @@ AUTH_DIR = REPO / "docs" / "r1" / "authorizations"
 TRACK_X_HEADING = re.compile(r"^##.*\b(Track X|exam)\b.*\b(B1|B2)\b.*$", re.I | re.M)
 RUNNING_WORDS = re.compile(r"\b(running|started|launched|in progress)\b", re.I)
 ENDED_WORDS = re.compile(r"\b(accepted|stopped|done|complete|completed|finished)\b", re.I)
+GPU_UUID = re.compile(r"GPU-[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}")
+GPU_INDEX = re.compile(r"0|[1-9][0-9]*")
 
 
 class TrackPStop(RuntimeError):
@@ -157,25 +159,42 @@ def _nvidia_rows(*args: str) -> list[list[str]]:
     return [[field.strip() for field in line.split(",")] for line in res.stdout.splitlines() if line.strip()]
 
 
-def _leased_card(gpu: str | None, visible: str | None) -> tuple[int, str]:
-    selector = visible if gpu is None else gpu
-    query = ["--query-gpu=index,uuid"]
-    if selector is not None and not re.fullmatch(r"(?:0|[1-9][0-9]*|GPU-[0-9a-fA-F-]+)", selector):
+def _cuda_uuid_for_visible_index() -> str:
+    # CUDA and NVML can order the same GPUs differently. Probe the inherited mask without initializing CUDA here.
+    probe = ("import torch\n"
+             "if torch.cuda.device_count() != 1: raise SystemExit(1)\n"
+             "uuid = str(torch.cuda.get_device_properties(0).uuid).removeprefix('GPU-')\n"
+             "print('GPU-' + uuid)\n")
+    try:
+        res = subprocess.run([sys.executable, "-c", probe], capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise TrackPStop("cannot resolve the inherited CUDA ordinal to a GPU UUID") from exc
+    uuid = res.stdout.strip()
+    if res.returncode != 0 or not GPU_UUID.fullmatch(uuid):
+        raise TrackPStop("cannot resolve the inherited CUDA ordinal to a GPU UUID")
+    return uuid
+
+
+def _leased_card(gpu: str | int | None, visible: str | None) -> tuple[int, str]:
+    if visible is not None and GPU_INDEX.fullmatch(visible):
+        visible = _cuda_uuid_for_visible_index()
+    if visible is not None and not GPU_UUID.fullmatch(visible):
+        raise TrackPStop("CUDA_VISIBLE_DEVICES must identify exactly one GPU")
+    selector = visible if gpu is None else str(gpu)
+    if selector is not None and not (GPU_INDEX.fullmatch(selector) or GPU_UUID.fullmatch(selector)):
         raise TrackPStop("select exactly one GPU by physical index or UUID")
-    # A single device exposed by a scheduler/container may have CUDA ordinal 0 and a different NVML index.
-    only_local_ordinal = gpu is None and visible == "0"
-    rows = _nvidia_rows(*query) if selector is None or only_local_ordinal else []
-    if selector is not None and len(rows) != 1:
-        rows = _nvidia_rows(*query, f"--id={selector}")
-        only_local_ordinal = False
+    query = ["--query-gpu=index,uuid"]
+    if selector is not None:
+        query.append(f"--id={selector}")
+    rows = _nvidia_rows(*query)
     if len(rows) != 1 or len(rows[0]) != 2:
         raise TrackPStop("select exactly one GPU by physical index or UUID")
     index, uuid = rows[0]
-    if not index.isascii() or not index.isdecimal() or not re.fullmatch(r"GPU-[0-9a-fA-F-]+", uuid):
+    if not GPU_INDEX.fullmatch(index) or not GPU_UUID.fullmatch(uuid):
         raise TrackPStop("nvidia-smi did not identify the selected GPU")
-    if selector is not None and not only_local_ordinal and selector not in (index, uuid):
+    if selector is not None and selector not in (index, uuid):
         raise TrackPStop("nvidia-smi returned a different GPU than selected")
-    if visible is not None and not only_local_ordinal and visible not in (index, uuid):
+    if visible is not None and visible != uuid:
         raise TrackPStop("selected GPU disagrees with CUDA_VISIBLE_DEVICES")
     return int(index), uuid
 
@@ -183,20 +202,18 @@ def _leased_card(gpu: str | None, visible: str | None) -> tuple[int, str]:
 def foreign_compute_processes(uuid: str) -> dict:
     """Selected card only. Exclude our own process and omit all process identities."""
     count, memory_mib = 0, 0
-    known_memory = True
-    for row in _nvidia_rows("--query-compute-apps=gpu_uuid,pid,used_memory"):
-        if row[0] != uuid:
+    for row in _nvidia_rows("--query-compute-apps=gpu_uuid,pid,used_memory", f"--id={uuid}"):
+        if row[0] != uuid and GPU_UUID.fullmatch(row[0]):
             continue
-        if len(row) != 3 or not row[1].isdecimal():
+        if row[0] != uuid or len(row) != 3 or not row[1].isdecimal():
             raise TrackPStop("nvidia-smi returned an invalid process record for the selected GPU")
         if int(row[1]) == os.getpid():
             continue
+        if not row[2].isdecimal():
+            raise TrackPStop("nvidia-smi did not report process memory for the selected GPU")
         count += 1
-        if row[2].isdecimal():
-            memory_mib += int(row[2])
-        else:
-            known_memory = False
-    return {"count": count, "memory_mib": memory_mib if known_memory else None}
+        memory_mib += int(row[2])
+    return {"count": count, "memory_mib": memory_mib}
 
 
 def _log_lease(event: dict, log_path: Path) -> None:
@@ -205,10 +222,22 @@ def _log_lease(event: dict, log_path: Path) -> None:
         fh.write(json.dumps(event, sort_keys=True) + "\n")
 
 
+def _check_cuda_card(uuid: str) -> None:
+    """Verify the bound device before handing it to a model or kernel."""
+    import torch
+
+    try:
+        actual = str(torch.cuda.get_device_properties(0).uuid) if torch.cuda.device_count() == 1 else ""
+    except (RuntimeError, AttributeError) as exc:
+        raise TrackPStop("cannot verify the leased GPU in CUDA") from exc
+    if f"GPU-{actual.removeprefix('GPU-')}" != uuid:
+        raise TrackPStop("CUDA does not expose exactly the leased GPU")
+
+
 @contextlib.contextmanager
 def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_LOG, run_log: list | None = None,
               status_text: str | None = None, check_processes: bool = True,
-              marker_path: Path = TRACKX_MARKER, gpu: str | None = None) -> Iterator[dict]:
+              marker_path: Path = TRACKX_MARKER, gpu: str | int | None = None) -> Iterator[dict]:
     """Hold one empty card before CUDA initializes, or a job-local lock under the checked P.4 outer lease."""
     if marker_path.exists():
         raise TrackPStop(f"Track X evidence marker {marker_path} exists (B1/B2 running): do not start")
@@ -218,10 +247,6 @@ def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_L
     card = {}
     if check_processes:
         index, uuid = _leased_card(gpu, visible)
-        torch = sys.modules.get("torch")
-        if torch is not None and torch.cuda.is_initialized():
-            if torch.cuda.device_count() != 1 or f"GPU-{torch.cuda.get_device_properties(0).uuid}" != uuid:
-                raise TrackPStop("CUDA already initialized with a different GPU selection")
         lock_path = lock_path.with_name(f"gpu{index}.lock")
         card = {"gpu_index": index, "gpu_uuid": uuid}
     lock_path.parent.mkdir(parents=True, exist_ok=True)
@@ -238,27 +263,40 @@ def gpu_lease(job: str, *, lock_path: Path = LOCK_PATH, log_path: Path = LEASE_L
             start["other_processes"] = foreign_compute_processes(uuid)
             if start["other_processes"]["count"]:
                 raise TrackPStop(f"GPU {index} ({uuid}) needs to be empty: {start['other_processes']}")
-        _log_lease(start, log_path)
-        if run_log is not None:
-            run_log.append(start)
         if card:
             os.environ["CUDA_VISIBLE_DEVICES"] = uuid
         try:
-            yield {"start": start["utc"], "job": job, **card}
+            if card:
+                _check_cuda_card(uuid)
+            _log_lease(start, log_path)
+            if run_log is not None:
+                run_log.append(start)
+            job_failed = False
+            try:
+                yield {"start": start["utc"], "job": job, **card}
+            except BaseException:
+                job_failed = True
+                raise
+            finally:
+                end = {"event": "end", "job": job, "pid": os.getpid(), "utc": utcnow(), **card}
+                sample_error = None
+                if card:
+                    try:
+                        end["other_processes"] = foreign_compute_processes(uuid)
+                    except TrackPStop as exc:
+                        sample_error = exc
+                        end["other_processes"] = {"error": str(exc)}
+                _log_lease(end, log_path)
+                if run_log is not None:
+                    run_log.append(end)
+                if sample_error is not None and not job_failed:
+                    raise TrackPStop("the leased GPU's end occupancy could not be recorded") from sample_error
         finally:
-            end = {"event": "end", "job": job, "pid": os.getpid(), "utc": utcnow(), **card}
             if card:
                 if visible is None:
                     os.environ.pop("CUDA_VISIBLE_DEVICES", None)
                 else:
                     os.environ["CUDA_VISIBLE_DEVICES"] = visible
-                try:
-                    end["other_processes"] = foreign_compute_processes(uuid)
-                except TrackPStop as exc:
-                    end["other_processes"] = {"error": str(exc)}
-            _log_lease(end, log_path)
-            if run_log is not None:
-                run_log.append(end)
 
 
 # ---------------------------------------------------------------------- manifest
@@ -349,7 +387,7 @@ def host_record() -> dict:
         import torch
         if torch.cuda.is_available():
             props = torch.cuda.get_device_properties(torch.cuda.current_device())
-            device = {"name": props.name, "uuid": f"GPU-{props.uuid}",
+            device = {"name": props.name, "uuid": f"GPU-{str(props.uuid).removeprefix('GPU-')}",
                       "compute_capability": f"{props.major}.{props.minor}"}
     except (ImportError, RuntimeError, AttributeError):
         pass

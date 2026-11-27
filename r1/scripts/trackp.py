@@ -124,7 +124,7 @@ def _lease(args, lease_log: list):
     if direct:
         outer_gpu = os.environ.get("P4_LEASED_GPU_UUID")
         if outer_gpu:
-            if gpu is not None or os.environ.get("CUDA_VISIBLE_DEVICES") != outer_gpu:
+            if not R.GPU_UUID.fullmatch(outer_gpu) or gpu is not None or os.environ.get("CUDA_VISIBLE_DEVICES") != outer_gpu:
                 raise R.TrackPStop("a P.4 direct job must use its outer card lease")
         elif gpu is None:
             raise R.TrackPStop("select an empty card with --gpu for a standalone Track P job")
