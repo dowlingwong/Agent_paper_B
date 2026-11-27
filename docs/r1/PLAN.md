@@ -1733,6 +1733,12 @@ preregistration, the gate code and every signed note are unchanged.
 |---|---|
 | R1-SCREEN-DEEPTHOUGHT2 | **Move the screening evidence measurement to deepthought2, CPU only, using at most 64 CPUs** (author, 27 Nov 2026, in Codex chat, “换到deepthought2上跑，最多可以用64个核，又多又快，现在就能跑”). This is the host and resource decision under R1-HOST-FREE (3). The coordinator routes the host-specific runner and note re-issue for review, publishes the reviewed authorization, and dispatches Compute promptly. Verify the host, environment, harness and cache bindings, the effective CPU capacity and co-tenancy headroom at preflight. The worker count must fit the reviewed launch binding and the 64-CPU cap. Keep the existing design, seeds, analysis, and STOP rules. Use a fresh run stamp, preserve the old STOP records, and carry no rows from those attempts into the analysis. The deepthought retry route is superseded for the new run. D.3 step (8) and campaigns still wait under R1-D3-STEP8-HOLD. |
 
+### 27 November 2026 (k) — same-code P.4 E0 reference (author)
+
+| ID | Decision |
+|---|---|
+| R1-P4-E0-SAME-CODE-REFERENCE | **Re-run the P.4 E0 reference on TASL-7 with the same code and configuration used by the Ada E0 comparison run** (author, 27 Nov 2026, in Codex chat, “批准在 TASL-7 用与 Ada 相同的代码和配置重做参照”, answering `AUTHOR.md` at `a536afe7`). Bind the run to the Ada comparison recorded in `972f0e70`: paper `c80f83bc`, `e0_config_ref.json` SHA-256 `9773547dc286f638792b53b06cc7133d61209c2d9e92cdfd4982a062c1a2c054`, matching data, model and seed. Compute verifies the TASL-7 environment and lease, runs the reference and reports the comparison against the pinned Ada run with the existing comparator and tolerances. Keep the 26 October reference as a historical record. The Ada phase-1 note and A5 SFT remain gated by accepted E0 equivalence and reviewed timing disposition under R1-P4-PHASE1-SIGNATURE. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
