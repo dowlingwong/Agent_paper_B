@@ -4,7 +4,8 @@ Independent review (read-only with respect to the deliverable). ENGINEERING_ONLY
 
 - **Task:** `compute/20261127-26` (screening cache rebuild and 168-run engineering smoke after the cache-layout fix).
 - **Deliverable branch:** `compute-screen-cache-rebuild-20261127`, tip
-  `11ca8fe85f44262fd3f62764eebac9ed251f7106`. Base `origin/main`
+  `11ca8fe85f44262fd3f62764eebac9ed251f7106` as first reviewed; re-checked at
+  `e6aced0f2039d2b0f380fb2a480d82768d1b7e59` (see the re-check section). Base `origin/main`
   `4a9a1f4aaaadca90edf1ae481cec3163a67e42b0` (merge-base equals that commit).
 - **Code commit reviewed by the run:** `c12136d664ae588a2539b76b2602e36742979ce8`.
 - **Task text:** `tasks/compute/20261127-26-screen-cache-rebuild-smoke.md` on `coord/coordinator`; design report
@@ -93,6 +94,44 @@ Independent review (read-only with respect to the deliverable). ENGINEERING_ONLY
   the sentence reads as if the command was never run again.
 
 These are record-keeping/wording gaps; none affects a hash, a count, the cache layout or the scope boundary.
+
+## Re-check — delta at `e6aced0f`
+
+- **Tip and scope.** Fetched; the branch tip is `e6aced0f2039d2b0f380fb2a480d82768d1b7e59`
+  (one commit over `11ca8fe8`, "record pre-check context and preserved scenes; address review
+  minors"). `git diff --name-status origin/main...<branch>` still adds only
+  `docs/r1/reports/screen_cache_rebuild_20261127/**` (17 files, all in the report directory). The
+  delta touches the report, `SHA256SUMS` and three new captures; no original capture changed.
+- **Hashes.** `shasum -a 256 -c SHA256SUMS` reports OK for all 16 entries, which cover every file
+  except `SHA256SUMS` itself. The three new files' actual hashes equal both `SHA256SUMS` and the
+  report's §3 citations: `precheck_context.txt` `26c77a0c…`, `preserved_scenes.txt` `7b660c7c…`,
+  `post_run_status.txt` `edb2c142…`. The report's own new hash (`800bf884…`) verifies.
+- **Pre-check context (M1).** `captures/precheck_context.txt` gives the host, log path and mtime
+  (`2026-11-27T13:53:19Z`, 22 s before the PASS at `13:53:41Z`), the first invocation and its
+  output path, the two main SHAs (`83425c70` before the fetch, `4a9a1f4a` at the fetch), and the
+  observed absence of the output directory. It asserts no exit code or process status — nothing is
+  invented. Its "stopped in `evidence_environment()` before `out.mkdir()`" matches the module order
+  verified in item 8.
+- **Post-run status (M2).** `captures/post_run_status.txt` is labelled exactly as what it is: a
+  host observation after the run, "not a run-time capture". The report now draws only its post-run
+  clean `git status`, HEAD and host card state from it, and says the run "used only CPU nodes and
+  requested no GPU" instead of treating the card state as run-time evidence. The capture shows a
+  host card at 100 % (another process, not ours); the report does not claim otherwise, so the
+  wording does not overstate.
+- **Preserved scenes (M3).** `captures/preserved_scenes.txt` is a read-only listing that shows both
+  earlier evidence STOP scenes (`SMEAS_EVIDENCE_20261127T1032Z`, `…T1155Z`), the earlier cache STOP
+  directory, the old cache and the old smoke directory, with pre-run mtimes. "Remain untouched" is
+  supported by the listing and unchanged mtimes rather than content hashes — adequate for the
+  purpose, with no writer to those paths in this deliverable.
+- **Wording (M4).** The report now says "Nothing was patched or relaxed; no attempt or run was
+  retried — only the preflight was re-invoked after `git fetch`, and it had created no attempt.",
+  which matches the record.
+- **Residual minors.** (a) M2 is partly addressed: the post-run clean tree is captured, but "fresh
+  full clone" and "clean at start" still rest on the post-run status and are not separately
+  captured. (b) M3's preservation is evidenced by a directory listing, not content hashes. Neither
+  affects a hash, a count, the cache layout or the scope boundary.
+- **No BLOCKING finding.** The numbers and hashes of the original captures are unchanged and were
+  not re-derived beyond the `SHA256SUMS` check; the earlier full verification stands.
 
 ## Verdict
 
