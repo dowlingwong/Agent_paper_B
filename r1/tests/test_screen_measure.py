@@ -648,6 +648,18 @@ class RunnerStopTest(unittest.TestCase):
         self.assertIsNone(res["stop"])
         self.assertTrue((out / "cotenancy.log").read_text().strip())
 
+    def test_deepthought2_cotenancy_uses_whole_host_load_and_capacity(self):
+        out = self.tmp / "deepthought2"
+        out.mkdir()
+        manifest = {"preflight": {"launch_host": "deepthought2"}}
+        with mock.patch.object(sm.os, "sched_getaffinity", return_value=set(range(64)), create=True), \
+                mock.patch.object(sm.os, "cpu_count", return_value=128), \
+                mock.patch.object(sm.os, "getloadavg", return_value=(65, 0, 0)):
+            result = sm.execute(out, _c0_jobs(), _fake_run, manifest, 2, None, str(self.tmp), monitor=True)
+        self.assertIsNone(result["stop"])
+        sample = json.loads((out / "cotenancy.log").read_text().splitlines()[0])
+        self.assertEqual((sample["cpus"], sample["free_for_others"]), (128, 63))
+
     def test_identity_flags(self):
         """Review M3: the smoke flags a configuration whose seed-999 metric equals c0's or a single-edit parent's."""
         node = DESIGN["nodes"]["openml_climate"]
@@ -778,6 +790,49 @@ class PreflightTest(unittest.TestCase):
     def test_cotenancy_at_start(self):
         with mock.patch.object(sm, "cotenancy", return_value={**self.GOOD_CO, "free_for_others": 9.0, "ok": False}):
             self.stops("co-tenancy before launch")
+
+    def bind_deepthought2(self):
+        self.fields.update(launch_host="deepthought2", workers="64")
+        self.args.workers = 64
+        self.plan += "| R1-SCREEN-DEEPTHOUGHT2 | CPU only on deepthought2, up to 64 CPUs |\n"
+        self.affinity = self.enterContext(mock.patch.object(
+            sm.os, "sched_getaffinity", return_value=set(range(64)), create=True))
+        self.enterContext(mock.patch.dict(os.environ, {"CUDA_VISIBLE_DEVICES": ""}))
+        self.headroom = self.enterContext(mock.patch.object(
+            sm, "cotenancy", return_value={**self.GOOD_CO, "cpus": 128, "load1": 54, "free_for_others": 74}))
+
+    def test_deepthought2_signed_worker_and_host_binding(self):
+        self.bind_deepthought2()
+        with mock.patch.object(self.audit, "evidence_environment", return_value={}) as environment:
+            result = sm.preflight_evidence(self.args, DESIGN)
+        environment.assert_called_once_with(Path(REPO).resolve(), expected_host="deepthought2")
+        self.headroom.assert_called_once_with(0, host_wide=True)
+        self.assertEqual(result["launch_host"], "deepthought2")
+        self.assertEqual(result["affinity_cpus"], list(range(64)))
+        self.assertEqual(result["placement_ruling"], "R1-SCREEN-DEEPTHOUGHT2")
+
+    def test_deepthought2_refuses_missing_authority_and_wrong_worker_binding(self):
+        self.bind_deepthought2()
+        self.args.workers = 63
+        self.stops("must equal the note's reviewed worker count")
+        self.args.workers = 65
+        self.fields["workers"] = "65"
+        self.stops("workers 65 not within")
+        self.args.workers = 64
+        self.fields["workers"] = "64"
+        self.plan = self.PLAN_ROW
+        self.stops("exactly one R1-SCREEN-DEEPTHOUGHT2 row")
+
+    def test_deepthought2_refuses_invalid_affinity_gpu_or_headroom(self):
+        self.bind_deepthought2()
+        for count in (63, 65):
+            self.affinity.return_value = set(range(count))
+            self.stops("affinity must cover 64 workers within 64 CPUs")
+        self.affinity.return_value = set(range(64))
+        with mock.patch.dict(os.environ, {"CUDA_VISIBLE_DEVICES": "0"}):
+            self.stops("requires CUDA_VISIBLE_DEVICES empty")
+        self.headroom.return_value.update(load1=54.01)
+        self.stops("lacks capacity for 64 workers and 10 free cores")
 
 
 class SmokeModeTest(unittest.TestCase):
