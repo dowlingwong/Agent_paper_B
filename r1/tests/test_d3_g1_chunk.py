@@ -102,7 +102,8 @@ def _observed():
     return {"model": "NVIDIA RTX 4090", "proposer_model": "gemma4_31b", "memory_check": "pass",
             "lease": True, "gpu_uuid": "GPU-test", "driver": "test", "memory_total": 24564,
             "memory_free": 24000, "other_processes_start": 0, "other_processes_end": 0,
-            "request": "test", "scope": "test", "environment_freeze": "test"}
+            "request": "test", "scope": "test", "environment_freeze": "test",
+            "host_class": "test", "lease_path": "/tmp/test.lock", "chunk_start_utc": "2026-11-27T00:00:00Z"}
 
 
 def test_one_chunk_writes_layout_records_and_sums(tmp_path):
@@ -130,6 +131,7 @@ def test_one_chunk_writes_layout_records_and_sums(tmp_path):
     assert chunk["gpu_model"] == "NVIDIA RTX 4090"
     assert chunk["memory_check"] == "pass"
     assert chunk["proposer_check"] == "pass" and chunk["model_check"] == "pass"
+    assert chunk["campaign_model"] == "NVIDIA RTX 4090" and chunk["status"] == "complete"
     # The outer sums verifies every entry.
     for line in (out / "SHA256SUMS").read_text().splitlines():
         digest, rel = line.split("  ", 1)
@@ -186,6 +188,14 @@ def test_hardware_refusals():
 def test_manifest_source_mismatch_is_refused(tmp_path):
     spec = _spec()
     manifest = dict(_manifest(spec), campaign_model_source_sha256="0" * 64)
+    with pytest.raises(ChunkStop):
+        run_chunk(spec, tmp_path / "chunk", _factory, manifest=manifest, observed=_observed())
+
+
+def test_manifest_source_key_is_required(tmp_path):
+    spec = _spec()
+    manifest = dict(_manifest(spec))
+    manifest.pop("campaign_model_source_sha256")
     with pytest.raises(ChunkStop):
         run_chunk(spec, tmp_path / "chunk", _factory, manifest=manifest, observed=_observed())
 

@@ -136,8 +136,8 @@ def check_hardware(spec: ChunkSpec, observed: Mapping[str, Any], manifest: Mappi
     want_prop = str(manifest.get("proposer_model") or "")
     if not want_model or not want_prop:
         raise ChunkStop("the campaign manifest must name campaign_model and proposer_model")
-    instance_model = str(manifest.get("instance_model") or "")
-    if instance_model and instance_model != want_model:
+    instance_model = str(manifest.get("instance_model") or want_model)
+    if instance_model != want_model:
         raise ChunkStop(f"instance_model {instance_model!r} differs from campaign_model {want_model!r}")
     got_model = str(observed.get("model") or "")
     if not got_model:
@@ -183,8 +183,9 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory, *,
     if observed is None:
         raise ChunkStop("a chunk needs the observed hardware record (revision 6b)")
     check_hardware(spec, observed, manifest)
-    if str(manifest.get("campaign_model_source_sha256", "")) and \
-            str(manifest["campaign_model_source_sha256"]) != sha256_json(dict(spec.campaign_model_source)):
+    if "campaign_model_source_sha256" not in manifest:
+        raise ChunkStop("the campaign manifest must carry campaign_model_source_sha256")
+    if str(manifest["campaign_model_source_sha256"]) != sha256_json(dict(spec.campaign_model_source)):
         raise ChunkStop("the campaign manifest's model source does not match this launch")
     out.mkdir(parents=True)
     campaigns: list[dict[str, Any]] = []
@@ -197,6 +198,8 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory, *,
                                     repetition=spec.repetition, instance_id=inst)
         kwargs, ended_on = factory(spec, seed, cdir, recorder)
         _validate_kwargs(kwargs)
+        if str(kwargs.get("campaign_id")) != inst:
+            raise ChunkStop("the factory campaign_id is not the instance id")
         if kwargs.get("snapshot_hook") is not recorder:
             raise ChunkStop("the factory did not bind the chunk recorder as the snapshot hook")
         if ended_on not in ENDED_ON:
@@ -250,9 +253,14 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory, *,
         "campaign_model_source": dict(spec.campaign_model_source),
         "hardware": dict(observed),
         "hardware_claim": dict(spec.hardware),
+        "campaign_model": manifest.get("campaign_model"),
+        "host_class": observed.get("host_class"), "lease_path": observed.get("lease_path"),
+        "chunk_start_utc": observed.get("chunk_start_utc"), "chunk_end_utc": utc_now(),
         "gpu_model": observed.get("model"), "gpu_uuid": observed.get("gpu_uuid"),
-        "driver": observed.get("driver"), "memory_total": observed.get("memory_total"),
-        "memory_free": observed.get("memory_free"), "memory_check": observed.get("memory_check"),
+        "driver": observed.get("driver"), "driver_version": observed.get("driver"),
+        "memory_total": observed.get("memory_total"), "memory_total_mib": observed.get("memory_total"),
+        "memory_free": observed.get("memory_free"), "memory_free_mib_at_start": observed.get("memory_free"),
+        "memory_check": observed.get("memory_check"),
         "other_processes_start": observed.get("other_processes_start"),
         "other_processes_end": observed.get("other_processes_end"),
         "proposer_expected": manifest.get("proposer_model"),
@@ -260,7 +268,8 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory, *,
         "proposer_check": "pass",
         "request": observed.get("request"), "scope": observed.get("scope"),
         "environment_freeze": observed.get("environment_freeze"),
-        "model_check": "pass", "status": "complete",
+        "model_check": "pass",
+        "status": "stopped" if any(c["ended_on"] in ("stop", "error") for c in campaigns) else "complete",
         "notes": dict(spec.notes),
         "instances": [spec.instance_id(s) for s in spec.instance_seeds],
     }
