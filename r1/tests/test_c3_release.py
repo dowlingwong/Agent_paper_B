@@ -575,7 +575,14 @@ def test_a_v2_row_needs_the_published_pre_split_amendment_and_partitions_by_v2(p
     with pytest.raises(R.ReleaseStop, match="PRE-SPLIT amendment"):
         R.release_row("T0", "traindev")
     _amendment(paper)
-    paper.plan(_v2_rows(paper))
+    paper.plan(_v2_rows(paper), publish=False)
+    from r1.c3.train import sft_data
+    with pytest.raises(R.ReleaseStop, match="must match published main"):
+        R.split_v2_amendment()
+    with pytest.raises(sft_data.SFTDataError, match="must match published main"):
+        sft_data._signed_split({"split_file": sft_data.SIGNED_SPLIT_FILE_V2})
+    paper.publish()
+    assert sft_data._signed_split({"split_file": sft_data.SIGNED_SPLIT_FILE_V2})
     row = R.release_row("T0", "traindev")
     assert row["split_sha256"] == p3_split.P3_SPLIT_V2_SHA256
     assert R.split_v2_amendment()["path"] == R.SPLIT_AMENDMENT_PATH

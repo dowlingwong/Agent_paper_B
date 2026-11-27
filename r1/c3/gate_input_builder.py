@@ -98,6 +98,7 @@ class Source:
     rows: list                       # table rows (proposals.jsonl)
     labels: list = field(default_factory=list)        # label-block rows (label_block.jsonl format)
     evaluations: list = field(default_factory=list)   # evaluation-block rows (evaluation_block.jsonl format)
+    split_sha256: str | None = None                   # G.5 release receipt's exact split binding
 
     @property
     def gate(self) -> bool:
@@ -211,6 +212,8 @@ def _check_sources(sources: list[Source], need_sweep1: bool) -> None:
 
 def _source_row_ok(src: Source, row: dict) -> None:
     tier = GATE_SOURCES.get(src.name) or KEY_SOURCES[src.name]
+    if row["node"] in p3_split.T1_EXTRA_TASKS:
+        raise BuilderError(f"{row['node']}: a 1GC extra task is never supplied to the gate (R1-G5-S9)")
     if _tier_of(row["node"]) != tier:
         raise BuilderError(f"{src.name}: row {row['proposal_id']} of node {row['node']} is not a {tier} node")
 
@@ -345,6 +348,17 @@ def _inert():
     return p
 
 
+def _source_assignment(sources: list[Source], split_path=None) -> dict:
+    pin_sha = next((s.split_sha256 for s in sources if s.name == "g5" and s.split_sha256), None)
+    try:
+        if split_path is not None:
+            return p3_split.assignment(p3_split.load(split_path, sha256=pin_sha))
+        split = p3_split.load_pinned(p3_split.pin_of_sha(pin_sha)) if pin_sha else p3_split.load()
+        return p3_split.assignment(split)
+    except p3_split.SplitError as exc:
+        raise BuilderError(str(exc)) from exc
+
+
 def build(sources: list[Source], predictions: dict, noise: dict, *, t0_nodes, t1: Tier1 | None = None,
           population: str = "primary", g_units: float = G_PRIMARY, modes=None, split_path=None) -> tuple[dict, dict]:
     """The v3.1 gate input and its report. ``t0_nodes``: the declared T0 node set (required). ``noise``: {node:
@@ -358,7 +372,13 @@ def build(sources: list[Source], predictions: dict, noise: dict, *, t0_nodes, t1
     if len(set(t0_nodes)) != len(t0_nodes) or not set(t0_nodes) <= set(G.T0_NODES):
         raise BuilderError(f"t0_nodes must be distinct members of {G.T0_NODES}")
     _check_sources(sources, need_sweep1=bool(t0_nodes))
-    assign = p3_split.assignment(p3_split.load(split_path) if split_path else p3_split.load())
+    if t1 is not None:
+        for node, suite in t1.suites.items():
+            if node in p3_split.T1_EXTRA_TASKS:
+                raise BuilderError(f"{node}: a 1GC extra task is never supplied to the gate (R1-G5-S9)")
+            if node in p3_split.T1_EXPANSION_MLGYM and suite != "MLGym":
+                raise BuilderError(f"{node}: the expansion node is supplied as MLGym (R1-G5-S9)")
+    assign = _source_assignment(sources, split_path)
     prepared, keys, key_sources = _prepare(sources, assign, t1)
     seen_traindev = keys["train"] | keys["dev"]
     by_node = {}
@@ -505,7 +525,7 @@ def runs(sources, predictions, noise, *, primary_t0, t1=None, split_path=None) -
 def primary_dev_population(sources: list[Source], *, split_path=None) -> set:
     """PRE-DUP A for selection (PRE-SELECT): the proposal ids of dev proposals of the gate sources whose repeat key
     does not occur on any train instance of any source supplied."""
-    assign = p3_split.assignment(p3_split.load(split_path) if split_path else p3_split.load())
+    assign = _source_assignment(sources, split_path)
     _check_sources(sources, need_sweep1=any(_tier_of(r["node"]) == "T0" for s in sources for r in s.rows))
     train_keys = set()
     dev = []

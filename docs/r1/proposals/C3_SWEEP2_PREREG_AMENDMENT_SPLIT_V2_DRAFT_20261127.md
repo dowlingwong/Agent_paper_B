@@ -44,9 +44,14 @@ form of the post-freeze reads amendment), and the decision to publish it is the 
 - A document over a joining node cites v2: a G.5 addendum, a T1 release row, the arms-frozen record and the A1/A2
   constants file.
 - The code (`r1/c3/release.py`, `r1/c3/arms_freeze.py`) accepts a v2 citation in evidence only when this amendment
-  is published as A§4 says.
-- Unchanged: every §2 decision, the §3 definitions, the §4 order, the §5 floors, the §6 STOPs, the gate and the
-  builder (their sha256s in the preregistration's block). PRE-T1 A also stays: the T1 node set of the one primary
+  is published as A§4 says. The G.5 gate reader uses the v2 split binding of both receipts, and keeps
+  the 1GC extra tasks outside the supplied inputs. A G.5 label reader can still retain their separate
+  descriptive results under the signed reporting rules. The addendum unit must write 1GC outputs
+  separately from the SFT table that feeds the arms.
+- Unchanged: every §2 decision, the §3 definitions, the §4 order, the §5 floors, the §6 STOPs, and the gate
+  statistic and thresholds. Bind the active builder to the independently reviewed integration of
+  the split-v2 unit and the G.5 tail-law amendment before either becomes active. Historical receipts
+  retain their original published builder bindings. PRE-T1 A also stays: the T1 node set of the one primary
   read is the T1 nodes whose train/dev labels were released and used to freeze the arms. The 1GC nodes are never
   among them.
 

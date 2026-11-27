@@ -358,6 +358,7 @@ def _code_commit() -> tuple[str, str]:
 
 
 def _fit_cmd(a) -> dict:
+    from r1.c3 import release
     from r1.harness import REPO
     tables, receipts, roots = AF._kv(a.table), AF._kv(a.receipt), AF._kv(a.release_root)
     if not (set(tables) == set(receipts) == set(roots)):
@@ -386,7 +387,9 @@ def _fit_cmd(a) -> dict:
         if src == "sweep2" and table_sha != SWEEP2_PROPOSALS_SHA256:
             _refuse(f"sweep2: the table is not the pinned sweep-2 table {SWEEP2_PROPOSALS_SHA256[:12]}… "
                     "(D.3 draft §5.0)")
-        sources[src] = (rows, labels)
+        sources[src] = (release.g5_consumer_rows(receipt, rows), labels)
+        if src == "g5" and "split_sha256" in receipt:
+            assign = release._row_assignment(receipt)  # both split versions preserve T0 membership
         configs = Path(tables[src]) / "configs.json"          # recorded for D.3 §5.0's table pin; not read further
         meta[src] = {"receipt_sha256": receipts[src],
                      "traindev_partition_sha256": receipt["outputs"]["label_block.traindev.jsonl"],

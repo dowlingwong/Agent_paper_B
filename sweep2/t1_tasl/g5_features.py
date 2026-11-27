@@ -146,9 +146,11 @@ def tier1_suites(node_suites: dict) -> dict:
     return out
 
 
-def describe() -> dict:
-    """What the table's ``build.json`` records about the featurizer."""
-    return {"version": FEATURIZER, "fields": list(FEATURES_V3), "node_codes": dict(T1_NODE_CODES),
+def describe(nodes=SIGNED_NOTE_NODES) -> dict:
+    """What the table's ``build.json`` records about the featurizer, including codes of any addendum nodes."""
+    active = set(SIGNED_NOTE_NODES) | set(nodes)
+    return {"version": FEATURIZER, "fields": list(FEATURES_V3),
+            "node_codes": {node: code for node, code in T1_NODE_CODES.items() if node in active},
             "missing_categorical": MISSING_CATEGORICAL, "no_t1_source": list(NO_T1_SOURCE),
             "raw_state_fields": list(RAW_STATE_FIELDS), "suite_names": dict(SUITE_NAMES)}
 

@@ -418,14 +418,17 @@ class G5LabelSource:
         self._prov: dict | None = None
 
     def _load(self) -> None:
-        from r1.c3 import arms_freeze as AF
+        from r1.c3 import arms_freeze as AF, release
         loader = self.loader or AF.load_traindev
         labels, receipt = loader(self.release_root, "g5", self.receipt_sha256)
         inputs = receipt.get("inputs") or {}
         if inputs.get("proposals_sha256") != self.table_sha256:
             raise SFTDataError("the G.5 table is not the one its train/dev partition was released from")
         try:
-            trows = AF.training_rows("g5", self.table_rows, labels, t1=self.t1)
+            rows = release.g5_consumer_rows(receipt, self.table_rows)
+            labels = release.g5_consumer_rows(receipt, labels)
+            assign = release._row_assignment(receipt) if "split_sha256" in receipt else None
+            trows = AF.training_rows("g5", rows, labels, assign=assign, t1=self.t1)
         except AF.ArmsFreezeError as exc:
             raise SFTDataError(str(exc)) from exc
         by_pid = {lab["proposal_id"]: lab for lab in labels}
@@ -589,7 +592,16 @@ SIGNED_SPLIT_FILES = (SIGNED_SPLIT_FILE, SIGNED_SPLIT_FILE_V2)
 
 
 def _signed_split(cfg: Mapping | None) -> bool:
-    return bool(cfg) and dict(cfg.get("split_file") or {}) in SIGNED_SPLIT_FILES
+    if not cfg or cfg.get("split_file") not in SIGNED_SPLIT_FILES:
+        return False
+    if cfg["split_file"] == SIGNED_SPLIT_FILE_V2:
+        from r1.c3.release import ReleaseStop, split_v2_amendment
+
+        try:
+            split_v2_amendment()
+        except ReleaseStop as exc:
+            raise SFTDataError(str(exc)) from exc
+    return True
 
 
 def refuse_extra_tasks(nodes: Iterable[str]) -> None:

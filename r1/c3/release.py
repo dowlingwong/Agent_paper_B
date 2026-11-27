@@ -342,7 +342,8 @@ def split_v2_amendment(root=None) -> dict:
         raise ReleaseStop(f"STOP: the split file v2 needs the published PRE-SPLIT amendment {SPLIT_AMENDMENT_PATH} "
                           "(R1-G5-S9 (1))") from exc
     try:
-        lines = _final_block(data.decode("utf-8"))
+        text = data.decode("utf-8")
+        lines = _final_block(text)
         plan = _committed("docs/r1/PLAN.md", root).decode("utf-8")
     except UnicodeError as exc:
         raise ReleaseStop("STOP: the PRE-SPLIT amendment or PLAN is not UTF-8") from exc
@@ -361,12 +362,22 @@ def split_v2_amendment(root=None) -> dict:
     if set(block) != keys:
         raise ReleaseStop(f"STOP: the PRE-SPLIT amendment block must hold exactly {sorted(keys)}")
     bad = sorted(k for k, v in want.items() if block[k] != v)
-    if bad:
+    status = re.findall(r"^approved: (.+)$", re.split(r"^```", _strip_comments(text), maxsplit=1, flags=re.M)[0], re.M)
+    if bad or status != ["true"]:
         raise ReleaseStop(f"STOP: the PRE-SPLIT amendment is not published as approved and frozen for v2: {bad}")
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z", block["signed_utc"]) or not block["signed_by"]:
         raise ReleaseStop("STOP: the PRE-SPLIT amendment has no signed_by / signed_utc (YYYY-MM-DDTHH:MM[:SS]Z)")
-    if len([d for i, d in author_rows(plan) if i == SPLIT_AMENDMENT_ROW]) != 1:
+    rows = [d for i, d in author_rows(plan) if i == SPLIT_AMENDMENT_ROW]
+    if len(rows) != 1:
         raise ReleaseStop(f"STOP: {SPLIT_AMENDMENT_ROW} is absent or not unique in PLAN §10")
+    try:
+        main = "refs/remotes/origin/main"
+        published = _git("show", f"{main}:{SPLIT_AMENDMENT_PATH}", root=root)
+        published_plan = _git("show", f"{main}:docs/r1/PLAN.md", root=root).decode("utf-8")
+    except _GIT_ERRORS as exc:
+        raise ReleaseStop("STOP: the PRE-SPLIT amendment and author row must match published main") from exc
+    if published != data or [d for i, d in author_rows(published_plan) if i == SPLIT_AMENDMENT_ROW] != rows:
+        raise ReleaseStop("STOP: the PRE-SPLIT amendment and author row must match published main")
     return {"path": SPLIT_AMENDMENT_PATH, "sha256": _sha(data)}
 
 
@@ -716,6 +727,13 @@ def traindev_labels(release_root, source: str, *, receipt_sha256: str | None = N
     return parts["label_block.traindev.jsonl"], receipt
 
 
+def g5_consumer_rows(receipt: dict, rows: list[dict]) -> list[dict]:
+    """Exclude S9 descriptive tasks from an authorized v2 G.5 consumer's input."""
+    if receipt.get("source") == "g5" and receipt.get("split_sha256") == p3_split.P3_SPLIT_V2_SHA256:
+        return [r for r in rows if r["node"] not in p3_split.T1_EXTRA_TASKS]
+    return rows
+
+
 def builder_source(release_root, source: str, table_dir):
     """A ``gate_input_builder.Source`` for a gate source (``sweep2``, ``g5``) from the receipted partitions of both
     stages, after the test release row; for ``sweep1`` (repeat keys only) the table rows alone."""
@@ -734,7 +752,14 @@ def builder_source(release_root, source: str, table_dir):
     if _sha((Path(table_dir) / "proposals.jsonl").read_bytes()) != rts["inputs"]["proposals_sha256"]:
         raise ReleaseStop(f"STOP: {table_dir} is not the table the {source} partitions were released from")
     labels = td["label_block.traindev.jsonl"] + ts["label_block.test.jsonl"]
-    return Source(source, load_table(Path(table_dir)), labels, ts["evaluation_block.all.jsonl"])
+    rows, evaluations = load_table(Path(table_dir)), ts["evaluation_block.all.jsonl"]
+    split_sha = None
+    if source == "g5":
+        split_sha = rts["split_sha256"]
+        if split_sha != rtd["split_sha256"]:
+            raise ReleaseStop("STOP: the G.5 partitions bind different split files")
+        rows, labels, evaluations = (g5_consumer_rows(rts, items) for items in (rows, labels, evaluations))
+    return Source(source, rows, labels, evaluations, split_sha256=split_sha)
 
 
 def main(argv=None) -> int:

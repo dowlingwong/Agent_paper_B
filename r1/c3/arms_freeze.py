@@ -200,7 +200,8 @@ def load_traindev(release_root, source: str, receipt_sha256: str):
     if receipt.get("stage") != "traindev" or receipt.get("source") != source or \
             receipt.get("counts", {}).get("evaluation_rows") != 0:
         raise ArmsFreezeError(f"{source}: not a train/dev receipt without evaluation rows")
-    check_label_rows(labels, _assign())
+    labels = release.g5_consumer_rows(receipt, labels)
+    check_label_rows(labels, release._row_assignment(receipt) if "split_sha256" in receipt else _assign())
     return labels, receipt
 
 
@@ -1215,6 +1216,8 @@ def _tier1(path) -> B.Tier1 | None:
 
 
 def _train_cmd(a) -> dict:
+    from r1.c3 import release
+
     tables_dirs, receipts, roots = _kv(a.table), _kv(a.receipt), _kv(a.release_root)
     if not (set(tables_dirs) == set(receipts) == set(roots)) or not {"sweep1", "sweep2"} <= set(tables_dirs):
         raise ArmsFreezeError("--table, --receipt and --release-root must name the same sources, sweep1 and sweep2 "
@@ -1228,7 +1231,7 @@ def _train_cmd(a) -> dict:
         raise ArmsFreezeError("a frozen T1 set needs the g5 table and receipt")
     commit = _code_commit()
     assign = _assign()
-    tables, trows, inputs = {}, {}, {}
+    tables, trows, inputs, source_splits = {}, {}, {}, {}
     for src in sorted(tables_dirs):
         labels, receipt = load_traindev(roots[src], src, receipts[src])
         rows = load_table_rows(tables_dirs[src])
@@ -1237,12 +1240,16 @@ def _train_cmd(a) -> dict:
             require_feat_one(identity, sealed_sha256=receipt["inputs"]["proposals_sha256"], arms_sha256=table_sha)
         elif table_sha != receipt["inputs"]["proposals_sha256"]:
             raise ArmsFreezeError(f"{src}: the table is not the one the receipt released")
+        rows = release.g5_consumer_rows(receipt, rows)
+        source_splits[src] = receipt.get("split_sha256")
         tables[src] = rows
-        trows[src] = training_rows(src, rows, labels, assign=assign, t1=t1)
+        trows[src] = training_rows(src, rows, labels,
+                                   assign=release._row_assignment(receipt) if source_splits[src] else assign, t1=t1)
         inputs[src] = {"table_proposals_sha256": table_sha, "receipt_sha256": receipts[src],
                        "traindev_partition_sha256": receipt["outputs"]["label_block.traindev.jsonl"]}
     out.mkdir(parents=True, exist_ok=False)
-    primary_dev = B.primary_dev_population([B.Source(s, rows) for s, rows in sorted(tables.items())])
+    primary_dev = B.primary_dev_population([B.Source(s, rows, split_sha256=source_splits[s])
+                                            for s, rows in sorted(tables.items())])
     entries = {"A3": write_arm(out / "A3", "A3", freeze_a3(tables, trows, calibration=a.calibration,
                                                             primary_dev=primary_dev, twin_weight=a.twin_weight),
                                code_commit=commit, role="primary", inputs=inputs, artefact_root=artefact_root)}

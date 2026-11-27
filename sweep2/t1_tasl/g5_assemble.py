@@ -592,7 +592,7 @@ def derive(spec: dict, spec_sha256: str, stage: str, tree, row: dict, *, purpose
              "spec_path": SPEC_REL, "spec_sha256": spec_sha256, "sealed_run": str(SE.sealed_run(spec)),
              "K": k, "label_seeds": seeds["label"], "evaluation_seeds": seeds["evaluation"],
              "memory_modes": spec["memory"]["modes"], "options": S.options(spec), "nodes": nodes,
-             "featurizer": F.describe(), "proposal_diff": dict(PROPOSAL_DIFF),
+             "featurizer": F.describe(nodes), "proposal_diff": dict(PROPOSAL_DIFF),
              "train_dev_row": {"row_id": row["row_id"], "decision_sha256": row["decision_sha256"]},
              "readings": {**readings["readings"], "campaign_divergent_delta_hat": divergent_delta_hat,
                           "note": readings["note"], "note_sha256": readings["note_sha256"]},

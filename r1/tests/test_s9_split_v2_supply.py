@@ -1,6 +1,8 @@
 """R1-G5-S9 (1)-(2) on the consumers of the split file: v2 admitted beside v1, the MLGym joiners supplied as suite
 MLGym, the 1GC extra tasks refused by the arms freeze and the SFT builder (fail closed). Synthetic only: no table,
 label or evaluation value is read."""
+import hashlib
+import json
 import sys
 from pathlib import Path
 
@@ -29,7 +31,10 @@ def _t1(suites, instances):
 
 # ------------------------------------------------------------------------------------------------- sft_data
 
-def test_sft_data_admits_v1_and_v2_and_nothing_else():
+def test_sft_data_admits_v1_and_published_v2_and_nothing_else(monkeypatch):
+    from r1.c3 import release
+
+    monkeypatch.setattr(release, "split_v2_amendment", lambda: {"path": release.SPLIT_AMENDMENT_PATH})
     assert SD._signed_split({"split_file": dict(V1)}) and SD._signed_split({"split_file": dict(V2)})
     assert not SD._signed_split({"split_file": {"path": V1["path"], "sha256": V2["sha256"]}})
     assert not SD._signed_split({"split_file": {"path": V2["path"], "sha256": "0" * 64}})
@@ -158,3 +163,49 @@ def test_the_t1_prompt_form_refuses_a_build_naming_an_extra_task(node):
     with pytest.raises(S1.T1PromptError, match="extra task"):
         S1.check_build(build)
     assert set(S1.T1_NODES) == set(P.T1_NODES)
+
+
+def test_v2_gate_source_uses_its_exact_split_and_omits_descriptive_nodes(monkeypatch, tmp_path):
+    from r1.c3 import dataset, fold_analysis, release
+    import test_gate_input_builder as W
+
+    nodes = ["mlgym_titanic", "gc7rc_etth1"]
+    rows = [W._row(node, seed, "history", 1, src="g5") for node in nodes for seed in P.T1_SEEDS]
+    raw = (json.dumps(rows) + "\n").encode()
+    (tmp_path / "proposals.jsonl").write_bytes(raw)
+    monkeypatch.setattr(dataset, "load_table", lambda path: rows)
+    v2_receipt = {"source": "g5", "split_sha256": V2["sha256"],
+                  "inputs": {"label_block_sha256": "0" * 64,
+                             "proposals_sha256": hashlib.sha256(raw).hexdigest()}}
+
+    def partition(path, *, expect_source, expect_stage):
+        labels = [W._label(row) for row in rows if (A2[row["instance"]]["split"] == "test") == (expect_stage == "test")]
+        parts = {f"label_block.{expect_stage}.jsonl": labels}
+        if expect_stage == "test":
+            parts["evaluation_block.all.jsonl"] = [W._evaluation(row) for row in rows]
+        return parts, v2_receipt
+
+    monkeypatch.setattr(release, "open_partition", partition)
+    source = release.builder_source(tmp_path, "g5", tmp_path)
+    for records in (source.rows, source.labels, source.evaluations):
+        assert {r["node"] for r in records} == {"mlgym_titanic"}
+    assert source.split_sha256 == V2["sha256"]
+    assert fold_analysis.node_subset([source], ["mlgym_titanic"])[0].split_sha256 == V2["sha256"]
+    t1 = B.Tier1(suites={"mlgym_titanic": "MLGym"}, modes=("history",))
+    predictions = {arm: {r["proposal_id"]: [0.0] + [1 / 11] * 11 for r in rows} for arm in ("A3", "A5")}
+    kwargs = {"t0_nodes": [], "noise": {"mlgym_titanic": {"delta_n": 0.01, "sigma_node": W.SIG}},
+              "predictions": predictions}
+    gi, _ = B.build([source], t1=t1, **kwargs)
+    assert [(n["node"], n["suite"]) for n in gi["nodes"]] == [("mlgym_titanic", "MLGym")]
+    with pytest.raises(B.BuilderError, match="not the pinned P3 split file"):
+        B.build([source], t1=t1, split_path=P.DEFAULT_PATH, **kwargs)
+    for wrong in ({"mlgym_titanic": "MLAgentBench"}, {"gc7rc_etth1": "MLGym"}):
+        with pytest.raises(B.BuilderError, match="R1-G5-S9"):
+            B.build([source], t1=B.Tier1(suites=wrong, modes=("history",)), **kwargs)
+
+
+def test_g5_feature_descriptor_preserves_original_node_codes():
+    from sweep2.t1_tasl import g5_features as F
+
+    assert list(F.describe()["node_codes"]) == list(F.SIGNED_NOTE_NODES)
+    assert F.describe(["mlgym_titanic"])["node_codes"] == {**F.describe()["node_codes"], "mlgym_titanic": 19}
