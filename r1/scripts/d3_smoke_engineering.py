@@ -1,33 +1,36 @@
 """D.3 per-arm ENGINEERING smoke on one GPU host (task ``compute/20261127-27``).
 
-ENGINEERING_ONLY.  This driver runs one campaign per D.3a arm on one instance
-seed, with the real G1 adapter (node spec, ``gemma4_31b`` manager and worker),
-the real G1 snapshot/record writers and the real G6 audit.  It never writes an
-outcome table from the smoke rows and never reads a label, evaluation or test
-partition.
+ENGINEERING_ONLY.  This driver runs one campaign per D.3a arm on one reserved
+smoke instance seed, with the real G1 adapter (node spec, ``gemma4_31b``
+manager and worker), the real G1 snapshot/record writers and the real G6 audit
+code path.  It never writes an outcome table and never reads a label,
+evaluation or test partition.
 
-Why this is a separate entry point: ``campaign_chunk.ChunkSpec.from_launch``
-binds a *deployment* chunk to 18 instance seeds (6201-6218).  A smoke has one
-instance per arm; the frozen design gives it the reserved smoke seed 6301.  The
-chunk core itself is seed-agnostic, so this driver constructs a ``ChunkSpec``
-directly and calls the same ``run_chunk`` the launchers call.  No campaign
-logic is duplicated.
+Two limits are deliberate and are reported rather than worked around:
 
-The G6 audit seed block for a smoke instance is defined in ``audit.py`` as
-6391-6400 (6301) / 6401-6410 (6302); it is a separate block from every
-deployment block.  The smoke output is labelled ``ENGINEERING_ONLY`` and is
-never an outcome.
+* ``campaign_chunk.ChunkSpec.from_launch`` binds a *deployment* chunk to 18
+  instance seeds (6201-6218).  A smoke has one instance per arm; the frozen
+  design gives it the reserved smoke seed 6301.  The chunk core is seed-
+  agnostic, so this driver constructs a ``ChunkSpec`` directly and calls the
+  same ``run_chunk`` the launchers call.  ``run_smoke`` refuses any seed other
+  than 6301/6302.
+* The signed D.3 pre-declaration fixes the engineering smoke to
+  ``openml_climate`` and says it is never audited for Y, while task
+  ``compute/20261127-27`` asks for one instance per arm and a G6 audit.  This
+  driver therefore labels every output ``ENGINEERING_ONLY`` and records the
+  design deviation in ``smoke.json``; the G6 output is an engineering check of
+  the audit machinery, never a Y row for an outcome table, and the G7 table
+  step refuses rather than fabricate a table the pinned analysis cannot accept.
 
 Commands::
 
-    python -m r1.scripts.d3_smoke_engineering run   --manifest M --observed O --out OUT ...
-    python -m r1.scripts.d3_smoke_engineering audit --out OUT --harness-root H ...
-    python -m r1.scripts.d3_smoke_engineering table --out OUT --predeclaration P ...
+    AR_HARNESS_ROOT=<9bb41680 checkout> python -m r1.scripts.d3_smoke_engineering \
+        run   --manifest M --observed O --out OUT --repo-root .
+    ... audit --out OUT --sigma-node S --harness-root H
+    ... table --out OUT --predeclaration P
 
-The ``table`` command first checks the G7 row builder on the seven real
-campaigns, then repeats those rows across the declared design only to exercise
-the pinned analysis's full-coverage validator (``ENGINEERING_ONLY``; the
-repeated rows are labelled as such in the table record and are not evidence).
+``--harness-root`` is passed to the G1 factories; the top-level harness import
+reads ``AR_HARNESS_ROOT``, so set it in the environment as above.
 """
 from __future__ import annotations
 
@@ -35,16 +38,21 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
+import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Mapping
 
 from r1.c3.d3 import adapter as A
 from r1.c3.d3 import assemble as AS
-from r1.c3.d3.audit import Cache, audit_chunk, harness_runner
-from r1.c3.d3.campaign_chunk import ChunkSpec, _sample_compute_apps, run_chunk
+from r1.c3.d3.audit import AuditStop, Cache, audit_chunk, harness_runner
+from r1.c3.d3.campaign_chunk import ChunkSpec, ChunkStop, _sample_compute_apps, run_chunk
+from r1.harness import harness_commit
 
-SMOKE_NODE = "digits_mlp"
+SMOKE_NODE = "openml_climate"          # the design's smoke node
+ENGINEERING_NODES = ("openml_climate", "digits_mlp")
+SMOKE_SEEDS = (6301, 6302)
 SMOKE_SEED = 6301
 SMOKE_ARMS = ("A0", "A0R", "A1", "A2", "FIXR3", "EGATE", "LADDER")
 RUN_ID = "d3-smoke-engineering-20261127-a"
@@ -66,13 +74,20 @@ def _write_json(path: str | Path, payload: Mapping[str, Any]) -> str:
 
 def _spec(arm: str, *, node: str, seed: int, manifest: A.Manifest, observed: Mapping[str, Any],
           run_id: str) -> ChunkSpec:
+    if int(seed) not in SMOKE_SEEDS:
+        raise A.AdapterStop(f"the engineering smoke uses only seeds {SMOKE_SEEDS}, not {seed}")
+    if node not in ENGINEERING_NODES:
+        raise A.AdapterStop(f"the engineering smoke uses only {ENGINEERING_NODES}, not {node!r}")
     source = dict(manifest.raw["campaign_model_source"])
     return ChunkSpec(
         stage="a", arm=arm, node=node, repetition=0, instance_seeds=(int(seed),),
-        W=A.W, llm_cap=A.LLM_CAP, launcher="ssh", host=str(observed.get("host") or "TASL-2"),
+        W=A.W, llm_cap=A.LLM_CAP, launcher="direct",
+        host=str(observed.get("host") or "TASL-2"),
         campaign_model_source=source,
         notes={"engineering_only": True, "task": "compute/20261127-27", "run_id": run_id,
-               "smoke_seed": int(seed), "smoke_arms": list(SMOKE_ARMS)},
+               "smoke_seed": int(seed), "smoke_arms": list(SMOKE_ARMS),
+               "design_node": SMOKE_NODE,
+               "design_deviation": None if node == SMOKE_NODE else f"ran on {node}, not {SMOKE_NODE}"},
     )
 
 
@@ -100,7 +115,6 @@ def write_manifest(*, out: str, campaign_model: str, proposer_sha256: str, base_
         "verify_seed_base": A.VERIFY_SEED_BASE, "verify_split_policy": A.VERIFY_SPLIT_POLICY,
         "nodes": list(A.D3_NODES), "arms": list(A.D3A_ARMS),
     }
-    # Load it before writing: a typo is refused here, not at launch.
     A.load_manifest(payload, repo_root=root, check_files=True)
     _write_json(out, payload)
     return payload
@@ -119,6 +133,8 @@ def run_smoke(*, manifest_path: str, observed_path: str, out: str, harness_root:
         raise A.AdapterStop("observed proposer differs from the manifest")
     if observed.get("memory_check") != "pass" or observed.get("lease") is not True:
         raise A.AdapterStop("the observed record must show memory_check=pass and lease=true")
+    actual = harness_commit()
+    A.check_harness(manifest, actual)
     root = Path(out)
     if root.exists():
         raise A.AdapterStop(f"refusing an existing smoke root {root}")
@@ -152,26 +168,34 @@ def run_smoke(*, manifest_path: str, observed_path: str, out: str, harness_root:
         "chunks": chunks, "observed": dict(observed),
         "manifest_sha256": hashlib.sha256(Path(manifest_path).read_bytes()).hexdigest(),
         "harness_commit": manifest.harness_commit,
+        "harness_actual": actual,
+        "design_node": SMOKE_NODE,
+        "design_deviation": None if node == SMOKE_NODE else f"ran on {node}, not {SMOKE_NODE}",
+        "design_note": ("The signed smoke fixes openml_climate and says it is never audited for Y; "
+                        "the task card asks for one instance per arm and a G6 audit. Every output here "
+                        "is ENGINEERING_ONLY and is not evidence."),
     }
     record["record_sha256"] = _write_json(root / "smoke.json", record)
     return record
 
 
 def _expected_worker() -> dict[str, Any]:
-    """The pinned worker interpreter/version/package record G6 requires for appends."""
+    """The worker identity G6's append guard requires, from the same ``python3`` it will probe."""
     import importlib.metadata as md
-    import sys
 
+    command = shutil.which("python3", path=os.environ.get("PATH"))
+    if not command:
+        raise AuditStop("python3 is not on PATH for the audit worker")
     packages: dict[str, str] = {}
     for dist in md.distributions():
         name = (dist.metadata.get("Name") or "").lower().replace("_", "-")
         if not name or name in packages:
-            raise RuntimeError("duplicate or missing package name in the audit environment")
+            raise AuditStop("duplicate or missing package name in the audit environment")
         packages[name] = dist.version
     versions = {name: md.version(name) for name in ("scikit-learn", "numpy", "scipy", "pandas")}
     return {
-        "worker_python": sys.executable,
-        "worker_python_realpath": os.path.realpath(sys.executable),
+        "worker_python": command,
+        "worker_python_realpath": os.path.realpath(command),
         "worker_prefix": sys.prefix,
         "worker_versions": versions,
         "package_list_sha256": hashlib.sha256(
@@ -179,8 +203,8 @@ def _expected_worker() -> dict[str, Any]:
     }
 
 
-def _audit_one(args: tuple[str, str, float, str, str | None, dict[str, Any]]) -> dict[str, Any]:
-    chunk_dir, audit_dir, sigma, harness_root, repo_root, expected = args
+def _audit_one(args: tuple[str, str, float, str, dict[str, Any]]) -> dict[str, Any]:
+    chunk_dir, audit_dir, sigma, harness_root, expected = args
     if harness_root:
         os.environ["AR_HARNESS_ROOT"] = harness_root
     tmp = Path(audit_dir) / "tmp"
@@ -200,16 +224,17 @@ def _audit_one(args: tuple[str, str, float, str, str | None, dict[str, Any]]) ->
     return {"chunk": chunk_dir, "audit": audit_dir, "campaigns": len(rows)}
 
 
-def audit_smoke(*, out: str, sigma_node: float, harness_root: str | None, repo_root: str | None,
-                jobs: int = 7) -> dict[str, Any]:
+def audit_smoke(*, out: str, sigma_node: float, harness_root: str | None, jobs: int = 4) -> dict[str, Any]:
     root = Path(out)
     smoke = _read_json(root / "smoke.json")
+    if (root / "audits").exists():
+        raise AuditStop(f"refusing an existing audit root {root / 'audits'}")
     chunks = smoke["chunks"]
     expected = _expected_worker()
     tasks = []
     for arm, chunk_dir in sorted(chunks.items()):
         audit_dir = str(root / "audits" / arm)
-        tasks.append((chunk_dir, audit_dir, float(sigma_node), harness_root, repo_root, expected))
+        tasks.append((chunk_dir, audit_dir, float(sigma_node), harness_root, expected))
     results = []
     with ProcessPoolExecutor(max_workers=max(1, int(jobs))) as pool:
         futures = {pool.submit(_audit_one, task): task for task in tasks}
@@ -218,68 +243,47 @@ def audit_smoke(*, out: str, sigma_node: float, harness_root: str | None, repo_r
     results.sort(key=lambda r: r["audit"])
     record = {"schema": "r1_d3_smoke_audit/v1", "engineering_only": True,
               "task": "compute/20261127-27", "results": results,
-              "expected_worker": expected}
+              "expected_worker": expected,
+              "note": "Engineering check of the G6 audit path; these rows are not Y evidence and "
+                      "never enter an outcome table."}
     record["record_sha256"] = _write_json(root / "audit.json", record)
     return record
 
 
-def _g7_rows(root: Path) -> tuple[list[dict], list[dict]]:
-    summaries = AS.load_summaries(root / "chunks" / arm for arm in SMOKE_ARMS)
-    audits = AS.load_audits(root / "audits" / arm for arm in SMOKE_ARMS)
+def table_check(*, out: str, predeclaration: str, noise_summary: str | None) -> dict[str, Any]:
+    """Try G7's row builder on the seven real smoke rows; report, never fabricate, a table."""
+    root = Path(out)
+    smoke = _read_json(root / "smoke.json")
+    arms = tuple(smoke["arms"])
+    summaries = AS.load_summaries(root / "chunks" / arm for arm in arms)
+    audits = AS.load_audits(root / "audits" / arm for arm in arms)
+    from r1.c3 import d3_analysis as D3
     from r1.c3 import d3_outcome_table as T
     by = T._audits_by_campaign(audits)
-    rows = [T.build_row("D.3a", s, by.get(T._check_summary(s, "D.3a"))) for s in summaries]
-    return summaries, rows
-
-
-def build_table(*, out: str, predeclaration: str, noise_summary: str | None) -> dict[str, Any]:
-    root = Path(out)
-    summaries, rows = _g7_rows(root)
-    # 1) The seven real rows pass G7's per-row builder.
-    from r1.c3 import d3_outcome_table as T
-    direct = {"schema": "r1_d3_smoke_rows/v1", "engineering_only": True, "rows": rows,
-              "row_count": len(rows)}
-    _write_json(root / "g7_rows_real.json", direct)
-    # 2) The pinned analysis requires the full declared design.  Repeat the seven real
-    #    rows across the declared design only to exercise its validator and analysis;
-    #    every repeated row is marked engineering_only in the record, never evidence.
-    from r1.c3 import d3_analysis as D3
-    expanded = []
-    for node in D3.NODES:
-        for seed in D3.INSTANCE_SEEDS:
-            for arm in D3.ARMS_D3A:
-                base = next(r for r in rows if r["arm"] == arm)
-                r = dict(base)
-                r["node"], r["instance_seed"] = node, seed
-                r["instance_id"] = D3.instance_id(node, seed)
-                r["campaign_id"] = D3.campaign_id("D.3a", arm, node, seed, 0)
-                expanded.append(r)
-    table = {"schema": D3.SCHEMA, "stage": "D.3a",
-             "predeclaration_sha256": hashlib.sha256(Path(predeclaration).read_bytes()).hexdigest(),
-             "noise_source_sha256": D3.NOISE_SOURCE_SHA256,
-             "sigma_node": _sigma_from(noise_summary), "arms": list(D3.ARMS_D3A),
-             "a6_entered": None, "repetitions": D3.REPETITIONS, "rows": expanded}
-    D3.validate_table(table, "D.3a")
-    T.write_table(table, root / "d3_smoke_exercise_table.json")
-    report = D3.analyse(table, d3b_not_run="not_started")
-    _write_json(root / "d3_smoke_exercise_report.json", report)
+    rows, failures = [], []
+    for summary in summaries:
+        try:
+            rows.append(T.build_row("D.3a", summary, by.get(T._check_summary(summary, "D.3a"))))
+        except Exception as exc:  # noqa: BLE001 - a refusal is the result, not a table
+            failures.append({"campaign_id": summary.get("campaign_id"), "error": str(exc)})
+    if failures:
+        record = {"schema": "r1_d3_smoke_table/v1", "engineering_only": True,
+                  "status": "REFUSED", "task": "compute/20261127-27",
+                  "failures": failures,
+                  "reason": ("G7.build_row uses d3_analysis.audit_seeds, which accepts only the "
+                             "deployment seeds 6201-6218. The signed analysis is hash-pinned and "
+                             "cannot be changed here; no table was written."),
+                  "predeclaration": predeclaration,
+                  "noise_summary": noise_summary}
+        record["record_sha256"] = _write_json(root / "table.json", record)
+        return record
     record = {"schema": "r1_d3_smoke_table/v1", "engineering_only": True,
-              "real_rows": len(rows), "expanded_rows": len(expanded),
-              "exercise_table": "d3_smoke_exercise_table.json",
-              "exercise_report": "d3_smoke_exercise_report.json",
-              "note": "The seven real smoke rows are validated by G7.build_row. The expanded "
-                      "table repeats those rows across the declared design only so the pinned "
-                      "analysis's coverage validator can be exercised; repeated rows are not evidence."}
+              "status": "ROWS_PASS", "task": "compute/20261127-27", "rows": rows,
+              "note": "The seven real smoke rows pass G7.build_row. No stage table is written: the "
+                      "pinned analysis requires the full declared design and the signed smoke is not "
+                      "an outcome design."}
     record["record_sha256"] = _write_json(root / "table.json", record)
     return record
-
-
-def _sigma_from(noise_summary: str | None) -> dict[str, float]:
-    from r1.c3 import d3_analysis as D3
-    from r1.c3.dataset import noise_table
-    path = D3.refuse_input_path(Path(noise_summary) if noise_summary else D3.NOISE_SOURCE_PATH)
-    table = noise_table(path)
-    return {node: float(table[node]["sigma_node"]) for node in D3.NODES}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -299,8 +303,7 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--out", required=True)
     a.add_argument("--sigma-node", type=float, required=True)
     a.add_argument("--harness-root", default=None)
-    a.add_argument("--repo-root", default=None)
-    a.add_argument("--jobs", type=int, default=7)
+    a.add_argument("--jobs", type=int, default=4)
     t = sub.add_parser("table")
     t.add_argument("--out", required=True)
     t.add_argument("--predeclaration", required=True)
@@ -319,24 +322,27 @@ def main(argv: list[str] | None = None) -> int:
     m.add_argument("--campaign-model-source",
                    default="docs/r1/proposals/d3_design_20261126/D3_G1_G6_DESIGN_REV6_LAUNCHERS_20261126.md")
     args = ap.parse_args(argv)
-    if args.cmd == "run":
-        print(json.dumps(run_smoke(manifest_path=args.manifest, observed_path=args.observed,
-                                   out=args.out, harness_root=args.harness_root,
-                                   repo_root=args.repo_root, node=args.node, seed=args.seed,
-                                   arms=tuple(args.arms), run_id=args.run_id), sort_keys=True))
-    elif args.cmd == "audit":
-        print(json.dumps(audit_smoke(out=args.out, sigma_node=args.sigma_node,
-                                     harness_root=args.harness_root, repo_root=args.repo_root,
-                                     jobs=args.jobs), sort_keys=True))
-    elif args.cmd == "table":
-        print(json.dumps(build_table(out=args.out, predeclaration=args.predeclaration,
-                                     noise_summary=args.noise_summary), sort_keys=True))
-    else:
-        print(json.dumps(write_manifest(out=args.out, campaign_model=args.campaign_model,
-                                        proposer_sha256=args.proposer_sha256, base_url=args.base_url,
-                                        repo_root=args.repo_root, predeclaration=args.predeclaration,
-                                        constants=args.constants, noise=args.noise, split=args.split,
-                                        campaign_model_source=args.campaign_model_source), sort_keys=True))
+    try:
+        if args.cmd == "run":
+            print(json.dumps(run_smoke(manifest_path=args.manifest, observed_path=args.observed,
+                                       out=args.out, harness_root=args.harness_root,
+                                       repo_root=args.repo_root, node=args.node, seed=args.seed,
+                                       arms=tuple(args.arms), run_id=args.run_id), sort_keys=True))
+        elif args.cmd == "audit":
+            print(json.dumps(audit_smoke(out=args.out, sigma_node=args.sigma_node,
+                                        harness_root=args.harness_root, jobs=args.jobs), sort_keys=True))
+        elif args.cmd == "table":
+            print(json.dumps(table_check(out=args.out, predeclaration=args.predeclaration,
+                                         noise_summary=args.noise_summary), sort_keys=True))
+        else:
+            print(json.dumps(write_manifest(out=args.out, campaign_model=args.campaign_model,
+                                            proposer_sha256=args.proposer_sha256, base_url=args.base_url,
+                                            repo_root=args.repo_root, predeclaration=args.predeclaration,
+                                            constants=args.constants, noise=args.noise, split=args.split,
+                                            campaign_model_source=args.campaign_model_source), sort_keys=True))
+    except (A.AdapterStop, ChunkStop, AuditStop) as exc:
+        print(f"STOP: {exc}", flush=True)
+        return 2
     return 0
 
 
