@@ -1,0 +1,47 @@
+{
+ "engineering_only": true,
+ "failures": [
+  {
+   "arm": "A0",
+   "campaign_id": "D.3a__A0__digits_mlp__s6301__r0",
+   "error": "not a declared D.3 instance seed"
+  },
+  {
+   "arm": "A0R",
+   "campaign_id": "D.3a__A0R__digits_mlp__s6301__r0",
+   "error": "not a declared D.3 instance seed"
+  },
+  {
+   "arm": "A1",
+   "campaign_id": "D.3a__A1__digits_mlp__s6301__r0",
+   "error": "not a declared D.3 instance seed"
+  },
+  {
+   "arm": "A2",
+   "campaign_id": "D.3a__A2__digits_mlp__s6301__r0",
+   "error": "not a declared D.3 instance seed"
+  },
+  {
+   "arm": "FIXR3",
+   "campaign_id": "D.3a__FIXR3__digits_mlp__s6301__r0",
+   "error": "not a declared D.3 instance seed"
+  },
+  {
+   "arm": "EGATE",
+   "campaign_id": "D.3a__EGATE__digits_mlp__s6301__r0",
+   "error": "not a declared D.3 instance seed"
+  },
+  {
+   "arm": "LADDER",
+   "campaign_id": "D.3a__LADDER__digits_mlp__s6301__r0",
+   "error": "not a declared D.3 instance seed"
+  }
+ ],
+ "noise_summary": null,
+ "predeclaration": "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261122.md",
+ "reason": "G7.build_row refused the smoke rows; the first refusal is: not a declared D.3 instance seed",
+ "record_sha256": "743927861ac1f5bfe0ddfa848409285dcb714e4b8ac578fc8cabceeda8a89335",
+ "schema": "r1_d3_smoke_table/v1",
+ "status": "REFUSED",
+ "task": "compute/20261127-27"
+}

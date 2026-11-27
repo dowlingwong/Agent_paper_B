@@ -1,0 +1,27 @@
+{
+ "arm": "EGATE",
+ "campaign_id": "digits_mlp__s6301",
+ "campaign_kind": "replicate",
+ "ended_on": "worker_runs",
+ "final_sha256": "1f5fb622e9e4f536fcb11495e0af9ee8929d0a5b5f10847130cb722dae6364aa",
+ "instance_id": "digits_mlp__s6301",
+ "instance_seed": 6301,
+ "llm_calls": 3,
+ "node": "digits_mlp",
+ "pre_decision_snapshots": {
+  "w20_pre.json": "5d12218f33afe374ce9e9ae9440d9a1067ccff1db8c84bbda5443ee9e9d36ebc"
+ },
+ "record_name": "a__EGATE__digits_mlp__s6301__r0",
+ "repetition": 0,
+ "schema": "r1_d3_campaign/v1",
+ "snapshot_schema": "r1_d3_snapshot/v1",
+ "snapshots": {
+  "w10.json": "f79a5db0bc953042191030bf57094bb78856591185b84a671d516a62258b72dc",
+  "w15.json": "d7cfe842c29b1274d5c389c94c1aa98efc311a0fec81f99031aaf805b4d961db",
+  "w20.json": "5ceacdc6651ee51adf12e052f698f131045fe74e483b0422a3bdc7b59a08c580",
+  "w5.json": "aa22b2586fe023f0da65bc47b99d659292896fb5448f9f721fbf6f24877e89f4"
+ },
+ "stage": "a",
+ "worker_runs": 20,
+ "zero_variance_cases": 0
+}

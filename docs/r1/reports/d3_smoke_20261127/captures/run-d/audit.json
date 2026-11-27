@@ -1,0 +1,58 @@
+{
+ "engineering_only": true,
+ "expected_worker": {
+  "package_list_sha256": "571b411bb2a2724faad9175b0c12f540d37a183499ae75760c2e8a9909df930d",
+  "worker_prefix": "/home/dowling/r1_tracks/venv_audit",
+  "worker_python": "/home/dowling/r1_tracks/venv_audit/bin/python3",
+  "worker_python_realpath": "/home/dowling/.local/share/uv/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11",
+  "worker_versions": {
+   "numpy": "2.4.6",
+   "pandas": "3.1.0",
+   "scikit-learn": "1.9.1",
+   "scipy": "1.17.1"
+  }
+ },
+ "note": "Engineering check of the G6 audit path; these rows are not Y evidence and never enter an outcome table.",
+ "record_sha256": "b713b5fac3bce84fd2e7fed40000cda178f4dcdcab096d15c6a934b1a217cfe0",
+ "results": [
+  {
+   "audit": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/audits/A0",
+   "campaigns": 1,
+   "chunk": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/chunks/A0"
+  },
+  {
+   "audit": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/audits/A0R",
+   "campaigns": 1,
+   "chunk": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/chunks/A0R"
+  },
+  {
+   "audit": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/audits/A1",
+   "campaigns": 1,
+   "chunk": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/chunks/A1"
+  },
+  {
+   "audit": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/audits/A2",
+   "campaigns": 1,
+   "chunk": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/chunks/A2"
+  },
+  {
+   "audit": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/audits/EGATE",
+   "campaigns": 1,
+   "chunk": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/chunks/EGATE"
+  },
+  {
+   "audit": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/audits/FIXR3",
+   "campaigns": 1,
+   "chunk": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/chunks/FIXR3"
+  },
+  {
+   "audit": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/audits/LADDER",
+   "campaigns": 1,
+   "chunk": "/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/chunks/LADDER"
+  }
+ ],
+ "schema": "r1_d3_smoke_audit/v1",
+ "sigma_node": 0.006613322803772441,
+ "sigma_source": "smoke.json",
+ "task": "compute/20261127-27"
+}

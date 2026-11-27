@@ -1,0 +1,41 @@
+{
+ "arm": "A0R",
+ "campaigns": 1,
+ "campaigns_detail": [
+  {
+   "arm": "A0R",
+   "campaign_id": "digits_mlp__s6301",
+   "campaign_kind": "harness",
+   "ended_on": "worker_runs",
+   "final_sha256": "201a2a4a38069d1fa35d5e67fe162478b766237439cfee51a274411edb86dd7c",
+   "instance_id": "digits_mlp__s6301",
+   "instance_seed": 6301,
+   "llm_calls": 20,
+   "node": "digits_mlp",
+   "pre_decision_snapshots": {
+    "w20_pre.json": "05186bb047bd944982bd7664340e97538dbd35038d1a854d51b1416d47fddb40"
+   },
+   "record_name": "a__A0R__digits_mlp__s6301__r0",
+   "repetition": 0,
+   "schema": "r1_d3_campaign/v1",
+   "snapshot_schema": "r1_d3_snapshot/v1",
+   "snapshots": {
+    "w10.json": "345d78d72af35c438cc23991fb00944b86b01669276d33b61ccd50df334e0ddb",
+    "w15.json": "40561b39f7c741e0f41755a4ffe1ada10f9b787fb5ca83de071a9dcc1c14b20d",
+    "w20.json": "ffc3949e44043f517c9d67fbc6e7f8d7aed82bed94ef8cb3a95251d8a2782232",
+    "w5.json": "c353b0a0f06d403d5659ae94f8de5c45421c4eb0db41f9fc3cf1a558f135e0eb"
+   },
+   "stage": "a",
+   "worker_runs": 20
+  }
+ ],
+ "ended_on": {
+  "worker_runs": 1
+ },
+ "llm_calls": 20,
+ "node": "digits_mlp",
+ "repetition": 0,
+ "schema": "r1_d3_chunk_summary/v1",
+ "stage": "a",
+ "worker_runs": 20
+}

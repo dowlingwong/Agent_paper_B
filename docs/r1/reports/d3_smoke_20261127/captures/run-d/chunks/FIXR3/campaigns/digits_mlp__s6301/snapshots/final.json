@@ -1,0 +1,30 @@
+{
+ "arm": "FIXR3",
+ "config_sha256": "60c2660c4602bbfca3e5d8b6b18e4da7aaab9bba9cb5bcba1a839e9bd01979ab",
+ "controller_state_sha256": "a1c79eba8bbedba3e515d6f95d136a138f48872cf2172c0f3190b2d8f2f2941c",
+ "ended": true,
+ "ended_on": "no_fundable_candidate",
+ "final": true,
+ "incumbent_config": {
+  "train.py": "#!/usr/bin/env python3\n\"\"\"digits_mlp: editable hyperparameters for a frozen sklearn MLP benchmark (R1 L8b).\n\nOnly the constants below are editable. Output:\n    val_score: 0.XXXXXX   (validation metric, higher is better)\nThe held-out test score is computed but deliberately not printed: the worker\nparses every ``key: value`` line into the ledger, and a controller or an LLM\nside query must never see a test metric (L14 review, finding 6).\n\"\"\"\nfrom benchmark import run_benchmark\n\n# \u2500\u2500 editable hyperparameters \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nHIDDEN_UNITS = 64\nALPHA = 1e-4\nLEARNING_RATE_INIT = 1e-3\nBATCH_SIZE = 64\nMAX_ITER = 40\n\n\ndef main() -> None:\n    result = run_benchmark(\n        hidden_units=HIDDEN_UNITS,\n        alpha=ALPHA,\n        learning_rate_init=LEARNING_RATE_INIT,\n        batch_size=BATCH_SIZE,\n        max_iter=MAX_ITER,\n    )\n    print(f\"val_score: {result['val_score']:.6f}\")\n    print(f\"train_loss: {result['train_loss']:.6f}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+ },
+ "instance_id": "digits_mlp__s6301",
+ "last_kept_trial_index": 0,
+ "llm_calls": 7,
+ "llm_calls_basis": "budget_observed_at_run",
+ "node": "digits_mlp",
+ "pending_action": null,
+ "repetition": 0,
+ "run_kind": "final",
+ "schema": "r1_d3_snapshot/v1",
+ "stage": "a",
+ "start_config": {
+  "train.py": "#!/usr/bin/env python3\n\"\"\"digits_mlp: editable hyperparameters for a frozen sklearn MLP benchmark (R1 L8b).\n\nOnly the constants below are editable. Output:\n    val_score: 0.XXXXXX   (validation metric, higher is better)\nThe held-out test score is computed but deliberately not printed: the worker\nparses every ``key: value`` line into the ledger, and a controller or an LLM\nside query must never see a test metric (L14 review, finding 6).\n\"\"\"\nfrom benchmark import run_benchmark\n\n# \u2500\u2500 editable hyperparameters \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nHIDDEN_UNITS = 32\nALPHA = 1e-4\nLEARNING_RATE_INIT = 1e-3\nBATCH_SIZE = 64\nMAX_ITER = 40\n\n\ndef main() -> None:\n    result = run_benchmark(\n        hidden_units=HIDDEN_UNITS,\n        alpha=ALPHA,\n        learning_rate_init=LEARNING_RATE_INIT,\n        batch_size=BATCH_SIZE,\n        max_iter=MAX_ITER,\n    )\n    print(f\"val_score: {result['val_score']:.6f}\")\n    print(f\"train_loss: {result['train_loss']:.6f}\")\n\n\nif __name__ == \"__main__\":\n    main()\n"
+ },
+ "step_index": 5,
+ "timestamp_utc": "2026-11-27T15:23:29Z",
+ "trial_id": "digits_mlp__s6301__t5",
+ "w": 18,
+ "w_actual": 18,
+ "worker_runs": 18
+}
