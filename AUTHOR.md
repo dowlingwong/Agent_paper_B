@@ -1,4 +1,4 @@
-# Waiting on the author — 27 Nov 2026, 11:20 CET (`main` `1b566d78`). Signed 27 Nov in this session: screening note + P4-4B A (published `c76e1b49`); Paper C rows confirmed and merged (`1b566d78`).
+# Waiting on the author — 27 Nov 2026, 11:20 CET (`main` `7cb5621d`). Signed 27 Nov in this session: screening note + P4-4B A (published `c76e1b49`); T5 correction published (`7cb5621d`); Paper C rows confirmed and merged (`1b566d78`).
 
 Answered on 26 Nov: D1 (rows (f)(g), TIMEOUT A, the three additions) → published `95249de3`. D2 (this tmux session
 coordinates; Codex does not push `main`; `canon/README.md` rule 1 stands, so no row is needed) → recorded. D3 (P.4 on Ada:
@@ -7,7 +7,6 @@ D4 (start order) → see the agents row. **G.5 signed** ("签 G.5：S1–S14 按
 
 | Item | Recommendation | The reply that decides | Blocks |
 |---|---|---|---|
-| **T5 correction row** (R1-D3-CHOICES-T5-CORRECTION, on `codex/screening-note-p4-4b-approval-20261127` @ `649c5f02`, from your Codex chat) | Not confirmed in this session, so not published. It corrects the cited figures only; the decision of R1-D3-CHOICES (1) is unchanged | "签 T5 更正" | The paper's citation of the T5 figures |
 | **No batch GPU for D.3's HTCondor preflight** (`compute/20261127-12`): the ETP L40S and the TOpAS A100s advertise `Start = false`; nothing matches | Nothing to decide yet: compute keeps watching. If the pool stays closed, D.3's proposer can run on Ada or the TASL pair under R1-HOST-FREE (one GPU model per instance and campaign), which needs no new row for work not under a signed note | — | D.3 per-arm smoke on HTCondor only |
 | **Compute agent cannot authenticate** (23:26): `deepseek-flash` → `Authentication Fails, Your api key: ****a92e is invalid` | Renew or replace the DeepSeek key in OpenCode yourself (for example `opencode auth login`, provider DeepSeek), then `python3 tools/start_workers.py --role compute --compute-model deepseek/deepseek-flash`. Or use the OpenCode provider: `--compute-model opencode/deepseek-v4.1-flash` (its own login). The coordinator does not read or handle keys | fix the key, restart | Compute's whole queue: kit c1 (launch by 30 Nov 20:33), the REL copy for G.5, the P.4 survey |
 | Roles row: design agent; E-INT census choice (Codex commits on `main`, no PLAN row) | Defer until G.5 is signed; then one row for the roles (coordinator, writer, design, local, compute) and one for the census | — | Paper C; design-agent tasks |
