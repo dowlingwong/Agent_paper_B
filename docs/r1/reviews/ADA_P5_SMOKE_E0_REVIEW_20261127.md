@@ -1,15 +1,60 @@
-# Verdict: ACCEPTED WITH MINORS
+# Verdict: ACCEPTED WITH MINORS (re-check: one required artifact still missing)
 Task: `compute/20261127-29` (with `compute/20261127-33` item 2)
-Reviewed tip: `compute-p5-ada-smoke-e0-20261127` @ `eab09bc9f3f69a194df73e1a3f5b4680d607008a` (base `origin/main` `1afa7d62ffd98709a100de6e725d123cbc272a73`)
+Reviewed tip: `compute-p5-ada-smoke-e0-20261127` @ `dd6a529b243f63dcb335509728976c178920e795` (initial review at `eab09bc9…`; base `origin/main` `1afa7d62…`)
 
 Independent review of `docs/r1/reports/trackp_p5_ada_20261127/` at the tip above. I did not write the record.
-All work was read-only: a detached worktree at `eab09bc9`, local hashing/re-computation, and read-only `ssh
-ada_server` hashing/cat of the receipts named by the record. No GPU job was launched, no file was written on Ada,
-and no label was read.
+All work was read-only: worktrees at `eab09bc9` (initial review) and `dd6a529b` (re-check), local
+hashing/re-computation, and read-only `ssh ada_server` hashing/cat of the receipts named by the record. No GPU
+job was launched, no file was written on Ada, and no label was read.
 
 The central finding is correct: the staged Track P smoke **passes** on the RTX 6000 Ada, and the E0 equivalence
 check **does not meet** its pre-declared criteria and is correctly reported as a **STOP**, not a PASS. The
 minors are packaging/disclosure defects, not a defect in the result.
+
+## Addendum — re-check at `dd6a529b` (27 Nov 2026)
+
+I re-checked only the two required fixes and the corrected wording against the initial review at `eab09bc9`.
+Read-only; no GPU job, no write on Ada, no label read.
+
+**Closed.**
+
+- `smoke_report.json` is committed; sha256 `6a3c49055c72a5e2c3026bd5702c9cc016ec515024cd2bb298ae3c150b6a5547`
+  equals the record and the host receipt.
+- `e0b_report.json` (`46f8dbb2a63973920129bbedd7957694310b79df73394aefe9f55f96cd6c5597`) and
+  `e0c_report.json` (`0f71111589e32a7e2b9515b3606454fc458e12c6e59950e413ceeba7e9c27073`) are committed and
+  match the host reports.
+- `e0e_report.json` and `e0e_manifest.json` are the renamed originals, unchanged:
+  `7df24070ee8a3a0838b3e2b3e71bf264fcbc6d8fa5a531fac2d28c16d8b9e817` and
+  `b4f918948f31b2ffb40c7428a25a16dc893f75154ebd4024e5a725d7df0197bb`.
+- `e0d` is disclosed as a third, non-comparison scene ended at step 0 with no report. The step-0 state is what
+  the host shows; the stated reason ("the wrapper was corrected to `--stage final`") is not recorded in
+  `e0d.log` or `e0d/`, so it is plausible but not independently evidenced. That does not affect the comparison.
+- The drift paragraph now names R1-E0-HEADFIT, the AdamW-to-L-BFGS head-fit change and `471f93f7`/`52b527b9`,
+  and correctly says the reference starts LoRA from the fitted head while `c80f83bc` restores the fresh head.
+  This is the specific, checkable cause; the drift claim is no longer under-specified.
+- The memory wording is corrected: "0 MiB foreign-process memory; card total 5–8 MiB" matches the lease
+  (`other_processes.memory_mib = 0`) and the captures (5 MiB start, 8 MiB end).
+
+**Still open (required).** `smoke_lease.jsonl` is **not in the branch**. The tree at `dd6a529b` has 11 files
+under the record directory and none is the lease:
+
+```
+git ls-tree -r --name-only dd6a529b docs/r1/reports/trackp_p5_ada_20261127/
+git cat-file -e dd6a529b:docs/r1/reports/trackp_p5_ada_20261127/smoke_lease.jsonl
+fatal: path '.../smoke_lease.jsonl' does not exist in 'dd6a529b'
+```
+
+The record nevertheless cites `smoke_lease.jsonl` at lines 20 and 31 and lists it under "Captured files (this
+directory)" at line 81. The lease hash `69d0d2d03b83f63de043d1132baaeddb391c24ad00818b29cac511dc5c5f52e2`
+still matches the 515-byte host file `/data1/zli538/paperb_p4_20261127/p5_20261127_b/smoke/lease.jsonl`, so
+the evidence is genuine and the recorded hash is right; the branch simply does not carry the file. **The
+record still has a dangling reference.** Required: commit the lease (e.g. as `smoke_lease.jsonl`, hash
+`69d0d2d0…`) or remove/repoint the three citations. Until that is done, required fix M1 is only half closed.
+
+Because one required artifact is still missing, the final verdict remains **ACCEPTED WITH MINORS**, with M1
+open. The scientific result is unchanged and reconfirmed: the smoke PASS is real and the E0 equivalence is a
+STOP. The optional "only" caveat about the changed config comment was not taken; it is cosmetic and I do not
+ask for it again.
 
 ## 1. Hashes and the E0 data manifest
 
@@ -22,11 +67,11 @@ cd docs/r1/reports/trackp_p5_ada_20261127 && shasum -a 256 *
 
 | File | Computed sha256 | Record claim | Match |
 |---|---|---|---|
-| `report.json` (E0e) | `7df24070ee8a3a0838b3e2b3e71bf264fcbc6d8fa5a531fac2d28c16d8b9e817` | `7df24070…` | yes |
+| `e0e_report.json` (was `report.json`) | `7df24070ee8a3a0838b3e2b3e71bf264fcbc6d8fa5a531fac2d28c16d8b9e817` | `7df24070…` | yes |
 | `comparison_e0e.json` | `7d3b9f8721e586615ba9992d0cbc3c56a20f52b11cb534aebb021e390aa5a5d4` | `7d3b9f87…` | yes |
 | `e0_config_ref.json` | `9773547dc286f638792b53b06cc7133d61209c2d9e92cdfd4982a062c1a2c054` | `9773547d…` | yes |
 | `p5_reference.json` | `bc1c9182a7f49f19bd0d276176de2bd31612e3b07ae8cd670bc5c78822d33afc` | `bc1c9182…` | yes |
-| `manifest.json` | `b4f918948f31b2ffb40c7428a25a16dc893f75154ebd4024e5a725d7df0197bb` | not claimed | — |
+| `e0e_manifest.json` (was `manifest.json`) | `b4f918948f31b2ffb40c7428a25a16dc893f75154ebd4024e5a725d7df0197bb` | `b4f91894…` at `dd6a529b` | yes |
 | `p5_compare_ada.py` | `da5354ed4ce1fdd3c92e9fa846b274901f633d886845c08fca6abfde0a5e9216` | not claimed | — |
 | `gpu_before.txt` | `3ba812533d0a6abf39cb08d9a3e20cb363fedc2e8332790c731b53ea9174076e` | not claimed | — |
 | `gpu_after.txt` | `d8d436d3796b8e1d16d15c10cbec939d8dc0dc7c63f27fcb3aa8a0e59874841f` | not claimed | — |
@@ -38,7 +83,8 @@ shasum -a 256 r1/scripts/configs/trackp_ada_v1.json
 bb0c7251a5d47e04e82e33c738160be317bfbf59984b82a0d611b0798c4fa908
 ```
 
-The two hashes that cannot be checked from the branch (the smoke report and the smoke lease) match the host files:
+At `eab09bc9` the two hashes that could not be checked from the branch (the smoke report and the smoke lease)
+matched the host files; at `dd6a529b` the smoke report is committed and only the lease remains host-only:
 
 ```
 ssh ada_server 'sha256sum /data1/zli538/paperb_p4_20261127/p5_20261127_b/smoke/*'
@@ -99,10 +145,11 @@ Command (from the worktree root):
 ```
 python3 docs/r1/reports/trackp_p5_ada_20261127/p5_compare_ada.py \
   docs/r1/reports/trackp_p5_ada_20261127/p5_reference.json \
-  docs/r1/reports/trackp_p5_ada_20261127/report.json
+  docs/r1/reports/trackp_p5_ada_20261127/e0e_report.json
 ```
 
-Exit status **1**; output `equivalent: false`. The three pre-declared criteria:
+At `eab09bc9` the same E0e report was named `report.json`; the bytes and hash are identical. Exit status
+**1**; output `equivalent: false`. The three pre-declared criteria:
 
 | Metric | Reference | Ada | Delta | Tolerance | Pass |
 |---|---:|---:|---:|---:|---|
@@ -119,7 +166,7 @@ The comparator is not a relaxed rewrite. `diff -u` against
 same. The tolerances are the ones fixed in the TASL-7 `PREDECLARATION.md` (0.05/0.05 abs, 10 % relative), so "pre-declared"
 is accurate.
 
-`report.json` has `pass: true` because `e0_pass_v2` checks the E0 engineering thresholds (width slope ≥ 0.6 and
+`e0e_report.json` has `pass: true` because `e0_pass_v2` checks the E0 engineering thresholds (width slope ≥ 0.6 and
 its bootstrap lower bound > 0, mean slope ≥ 0.8). The record does not confuse that with equivalence: the title,
 the summary and the STOP paragraph all say the equivalence is **not** met and that the phase-1 note may not cite
 it. I confirm the STOP reading.
@@ -154,8 +201,8 @@ trajectory. **The record's claim is supported — in fact the diff establishes m
 drift": it shows a deliberate recipe change, so the E0 comparison at `c80f83bc` against an `8e13e77` reference
 is not a controlled same-recipe comparison.** The record's sentence "the metric comparison cannot separate code
 drift from a runtime difference" is defensible about the metric alone but understates what `git diff` settles.
-This is not an overstatement and does not change the STOP; the record should name the change (R1-E0-HEADFIT,
-`471f93f7`/`52b527b9`) so the next reader does not have to rediscover it.
+This is not an overstatement and does not change the STOP. At `dd6a529b` the record names the change
+(R1-E0-HEADFIT, `471f93f7`/`52b527b9`), so this point is closed.
 
 I checked that `c80f83bc` is still the current code for these paths on the review base: `git diff c80f83bc
 1afa7d62 -- r1/c3/train/ r1/scripts/trackp.py r1/scripts/configs/trackp_ada_v1.json` is empty. "Current code" is
@@ -169,12 +216,12 @@ Verified against the host reports:
 |---|---|---|---:|---|
 | `e0b` | `46f8dbb2a63973920129bbedd7957694310b79df73394aefe9f55f96cd6c5597` | `final`, 6000 steps | 9.599665888245219e-5 | `9.60e-5`, `46f8dbb2…` |
 | `e0c` | `0f71111589e32a7e2b9515b3606454fc458e12c6e59950e413ceeba7e9c27073` | `screen`, 2000 steps, no head fit | 1.002877004917583e-4 | `1.00e-4`, `0f711115…` |
-| `e0d` | none (no `report.json`) | `screen`, aborted at step 0 | — | **not disclosed** |
+| `e0d` | none (no report) | `screen`, aborted at step 0 | — | not disclosed at `eab09bc9`; **disclosed at `dd6a529b`** |
 
 `e0d` is a real third non-comparison scene: `e0d_run.sh` launches the `screen` stage into `.../e0d`,
 `e0d.log` ends after the model-load lines, and `e0d/` holds only a step-0 checkpoint/metrics stub. It is
-harmless to the comparison (no report, no metric), but the record says "Two earlier engineering attempts" and
-does not mention it. Given the task's honesty requirement, this should be one sentence.
+harmless to the comparison (no report, no metric). At `eab09bc9` the record said "Two earlier engineering
+attempts" and did not mention it; at `dd6a529b` the third scene is disclosed as required (addendum).
 
 Config copy: I flattened both files and compared every leaf. `e0_config_ref.json` differs from
 `r1/scripts/configs/trackp_ada_v1.json` at exactly:
@@ -208,19 +255,24 @@ the different paper commit). The conclusion stands; a short reword would make it
 
 ## Minors
 
+Status after `dd6a529b`: M1 half closed; M2–M4 closed; M5 not taken (cosmetic).
+
 1. **Required — the smoke evidence is not in the branch.** The record cites `lease.jsonl` and the smoke report
    hash, but the branch contains neither a smoke `report.json` nor `lease.jsonl` (the single `report.json` is
    E0e). The hashes match the host files, so the claim is true, but a reader of the record cannot check it and
    the `lease.jsonl` reference is dangling in the record directory. Commit the smoke report and lease (e.g.
-   under `smoke/`), or state explicitly that they are host-only and correct the path.
+   under `smoke/`), or state explicitly that they are host-only and correct the path. **At `dd6a529b` the
+   reports are committed but `smoke_lease.jsonl` is still absent; see the addendum.**
 2. **Required — disclose `e0d`.** Say that a third scene, the `screen` launch into `e0d`, was aborted at step 0
-   and produced no report; it is not the comparison and not one of the two scenes with reports.
+   and produced no report; it is not the comparison and not one of the two scenes with reports. **Closed.**
 3. **Recommended — name the drift.** State that the reference is pre-R1-E0-HEADFIT (`8e13e77` runs the AdamW
    head fit and lets LoRA start from the fitted head; `c80f83bc` records an L-BFGS fit and restores the fresh
    head), with `471f93f7`/`52b527b9`. This converts "consistent with drift" into the actual, checkable cause.
+   **Closed.**
 4. **Recommended — precise memory wording.** "Empty at start and end (0 foreign processes, 0 MiB)" should note
-   that the captures show 5/8 MiB total on card 0 and that the zero is foreign-process memory.
-5. **Optional — "only" in the config sentence.** Add "functional values"; the comment string also differs.
+   that the captures show 5/8 MiB total on card 0 and that the zero is foreign-process memory. **Closed.**
+5. **Optional — "only" in the config sentence.** Add "functional values"; the comment string also differs. Not
+   taken; no further request.
 
 ## Unverified / limits
 
@@ -230,12 +282,13 @@ the different paper commit). The conclusion stands; a short reword would make it
 - The cause of the `e0d` abort is not documented beyond the truncated log; no label or evidence data was read
   to infer it.
 - I did not re-run the smoke or E0, did not read labels, and did not write on Ada.
-- `e0d`'s step-0 checkpoint and the `e0b`/`e0c` outputs remain only on the host; only the record, E0e report,
-  manifest, comparison and config copy are committed.
+- `e0d`'s step-0 checkpoint remains only on the host. At `dd6a529b` the record, smoke report, `e0b`/`e0c`/E0e
+  reports, E0e manifest, comparison, config copy and reference are committed; only `smoke_lease.jsonl` is not.
 
 ## Disposition
 
 The smoke PASS and the E0 STOP are independently confirmed. The record must not be cited as an Ada E0
-equivalence, and the phase-1 note's `ada_smoke_e0` line remains blocked. The smoke may be cited as a PASS after
-this review and the two required minors (smoke evidence committed/pointed to; `e0d` disclosed). No tolerance,
-reference or result should be changed to turn the miss into a pass.
+equivalence, and the phase-1 note's `ada_smoke_e0` line remains blocked. The `e0d` disclosure and the drift and
+memory wording are fixed. The smoke may be cited as a PASS once `smoke_lease.jsonl` is committed (or the three
+citations are removed/repointed); that is the one remaining required minor. No tolerance, reference or result
+should be changed to turn the miss into a pass.
