@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 04:15 CET, `main` at the G1/checker merge
+# State — 27 Nov 2026, 04:30 CET, `main` after the addendum-template merge
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -33,7 +33,8 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | done | kit c1 record (`experiment/20261126-01`, `compute/20261126-04`); REL-T1-G1B copy (`compute/20261126-05`); survey (`compute/20261126-01`; Ada: LLM serving ready, P.4 training not ready: no torch env, no container runtime) | | merged `166db0eb` (survey: after item 2) |
 | — | `compute/20261126-06`: G.5 campaigns on the TASL pair | §2 2B | blocked: G.5 note published (coordinator), after `local/20261126-08` render and review (local) |
 | — | `compute/20261126-07`: P.4 probe on Ada | §2 2B, §4 | blocked: the Ada venv (`compute/20261127-06`) (the missing-runs STOP fix and the H200 fill are merged); the direct launcher and Ada host config are on `main` `bd406db9`. Earlier: a torch environment on Ada (the survey: a venv from the P.4 lock without sudo, or a container runtime from the host owner); the route goes to the author if a venv is not acceptable |
-| 1e | `compute/20261127-14`: screening smoke again | §2 2A | ready (fix on `main` `03a352d9`) |
+| 1e | `compute/20261127-14`: screening smoke again | §2 2A | in progress (branch `compute-screen-smoke-repeat-20261127` pushed, no report yet) |
+| 1f | `compute/20261127-17`: D.3 G2 constants fit on the released sweep-2 dev rows, then review | §2 2A | ready; revision 4 waits for it |
 | — | `compute/20261126-09`: D.3 per-arm smoke | §2 2A | blocked: item 4 (compute), `local/20261126-05` item 1 and `local/20261126-03` (local) |
 
 ## Local (Claude on the Mac)
