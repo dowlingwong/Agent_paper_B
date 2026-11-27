@@ -260,3 +260,14 @@ def test_replicate_factory_and_harness_factory_are_exclusive(tmp_path):
     with pytest.raises(ChunkStop):
         run_chunk(spec, tmp_path / "chunk", _factory, manifest=_manifest(spec), observed=_observed(),
                   replicate_factory=_replicate_factory())
+
+
+def test_end_sampler_fills_the_chunk_after_the_campaign(tmp_path):
+    spec = _spec(instance_seeds=(6201,))
+    out = tmp_path / "chunk"
+    summary = run_chunk(spec, out, _factory, manifest=_manifest(spec), observed=_observed(),
+                        end_sampler=lambda: {"count": 2, "used_memory_mib": 1234})
+    assert summary["campaigns"] == 1
+    chunk = json.loads((out / "chunk.json").read_text())
+    assert chunk["other_processes_start"] == 0
+    assert chunk["other_processes_end"] == {"count": 2, "used_memory_mib": 1234}
