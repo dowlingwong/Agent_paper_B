@@ -54,9 +54,11 @@ The cluster and experiment agents own the live hosts listed in [COMPUTE.md](../.
 | 3B | **Paper C fixed-memory census**, design + experiment | One approved development task, cap, pin, and a host lease that fits Paper B's schedule | Reproducible baseline, measured headroom and evidence about whether the first edit changes follow-up feasibility or quality. See §5. |
 | 4 | **Paper C core decision and new trajectories**, design + coordinator + author | CPU census and, where available, development results from E-INT | Approve R1-PAPERC-CORE with eligible nodes/actions, frozen comparators, practical margin, supported interventions, audit, budget/power statement and test split. Then collect evidence under the signed runbooks. |
 
-Run the manuscript correction, CPU runner work and resource checks in parallel. Paper B remains the first call on
-its signed devices and budget. Paper C's CPU work and task specification can proceed while the batch GPU is
-unavailable. The coordinator tracks departures in the existing queue.
+Run the manuscript correction, CPU runner work and resource checks in parallel. The compute agent advances the
+Ada P.4 probe and the D.3 HTCondor preflight in parallel under R1-P4-D3-GPU-PREFLIGHT. The D.3 preflight can
+start while G1/G6 are being implemented. Paper B remains the first call on its signed devices and budget.
+Paper C's CPU work and task specification can proceed while the batch GPU is unavailable. The coordinator
+tracks departures in the existing queue.
 
 Calendar checks from the adopted rows are the expansion G.1b cutoff (2 Dec at 00:00 CET), latest T1
 train/dev release (17 Dec), and latest arms freeze (20 Dec). Read the offline gate once after freeze.
@@ -97,13 +99,23 @@ The writer starts with [introduction](../../../papers/r1/sections/introduction.t
 |---|---|---|
 | D.3a/b Paper B | Seven T0 nodes × 18 fresh instances per node, same start/instance pairing across arms, 20 charged worker runs and 80 manager calls, ten fresh audit seeds. deepthought for the CPU audit within its 16-worker / 10-free-CPU rule. Proposer GPU from the declared layout. | Cluster reports the job/event accounting, SHA and schema. Verify rules skips consume no worker run but still count the manager call. Charge any repeat training. D.3a's 140 GPU-hour projection stop remains the existing planning check. |
 | G.5 Paper B | TASL pair under reviewed per-node routing, projected 216.9 GPU-h against 425 GPU-h in the current plan. TASL-2 excludes CPUs 8–11. TASL-7's eligible audit chunks follow the cross-host checks. | Experiment reports correct pin and lease, per-node completions and any failures. The houseprice procedure stops that node on the affected host. Test and evaluation partitions follow the release notes. |
-| P.4 Paper B | H200-dependent request in the recorded plan, 8 CPUs, 131,072 MB memory and 150,000,000 KB requested disk. Existing phase-1 cap 40 GPU-h including the probe. | Cluster first verifies scheduler match and runtime/torch smoke. Record potential alternatives for an author decision if the assigned GPU is still unavailable. |
+| P.4 Paper B | Run the probe on one RTX 6000 Ada through the direct launcher. The existing H200 queue request is independent of this route. The phase-1 reporting threshold includes the probe charge. | Compute confirms the approved launch account, finishes the reviewed Ada host configuration, verifies the environment and lease, and delivers timing, peak GPU memory and charges for the phase-1 note. |
 | Paper C E-SYN and E-T0 | Desk/CPU work with pinned harness and separate seed registry. R1-PAPERC-MEASURE-FIRST specifies new audits of retained/final configurations on four nodes and a guarded first-accept check on digits and tabular. | Report decision relevance, immediate stakes and expected paired precision first. Compare E1 and E2 separately. E1 only enters the proposed core where its declared threshold produces decision-relevant variation. |
 | Paper C E-INT | One declared 24 GB or 48 GB GPU with an explicit VRAM cap on that host. Candidate route is a spare TASL lease or Ada once the owner confirms availability and the author accepts the layout. | Record device model, free/allowed memory, software and lease, exact token accounting, throughput and loss. Use one GPU model and identical conditions across the four cells. |
 
-The [compute card](../../../canon/COMPUTE.md) records inventory and observed occupancy separately. At the 26 Nov
-ETP snapshot, P.4's H200 job had no match. Preparing runner, audit, and placement checks can continue. Approve
-any GPU-model or host change through the existing PLAN process before relying on the replacement for a table.
+### D.3 single-GPU HTCondor preflight
+
+The compute agent uses one ETP L40S or TOpAS A100 in an engineering job. Verify the intended single-GPU request
+matches (GPU, CPU, RAM and scratch), and that the pinned candidate container starts and can use the assigned
+GPU. The ETP workers can read the shared ETP paths. TOpAS workers have neither the ETP `/work` nor `/ceph`
+mounts. For TOpAS, stage the approved inputs from the submit side and check their hashes inside the job sandbox
+before relying on that route. Use approved non-sealed fixtures for any inputs that are still sealed or unavailable,
+and list those substitutions in the report.
+
+Report the job ID and match or failure reason, GPU model and driver, image digest, and the in-container input
+read and hash checks. Record partial coverage explicitly if an image or input is still unverified. Keep the
+per-arm smoke behind its own G1/G6, constants and runner checks. The
+[compute card](../../../canon/COMPUTE.md) records inventory and observed occupancy separately.
 
 ## 5. Fixed-memory, variable-length sequence census
 

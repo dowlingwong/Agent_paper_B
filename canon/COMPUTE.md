@@ -45,10 +45,9 @@ here, and no agent reads one (`~/.config/r1/secrets.env`, `~/.ssh` keys, `~/.doc
 
 ## 4. Known conditions
 
-- **Batch GPUs:** no H200 machine has been in the collector since 24 Nov, and on 26 Nov no NEMO2 GPU of any model
-  was advertised; end unknown. Track P (P.4) and the D.3 proposer both need a batch GPU, so this is the largest
-  open resource risk. The question belongs to the ETP HTCondor administrators (the machines are provisioned into the
-  pool, not owned by it). Under R1-HOST-FREE the work moves to a host that fits meanwhile, Ada's cards first.
+- **Batch GPUs:** the last committed NEMO2 snapshot on 26 Nov advertised no GPU, and the H200 request was
+  idle. Under R1-P4-D3-GPU-PREFLIGHT, the P.4 probe uses the direct Ada path while Compute checks the D.3
+  batch route on one ETP L40S or TOpAS A100. Verify actual job matching before assigning work to a listed slot.
 - **TASL-2:** CPUs 8-11 (physical cores 4 and 5) crash under load; no job uses them.
 - **TASL-7:** the GPU is not always free of other users; a lease check refuses to start beside a foreign compute
   process.
@@ -79,7 +78,8 @@ A dated observation or lease is evidence of availability.
 | Lane | Verified layout and limits | Last observation or dependency |
 |---|---|---|
 | T0 audit and D.3 CPU work | deepthought: 40 logical CPUs, 503 GiB total RAM, up to 16 audit workers while keeping at least 10 CPUs free. Use the shared ETP work paths for staged inputs and sealed outputs. | At 13:08 CET on 26 Nov the host had 451 GiB available RAM. The TITAN X cards had foreign compute processes. The CPU and GPU observations are separate. |
-| Batch proposer and P.4 | P.4's recorded H200 shape is 8 CPUs, 131,072 MB RAM and 150,000,000 KB requested disk. Use the pinned image and exact scheduler request when comparing placement. D.3 needs one declared proposer-GPU layout. | At 13:08 CET the ETP collector advertised no H200, H100 or A100. Its one advertised L40S was in Owner/Idle state. H200 job 760065 had no match. The alternate TOpAS collector has different storage visibility. Verify live matching before relying on any slot. |
+| P.4 probe | One RTX 6000 Ada by direct launch, with the approved account, checked GPU environment and reviewed host configuration. The existing HTCondor request is for one H200, 8 CPUs, 131,072 MB RAM and 150,000,000 KB disk. | Ada's environment smoke passed in the 27 Nov compute report. Record the fit and timings in the synthetic probe before preparing the phase-1 note. |
+| D.3 batch proposer preflight | One ETP L40S or one TOpAS A100. Check the actual scheduler request, pinned container and input hashes inside the job. | ETP workers share `/work` and `/ceph`. TOpAS needs explicit input staging into the sandbox. Report the match, runtime and input checks separately from the later per-arm smoke. |
 | T1 G.5 workers and audits | TASL-2 and TASL-7 each have one RTX 4090 with 24,564 MiB. Use the reviewed per-node placements, one GPU lease at a time, and the pinned CPU lease groups. Exclude TASL-2 CPUs 8–11. Approved TASL-7 audit scope covers seven nodes. | On 26 Nov TASL-2 passed the G.5 pilot-basis check. Houseprice's first CPU-set attempt completed and matched the reference, but the current procedure cannot produce the other two required attempts. TASL-7's card was occupied in the recorded snapshot. |
 | Paper C memory-capped census | Candidate placement is one spare TASL 4090 lease or one Ada 48 GB card, with the memory cap stated explicitly and one layout for all four comparison cells. Reserve no live capacity until the owner confirms the slot and its note is accepted. | Design and smoke preparation can proceed on the desk. Ada's available memory, CPU limits and free disk remain to verify. No Paper C slot or GPU-hour allocation is assumed. |
 | Mac and scratch | Design, manuscript builds, E-SYN setup and local code review. Launch scripts and inputs use the existing deployment path. | The Mac has no shared filesystem with ETP, TASL or Ada. Copy only the declared code, outputs and metadata through the appropriate channel. |
