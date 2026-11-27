@@ -1,7 +1,7 @@
 # Paper B writer round check · 27 November 2026
 
 Published base `c4250f7ea26a97e0f3c7b475613287864110a14c`. Checked the writer queue on
-`coord/coordinator` at `324f6ad4b0406f075934dea9b59af99b58315424`. Writer is idle.
+`coord/coordinator` at `b63f03e98b6885f32ee446a0a28c7622ab88f609`. Writer is idle.
 All five cards are published. The remaining result-table handoff has no task ID and waits for released evidence.
 
 | Task | Delivery branch and tip | Recorded review | Publication |
@@ -32,7 +32,7 @@ effects wait for authorised estimates and intervals.
 | `main_draft_gate_passed.pdf` | `latexmk -pdf` rc 0 with `DraftGatePassed` | ends p. 8 | 43 | `36059705e89c2a7ba934db9bbcfc46db36902b0a8180467c0064fe4d08784b96` |
 
 The extracted text of both rebuilds matched the corresponding published PDFs. Visual inspection confirmed the
-page-8 transition to references in both. The final logs show no undefined citations, undefined references or
+transition to references on page 8 in both. The final logs show no undefined citations, undefined references or
 multiply defined labels. Nine existing overfull lines remain in each build. The `FinalPaper` build stopped
 at the unresolved gate-outcome switch as expected. `git diff --check` passed.
 The published claim-to-table sheet SHA-256 is `23e9ca0b410c7db1ca46554b9cffbb59f5f6592feef061d56264176ccb6ce9c7`.
@@ -51,15 +51,20 @@ The published claim-to-table sheet SHA-256 is `23e9ca0b410c7db1ca46554b9cffbb59f
   running. ETTh1 was sealed. Check the remaining seals and determinism decisions. Houseprice waiter
   `208315` timed out before starting a run. Its retry and the remaining TASL-2 P11 checks wait on the
   applicable CPU leases, including 0–3 and 4–7.
-- **Probe and scheduler.** Ada P.4 probe card `compute/20261127-19` has a preparation branch at `e066dc6d`.
-  Neither the queue nor the latest Compute report at `db2f5195` records a probe launch ID. Check the
-  forthcoming receipt before treating it as launched. The separate H200 request `760065` was last reported
-  idle. D.3 preflight jobs `760148`, `760149` and `760152` were removed after no match. Compute owns any
-  further capacity checks.
+- **Probe complete with a STOP.** Compute report `d0d6f8af` records engineering run
+  `trackp-p4-probe-20261125-a` (`compute/20261127-19`): both 0.8B probes passed and both 4B probes
+  hit an out-of-memory STOP at micro-batch 8 on empty Ada cards. Record branch `compute-p4-ada-probe-20261127`
+  at `e99ebee3`, independent review `05d3048a` ACCEPTED WITH MINOR FINDINGS with corrections on the task tip.
+  No probe GPU job remains active. Check `compute/20261127-21` after the G1 fixes, the author's P.4 4B
+  decision and the phase-1 note's harness binding. A5 base selection depends on that path.
+- **Scheduler.** The H200 request `760065` was removed after no match with zero wall time. D.3 preflight jobs
+  `760148`, `760149` and `760152` were removed after no match. Check `compute/20261127-12` for the next
+  eligible L40S or A100 match.
 - **Offline results pending.** G.5 needs the remaining host checks, final reviewed bindings and note publication.
   The gate then waits for eligible-node labels, the T1 train/dev release, reviewed target-consumer and
   preregistration bindings, trained and calibrated frozen arms, and the signed test releases. Resume the
   writer result-table handoff after the applicable releases.
 
-Decided alone to verify the published drafts without modifying the assigned worktree and to append this round
-check to the existing reports.
+Decided alone to rebuild from a temporary copy of the assigned worktree's manuscript, whose files match
+published main. The shared Git metadata is read-only here. Temporary Git metadata was used to fetch the
+queue and refresh this round report from Compute and Local's recorded receipts.
