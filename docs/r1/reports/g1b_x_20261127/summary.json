@@ -1,0 +1,538 @@
+{
+ "schema": "g1b_tasl_x_summary/1",
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g1b-x-tasl-20261126-a",
+ "gpu_model": "NVIDIA GeForce RTX 4090",
+ "split_policy": "vary",
+ "edits_per_node": 4,
+ "assembly_sha256": "b4c90ec6a622dcd4c762ff0504751f85dde45fe5421fbb4780a61c5f565af077",
+ "verdicts": {
+  "mlgym_titanic": {
+   "qualifies_D21": false,
+   "checks": {
+    "seeds_per_condition_is_30": true,
+    "material_edits_ge_2": false,
+    "mean_p_wrong_ge_0.10": false,
+    "sigma_joint_gt_0": true
+   },
+   "n_edits": 4,
+   "n_material": 0,
+   "mean_p_wrong_material": NaN,
+   "sigma_joint": 0.026066300845450183,
+   "sigma_train": 0.008311043981616755,
+   "sigma_split": 0.03217500749339462,
+   "paired_joint_n": [
+    30,
+    30,
+    30,
+    30
+   ],
+   "divergent": {
+    "rows": 0,
+    "by_config": {
+     "c0": 0,
+     "c1": 0,
+     "c2": 0,
+     "c3": 0,
+     "c4": 0
+    }
+   },
+   "e1_report_proposed_split": "vary",
+   "median_wall_seconds": 151.379,
+   "determinism": {
+    "deterministic": true,
+    "configs": {
+     "c0": {
+      "default": [
+       "ok",
+       0.797753
+      ],
+      "default_repeat": [
+       "ok",
+       0.797753
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c1": {
+      "default": [
+       "ok",
+       0.808989
+      ],
+      "default_repeat": [
+       "ok",
+       0.808989
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c2": {
+      "default": [
+       "ok",
+       0.814607
+      ],
+      "default_repeat": [
+       "ok",
+       0.814607
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c3": {
+      "default": [
+       "ok",
+       0.820225
+      ],
+      "default_repeat": [
+       "ok",
+       0.820225
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c4": {
+      "default": [
+       "ok",
+       0.831461
+      ],
+      "default_repeat": [
+       "ok",
+       0.831461
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     }
+    },
+    "divergent_configs_at_default": []
+   }
+  },
+  "mlgym_metamaze": {
+   "qualifies_D21": false,
+   "checks": {
+    "seeds_per_condition_is_30": true,
+    "material_edits_ge_2": true,
+    "mean_p_wrong_ge_0.10": false,
+    "sigma_joint_gt_0": true
+   },
+   "n_edits": 4,
+   "n_material": 3,
+   "mean_p_wrong_material": 0.024397228859466213,
+   "sigma_joint": 1.5079643556876912,
+   "sigma_train": 1.7923452904876596,
+   "sigma_split": 0.32401817150752765,
+   "paired_joint_n": [
+    30,
+    30,
+    30,
+    30
+   ],
+   "divergent": {
+    "rows": 0,
+    "by_config": {
+     "c0": 0,
+     "c1": 0,
+     "c2": 0,
+     "c3": 0,
+     "c4": 0
+    }
+   },
+   "e1_report_proposed_split": "fixed",
+   "median_wall_seconds": 59.684,
+   "determinism": {
+    "deterministic": true,
+    "configs": {
+     "c0": {
+      "default": [
+       "ok",
+       9.148438
+      ],
+      "default_repeat": [
+       "ok",
+       9.148438
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c1": {
+      "default": [
+       "ok",
+       2.9375
+      ],
+      "default_repeat": [
+       "ok",
+       2.9375
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c2": {
+      "default": [
+       "ok",
+       8.226562
+      ],
+      "default_repeat": [
+       "ok",
+       8.226562
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c3": {
+      "default": [
+       "ok",
+       0.609375
+      ],
+      "default_repeat": [
+       "ok",
+       0.609375
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c4": {
+      "default": [
+       "ok",
+       20.21875
+      ],
+      "default_repeat": [
+       "ok",
+       20.21875
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     }
+    },
+    "divergent_configs_at_default": []
+   }
+  },
+  "gc7rc_etth1": {
+   "qualifies_D21": false,
+   "checks": {
+    "seeds_per_condition_is_30": true,
+    "material_edits_ge_2": true,
+    "mean_p_wrong_ge_0.10": false,
+    "sigma_joint_gt_0": true
+   },
+   "n_edits": 4,
+   "n_material": 3,
+   "mean_p_wrong_material": 0.09274020061373567,
+   "sigma_joint": 0.011064208240159312,
+   "sigma_train": 0.00998618607509577,
+   "sigma_split": 2.2584051416334807e-16,
+   "paired_joint_n": [
+    30,
+    30,
+    30,
+    30
+   ],
+   "divergent": {
+    "rows": 0,
+    "by_config": {
+     "c0": 0,
+     "c1": 0,
+     "c2": 0,
+     "c3": 0,
+     "c4": 0
+    }
+   },
+   "e1_report_proposed_split": "fixed",
+   "median_wall_seconds": 12.764,
+   "determinism": {
+    "deterministic": true,
+    "configs": {
+     "c0": {
+      "default": [
+       "ok",
+       0.667077
+      ],
+      "default_repeat": [
+       "ok",
+       0.667077
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c1": {
+      "default": [
+       "ok",
+       0.65201
+      ],
+      "default_repeat": [
+       "ok",
+       0.65201
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c2": {
+      "default": [
+       "ok",
+       0.693547
+      ],
+      "default_repeat": [
+       "ok",
+       0.693547
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c3": {
+      "default": [
+       "ok",
+       0.677962
+      ],
+      "default_repeat": [
+       "ok",
+       0.677962
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c4": {
+      "default": [
+       "ok",
+       1.739448
+      ],
+      "default_repeat": [
+       "ok",
+       1.739448
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     }
+    },
+    "divergent_configs_at_default": []
+   }
+  },
+  "gc7rc_forestcover": {
+   "qualifies_D21": false,
+   "checks": {
+    "seeds_per_condition_is_30": true,
+    "material_edits_ge_2": true,
+    "mean_p_wrong_ge_0.10": false,
+    "sigma_joint_gt_0": true
+   },
+   "n_edits": 4,
+   "n_material": 4,
+   "mean_p_wrong_material": 0.04986125834617813,
+   "sigma_joint": 0.0012512664577442553,
+   "sigma_train": 0.0010440715289055913,
+   "sigma_split": 0.0,
+   "paired_joint_n": [
+    30,
+    30,
+    30,
+    30
+   ],
+   "divergent": {
+    "rows": 0,
+    "by_config": {
+     "c0": 0,
+     "c1": 0,
+     "c2": 0,
+     "c3": 0,
+     "c4": 0
+    }
+   },
+   "e1_report_proposed_split": "fixed",
+   "median_wall_seconds": 98.2685,
+   "determinism": {
+    "deterministic": true,
+    "configs": {
+     "c0": {
+      "default": [
+       "ok",
+       0.897575
+      ],
+      "default_repeat": [
+       "ok",
+       0.897575
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c1": {
+      "default": [
+       "ok",
+       0.883135
+      ],
+      "default_repeat": [
+       "ok",
+       0.883135
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c2": {
+      "default": [
+       "ok",
+       0.896232
+      ],
+      "default_repeat": [
+       "ok",
+       0.896232
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c3": {
+      "default": [
+       "ok",
+       0.894769
+      ],
+      "default_repeat": [
+       "ok",
+       0.894769
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     },
+     "c4": {
+      "default": [
+       "ok",
+       0.928814
+      ],
+      "default_repeat": [
+       "ok",
+       0.928814
+      ],
+      "same_outcome": true,
+      "divergent_at_default": false
+     }
+    },
+    "divergent_configs_at_default": []
+   }
+  }
+ },
+ "screening_funnel": {
+  "measured": 4,
+  "qualified": 0,
+  "failed_determinism": 0
+ },
+ "note_rule": "R1-T1-NODE-EXPANSION (kit -> U2 census on TASL -> G.1b on TASL under a new G.1b note; D21 protocol, 460 runs per node; cap 40 GPU-h; published by the coordinating chat once independently reviewed and its launch checks pass)",
+ "harness_commits": {
+  "mlgym_titanic": "3a67042ba7e4211feb9681524f3879643c8cf635",
+  "mlgym_metamaze": "aa354485bff6b5746c48ddadcb50d92e9c6f3645",
+  "gc7rc_etth1": "3a06d86721b0c1826b165b68a9781a561e4993f4",
+  "gc7rc_forestcover": "85851664679d10889c5af406843c4a3fc38f7a49"
+ },
+ "hosts": {
+  "mlgym_metamaze": "TASL-2",
+  "gc7rc_forestcover": "TASL-2",
+  "gc7rc_etth1": "TASL-2",
+  "mlgym_titanic": "TASL-2"
+ },
+ "devices": {
+  "mlgym_metamaze": "cpu",
+  "gc7rc_forestcover": "cpu",
+  "gc7rc_etth1": "cpu",
+  "mlgym_titanic": "cpu"
+ },
+ "timing_4090": {
+  "mlgym_metamaze": [
+   {
+    "c0_median_wall_s": 61.691,
+    "max_wall_s": 63.976,
+    "part": "default",
+    "ratio_4090_over_ada": 1.1484
+   },
+   {
+    "c0_median_wall_s": 61.837,
+    "max_wall_s": 63.905,
+    "part": "train",
+    "ratio_4090_over_ada": 1.1511
+   },
+   {
+    "c0_median_wall_s": 59.449,
+    "max_wall_s": 61.441,
+    "part": "split",
+    "ratio_4090_over_ada": 1.1066
+   },
+   {
+    "c0_median_wall_s": 59.488,
+    "max_wall_s": 61.476,
+    "part": "joint",
+    "ratio_4090_over_ada": 1.1074
+   }
+  ],
+  "gc7rc_forestcover": [
+   {
+    "c0_median_wall_s": 102.905,
+    "max_wall_s": 281.153,
+    "part": "default",
+    "ratio_4090_over_ada": 1.1017
+   },
+   {
+    "c0_median_wall_s": 98.585,
+    "max_wall_s": 281.894,
+    "part": "train",
+    "ratio_4090_over_ada": 1.0554
+   },
+   {
+    "c0_median_wall_s": 93.341,
+    "max_wall_s": 270.052,
+    "part": "split",
+    "ratio_4090_over_ada": 0.9993
+   },
+   {
+    "c0_median_wall_s": 93.008,
+    "max_wall_s": 265.024,
+    "part": "joint",
+    "ratio_4090_over_ada": 0.9957
+   }
+  ],
+  "gc7rc_etth1": [
+   {
+    "c0_median_wall_s": 12.592,
+    "max_wall_s": 13.67,
+    "part": "default",
+    "ratio_4090_over_ada": 1.1544
+   },
+   {
+    "c0_median_wall_s": 12.686,
+    "max_wall_s": 14.353,
+    "part": "train",
+    "ratio_4090_over_ada": 1.163
+   },
+   {
+    "c0_median_wall_s": 12.6,
+    "max_wall_s": 14.393,
+    "part": "split",
+    "ratio_4090_over_ada": 1.1551
+   },
+   {
+    "c0_median_wall_s": 12.629,
+    "max_wall_s": 14.608,
+    "part": "joint",
+    "ratio_4090_over_ada": 1.1578
+   }
+  ],
+  "mlgym_titanic": [
+   {
+    "c0_median_wall_s": 160.391,
+    "max_wall_s": 186.378,
+    "part": "default",
+    "ratio_4090_over_ada": 1.1607
+   },
+   {
+    "c0_median_wall_s": 153.525,
+    "max_wall_s": 185.59,
+    "part": "train",
+    "ratio_4090_over_ada": 1.111
+   },
+   {
+    "c0_median_wall_s": 145.231,
+    "max_wall_s": 177.361,
+    "part": "split",
+    "ratio_4090_over_ada": 1.051
+   },
+   {
+    "c0_median_wall_s": 142.115,
+    "max_wall_s": 169.607,
+    "part": "joint",
+    "ratio_4090_over_ada": 1.0285
+   }
+  ]
+ },
+ "timeout_basis": "census_slowest_x3"
+}

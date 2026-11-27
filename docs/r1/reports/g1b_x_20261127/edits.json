@@ -1,0 +1,138 @@
+{
+ "mlgym_metamaze": [
+  {
+   "edit_id": "E1",
+   "symbol": "E1",
+   "old": "baseline",
+   "new": "E1.diff",
+   "patch_sha256": "9aacd7fd568e8bff3670efe1193b4cc29891afd431842d04c5f73a015c6137d5",
+   "code_state_sha256": "612d738cd8b406dca3f4d8f5976298912aa5d54f5a024c42dea38735653da60e"
+  },
+  {
+   "edit_id": "E2",
+   "symbol": "E2",
+   "old": "baseline",
+   "new": "E2.diff",
+   "patch_sha256": "ff4cd594788fa908ac26f2713c9bf5e7bf2b480325e8e89ca3aef13219474703",
+   "code_state_sha256": "d19281a49eb0e241fad1419987577c3882f050a24b578cc4f7d290e0739403fa"
+  },
+  {
+   "edit_id": "E3",
+   "symbol": "E3",
+   "old": "baseline",
+   "new": "E3.diff",
+   "patch_sha256": "c76634e908b787e4bc397294b750aef28a25fa2c0c426def3544b8dee02d2a53",
+   "code_state_sha256": "8e64c79c106813165004d90f7356b84ee51f47febd53b264dc08610891b7342e"
+  },
+  {
+   "edit_id": "E4",
+   "symbol": "E4",
+   "old": "baseline",
+   "new": "E4.diff",
+   "patch_sha256": "ec73a85a98c0690191e22be3cca97106c7daca51ba773ae484f696c01fb9f918",
+   "code_state_sha256": "821398a93416a78725ac1cbd2b249fc951b6c7c42128dd852ad89649992a07cf"
+  }
+ ],
+ "gc7rc_forestcover": [
+  {
+   "edit_id": "E1",
+   "symbol": "E1",
+   "old": "baseline",
+   "new": "E1.diff",
+   "patch_sha256": "d59cd11e4f976766f45d4fcdffbcc3ac3d12a101ad63824e639465c205f8f293",
+   "code_state_sha256": "798ca1a16393979c0ac90addf9c6399ed62b9e1dafeda5e5354551073d9daa87"
+  },
+  {
+   "edit_id": "E2",
+   "symbol": "E2",
+   "old": "baseline",
+   "new": "E2.diff",
+   "patch_sha256": "c960568c95067befccd929445ee030d496274252ae1cf6264b028613cb81e97a",
+   "code_state_sha256": "267e34f517c4f2ea0657de0c35c7493261968f80e7bde4c9e43ac903de2330fc"
+  },
+  {
+   "edit_id": "E3",
+   "symbol": "E3",
+   "old": "baseline",
+   "new": "E3.diff",
+   "patch_sha256": "19009049f5f509116b3451f7de383c97fecf0a19371aac0ac9477728ea0d1994",
+   "code_state_sha256": "34d6a4bdb72ca39967b423eea06bdc97f4bff7b619846f52fb46daa3cd77ac54"
+  },
+  {
+   "edit_id": "E4",
+   "symbol": "E4",
+   "old": "baseline",
+   "new": "E4.diff",
+   "patch_sha256": "29f4535bb5575e6f15e2957016051824523f1cc24251e108a6626a1930b11457",
+   "code_state_sha256": "73348ffbaab28834f06049e63f2a5e36219902d749e45e152b2d655b560bd665"
+  }
+ ],
+ "gc7rc_etth1": [
+  {
+   "edit_id": "E1",
+   "symbol": "E1",
+   "old": "baseline",
+   "new": "E1.diff",
+   "patch_sha256": "b5f985f3be4894170201ea716b455e00e9338277756d1a00a3c32cade8ab375a",
+   "code_state_sha256": "249c95c379c29df408333f329a5f8198ee3455f59b5bf8b65f5c805a2ed10614"
+  },
+  {
+   "edit_id": "E2",
+   "symbol": "E2",
+   "old": "baseline",
+   "new": "E2.diff",
+   "patch_sha256": "763ca217d5fa326f25ebcfbd88e14b95649aa4d7118eb4b7c16823bc23a7d792",
+   "code_state_sha256": "d6c46270c3cf27e0cdc58fe870bc2d592f8ba9b77cb73b8c0c5d3cfe80cf5886"
+  },
+  {
+   "edit_id": "E3",
+   "symbol": "E3",
+   "old": "baseline",
+   "new": "E3.diff",
+   "patch_sha256": "b261661afbd08b7ebe1d130e8862f348d676da342eabfd1efb5f4847ef6ab1e0",
+   "code_state_sha256": "0cfcb5a422998330a1c2b781c53ab60289a049269acf94598c851bb6d9016dc2"
+  },
+  {
+   "edit_id": "E4",
+   "symbol": "E4",
+   "old": "baseline",
+   "new": "E4.diff",
+   "patch_sha256": "f7666b876682b70f1de541770990a10d5b3eee6bb076596379deed9f6ce411ac",
+   "code_state_sha256": "5873d6ce7a9c77803ebd15e73a8c0ecce45ec78a5347763fed429767caf39275"
+  }
+ ],
+ "mlgym_titanic": [
+  {
+   "edit_id": "E1",
+   "symbol": "E1",
+   "old": "baseline",
+   "new": "E1.diff",
+   "patch_sha256": "e1a6a46e7e537143ba560f1942c45f9d1dc7e636fbb392075671a088d70a7a63",
+   "code_state_sha256": "448a0113dd73861ed7ef7fce2ad830861aaca39083b6469a07ba6bbbef64749f"
+  },
+  {
+   "edit_id": "E2",
+   "symbol": "E2",
+   "old": "baseline",
+   "new": "E2.diff",
+   "patch_sha256": "9e2973b9bba9dc70b75dc3b5a95833e014d7658f9d667e366f2c18b8556a6c9b",
+   "code_state_sha256": "329f04ebcfc842a763c916fc70695babb716a11ea9f2535442cfdecf4012c5ac"
+  },
+  {
+   "edit_id": "E3",
+   "symbol": "E3",
+   "old": "baseline",
+   "new": "E3.diff",
+   "patch_sha256": "dfa07242010a39737b409d687e12f382a32a9e4385186be4f3c8201efdd21107",
+   "code_state_sha256": "e728a53cae2835df4b7a356815ee203b82ba45298001f7c5323f412949cb7f48"
+  },
+  {
+   "edit_id": "E4",
+   "symbol": "E4",
+   "old": "baseline",
+   "new": "E4.diff",
+   "patch_sha256": "eb1f5c86017d58e0b80efdcde1f8e05bd4aa4ef7a4b260ca5c61248836923c31",
+   "code_state_sha256": "891503bef113e3533618edef988fd258f66a8c6298254d8dfbec9ff187433c26"
+  }
+ ]
+}

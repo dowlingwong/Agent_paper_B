@@ -1,0 +1,160 @@
+{
+ "schema": "g1b_tasl_x_assembly/1",
+ "run_id": "g1b-x-tasl-20261126-a",
+ "jobs": [
+  {
+   "node": "mlgym_metamaze",
+   "host": "TASL-2",
+   "attempt": 1,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl_x/sealed_g1b/g1b-x-tasl-20261126-a/mlgym_metamaze/attempt-1",
+   "stop_class": null,
+   "infrastructure_attempts_not_used": [],
+   "job_record_sha256": "e1bc322996c72d2c57d10c4d0d1dadc7cff17ece5f37ecd1aba01f31dc422073",
+   "spec_sha256": "d0dce0584b5c1c446e989bd7f8981242b36e30f6008f0c38eb43428524cfd238",
+   "gpu_uuid": null,
+   "device": "cpu",
+   "timing": [
+    {
+     "c0_median_wall_s": 61.691,
+     "max_wall_s": 63.976,
+     "part": "default",
+     "ratio_4090_over_ada": 1.1484
+    },
+    {
+     "c0_median_wall_s": 61.837,
+     "max_wall_s": 63.905,
+     "part": "train",
+     "ratio_4090_over_ada": 1.1511
+    },
+    {
+     "c0_median_wall_s": 59.449,
+     "max_wall_s": 61.441,
+     "part": "split",
+     "ratio_4090_over_ada": 1.1066
+    },
+    {
+     "c0_median_wall_s": 59.488,
+     "max_wall_s": 61.476,
+     "part": "joint",
+     "ratio_4090_over_ada": 1.1074
+    }
+   ]
+  },
+  {
+   "node": "gc7rc_forestcover",
+   "host": "TASL-2",
+   "attempt": 1,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl_x/sealed_g1b/g1b-x-tasl-20261126-a/gc7rc_forestcover/attempt-1",
+   "stop_class": null,
+   "infrastructure_attempts_not_used": [],
+   "job_record_sha256": "6d9a0ad80c18ca00e0adb0865cc902a84b1ed8f38140e76d7fe783d992cdb373",
+   "spec_sha256": "d0dce0584b5c1c446e989bd7f8981242b36e30f6008f0c38eb43428524cfd238",
+   "gpu_uuid": null,
+   "device": "cpu",
+   "timing": [
+    {
+     "c0_median_wall_s": 102.905,
+     "max_wall_s": 281.153,
+     "part": "default",
+     "ratio_4090_over_ada": 1.1017
+    },
+    {
+     "c0_median_wall_s": 98.585,
+     "max_wall_s": 281.894,
+     "part": "train",
+     "ratio_4090_over_ada": 1.0554
+    },
+    {
+     "c0_median_wall_s": 93.341,
+     "max_wall_s": 270.052,
+     "part": "split",
+     "ratio_4090_over_ada": 0.9993
+    },
+    {
+     "c0_median_wall_s": 93.008,
+     "max_wall_s": 265.024,
+     "part": "joint",
+     "ratio_4090_over_ada": 0.9957
+    }
+   ]
+  },
+  {
+   "node": "gc7rc_etth1",
+   "host": "TASL-2",
+   "attempt": 1,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl_x/sealed_g1b/g1b-x-tasl-20261126-a/gc7rc_etth1/attempt-1",
+   "stop_class": null,
+   "infrastructure_attempts_not_used": [],
+   "job_record_sha256": "2c50d59acbf1d224ddbc35927318237be2f4ebdaf76ff7d5cb4632092394aca2",
+   "spec_sha256": "d0dce0584b5c1c446e989bd7f8981242b36e30f6008f0c38eb43428524cfd238",
+   "gpu_uuid": null,
+   "device": "cpu",
+   "timing": [
+    {
+     "c0_median_wall_s": 12.592,
+     "max_wall_s": 13.67,
+     "part": "default",
+     "ratio_4090_over_ada": 1.1544
+    },
+    {
+     "c0_median_wall_s": 12.686,
+     "max_wall_s": 14.353,
+     "part": "train",
+     "ratio_4090_over_ada": 1.163
+    },
+    {
+     "c0_median_wall_s": 12.6,
+     "max_wall_s": 14.393,
+     "part": "split",
+     "ratio_4090_over_ada": 1.1551
+    },
+    {
+     "c0_median_wall_s": 12.629,
+     "max_wall_s": 14.608,
+     "part": "joint",
+     "ratio_4090_over_ada": 1.1578
+    }
+   ]
+  },
+  {
+   "node": "mlgym_titanic",
+   "host": "TASL-2",
+   "attempt": 1,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl_x/sealed_g1b/g1b-x-tasl-20261126-a/mlgym_titanic/attempt-1",
+   "stop_class": null,
+   "infrastructure_attempts_not_used": [],
+   "job_record_sha256": "ac23a7c11603e1ecca9b09116506e5d4973e078ad26cb70060b943556837c0c9",
+   "spec_sha256": "d0dce0584b5c1c446e989bd7f8981242b36e30f6008f0c38eb43428524cfd238",
+   "gpu_uuid": null,
+   "device": "cpu",
+   "timing": [
+    {
+     "c0_median_wall_s": 160.391,
+     "max_wall_s": 186.378,
+     "part": "default",
+     "ratio_4090_over_ada": 1.1607
+    },
+    {
+     "c0_median_wall_s": 153.525,
+     "max_wall_s": 185.59,
+     "part": "train",
+     "ratio_4090_over_ada": 1.111
+    },
+    {
+     "c0_median_wall_s": 145.231,
+     "max_wall_s": 177.361,
+     "part": "split",
+     "ratio_4090_over_ada": 1.051
+    },
+    {
+     "c0_median_wall_s": 142.115,
+     "max_wall_s": 169.607,
+     "part": "joint",
+     "ratio_4090_over_ada": 1.0285
+    }
+   ]
+  }
+ ],
+ "spec_json_sha256": "0fc29a2e614d131131b7bc00fb2b2f6d0d31d68fd832c1658cf594b361aff894",
+ "runs_sha256": "c23dec91a97cc04f3fb51e15d6248833dfa536a56cf7fda7d75713d82d6808a7"
+}
