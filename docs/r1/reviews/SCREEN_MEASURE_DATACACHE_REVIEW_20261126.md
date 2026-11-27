@@ -73,3 +73,51 @@
 3. Keep the same directory for the evidence run, with its `tree_sha256` in the note's `data_cache_sha256`.
 
 Verdict: ACCEPTED
+
+## Addendum 2: re-check of the deadline withdrawal (611b34c0)
+
+- **Range:** `git diff 2907b684 611b34c0`. The first commit id given for this re-check, 50cd7ae7, does not exist in the repository; the corrected id 611b34c0 was used.
+- **Ancestry:** 8821b70c, then 2907b684 (review record only), then 611b34c0.
+- **Worktree:** a fresh detached worktree, removed afterwards and clean when removed. No file was modified.
+- **Reviewer:** the same independent tier-E reviewer (AI-assisted, Claude subagent, 27 Nov 2026).
+
+### What changed, checked
+
+- **Authority:** PLAN row `R1-NO-TIMEOUT` is on published `origin/main`. Part (1) names "the deadline option of the screening measurement" as withdrawn. Part (2) keeps the T0 per-run budget of 600 s.
+- **Code (`r1/noise/screen_measure.py`):**
+  - Removed: `DEFAULT_DEADLINE`, the `--deadline` option, its finiteness check, and the manifest's `deadline_seconds`.
+  - `main` passes `None` to `execute`.
+  - `execute` takes `deadline: float | None`. Both deadline checks, in-process and in the pool, are guarded by `deadline is not None`, so with `None` neither can fire; the existing deadline tests pass a number.
+  - The per-run budget `LocalWorker(timeout_seconds=600)` is unchanged in `run_one_lineage` and `build_data_cache`, as R1-NO-TIMEOUT (2) requires.
+  - Nothing else reads `args.deadline`. `math` is still used elsewhere in the file.
+- **Evidence binding:**
+  - `expected_note` no longer contains `deadline_seconds`, and neither does the authorization draft's key block (still a template, `approved: false`). The preflight compares only `expected_note`'s keys, so draft and code agree.
+  - The launch line has no `--deadline`. The STOP list reads "no deadline: R1-NO-TIMEOUT (1)".
+- **Pre-declaration:**
+  - §8.1 says there is no deadline, a run without progress is ended by the operator as an infrastructure failure, and the 600 s budget stays.
+  - §9 item 7 is marked withdrawn, which keeps item 8's number.
+- **Pins:**
+  - `screen_measure.py` `9907689f…751edf`, the same in both drafts.
+  - `test_screen_measure.py` `67d7a05e…f850e7`.
+  - The other five pinned files are unchanged.
+- **Run table and analysis:** unaffected. `ROW_KEYS` is unchanged, and `screen_analysis` never read the deadline.
+- **Tests:** `PreflightTest` drops `deadline` from its args and from its mismatched fields. The new `NoDeadlineTest` checks three things: the constant is gone, argparse rejects `--deadline`, and `expected_note` has no `deadline_seconds`.
+
+### Nits (non-blocking)
+
+- `r1/noise/screen_power.py:22, 258-259` still computes and prints an informational `deadline_seconds`. That file is pinned and unchanged, and nothing reads the value. A later change could drop it or relabel it as a projection.
+- Pre-declaration line 664 (the historical M7 row) lists "deadline" among the tested STOP paths. That is accurate as history, since the test remains for `execute` with a numeric deadline.
+
+### What the reviewer ran
+
+`python -m pytest -q -p no:cacheprovider r1/tests/test_screen_measure.py` gave 78 passed.
+
+### What runs next
+
+The steps of addendum 1, except that the smoke takes no `--deadline`. argparse now rejects the option, so the 26 Nov command line must not be reused:
+
+`python -B -m r1.noise.screen_measure run --engineering-smoke --out <new dir> --workers 16 --tmp /tmp/r1_smeas_ENG_<stamp> --data-cache <dir>`
+
+The smoke follows the one-off `data-cache` build.
+
+Verdict: ACCEPTED
