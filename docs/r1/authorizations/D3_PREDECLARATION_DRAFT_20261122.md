@@ -250,8 +250,10 @@ on); its sha256 must equal both the addendum's pin and the train/dev receipt's `
 label): **rows are filtered to the P3 dev instances of the seven nodes before any use**, and dropped rows enter no
 computation. The P3 dev instances come from the split file (`r1/c3/splits/c3_p3_split_v1.json`, sha256
 `b5967dd7…e569`). The fitter writes one JSON file with, per node: A1's and A2's fitted bin vectors, the LADDER η and its
-search table, the σ values used, and the receipt, table and split-file sha256s. Its sha256 is entered in §14 before
-signing ("How it becomes binding").
+search table, the σ values used, and the receipt, table and split-file sha256s. The reviewed artifact is
+`docs/r1/reports/d3_g2_20261127/d3_constants.json`, sha256
+`4f5f686be8f0210bcb27dfe0968296d68cf54e7266fb72c9038e741163776a93`. The independent re-fit was byte-identical,
+and `docs/r1/reviews/D3_G2_CONSTANTS_FIT_REVIEW_20261127.md` records acceptance. The same hash is bound in §14.
 - **Population (PRE-A2 C):** the full dev population of sweep 2 (both memory modes, all labelled proposals; duplicates
   have no label and do not enter), as `r1/c3/gate_input_builder.py` `fit_a2` fits A2 for the gate. A test shows the
   fitter's per-node A2 vectors equal `fit_a2`'s on the same rows. The comparison is per node, not by `arm_digest`: the
@@ -916,7 +918,7 @@ split_file: r1/c3/splits/c3_p3_split_v1.json sha256 b5967dd74a5b2a8bfd5f936aa57d
 sweep2_table: proposals.jsonl sha256 379b17ca0783571f87724fc1687d02dfb4084d7ebcec69ab296e855de02197d9, configs.json sha256 de6d63b5e06e541d97dcb2455f75c27649c6b3698e2a7ab4d7193868f1ab0f4d
 analysis_preregistration: docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md sha256 aa1a961ba8eb4ab5c45579ea194260597ea3c2a804c731c92ed4ee778d7d7cc5
 analysis_script: r1/c3/d3_analysis.py sha256 c0be039905e682e8b1702542e16607f09daf30a59be3363bbdf5a85c64a484ce (revision 4 draft); tests r1/tests/test_d3_analysis.py sha256 c6c56c332d838db0acb2260ad7dc0f1a0ef90cc3bd63849bbe30fd26bf6f01a4
-constants_file_sha256: <pending: §5.0; must be filled before signing>
+constants_file_sha256: 4f5f686be8f0210bcb27dfe0968296d68cf54e7266fb72c9038e741163776a93
 audit_host: deepthought CPUs (R1-MINSUB-CHOICES (4), conditions of R1-SWEEP2-B2-GO)
 proposer_host: any host and GPU model with a measured D.3 chunk time on that model; one GPU model per instance across its arms and stages (R1-HOST-FREE (2)(c))
 ```
