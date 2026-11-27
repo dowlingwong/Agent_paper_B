@@ -7,20 +7,22 @@
 % R1-D3-HPO-REF, R1-D3-ORDER, R1-STEP-ORDER; the declared readings of
 % docs/r1/proposals/GOAL_METRIC_ALIGNMENT_PROPOSAL_20261126.md section 6; the 23 Nov results text, whose
 % full C1 and gate reports are now in Appendix app:results-main.
-% Switches (main.tex): \ifGatePassed for the gate; \ifRuleGain and \ifLearnedGain for the closed loop.
-% A statistical STOP of the gate is neither gate branch; its text is not drafted.
-%
-% The five declared readings, each written once. They are selected below by the switches.
-% Note for the author (not paper text): the proposal's section 6 adds to the fifth reading
-% "Not an ICML submission in the present form."
-\newcommand{\ReadingLearnedPass}{Learned control raises the audited gain of a campaign at a matched budget. On the seven controlled nodes, \LoopHeadline{} The decomposition of Table~\ref{tab:decomp} says how much the rule layer, the one-step rule and the learned forecast each add. The offline gate passes for \GatePassingArms, so the one-step claim and the campaign-level result point the same way.}
-\newcommand{\ReadingLearnedFail}{Learned control raises the audited gain of a campaign at a matched budget. On the seven controlled nodes, \LoopHeadline{} The decomposition of Table~\ref{tab:decomp} says how much the rule layer, the one-step rule and the learned forecast each add. The offline gate does not pass. We report it as measured, with its power (Section~\ref{sec:results-gate}). The two levels disagree, and we report the disagreement as a finding (Section~\ref{sec:results-agree}).}
-% Review m1: the switch is A2 > A0, which the rule layer alone can produce. The two readings below therefore say
-% "rule-based control" and point to the decomposition; the declared wording ("noise-aware rule control") is in
-% Table tab:readings. Which words stand when the gain is de-duplication alone is the author's decision.
-\newcommand{\ReadingRulePass}{Rule-based control raises the audited gain of a campaign at a matched budget, and the learned forecasts add no demonstrated gain to it. \TBD{From Table~\ref{tab:decomp}: how much of the gain is the rule layer (A0R $-$ A0) and how much the noise-aware one-step rule (A2 $-$ A0R).} On the seven controlled nodes, \LoopHeadline{} The offline gate passes for \GatePassingArms: the learned forecast improves one-step decisions on logged proposals, and that gain does not carry into the loop. The mechanism counts and the agreement table say where it is lost (Section~\ref{sec:results-agree}).}
-\newcommand{\ReadingRuleFail}{Rule-based control raises the audited gain of a campaign at a matched budget, and at this task complexity we find no gain from learning, in the loop or offline. \TBD{From Table~\ref{tab:decomp}: how much of the gain is the rule layer (A0R $-$ A0) and how much the noise-aware one-step rule (A2 $-$ A0R).} On the seven controlled nodes, \LoopHeadline{} The effect sizes and intervals of Tables~\ref{tab:decomp} and~\ref{tab:gate} bound what learning could add. The tier table says whether this changes with code-level edits (Table~\ref{tab:app-tier}).}
-\newcommand{\ReadingNegative}{The rule arms show no gain over the default loop: \LoopHeadline{} This is the measured negative. On these tasks, at this budget, the loop is not limited by its keep and screen decisions. The control errors of the default loop (Section~\ref{sec:results-c1}) and the theory (Section~\ref{sec:theory}) stand.}
+% Readings follow R1-D3-PREDECL-R4 and revision 4 §7.4.
+\newcommand{\ReadingRuleAttribution}{%
+  \ifRuleLayerAlone De-duplication raises the audited gain; the one-step rule adds no demonstrated gain.\space
+  \else\ifRuleSourceUnclear The decomposition does not attribute the gain to either component.\space\fi\fi}
+\newcommand{\ReadingLearnedLoop}{Learned control raises audited campaign gain at a matched budget. On the seven controlled nodes, \LoopHeadline{} Table~\ref{tab:decomp} reports the component contrasts.}
+\newcommand{\ReadingLearnedPass}{\ReadingLearnedLoop{} The offline gate also shows a one-step gain for \GatePassingArms.}
+\newcommand{\ReadingLearnedFail}{\ReadingLearnedLoop{} The offline gate does not pass. The campaign and one-step findings differ (Section~\ref{sec:results-agree}).}
+\newcommand{\ReadingRuleLoop}{Rule-based control raises audited campaign gain. The learned arms show no demonstrated further gain. On the seven controlled nodes, \LoopHeadline{}}
+\newcommand{\ReadingRulePass}{\ReadingRuleLoop{} The offline gate shows a one-step gain for \GatePassingArms{} that did not carry into the loop. We examine the mechanism counts and agreement descriptively (Section~\ref{sec:results-agree}).}
+\newcommand{\ReadingRuleFail}{\ifRuleLayerAlone The learned arms show no demonstrated further gain. On the seven controlled nodes, \LoopHeadline{}\else\ReadingRuleLoop{}\fi{} The gate does not pass. The intervals show the precision of the comparisons (Tables~\ref{tab:decomp} and~\ref{tab:gate}), and Table~\ref{tab:app-tier} reports offline gains by tier.}
+\newcommand{\ReadingNegative}{A2 shows no demonstrated gain over A0 at this budget. \LoopHeadline{} The control errors and the theory stand (Sections~\ref{sec:results-c1} and~\ref{sec:theory}).}
+\newcommand{\ReadingLearnedStopped}{D.3b stopped before analysis. \TBD{Give the STOP record and the D.3a contrasts and intervals.}}
+\newcommand{\ReadingLearnedForGate}{%
+  \ifGateStopped\ReadingLearnedLoop\else\ifGatePassed\ReadingLearnedPass\else\ReadingLearnedFail\fi\fi}
+\newcommand{\ReadingRuleForGate}{%
+  \ifGateStopped\ReadingRuleLoop\else\ifGatePassed\ReadingRulePass\else\ReadingRuleFail\fi\fi}
 
 \section{Results}
 \label{sec:results}
@@ -29,29 +31,28 @@
 \TBD{No closed-loop campaign has been analysed; every closed-loop value is a placeholder.}
 \fi
 \ifGateOutcomeSet\else
-\TBD{The gate has not been read; this draft shows the text for a gate that \ifGatePassed passes\else does not pass\fi.}
+\TBD{The gate is unread. This draft previews \ifGateStopped a STOP\else a \ifGatePassed pass\else non-pass\fi\fi.}
 \fi
 
 \paragraph{Headline.}
 \ifLoopOutcomeSet
   \ifRuleGain
-    \ifLearnedGain
-      \ifGatePassed\ReadingLearnedPass\else\ReadingLearnedFail\fi
-    \else
-      \ifGatePassed\ReadingRulePass\else\ReadingRuleFail\fi
-    \fi
+    \ReadingRuleAttribution
+    \ifLearnedNotRun\ReadingLearnedStopped
+    \else\ifLearnedGain\ReadingLearnedForGate\else\ReadingRuleForGate\fi\fi
   \else
     \ReadingNegative
+    \ifLearnedNotRun\space\ReadingLearnedStopped\fi
   \fi
 \else
-\TBD{One of three declared readings will stand here; the draft prints the first, and Appendix~\ref{app:readings} the other two.}
-\ifGatePassed\ReadingLearnedPass\else\ReadingLearnedFail\fi
+\TBD{Draft reading if both rule and learned arms gain (Appendix~\ref{app:readings} gives other cases).}
+\ReadingLearnedForGate
 \fi
 
 \subsection{The closed loop at a matched budget}
 \label{sec:results-closed}
 
-Every arm controlled \LoopInstances{} fresh campaigns per node on the seven primary T0 nodes, with \LoopW{} worker runs and at most \LoopCalls{} manager calls. Table~\ref{tab:decomp} gives the contrasts of the decomposition. Table~\ref{tab:closed} in the appendix gives every arm, with the reference rules, worker runs and manager calls.
+Each analysed arm controlled \LoopInstances{} fresh campaigns per node on the seven primary T0 nodes, with \LoopW{} worker runs and at most \LoopCalls{} manager calls. Table~\ref{tab:decomp} gives the contrasts of the decomposition. Table~\ref{tab:closed} in the appendix gives every arm, with the reference rules, worker runs and manager calls.
 
 \begin{table}[t]
 \caption{The decomposition (closed loop, T0). Reading guide: each row is a paired difference in $Y$, the audited improvement of the final incumbent over the start in units of $\sigma_{\mathrm{node}}$, averaged over nodes, with its 95\% interval; a star marks a rejection by the two-sided Holm step-down within the row's family. The first two rows separate the rule layer from the one-step rule. A5 $-$ A3 compares the two full forecasting arms, which differ in the model and in what it reads.}
@@ -69,10 +70,14 @@ A2 $-$ A0R & one-step rule, with the rule layer in place & \LoopDATwovAZeroR \\
 A1 $-$ A0 & one-step rule, without the rule layer & \LoopDAOnevAZero \\
 A2 $-$ A0 & both together & \LoopDATwovAZero \\
 \midrule
+\ifLearnedNotRun
+\multicolumn{3}{l}{D.3b stopped. Contrasts not estimated.} \\
+\else
 \multicolumn{3}{l}{\emph{Learned arms}} \\
 A3 $-$ A2 & tabular forecast in place of the constant forecast & \LoopDAThreevATwo \\
 A5 $-$ A2 & language-model forecast in place of the constant forecast & \LoopDAFivevATwo \\
 A5 $-$ A3 & the two forecasting arms & \LoopDAFivevAThree \\
+\fi
 \bottomrule
 \end{tabular}
 \end{table}
@@ -89,7 +94,8 @@ A5 $-$ A3 & the two forecasting arms & \LoopDAFivevAThree \\
 % Prompt: A3 - A2 and A5 - A2 with intervals and Holm decisions, then A5 - A3 as a contrast of the two full
 % forecasting arms. State the smallest difference the design could detect, from the signed pre-declaration. A
 % contrast that is not rejected is reported with its interval, not as equality.
-\TBD{One paragraph: the learned arms against A2, then A5 against A3, with what the design could detect.}
+\ifLearnedNotRun D.3b contrasts were not estimated.
+\else\TBD{Learned-arm effects and intervals. State any harm and any learned gain when A2 shows none.}\fi
 
 \paragraph{Reference rules and reference proposers.}
 % Prompt: fixed replication, the commit gate and the margin rule against A0, and the margin rule against A2; runs and
@@ -115,6 +121,9 @@ Figure~\ref{fig:budget} gives the audited outcome after 5, 10, 15 and 20 charged
 \subsection{The offline gate: the one-step claim}
 \label{sec:results-gate}
 
+\ifGateStopped
+The statistical gate stopped without a verdict. \GateStopReason{} The closed-loop comparisons give the campaign result.
+\else
 The gate was read once, on \GateReadDate, after the arms-frozen record had fixed every arm, split and gate file. The read covers the seven primary T0 nodes and \TOneNodesUsed; \GateEligibleNodes{} entered the IQM. Table~\ref{tab:gate} gives the two tested arms. The full ladder, the secondary analyses and the per-node table are in Appendix~\ref{app:gate-full}.
 
 \begin{table}[t]
@@ -144,9 +153,11 @@ Neither A3 nor A5 passes. \TBD{Name the condition that failed for the first-rank
 \subsection{Agreement between the two levels}
 \label{sec:results-agree}
 
-The gate scores one-step decisions on logged proposals. The closed loop scores whole campaigns. For each node and arm, Table~\ref{tab:app-agree} sets the gate's per-node utility beside the arm's closed-loop $Y$. \LoopRankAgreement. % Prompt: where the levels disagree, use the mechanism counts: value skips that cost gain, runs re-spent after a skip,
+The gate scores one-step decisions on logged proposals. The closed loop scores whole campaigns. \ifLearnedNotRun D.3b stopped, so the planned rank comparison is unavailable.\else For each node and each of A2, A3 and A5, Table~\ref{tab:app-agree} sets the gate's per-node utility beside the arm's closed-loop $Y$. \LoopRankAgreement. % Prompt: where the levels disagree, use the mechanism counts: value skips that cost gain, runs re-spent after a skip,
 % and the last run that improved the audited incumbent.
-\TBD{One descriptive paragraph: whether the arms order the same way at the two levels.} Agreement is not a test of the conditions of Theorem~\ref{thm:reduction}. Table~\ref{tab:app-tier} gives A5 against A3 and against A2 separately for single-parameter edits (T0) and code-level edits (T1).
+\TBD{One descriptive paragraph: whether the arms order the same way at the two levels.} Agreement is not a test of the conditions of Theorem~\ref{thm:reduction}.\fi{} Table~\ref{tab:app-tier} gives A5 against A3 and against A2 separately for single-parameter edits (T0) and code-level edits (T1).
+
+\fi
 
 \subsection{Control errors of the default loop}
 \label{sec:results-c1}

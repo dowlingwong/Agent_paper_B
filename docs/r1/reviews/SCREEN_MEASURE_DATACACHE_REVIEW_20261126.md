@@ -121,3 +121,44 @@ The steps of addendum 1, except that the smoke takes no `--deadline`. argparse n
 The smoke follows the one-off `data-cache` build.
 
 Verdict: ACCEPTED
+
+## Addendum 3: re-check of ARFF identification by content (e5227c0c; local/20261127-05)
+
+- **Range:** `git diff 5c901d19 e5227c0c`. The screening files at the base are byte-identical to `611b34c0`, the tip accepted in addendum 2.
+- **Worktree:** a fresh detached worktree, removed afterwards.
+- **Reviewer:** the same independent tier-E reviewer (AI-assisted, Claude subagent, 27 Nov 2026).
+
+### Correction to round 1
+
+In round 1 the reviewer said `check_pilot`'s name test would work under scikit-learn 1.8. It did not. Compute's STOP report (`reports/20261127-06-screening-smoke-stop.md`) shows that the 1.8.0 build stored breast-w as `…/data/v1/download/52350.gz`. The likely reason is that OpenML's current description `url` carries no file name, whereas the 9 October pilot's did. If so, the description JSON in the new cache also differs from the pilot's. That is acceptable: the pilot cross-check covers the ARFF only, and the tree sha256 binds every file. The STOP failed closed, as intended.
+
+### Checks
+
+- **`is_arff`:**
+  - It reads the first 64 KiB of the decompressed content, skips blank lines and `%` lines, and accepts the file only if the next line starts with `@relation` (in any case).
+  - The JSON files start with `{`, so they never count.
+  - A real ARFF with leading `%` comments is recognised, including CRLF line endings and leading spaces.
+  - A BOM, a comment block over 64 KiB, or a header cut at 64 KiB gives "0 ARFF files", a STOP. All three cases fail closed.
+- **`cache_tree`:**
+  - It records `{"sha256", "content_sha256", "arff"}` for each file.
+  - The same function builds the manifest, verifies it, and checks each run's cache, so the format is the same at all three points.
+  - No manifest in the old format exists: compute's build STOPped before writing one.
+- **`check_pilot`:** counts the files with `arff` True in the recomputed tree, requires exactly one, and still applies the pilot pin. Per compute's report, `52350.gz` matches the breast-w pin.
+- **Tests:** the earlier fixtures now carry ARFF headers. The new `ArffByContentTest` covers the 1.8 `<id>.gz` layout with the JSON files: one ARFF counted, the pin applied (both mismatch and match), 0 and 2 ARFF files refused, and `read_data_cache` accepting the layout.
+- **Pins:**
+  - `screen_measure.py`: `5c04aeee…75bd38`, in both drafts.
+  - `test_screen_measure.py`: `7f359ace…eb7be3`.
+  - The other five pins are unchanged.
+  - §8.4's wording matches the code.
+- **Scope:** nothing affects the run table, the analysis, the evidence binding, or any signed file.
+
+### Nits
+
+- `@relationship…` would also count, because the test is a prefix match. This cannot arise in practice.
+- One docstring line is longer than the file's usual line width.
+
+### What the reviewer ran
+
+`python -m pytest -q -p no:cacheprovider r1/tests/test_screen_measure.py`: 82 passed.
+
+Verdict: ACCEPTED

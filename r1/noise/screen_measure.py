@@ -48,7 +48,7 @@ The OpenML nodes read their dataset through ``fetch_openml(data_home=<node>/data
 absent from a fresh harness worktree, so every run of the smoke downloaded its dataset from openml.org (16 at a time) and
 the data were pinned by nothing. ``data-cache --out DIR`` now builds the caches once, one node at a time, through the
 harness worker itself (a no-edit trial at seed 999 in a node copy with an empty cache; ENGINEERING_ONLY, nothing kept but
-the cache), checks each downloaded ``.arff``'s decompressed sha256 against the pilot cache's where the pilot had the node
+the cache), checks the downloaded ARFF's (identified by content) decompressed sha256 against the pilot cache's where the pilot had the node
 (``PILOT_ARFF_SHA256``), and writes ``DIR/MANIFEST.json`` (per file the stored and decompressed sha256, per node and in
 total a tree sha256). ``run --engineering-smoke`` and ``run --evidence`` require ``--data-cache DIR``: the manifest must
 match the files and name exactly the design's OpenML nodes; every run gets a copy of its node's cache (replacing any
@@ -194,8 +194,8 @@ def _file_sha(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def _content_sha(path: Path) -> str:
-    """sha256 of the file's content, gunzipped when it is a .gz (the stored gzip header carries a time stamp)."""
+def _content(path: Path) -> bytes:
+    """The file's content, gunzipped when it is a .gz (the stored gzip header carries a time stamp)."""
     import gzip
     path = Path(path)
     data = path.read_bytes()
@@ -204,11 +204,28 @@ def _content_sha(path: Path) -> str:
             data = gzip.decompress(data)
         except (OSError, EOFError) as exc:
             raise RunStop(f"STOP: {path} is not a gzip file ({exc})") from None
-    return hashlib.sha256(data).hexdigest()
+    return data
+
+
+def _content_sha(path: Path) -> str:
+    return hashlib.sha256(_content(path)).hexdigest()
+
+
+def is_arff(data: bytes) -> bool:
+    """ARFF by content (local/20261127-05): the first line that is neither blank nor a ``%`` comment starts with
+    ``@relation`` (case-insensitive). scikit-learn 1.8.0 stores the download as ``…/data/v1/download/<file id>.gz``, so
+    the name says nothing; the JSON description, feature and quality files are not ARFF."""
+    for raw in data[:65536].splitlines():
+        line = raw.strip()
+        if not line or line.startswith(b"%"):
+            continue
+        return line.lower().startswith(b"@relation")
+    return False
 
 
 def cache_tree(cache: Path) -> dict:
-    """Every regular file under a node's cache: {relative path: {"sha256", "content_sha256"}}; a symlink is refused."""
+    """Every regular file under a node's cache: {relative path: {"sha256", "content_sha256", "arff"}} (``arff``: the
+    decompressed content is an ARFF file, ``is_arff``); a symlink is refused."""
     cache = Path(cache)
     if not cache.is_dir():
         raise RunStop(f"STOP: {cache} is not a directory")
@@ -217,7 +234,10 @@ def cache_tree(cache: Path) -> dict:
         if f.is_symlink():
             raise RunStop(f"STOP: {f} is a symlink")
         if f.is_file():
-            out[f.relative_to(cache).as_posix()] = {"sha256": _file_sha(f), "content_sha256": _content_sha(f)}
+            data = _content(f)
+            out[f.relative_to(cache).as_posix()] = {"sha256": _file_sha(f),
+                                                     "content_sha256": hashlib.sha256(data).hexdigest(),
+                                                     "arff": is_arff(data)}
     return out
 
 
@@ -231,7 +251,7 @@ def data_nodes(design: dict, harness: Path) -> list[str]:
 
 
 def check_pilot(node: str, files: dict) -> None:
-    arffs = [v["content_sha256"] for k, v in files.items() if k.endswith(".arff.gz") or k.endswith(".arff")]
+    arffs = [v["content_sha256"] for v in files.values() if v.get("arff") is True]   # by content, not by name
     if len(arffs) != 1:
         raise RunStop(f"STOP: {node}'s cache holds {len(arffs)} ARFF files, not one")
     if node in PILOT_ARFF_SHA256 and arffs[0] != PILOT_ARFF_SHA256[node]:

@@ -19,10 +19,14 @@ With a selected incumbent the deployed keep rule is Bayes-optimal only against a
 The GPU tier is small. Its nodes were not selected for noise: under the noise criterion used for T0 few of them would qualify, and each node's value is reported (Appendix~\ref{app:nodes}). One T0 node missed a liveness criterion and is a sensitivity row. The two sweeps differ in more than the proposer, and sweep~1 is not replayable call by call. The exam that selected the main proposer carries post-hoc amendments. Audit labels are means over five seeds and are themselves noisy. Duplicates receive no label. Jobs may share a GPU with other processes, and timing decides nothing; results that are compared with each other come from one hardware class (Appendix~\ref{app:hardware}).
 
 \paragraph{What the outcome leaves open.}
+\ifGateStopped
+The statistical STOP leaves the one-step question unresolved.
+\else
 \ifGatePassed
 A passing gate supports a one-step gain of the passing arm on the nodes of the read and at one run price; its size is uncertain.
 \else
 With a gate that does not pass, the paper has no positive offline result on a learned forecast. The dispersion estimate that we report uses fitted forecasts, and a forecast that is too smooth makes it too small.
+\fi
 \fi
 Decision-focused fine-tuning (A6) is trained only after a gate that passes and has no offline test read.
 % Prompt: for a contrast that is not rejected, the interval; for a gain, the nodes and the budget it holds for;

@@ -26,7 +26,7 @@ Given the forecast, the rule maximises the expected audited gain per run under t
 \centering
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{L{0.42in}L{0.42in}L{2.05in}}
+\begin{tabular}{L{0.52in}L{0.42in}L{1.95in}}
 \toprule
 Arm & Rule layer & Forecast and decisions \\
 \midrule
@@ -39,9 +39,9 @@ A3 & yes & Gradient-boosted forecast on proposal and ledger features; one-step r
 A4 & yes & The proposer's own zero-shot forecast, calibrated; one-step rule. \\
 A5 & yes & A small language model fine-tuned on soft labels; one-step rule. \\
 \midrule
-FIXR3 & \Cell & Three runs per executed proposal; keep on a one-sided Welch test. \\
-EGATE & \Cell & Anytime-valid commit gate on replicate runs. \\
-LADDER & \Cell & Keep if the observed increment exceeds a margin per node; no screen. \\
+FIXR3 & no & Three runs per executed proposal; keep on a one-sided Welch test. \\
+EGATE & no & Anytime-valid commit gate on replicate runs. \\
+LADDER & no & Keep if the observed increment exceeds a margin per node; no screen. \\
 \bottomrule
 \end{tabular}
 \end{table}
