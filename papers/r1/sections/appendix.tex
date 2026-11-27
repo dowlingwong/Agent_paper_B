@@ -287,6 +287,8 @@ Item & Earlier plan & What changed & Record \\
 \midrule
 G.5 tails & Gaussian label model & Student-$t$ with five degrees of freedom for ogbn-arxiv and MinAtar Breakout. Gaussian for the other five tasks in the reviewed pre-label record. & R1-G5-TAILS \\
 \addlinespace
+G.5 soft targets & Tail declaration for label assembly & Use the declared distribution in every T1 soft target, including training and the gate oracle and its A2 fit. Match the Student-$t$ standard deviation to the declared value. & R1-G5-TAILS-CONSUMERS \\
+\addlinespace
 G.5 host tests & All C1--C15 tests expected before publication & Publication needs independently reviewed pre-run host checks. C12 uses the signed acceptance line. A short C10 check covers one restart before publication. The full span is checked during the run; C15 assembly and release checks are due before first use. C16 precedes the first TASL-7 audit chunk. & R1-G5-P11 \\
 \addlinespace
 T1 expansion & Determinism-qualified tasks join G.5; split and gate handling open & The split extends using the same rule and salt. Eligible MLGym expansion tasks join arm training and the primary gate. Eligible 1GC tasks are labelled and reported separately. & R1-G5-S9 \\
