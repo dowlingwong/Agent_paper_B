@@ -448,7 +448,7 @@ def note_text(s, sp, *, k=10, k_row=None, approved="true", edit=None, freeze=Non
 
 
 def ar_record_world(m, s, sp, *, edit=None, env=None, review_ok=True, qualifies=True, note_bytes=None,
-                    decl=b"autoresearch_fixedtokens: student_t (from the G.1b summary)\n", runs_raw=RUNS_RAW):
+                    decl=b"autoresearch_fixedtokens: student_t, nu = 5 (from the G.1b summary)\n", runs_raw=RUNS_RAW):
     f, needles = run_copies(m, AR_COPY, runs_raw)
     ar = _summary("g1b_tasl_ar_summary/1", "g1b-ar-tasl-20261122-a", [T.AR], qualifies, f["assembly_sha256"])
     m[AR_COPY] = ar
@@ -464,6 +464,7 @@ def ar_record_world(m, s, sp, *, edit=None, env=None, review_ok=True, qualifies=
               "noise_floor_copy": f"{AR_COPY} sha256 {sha(ar)}",
               "noise_floor_copy_review": "docs/r1/reviews/REL_T1_G1B_AR_COPY_REVIEW.md",
               "d21_verdict": "qualifies" if qualifies else "does_not_qualify", "tails": "student_t",
+              "tails_nu": "5",
               "tails_declaration": f"docs/r1/reports/g5_ar_20261205/AR_P10.md sha256 "
                                    f"{sha(m['docs/r1/reports/g5_ar_20261205/AR_P10.md'])}",
               "environment": env or (f"ar-cond7a freeze {FREEZE} sha256 {sha(m[FREEZE])} python 3.12.15 interpreter "
@@ -1698,7 +1699,7 @@ def test_m5_launch_under_arpend_b(tmp_path, keys):
         for d in b["decisions"].values():
             d["signed"] = True
         node = T.node_entry(b, T.AR)
-        node.update(env="ar-cond7a", tails="student_t")
+        node.update(env="ar-cond7a", tails="student_t", tails_nu=5)
         b["harness_families"]["G5-AR"]["isolation_host_check"] = {"record": HOSTAR, "sha256": sha(_host(PC.PIN_AR))}
         b["noise_floor"]["ar"].update(copy=AR_COPY, sha256=sha(ar), review=review, sealed_path=SEALEDAR,
                                       **run_copies(Main(), AR_COPY)[0])
@@ -2574,3 +2575,97 @@ def test_cpuset_verdict_compares_with_the_g1b_attempt(tmp_path, monkeypatch):
     edited = tmp_path / "edited.json"
     edited.write_bytes(dpath.read_bytes().replace(b'"0-7"', b'"0-7" '))
     stop("is not the derived spec of cpuset-spec", T.cpuset_verdict, SPEC, HP, edited, ref, atts)
+
+
+# =============================================================================================== R1-G5-TAILS
+TAILS_DECLARED = {"mlab_cifar10": "gaussian", "mlab_imdb": "gaussian", "mlab_ogbn_arxiv": "student_t",
+                  "mlgym_cifar10": "gaussian", "mlgym_fmnist": "gaussian", "mlgym_breakout_minatar": "student_t",
+                  "mlgym_houseprice": "gaussian"}                      # R1-G5-TAILS; tests use synthetic copies
+
+
+def _declared(nu=5):
+    s = copy.deepcopy(SPEC)
+    for n in s["nodes"]:
+        if n["node"] in TAILS_DECLARED:
+            n["tails"] = TAILS_DECLARED[n["node"]]
+            if n["tails"] == "student_t":
+                n[T.TAILS_NU] = nu
+    return s
+
+
+def test_tails_constants_and_the_shipped_spec():
+    """The spec on main still carries PENDING tails and no tails_nu (the render fills them, not this unit)."""
+    import g5_assemble as A  # noqa: PLC0415
+    sys.path.insert(0, str(ROOT))
+    from r1.c3 import labels as LB  # noqa: PLC0415
+    assert T.TAILS == LB.TAIL_LAWS and A.STUDENT_T_SCALE == LB.STUDENT_T_SCALE == "sd_matched"
+    assert not any(T.TAILS_NU in n for n in SPEC["nodes"])
+    assert all(T.L._placeholder(n["tails"]) for n in SPEC["nodes"])
+
+
+def test_tails_nu_spec_field_validated():
+    s = _declared()
+    T.validate_spec(s)
+    lines = T.note_lines(s)["tails"]
+    assert lines == ("mlab_cifar10 gaussian, mlab_imdb gaussian, mlab_ogbn_arxiv student_t (nu = 5), mlgym_cifar10 "
+                     "gaussian, mlgym_fmnist gaussian, mlgym_breakout_minatar student_t (nu = 5), mlgym_houseprice "
+                     "gaussian, autoresearch_fixedtokens from the completion record (G5-ARPEND A)")
+    assert "student_t (nu = 5.5)" in T.note_lines(_declared(nu=5.5))["tails"]
+    for bad in (2, 1.5, 0, -3, True, "5", float("nan"), float("inf"), None):
+        stop(r"mlab_ogbn_arxiv.tails_nu must be a finite number > 2", T.validate_spec, _declared(nu=bad))
+    s = _declared()
+    del T.node_entry(s, "mlgym_breakout_minatar")[T.TAILS_NU]
+    stop(r"mlgym_breakout_minatar.tails_nu is required where tails is student_t", T.validate_spec, s)
+    s = _declared()
+    T.node_entry(s, "mlab_imdb")[T.TAILS_NU] = 5
+    stop(r"mlab_imdb.tails_nu is refused where tails is not student_t", T.validate_spec, s)
+    s = copy.deepcopy(SPEC)                               # PENDING tails: tails_nu refused
+    T.node_entry(s, "mlab_ogbn_arxiv")[T.TAILS_NU] = 5
+    stop(r"mlab_ogbn_arxiv.tails_nu is refused where tails is not student_t", T.validate_spec, s)
+    s = copy.deepcopy(SPEC)                               # G5-ARPEND A: autoresearch's comes from the record
+    T.node_entry(s, T.AR)[T.TAILS_NU] = 5
+    stop("autoresearch's tails_nu comes from the completion record", T.validate_spec, s)
+    s = _declared(nu="PENDING: R1-G5-TAILS")              # a draft may leave nu a placeholder; a launch may not
+    T.validate_spec(s)
+    stop("must be a finite number > 2", T.check_tails_nu, T.node_entry(s, "mlab_ogbn_arxiv"), allow=False)
+    T.check_tails_nu(T.node_entry(_declared(), "mlab_ogbn_arxiv"), allow=False)
+
+
+def test_tails_line_unchanged_for_gaussian_and_pending():
+    """The note's tails line is the pre-unit rendering for gaussian and PENDING nodes."""
+    old = lambda s: ", ".join(f"{n['node']} " + ("from the completion record (G5-ARPEND A)" if n["node"] == T.AR  # noqa
+                                                 else str(n["tails"])) for n in s["nodes"])
+    assert T.note_lines(SPEC)["tails"] == old(SPEC)
+    s = copy.deepcopy(SPEC)
+    for n in s["nodes"]:
+        if n["node"] != T.AR:
+            n["tails"] = "gaussian"
+    assert T.note_lines(s)["tails"] == old(s)
+
+
+def test_stop_15_tails_nu(tmp_path, keys):
+    """The completion record: tails_nu beside student_t (a number > 2, stated in the declaration), refused beside
+    gaussian; the record returns it only for student_t."""
+    s, sp, note, m = ready(tmp_path)
+    ar_record_world(m, s, sp)
+    calls = []
+    go(sp, note, m, node=T.AR, calls=calls)
+    assert calls[0][2]["ar_record"]["tails_nu"] == 5.0 and calls[0][2]["ar_tails"] == "student_t"
+    for edit in (lambda f: f.pop("tails_nu"), lambda f: f.update(tails_nu="2"), lambda f: f.update(tails_nu="five"),
+                 lambda f: f.update(tails_nu="1e9"), lambda f: f.update(tails_nu="-6")):
+        ar_record_world(m, s, sp, edit=edit)
+        stop("STOP 15: tails_nu must be a finite number > 2", go, sp, note, m, node=T.AR)
+    for decl in (b"autoresearch_fixedtokens: student_t (from the G.1b summary)\n",
+                 b"autoresearch_fixedtokens: student_t, nu = 4\n",
+                 b"autoresearch_fixedtokens: student_t, nu = 5\nautoresearch_fixedtokens: student_t\n"):
+        ar_record_world(m, s, sp, decl=decl)
+        stop("must state nu = 5 for autoresearch_fixedtokens", go, sp, note, m, node=T.AR)
+    ar_record_world(m, s, sp, decl="autoresearch_fixedtokens: student_t, ν = 5.0\n".encode())
+    assert go(sp, note, m, node=T.AR)["ran"] == T.AR
+    gauss = b"autoresearch_fixedtokens: gaussian\n"
+    ar_record_world(m, s, sp, decl=gauss, edit=lambda f: f.update(tails="gaussian"))
+    stop("STOP 15: tails_nu is refused where tails is gaussian", go, sp, note, m, node=T.AR)
+    ar_record_world(m, s, sp, decl=gauss, edit=lambda f: (f.update(tails="gaussian"), f.pop("tails_nu")))
+    calls = []
+    go(sp, note, m, node=T.AR, calls=calls)
+    assert calls[0][2]["ar_tails"] == "gaussian" and "tails_nu" not in calls[0][2]["ar_record"]

@@ -16,11 +16,18 @@ Soft-label width (R1-SOFT-SIGMA, 26 Oct; Track P spec §3.4). Two versioned mode
 - ``se_audit`` (v1): the per-proposal audit standard error; kept, selected explicitly,
   to reproduce existing tables (``offline_eval.assemble`` default).
 Track P action target (spec §3.5): ``action_target``.
+
+Tail law (E5, R1-BX-PROPOSED-CONFIRM; R1-G5-TAILS). ``tails="gaussian"`` (the default, every existing table) integrates
+N(Delta, s^2). ``tails="student_t"`` with degrees of freedom ``nu`` > 2 integrates a Student-t of the same location
+whose **standard deviation is s** (``STUDENT_T_SCALE = "sd_matched"``): scale = s * sqrt((nu - 2) / nu). s keeps the
+meaning it has on the Gaussian path (sigma_node is an sd: the median paired sd over material edits; s = sigma / sqrt(K)
+the sd of a K-seed mean), so only the shape changes, not the width. The Gaussian path is unchanged byte for byte.
 """
 from __future__ import annotations
 
 import numpy as np
 from scipy.stats import norm
+from scipy.stats import t as student_t
 
 EDGES = np.array([-np.inf, -3, -2, -1, -0.5, -0.15, 0.15, 0.5, 1, 2, 3, np.inf])
 N_BINS = 12  # including the inert bin
@@ -47,6 +54,38 @@ def soft_label_version(sigma_mode: str | None = None) -> str:
     return SOFT_LABEL_VERSIONS[sigma_mode or DEFAULT_SIGMA_MODE]
 
 
+TAIL_LAWS = ("gaussian", "student_t")
+STUDENT_T_SCALE = "sd_matched"          # the label sd is s for both laws; scale = s * sqrt((nu - 2) / nu)
+
+
+def check_tail_law(tails: str, nu) -> None:
+    """``gaussian`` takes no nu; ``student_t`` needs a finite real nu > 2 (finite variance, so s can be its sd)."""
+    if tails == "gaussian":
+        if nu is not None:
+            raise ValueError("nu is given for a gaussian tail law")
+        return
+    if tails != "student_t":
+        raise ValueError(f"tails must be one of {TAIL_LAWS}, not {tails!r}")
+    if isinstance(nu, bool) or not isinstance(nu, (int, float)) or not np.isfinite(nu) or not nu > 2:
+        raise ValueError(f"student_t needs a finite real nu > 2, not {nu!r}")
+
+
+def student_t_scale(zs: float, nu: float) -> float:
+    """The Student-t scale whose standard deviation is ``zs`` (``STUDENT_T_SCALE``)."""
+    return float(zs) * float(np.sqrt((float(nu) - 2.0) / float(nu)))
+
+
+def _student_t_bins(zm: float, zs: float, nu: float) -> np.ndarray:
+    p = np.zeros(N_BINS)
+    if zs <= 0:
+        p[hard_bin(zm)] = 1.0
+        return p
+    cdf = student_t.cdf((EDGES - zm) / student_t_scale(zs, nu), float(nu))
+    p[1:] = np.diff(cdf)
+    p = np.clip(p, 0.0, None)
+    return p / p.sum()
+
+
 def _gaussian_bins(zm: float, zs: float) -> np.ndarray:
     p = np.zeros(N_BINS)
     if zs <= 0:
@@ -60,8 +99,11 @@ def _gaussian_bins(zm: float, zs: float) -> np.ndarray:
 
 def soft_label(delta_audit: float | None, se: float | None, sigma_node: float, inert: bool = False, *,
                sigma_mode: str | None = None, k_label: int | None = None,
-               sigma_pooled: float | None = None) -> np.ndarray:
+               sigma_pooled: float | None = None, tails: str = "gaussian", nu: float | None = None) -> np.ndarray:
     """N(Delta_audit, s^2) integrated over the bins (z scale); inert -> one-hot on bin 0.
+
+    ``tails="student_t"`` with ``nu`` integrates a Student-t of location Delta_audit and sd s instead (module doc,
+    ``STUDENT_T_SCALE``); the default ``"gaussian"`` takes no ``nu`` and is the unchanged Gaussian path.
 
     ``sigma_mode="se_audit"`` (v1): s = ``se``. ``"pooled_node"`` (v2, default): s = sigma_pooled / sqrt(k_label),
     sigma_pooled defaulting to ``sigma_node`` (both from the C1 table); ``se`` must then be None, so a v1-style call
@@ -70,6 +112,7 @@ def soft_label(delta_audit: float | None, se: float | None, sigma_node: float, i
     mode = sigma_mode or DEFAULT_SIGMA_MODE
     if mode not in SOFT_LABEL_VERSIONS:
         raise ValueError(f"unknown sigma_mode {mode!r}")
+    check_tail_law(tails, nu)
     if mode == "pooled_node" and se is not None:
         raise ValueError("se given under sigma_mode='pooled_node'; pass sigma_mode='se_audit' to reproduce v1 tables")
     if inert:
@@ -88,6 +131,8 @@ def soft_label(delta_audit: float | None, se: float | None, sigma_node: float, i
         if not sp > 0:
             raise ValueError("pooled sigma must be positive")
         zs = sp / np.sqrt(int(k_label)) / sigma_node
+    if tails == "student_t":
+        return _student_t_bins(zm, zs, nu)
     return _gaussian_bins(zm, zs)
 
 
