@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 04:30 CET, `main` after the addendum-template merge
+# State — 27 Nov 2026, 05:00 CET, `main` at `bad59593`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -20,8 +20,8 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 |---|---|---|---|
 | 1 | `compute/20261126-10`: expansion G.1b | §2 2B | **running**: ETTh1 finished 00:34Z (460/460, determinism true, no STOP) and is sealed; MetaMaze, Forest Cover, Titanic in train. Next: seals, then `assemble` and `summarise` |
 | 1b | `compute/20261127-05` with `-08`: G.5 P11 host tests | §2 2B | TASL-7 part done (C7, C10 short, C11 server side; ACCEPTED), merging; C2, C4, C5, C6, C9, C14, C15 pre-run, C11 chunk side still to run (TASL-2 needs the 0-7 leases) |
-| 1c | `compute/20261127-13`: Ada probe preparation as `zli538` (author, 27 Nov) — host-config fill unit, then probe | §4 | ready; venv ACCEPTED (`a1d0cf74`) |
-| 1c2 | `compute/20261127-12`: D.3 single-GPU HTCondor preflight (L40S or TOpAS A100), ENGINEERING | §2 2A | ready |
+| 1c | `compute/20261127-13`: Ada probe preparation as `zli538` | §4 | **blocked**: no Apptainer and no docker access under `zli538`; launcher venv mode tasked to local (`local/20261127-11`) |
+| 1c2 | `compute/20261127-12`: D.3 HTCondor preflight | §2 2A | **no match**: L40S and TOpAS A100 `Start = false`; keep watching (record merging) |
 | 1d | `compute/20261127-16`: G1 core merged with the verify-seed checker; next the 6c replicate driver, then the G1 adapter at harness `9bb41680` (`verify_seed_base=20000`), then G6 | §2 2A | ready after `-12`/`-13` |
 | 2 | `compute/20261127-15` (= `-01`): houseprice CPU-set check | §2 2B | driver timed out waiting for 0-3/4-7 (helper guard, nothing ran); rerun after MetaMaze and Forest Cover seal |
 | 2b | `compute/20261126-11`: survey redaction | §4 | delivered `f60a2225`, **incomplete** (truncated `ps` user column in `Ada.txt` l.49–62); fix in `compute/20261127-02` item 2, then merge |
@@ -33,8 +33,8 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | done | kit c1 record (`experiment/20261126-01`, `compute/20261126-04`); REL-T1-G1B copy (`compute/20261126-05`); survey (`compute/20261126-01`; Ada: LLM serving ready, P.4 training not ready: no torch env, no container runtime) | | merged `166db0eb` (survey: after item 2) |
 | — | `compute/20261126-06`: G.5 campaigns on the TASL pair | §2 2B | blocked: G.5 note published (coordinator), after `local/20261126-08` render and review (local) |
 | — | `compute/20261126-07`: P.4 probe on Ada | §2 2B, §4 | blocked: the Ada venv (`compute/20261127-06`) (the missing-runs STOP fix and the H200 fill are merged); the direct launcher and Ada host config are on `main` `bd406db9`. Earlier: a torch environment on Ada (the survey: a venv from the P.4 lock without sudo, or a container runtime from the host owner); the route goes to the author if a venv is not acceptable |
-| 1e | `compute/20261127-14`: screening smoke again | §2 2A | in progress (branch `compute-screen-smoke-repeat-20261127` pushed, no report yet) |
-| 1f | `compute/20261127-17`: D.3 G2 constants fit on the released sweep-2 dev rows, then review | §2 2A | ready; revision 4 waits for it |
+| done | `compute/20261127-14`: screening smoke **PASS** (168/168, no STOP) | §2 2A | merge under test; then the author signs the screening note |
+| done | `compute/20261127-17`: G2 constants artifact (sha256 `4f5f686b…`, re-fit byte-identical, review ACCEPTED) | §2 2A | merge under test; revision 4 fill follows |
 | — | `compute/20261126-09`: D.3 per-arm smoke | §2 2A | blocked: item 4 (compute), `local/20261126-05` item 1 and `local/20261126-03` (local) |
 
 ## Local (Claude on the Mac)
