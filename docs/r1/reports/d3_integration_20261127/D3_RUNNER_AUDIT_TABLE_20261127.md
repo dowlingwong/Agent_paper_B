@@ -86,13 +86,24 @@ AR_HARNESS_ROOT=<harness9bb> python -m pytest -q \
   r1/tests/test_d3_g1_replicate.py r1/tests/test_d3_adapter.py \
   r1/tests/test_d3_audit_g6.py r1/tests/test_d3_integration.py \
   r1/tests/test_d3_outcome_table.py r1/tests/test_d3_analysis.py
-156 passed, 18 subtests passed (three integration tests after the fix).
+157 passed, 18 subtests passed (three integration tests after the fix).
 ```
 
 The seven-case test calls `table.build_row` on each production summary and G6 audit. The full-table
 test repeats the seven production cases across the declared design (only to satisfy G7's exact
 coverage check), writes and reloads the table, and runs `D3.analyse`; both pass. The full
 `r1/tests` suite is running at this commit; the base comparison and a fresh tier-E review follow.
+
+The second review (`compute-d3-integration-review-20261127` @ `dc76484d`) is **ACCEPTED**. Full
+suite at the fix tip `d8cfd7d0`: **114 failed / 4,988 passed / 163 skipped / 3 errors**, 117
+failure/error ids; base `840ad01d`: 115 / 4,984 / 163 / 3, 118 ids. The tip's ids are a strict
+subset of the base's (one base-only TASL GPU-lease timing test passes at the tip); no D3 failure.
+Remaining minors, recorded non-blocking: the seven-case `y_raw` is checked relationally against the
+G6 audit rather than hard-coded; an existing empty `g7_rows.jsonl` is refused by `load_audits`
+(an all-zero-run stage would need a producer-side change); the rule-arm test covers A2/A0, the
+zero-run test asserts no `final`, the stopped test does not cover `error`, and the 882 rows repeat
+the seven templates; `infra_attempts`/`proposer_gpu_seconds` stay named placeholders until a real
+outcome table.
 
 ## What this unit does not do
 
