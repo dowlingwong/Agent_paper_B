@@ -34,7 +34,9 @@ The OpenML rows serve as descriptive controls.
 
 1. From the reviewed Paper B code pin, prepare the plan against the classified Sweep 1 checkout
    with `PYTHONPATH=paperC/src python -m paperc.incumbent_audits prepare --paper "$PAPER" --out "$PLAN"`.
-   Record the byte hash, root and job counts, peak scratch estimate and the expected CPU-hours
+   The independent reconstruction found 144 roots, 452 retained edges and 496 unique
+   root/configuration jobs, or 4,960 seed executions. Record the byte hash, confirm those
+   counts, and estimate peak scratch and CPU-hours
    in the authorization. Review the pre-declaration, code and tests before signature.
 2. Compute stages the Sweep 1 harness `6adf3859de66c4814fcf376eed59880fbd8eeaf7` and the
    authenticated OpenML caches used for the Sweep 1 compatibility replay. Verify their
@@ -43,7 +45,8 @@ The OpenML rows serve as descriptive controls.
    and file hashes before running. Give the attempt fresh scratch and output paths.
 3. After publication, keep a current published provenance checkout separately from the clean launch-code
    checkout. The signed runtime JSON names `free_cpu_floor: 10`, the worker-runtime fingerprint
-   from `r1.c3.audit`, and each OpenML cache's staging path and complete relative-path-to-SHA256 map.
+   from `r1.c3.audit` obtained through the worker's actual `python3` command, and each
+   OpenML cache's staging path and complete relative-path-to-SHA256 map.
    Run from the exact code checkout.
 
    ```sh

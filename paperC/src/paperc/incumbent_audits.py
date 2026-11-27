@@ -18,6 +18,7 @@ import subprocess
 
 from r1.c3 import audit, dataset, d3_analysis, features
 from r1.c3.analysis_guard import SWEEP1_INDEX_PATH, refuse_sealed
+from r1.exam.b1_openml_cache_guard import B1OpenMLCacheStop
 from r1.harness import harness_root
 
 NODES = ("digits_mlp", "openml_credit_approval", "openml_ionosphere", "tabular_mlp")
@@ -113,9 +114,12 @@ def _audit_config(task: tuple) -> tuple[tuple, list[dict]]:
 
     def check_cache(path):
         def verified():
+            entries = tuple(path.rglob("*"))
+            if path.is_symlink() or any(p.is_symlink() for p in entries):
+                raise ValueError(f"{node}: OpenML cache contains a symlink")
             actual = {str(p.relative_to(path)): hashlib.sha256(p.read_bytes()).hexdigest()
-                      for p in path.rglob("*") if p.is_file() and not p.is_symlink()}
-            if actual != cache["sha256"]:
+                      for p in entries if p.is_file()}
+            if not actual or actual != cache["sha256"]:
                 raise ValueError(f"{node}: OpenML cache did not match the launch pin")
         verified()
         return verified
@@ -191,9 +195,13 @@ def run(paper: Path, published: Path, plan_bytes: bytes, runtime_bytes: bytes, s
     if any(note.get(k) != v for k, v in expected.items()) or not signer or signer.startswith("TODO"):
         raise ValueError("published authorization does not bind this code and exact plan")
     review_path = note.get("review_path", "")
-    if not re.fullmatch(r"docs/r1/reviews/[A-Z0-9_]+\.md", review_path) or hashlib.sha256(
-            audit._published_bytes(published, review_path)).hexdigest() != note.get("review_sha256"):
+    if not re.fullmatch(r"docs/r1/reviews/[A-Z0-9_]+\.md", review_path):
         raise ValueError("independent review is absent from the published authorization binding")
+    review_bytes = audit._published_bytes(published, review_path)
+    review_lines = review_bytes.decode().splitlines()
+    if hashlib.sha256(review_bytes).hexdigest() != note.get("review_sha256") or \
+            f"Code-Commit: {paper_commit}" not in review_lines or "Verdict: ACCEPTED" not in review_lines:
+        raise ValueError("independent review did not accept the exact paper commit")
     plan_text = audit._published_bytes(published, "docs/r1/PLAN.md").decode()
     note_sha = hashlib.sha256(note_bytes).hexdigest()
     if not any(line.startswith(f"| {AUTHORIZATION_ROW} |") and note_sha in line for line in plan_text.splitlines()):
@@ -227,12 +235,12 @@ def run(paper: Path, published: Path, plan_bytes: bytes, runtime_bytes: bytes, s
         with ProcessPoolExecutor(max_workers=workers) as pool:
             while group := tuple(islice(tasks, workers)):
                 results.update(pool.map(_audit_config, group))
-    except Exception as exc:
+        table = summarise(plan["roots"], results, dataset.noise_table(published / C1),
+                          json.loads((published / C1).read_bytes()))
+        (out / "summary.json").write_text(json.dumps(table, indent=2, sort_keys=True) + "\n")
+    except (Exception, B1OpenMLCacheStop) as exc:
         (out / "STOP.json").write_text(json.dumps({"class": type(exc).__name__, "message": str(exc)}) + "\n")
         raise
-    table = summarise(plan["roots"], results, dataset.noise_table(published / C1),
-                      json.loads((published / C1).read_bytes()))
-    (out / "summary.json").write_text(json.dumps(table, indent=2, sort_keys=True) + "\n")
 
 
 def main(argv=None) -> None:
