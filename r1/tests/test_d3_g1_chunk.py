@@ -127,7 +127,10 @@ def test_one_chunk_writes_layout_records_and_sums(tmp_path):
     assert camp["record_name"] == f"a__A2__{NODE}__s6201__r0"
     assert camp["campaign_id"] == f"{NODE}__s6201"
     cs = json.loads((first / "summary.json").read_text())
-    assert cs["worker_runs"] == 20 and cs["ended_on"] == "worker_runs"
+    from r1.c3.d3_outcome_table import SUMMARY_KEYS
+    assert set(cs) == SUMMARY_KEYS and cs["schema"] == "r1_d3_campaign_summary/v1"
+    assert cs["worker_runs"] == 20 and cs["status"] == "complete"
+    assert camp["ended_on"] == "worker_runs"
     assert chunk["gpu_model"] == "NVIDIA RTX 4090"
     assert chunk["memory_check"] == "pass"
     assert chunk["proposer_check"] == "pass" and chunk["model_check"] == "pass"

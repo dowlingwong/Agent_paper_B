@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -25,10 +26,12 @@ from r1.c3.d3.snapshots import (
     SnapshotRecorder,
     SnapshotStop,
     SNAPSHOT_SCHEMA,
+    read_worker_config,
     sha256_json,
     utc_now,
     wrap,
 )
+from r1.c3.d3.summary import build_campaign_summary, keep_records
 
 CHUNK_SCHEMA = "r1_d3_chunk/v1"
 CAMPAIGN_SCHEMA = "r1_d3_campaign/v1"
@@ -228,7 +231,9 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
             resolver = None
         else:
             raise ChunkStop(f"unknown ended_on {ended_on!r}")
+        started = time.monotonic()
         run_real_campaign(**kwargs)
+        wall_seconds = time.monotonic() - started
         if resolver is not None:
             ended_on = resolver(recorder)
         if ended_on not in ENDED_ON:
@@ -243,12 +248,13 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
             w_final=w_final, ended_on=ended_on, worker=kwargs["worker"],
             node_spec=kwargs["node_spec"], ledger_path=kwargs["records_path"],
         )
+        llm_calls = int(getattr(recorder._last_budget, "llm_calls", 0) or 0)
         record = {
             "schema": CAMPAIGN_SCHEMA,
             "campaign_kind": "harness",
             "stage": spec.stage, "arm": spec.arm, "node": spec.node,
             "repetition": spec.repetition, "instance_id": inst, "instance_seed": seed,
-            "worker_runs": w_final, "llm_calls": getattr(recorder._last_budget, "llm_calls", None),
+            "worker_runs": w_final, "llm_calls": llm_calls,
             "ended_on": ended_on, "snapshots": recorder.snapshot_hashes(),
             "pre_decision_snapshots": recorder.pre_decision_hashes(),
             "final_sha256": final_sha, "snapshot_schema": SNAPSHOT_SCHEMA,
@@ -269,12 +275,25 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
         (cdir / "runs.jsonl").write_text(
             "".join(json.dumps({"instance_id": inst, "record": row}, sort_keys=True) + "\n"
                     for row in run_rows), encoding="utf-8")
-        campaign_summary = {
-            "schema": "r1_d3_campaign_summary/v1", "campaign_id": inst,
-            "record_name": record["record_name"], "instance_seed": seed,
-            "worker_runs": w_final, "llm_calls": record["llm_calls"], "ended_on": ended_on,
-            "snapshots": record["snapshots"], "final_sha256": final_sha,
-        }
+        events_path = cdir / "events.jsonl"
+        events = []
+        if events_path.is_file():
+            events = [json.loads(line) for line in events_path.read_text(encoding="utf-8").splitlines()
+                      if line.strip()]
+        config_by_trial = recorder.config_by_trial()
+        for keep in keep_records(run_rows, config_by_trial=config_by_trial):
+            target = cdir / "keeps" / f"keep-{int(keep['keep_run'])}.json"
+            _write_json(target, keep)
+        final_config = read_worker_config(kwargs["worker"], kwargs["node_spec"])
+        campaign_summary = build_campaign_summary(
+            stage=spec.stage, arm=spec.arm, node=spec.node, instance_seed=seed,
+            repetition=spec.repetition, gpu_model=str(observed.get("model") or ""),
+            status="complete" if ended_on in ENDED_ON else "stopped",
+            records=run_rows, events=events, config_by_trial=config_by_trial,
+            start_config=recorder.start_config or {}, final_config=final_config,
+            worker_runs=w_final, llm_calls=llm_calls, ended_on=ended_on,
+            wall_seconds=wall_seconds,
+        )
         _write_json(cdir / "summary.json", campaign_summary)
         _write_json(cdir / "campaign.json", record)
         sha256sums(cdir)
@@ -353,10 +372,12 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
         unit = factory(spec, seed, cdir, recorder)
         if str(getattr(unit.engine, "arm", "")) != spec.arm:
             raise ChunkStop(f"the replicate engine is {getattr(unit.engine, 'arm', None)!r}, not {spec.arm!r}")
+        started = time.monotonic()
         summary = run_replicate_campaign(
             instance_id=inst, repetition=spec.repetition, unit=unit, recorder=recorder,
             stage=spec.stage, node=spec.node, W=spec.W, llm_cap=spec.llm_cap,
         )
+        wall_seconds = time.monotonic() - started
         record = {
             "schema": CAMPAIGN_SCHEMA,
             "campaign_kind": "replicate",
@@ -377,15 +398,21 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
         (cdir / "runs.jsonl").write_text(
             "".join(json.dumps({"instance_id": inst, "record": a}, sort_keys=True) + "\n"
                     for a in summary["attempts"]), encoding="utf-8")
-        _write_json(cdir / "summary.json", {
-            "schema": "r1_d3_campaign_summary/v1", "campaign_id": inst,
-            "record_name": record["record_name"], "instance_seed": seed,
-            "campaign_kind": "replicate", "worker_runs": summary["worker_runs"],
-            "llm_calls": summary["llm_calls"], "ended_on": summary["ended_on"],
-            "snapshots": summary["snapshots"], "final_sha256": summary["final_sha256"],
-            "pre_decision_snapshots": recorder.pre_decision_hashes(),
-            "zero_variance_cases": record["zero_variance_cases"],
-        })
+        config_by_trial = recorder.config_by_trial()
+        for keep in keep_records(summary["trials"], config_by_trial=config_by_trial):
+            _write_json(cdir / "keeps" / f"keep-{int(keep['keep_run'])}.json", keep)
+        campaign_summary = build_campaign_summary(
+            stage=spec.stage, arm=spec.arm, node=spec.node, instance_seed=seed,
+            repetition=spec.repetition, gpu_model=str(observed.get("model") or ""),
+            status="complete" if summary["ended_on"] in ENDED_ON else "stopped",
+            records=summary["trials"], events=summary["events"],
+            config_by_trial=config_by_trial,
+            start_config=summary["start_config"], final_config=summary["final_config"],
+            worker_runs=int(summary["worker_runs"]), llm_calls=int(summary["llm_calls"]),
+            ended_on=summary["ended_on"], wall_seconds=wall_seconds,
+            attempts=summary["attempts"],
+        )
+        _write_json(cdir / "summary.json", campaign_summary)
         _write_json(cdir / "campaign.json", record)
         sha256sums(cdir)
         campaigns.append(record)

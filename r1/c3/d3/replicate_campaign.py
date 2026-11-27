@@ -303,6 +303,10 @@ def run_replicate_campaign(*, instance_id: str, repetition: int, unit: Replicate
         events.append({"event_type": "control_decision",
                        "payload": {"instance_id": instance_id, "step_index": step_index,
                                    "decision": result.decision, "llm_calls": 0}})
+        recorder.note_trial_config(
+            trial_id=trial_id, budget_index=step_index, decision=str(result.decision),
+            config=candidate_config, w=int(counter.used),
+        )
         step_index += 1
 
     if proposal_calls != int(budget_holder["value"].llm_calls):
@@ -336,4 +340,5 @@ def run_replicate_campaign(*, instance_id: str, repetition: int, unit: Replicate
         "attempts": [a.as_dict() for a in attempts],
         "snapshots": recorder.snapshot_hashes(), "final_sha256": final_sha,
         "incumbent_config_sha256": config_sha256(incumbent_config),
+        "start_config": dict(unit.start_config), "final_config": dict(incumbent_config),
     }

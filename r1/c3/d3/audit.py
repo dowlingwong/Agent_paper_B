@@ -265,6 +265,37 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def _campaign_id(row: Mapping[str, Any]) -> str:
+    instance = str(row["instance_id"])
+    stage = {"a": "D.3a", "b": "D.3b"}.get(str(row["stage"]), str(row["stage"]))
+    return f"{stage}__{row['arm']}__{instance}__r{int(row['repetition'])}"
+
+
+def g7_rows(result: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """The exact six-key audit rows G7's ``build_table`` accepts.
+
+    ``Y_*.jsonl`` keep the full audit record; this projection is the table input: final, every
+    reached w point and every keep (``keep_run``).  A ``missing_w`` row is omitted, as G7
+    expects no audit for a point the campaign did not reach.
+    """
+    rows: list[dict[str, Any]] = []
+
+    def add(point: str, row: Mapping[str, Any], keep_run: int | None = None) -> None:
+        rows.append({
+            "schema": ROW_SCHEMA, "campaign_id": _campaign_id(row), "point": point,
+            "keep_run": keep_run, "config_sha256": str(row["config_sha256"]),
+            "y_raw": float(row["y_raw"]),
+        })
+
+    add("final", result["final"])
+    for row in result["w"]:
+        if not row.get("missing_w"):
+            add(str(row["w"]), row)
+    for row in result.get("keep", []):
+        add("keep", row, int(row["keep_run"]))
+    return rows
+
+
 def audit_campaign(campaign_dir: Path | str, out_dir: Path | str, *, sigma_node: float, runner: Runner,
                    cache: Cache | None = None) -> dict[str, Any]:
     """Audit one campaign directory and write its Y_final / Y_w rows.
@@ -339,16 +370,49 @@ def audit_campaign(campaign_dir: Path | str, out_dir: Path | str, *, sigma_node:
             final_row["record_sha256"] = _write_json(target, final_row)
             final_row["audit_record"] = str(target.relative_to(out))
 
+    rows_keep: list[dict[str, Any]] = []
+    keep_dir = cdir / "keeps"
+    if keep_dir.is_dir():
+        for path in sorted(keep_dir.glob("keep-*.json")):
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            run, files = int(payload["keep_run"]), dict(payload["files"])
+            sha = config_sha256(files)
+            if sha != str(payload["config_sha256"]):
+                raise AuditStop(f"{path}: the keep configuration sha256 differs from its record")
+            snapshot = {
+                "schema": SNAPSHOT_SCHEMA, "stage": stage, "arm": arm, "node": node,
+                "repetition": rep, "instance_id": instance, "w": run,
+                "incumbent_config": files, "start_config": final["start_config"],
+                "worker_runs": run, "final": False,
+            }
+            row = audit_snapshot(snapshot, sigma_node=sigma_node, runner=runner, cache=cache)
+            row["point"] = "keep"
+            row["keep_run"] = run
+            target = out / stage / arm / f"r{rep}" / "keep" / str(run) / f"{instance}.json"
+            if target.exists():
+                raise AuditStop(f"{target} exists: a rerun takes a new output directory")
+            row["record_sha256"] = _write_json(target, row)
+            rows_keep.append(row)
+
     y_final = out / "Y_final.jsonl"
     y_w = out / "Y_w.jsonl"
+    y_keep = out / "Y_keep.jsonl"
     y_final.parent.mkdir(parents=True, exist_ok=True)
     with y_final.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(final_row, sort_keys=True) + "\n")
     with y_w.open("a", encoding="utf-8") as fh:
         for row in rows_w:
             fh.write(json.dumps(row, sort_keys=True) + "\n")
+    with y_keep.open("a", encoding="utf-8") as fh:
+        for row in rows_keep:
+            fh.write(json.dumps(row, sort_keys=True) + "\n")
+    result = {"final": final_row, "w": rows_w, "keep": rows_keep}
+    g7 = g7_rows(result)
+    with (out / "g7_rows.jsonl").open("a", encoding="utf-8") as fh:
+        for row in g7:
+            fh.write(json.dumps(row, sort_keys=True) + "\n")
     _sums(out)
-    return {"final": final_row, "w": rows_w}
+    return result
 
 
 def _sums(root: Path) -> None:
