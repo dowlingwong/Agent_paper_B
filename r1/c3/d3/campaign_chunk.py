@@ -136,6 +136,11 @@ def check_hardware(spec: ChunkSpec, observed: Mapping[str, Any], manifest: Mappi
     want_prop = str(manifest.get("proposer_model") or "")
     if not want_model or not want_prop:
         raise ChunkStop("the campaign manifest must name campaign_model and proposer_model")
+    # HTCondor chooses the worker, so its observed host is recorded and disclosed, not
+    # compared; SSH and direct target one named host and a mismatch is a placement refusal.
+    observed_host = str(observed.get("host") or "")
+    if spec.launcher != "htcondor" and observed_host and observed_host != spec.host:
+        raise ChunkStop(f"launcher/host mismatch: the launch says {spec.host!r}, the probe ran on {observed_host!r}")
     instance_model = str(manifest.get("instance_model") or want_model)
     if instance_model != want_model:
         raise ChunkStop(f"instance_model {instance_model!r} differs from campaign_model {want_model!r}")
@@ -177,11 +182,15 @@ def _validate_kwargs(kwargs: Mapping[str, Any]) -> None:
 def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = None, *,
               manifest: Mapping[str, Any] | None = None,
               observed: Mapping[str, Any] | None = None,
-              replicate_factory: "ReplicateFactory | None" = None) -> dict[str, Any]:
+              replicate_factory: "ReplicateFactory | None" = None,
+              end_sampler: Callable[[], Mapping[str, Any]] | None = None) -> dict[str, Any]:
     """Run one chunk and write its records.  The output directory must be absent.
 
     ``replicate_factory`` selects the FIXR3/EGATE branch (design revision 6c); the
-    harness-arm branch keeps its original ``factory`` contract unchanged.
+    harness-arm branch keeps its original ``factory`` contract unchanged.  ``end_sampler``
+    (optional) is called after the last campaign and before ``chunk.json`` is written; its
+    value becomes ``other_processes_end`` (the launcher samples the card's other compute
+    processes; the chunk never invents them).
     """
     out = Path(out_dir)
     if out.exists():
@@ -193,7 +202,8 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
             raise ChunkStop("a chunk needs the locked campaign manifest (campaign_manifest.json)")
         if observed is None:
             raise ChunkStop("a chunk needs the observed hardware record (revision 6b)")
-        return _run_replicate_chunk(spec, out, replicate_factory, manifest=manifest, observed=observed)
+        return _run_replicate_chunk(spec, out, replicate_factory, manifest=manifest, observed=observed,
+                                    end_sampler=end_sampler)
     if factory is None:
         raise ChunkStop("the harness-arm chunk needs a campaign factory")
     if spec.arm in ("FIXR3", "EGATE"):
@@ -280,6 +290,8 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
         sha256sums(cdir)
         campaigns.append(record)
 
+    if end_sampler is not None:
+        observed = {**observed, "other_processes_end": dict(end_sampler())}
     chunk = {
         "schema": CHUNK_SCHEMA, "created_utc": utc_now(),
         "stage": spec.stage, "arm": spec.arm, "node": spec.node,
@@ -333,7 +345,8 @@ ReplicateFactory = Callable[[ChunkSpec, int, Path, SnapshotRecorder], Any]
 
 
 def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, *,
-                         manifest: Mapping[str, Any], observed: Mapping[str, Any]) -> dict[str, Any]:
+                         manifest: Mapping[str, Any], observed: Mapping[str, Any],
+                         end_sampler: Callable[[], Mapping[str, Any]] | None = None) -> dict[str, Any]:
     from r1.c3.d3.replicate_campaign import run_replicate_campaign
 
     if spec.arm not in ("FIXR3", "EGATE"):
@@ -390,6 +403,8 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
         sha256sums(cdir)
         campaigns.append(record)
 
+    if end_sampler is not None:
+        observed = {**observed, "other_processes_end": dict(end_sampler())}
     chunk = {
         "schema": CHUNK_SCHEMA, "created_utc": utc_now(),
         "stage": spec.stage, "arm": spec.arm, "node": spec.node,
@@ -431,3 +446,81 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
     _write_json(out / "summary.json", summary)
     sha256sums(out)
     return summary
+
+
+# ---------------------------------------------------------------------------
+# The one job entry both launchers invoke (design revision 6b §2)
+# ---------------------------------------------------------------------------
+
+def _sample_compute_apps(gpu_uuid: str | None = None) -> dict[str, Any]:
+    """The job-side end sample: count and memory only (revision 6b §3)."""
+    import subprocess
+
+    from r1.c3.d3.launch import LaunchStop, parse_other_processes
+
+    proc = subprocess.run(
+        ["nvidia-smi", "--query-compute-apps=gpu_uuid,pid,used_memory",
+         "--format=csv,noheader,nounits"],
+        capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        raise LaunchStop(f"nvidia-smi failed at the end sample: {proc.stderr.strip() or proc.returncode}")
+    return parse_other_processes(proc.stdout, gpu_uuid=gpu_uuid)
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run one chunk from a launch record.
+
+    Both launchers pass the same argv::
+
+        python -m r1.c3.d3.campaign_chunk --launch L --out O --manifest M --observed H
+
+    The chunk is the only implementation of the campaign; a launcher only supplies the record.
+    """
+    import argparse
+
+    from r1.c3.d3.launch import LaunchStop, read_json, validate_launch
+
+    ap = argparse.ArgumentParser(description="D.3 G1 one-chunk entry (ENGINEERING)")
+    ap.add_argument("--launch", required=True)
+    ap.add_argument("--out", required=True)
+    ap.add_argument("--manifest", required=True)
+    ap.add_argument("--observed", required=True)
+    ap.add_argument("--repo-root", default=None)
+    ap.add_argument("--harness-root", default=None)
+    ap.add_argument("--gpu-uuid", default=None,
+                    help="sample this card's other compute processes after the chunk")
+    ap.add_argument("--no-end-sample", action="store_true",
+                    help="do not sample the card after the chunk (default: sample when the probe names a card)")
+    args = ap.parse_args(argv)
+
+    launch = validate_launch(read_json(args.launch))
+    spec = ChunkSpec.from_launch(launch)
+    observed = read_json(args.observed)
+    from r1.c3.d3.adapter import (load_constants, load_manifest, make_campaign_factory,
+                                  make_replicate_factory)
+
+    manifest = load_manifest(args.manifest, repo_root=args.repo_root)
+    constants = load_constants(manifest, repo_root=args.repo_root)
+    kwargs: dict[str, Any] = {"manifest": manifest.chunk_manifest(), "observed": observed}
+    if spec.arm in ("FIXR3", "EGATE"):
+        kwargs["replicate_factory"] = make_replicate_factory(
+            manifest, constants, harness=args.harness_root)
+    else:
+        kwargs["factory"] = make_campaign_factory(manifest, constants, harness=args.harness_root)
+    gpu_uuid = args.gpu_uuid or observed.get("gpu_uuid")
+    if gpu_uuid and not args.no_end_sample:
+        kwargs["end_sampler"] = lambda: _sample_compute_apps(str(gpu_uuid))
+    summary = run_chunk(spec, Path(args.out), **kwargs)
+    print(json.dumps({"out": str(Path(args.out)), "stage": summary["stage"], "arm": summary["arm"],
+                      "node": summary["node"], "campaigns": summary["campaigns"],
+                      "worker_runs": summary["worker_runs"]}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover - exercised by the launcher tests
+    try:
+        raise SystemExit(main())
+    except ChunkStop as exc:
+        print(f"STOP: {exc}", flush=True)
+        raise SystemExit(2)
