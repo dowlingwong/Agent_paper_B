@@ -44,6 +44,14 @@ instance**. Mechanism:
   ``audit.RunCache`` (T0, a non-empty run log in an evidence directory), ``audit collect`` (refuses an evidence
   directory) and ``audit.verify_evidence_completion`` (T0).
 
+* **Split file v2** (R1-G5-S9 (1)). A release row may cite the split file v1 (the frozen preregistration's) or v2
+  (v1 plus the expansion nodes, every v1 entry byte-identical). A row citing v2 also needs the PRE-SPLIT amendment
+  published on the committed checkout (``split_v2_amendment``: ``SPLIT_AMENDMENT_PATH`` with its final block approved
+  and frozen, naming R1-G5-S9, the preregistration and both split files; R1-G5-S9 an author row of PLAN §10). The
+  preregistration's own block still names v1 (its bytes are not changed). The release step partitions, and every
+  reader re-derives P3 membership, by the split file the row cites (the receipt's ``split_sha256``), so a v1 row never
+  admits a joining node's instance.
+
 What may be read before release: counts and divergence diagnostics without values (the receipts' counts).
 A lock forbids reads; it cannot prevent a deliberate read (copying a block elsewhere, editing a receipt), which is a
 STOP (§6).
@@ -70,6 +78,11 @@ CHECKS_PATH = "r1/c3/release_checks.py"
 BUILDER_PATH = "r1/c3/gate_input_builder.py"
 GATE_PATH = "r1/c3/gate.py"
 SPLIT_PATH = "r1/c3/splits/c3_p3_split_v1.json"
+SPLIT_V2_PATH = "r1/c3/splits/c3_p3_split_v2.json"                  # R1-G5-S9 (1)
+# The PRE-SPLIT amendment (R1-G5-S9 (1): "PRE-SPLIT is amended to cite v2"), published by the coordinator from the draft
+# docs/r1/proposals/C3_SWEEP2_PREREG_AMENDMENT_SPLIT_V2_DRAFT_20261127.md; the preregistration's bytes are not changed.
+SPLIT_AMENDMENT_PATH = "docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_SPLIT_V2_20261127.md"
+SPLIT_AMENDMENT_ROW = "R1-G5-S9"
 STAGES = ("traindev", "test")
 TIERS = ("T0", "T1")
 SOURCES = {"sweep1": "T0", "sweep2": "T0", "g5": "T1"}
@@ -319,6 +332,44 @@ def prereg_frozen(root=None) -> dict:
     return {"sha256": _sha(data), "builder_sha256": builder, "gate_sha256": gate}
 
 
+def split_v2_amendment(root=None) -> dict:
+    """The published PRE-SPLIT amendment that lets evidence cite the split file v2 (R1-G5-S9 (1)): the committed
+    ``SPLIT_AMENDMENT_PATH``, whose final fenced block holds exactly these lines (each once) with ``approved: true``
+    and ``frozen: true``; and R1-G5-S9 an author row of the committed PLAN §10. Returns {path, sha256}."""
+    try:
+        data = _committed(SPLIT_AMENDMENT_PATH, root)
+    except ReleaseStop as exc:
+        raise ReleaseStop(f"STOP: the split file v2 needs the published PRE-SPLIT amendment {SPLIT_AMENDMENT_PATH} "
+                          "(R1-G5-S9 (1))") from exc
+    try:
+        lines = _final_block(data.decode("utf-8"))
+        plan = _committed("docs/r1/PLAN.md", root).decode("utf-8")
+    except UnicodeError as exc:
+        raise ReleaseStop("STOP: the PRE-SPLIT amendment or PLAN is not UTF-8") from exc
+    block = {}
+    for line in lines:
+        m = re.fullmatch(r"([a-z_0-9]+): (.*)", line)
+        if not m or m.group(1) in block:
+            raise ReleaseStop(f"STOP: the PRE-SPLIT amendment block has a bad or repeated line: {line!r}")
+        block[m.group(1)] = m.group(2).strip()
+    pre = _sha(_committed(PREREG_PATH, root))
+    want = {"amends": f"{PREREG_PATH} sha256 {pre}", "plan_row": SPLIT_AMENDMENT_ROW, "pre_split": "A",
+            "split_file": f"{SPLIT_V2_PATH} sha256 {p3_split.P3_SPLIT_V2_SHA256}",
+            "supersedes_split_file": f"{SPLIT_PATH} sha256 {p3_split.P3_SPLIT_SHA256}",
+            "approved": "true", "frozen": "true"}
+    keys = set(want) | {"signed_by", "signed_utc"}
+    if set(block) != keys:
+        raise ReleaseStop(f"STOP: the PRE-SPLIT amendment block must hold exactly {sorted(keys)}")
+    bad = sorted(k for k, v in want.items() if block[k] != v)
+    if bad:
+        raise ReleaseStop(f"STOP: the PRE-SPLIT amendment is not published as approved and frozen for v2: {bad}")
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z", block["signed_utc"]) or not block["signed_by"]:
+        raise ReleaseStop("STOP: the PRE-SPLIT amendment has no signed_by / signed_utc (YYYY-MM-DDTHH:MM[:SS]Z)")
+    if len([d for i, d in author_rows(plan) if i == SPLIT_AMENDMENT_ROW]) != 1:
+        raise ReleaseStop(f"STOP: {SPLIT_AMENDMENT_ROW} is absent or not unique in PLAN §10")
+    return {"path": SPLIT_AMENDMENT_PATH, "sha256": _sha(data)}
+
+
 def release_row(tier: str, stage: str, *, writing: bool = False, root=None) -> dict:
     """The exact release row of (tier, stage) in the committed PLAN, with every cited binding checked. ``writing``:
     the running ``release.py`` must also be the cited commit's (the release step itself)."""
@@ -339,8 +390,10 @@ def release_row(tier: str, stage: str, *, writing: bool = False, root=None) -> d
     pre = prereg_frozen(root)
     if m.group("prereg") != pre["sha256"]:
         raise ReleaseStop(f"STOP: {rid} cites another preregistration sha256")
-    if m.group("split") != p3_split.P3_SPLIT_SHA256:
+    if m.group("split") not in (p3_split.P3_SPLIT_SHA256, p3_split.P3_SPLIT_V2_SHA256):
         raise ReleaseStop(f"STOP: {rid} cites another split file")
+    if m.group("split") == p3_split.P3_SPLIT_V2_SHA256:
+        split_v2_amendment(root)                        # R1-G5-S9 (1): v2 only with the published amendment
     commit = m.group("commit")
     try:
         _git("merge-base", "--is-ancestor", commit, "HEAD", root=root)
@@ -368,6 +421,14 @@ def release_row(tier: str, stage: str, *, writing: bool = False, root=None) -> d
     if _head(root) != head:
         raise ReleaseStop("STOP: the checkout HEAD changed during the release-row check")
     return out
+
+
+def _row_assignment(row: dict) -> dict:
+    """The P3 assignment of the split file a release row cites (``split_sha256``: v1 or v2)."""
+    try:
+        return p3_split.assignment(p3_split.load_pinned(p3_split.pin_of_sha(row["split_sha256"])))
+    except p3_split.SplitError as exc:
+        raise ReleaseStop(f"STOP: the split file the row cites cannot be loaded ({exc})") from exc
 
 
 def test_released(tier: str = "T0", root=None) -> bool:
@@ -469,7 +530,7 @@ def _instance_of_pid(pid) -> str:
 
 
 PUBLISHED_PATHS = ("docs/r1/PLAN.md", PREREG_PATH, RELEASE_PATH, CHECKS_PATH, GATE_PATH, BUILDER_PATH, SPLIT_PATH,
-                   "r1/c3/p3_split.py", "r1/c3/audit.py", "r1/c3/dataset.py", "r1/c3/analysis_guard.py")
+                   SPLIT_V2_PATH, "r1/c3/p3_split.py", "r1/c3/audit.py", "r1/c3/dataset.py", "r1/c3/analysis_guard.py")
 
 
 def _published_clean(release_checks, extra_paths=()) -> bytes:
@@ -521,7 +582,8 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
                 prior["inputs"]["proposals_sha256"] != _sha(proposals):
             raise ReleaseStop("STOP: the test release must use the label block and table of the traindev release")
     cited = ([row["arms_frozen_path"]] if "arms_frozen_path" in row else []) + \
-        [v["path"] for v in (row.get("g1b_summaries") or {}).values()]
+        [v["path"] for v in (row.get("g1b_summaries") or {}).values()] + \
+        ([SPLIT_AMENDMENT_PATH] if row["split_sha256"] == p3_split.P3_SPLIT_V2_SHA256 else [])
     checks_bytes = _published_clean(release_checks, cited)
     check = release_checks.INTEGRITY_CHECKS.get(source)
     if check is None:
@@ -538,7 +600,7 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
     if completion.get("label_block_sha256") != _sha(label_bytes):
         raise ReleaseStop("STOP: the label block read is not the one the integrity check verified")
     from r1.c3.dataset import load_table
-    assign = p3_split.assignment(p3_split.load())
+    assign = _row_assignment(row)                       # the split file the row cites (v1 or v2)
     inst_of = {}
     for r in load_table(table_dir):
         inst = p3_split.instance_id(r["node"], r["instance_seed"])
@@ -626,7 +688,7 @@ def open_partition(part_dir, *, expect_source: str, expect_stage: str,
     for k, v in row.items():
         if receipt.get(k) != v:
             raise ReleaseStop(f"STOP: {rp} no longer matches {row['row_id']} ({k})")
-    assign = p3_split.assignment(p3_split.load())
+    assign = _row_assignment(row)
     out = {}
     for name, digest in receipt["outputs"].items():
         data = (part_dir / name).read_bytes()

@@ -261,6 +261,9 @@ def check_build(build: Mapping) -> dict:
     for node, info in nodes.items():
         if node not in G5F.T1_NODE_INFO:
             raise T1PromptError(f"build.json names {node}, not a declared T1 node")
+        if G5F.T1_NODE_INFO[node]["suite"] in G5F.EXTRA_TASK_SUITES:
+            raise T1PromptError(f"build.json names {node}, an extra task (R1-1GC-FALLBACK) that is never supplied to "
+                                "the arms (R1-G5-S9 (2))")
         if info.get("suite") != G5F.T1_NODE_INFO[node]["suite"] or \
                 info.get("gate_suite") != G5F.SUITE_NAMES[info.get("suite")]:
             raise T1PromptError(f"{node}: build.json suite/gate_suite differ from g5_features")
@@ -502,7 +505,7 @@ def history_drop_report(rows: Sequence[Mapping], build: Mapping, *, budget_w: in
     bad = sorted(set(splits) - set(REPORT_SPLITS))
     if bad or not splits:
         raise T1PromptError(f"the history-drop report reads train and dev instances only, not {bad or 'none'}")
-    assign = p3_split.assignment(p3_split.load()) if assign is None else assign
+    assign = p3_split.assignment(p3_split.load(p3_split.V2_PATH)) if assign is None else assign   # v2 ⊇ v1
     wanted = set()
     for r in rows:
         inst = r.get("instance")

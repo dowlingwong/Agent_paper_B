@@ -56,6 +56,15 @@ path named like a raw, test or evaluation block are refused (``ArmsFreezeError``
   without them (``require_file_checks``), so they never report a pass that skipped either. ``arms`` is unchanged: A0
   and A1 are not arms of the record (they have nothing to train), so ``required_arms`` does not list them.
 
+* **Split file v2 and the joining nodes** (R1-G5-S9; AI-assisted, Claude, 27 Nov 2026). The record's ``split_file``
+  is v1 (the preregistration's) or v2 (``p3_split.SPLIT_FILES``); with ``verify_committed`` a v2 record needs the
+  published PRE-SPLIT amendment (``release.split_v2_amendment``). The frozen T1 set's instances are checked against the
+  file the record cites. A frozen T1 node must be one that may be supplied (``p3_split.T1_SUPPLY_NODES``: the eight and
+  the MLGym expansion nodes) under its own gate suite (``p3_split.T1_SUITES``; the MLGym joiners as MLGym); an
+  extra-task node (the 1GC nodes, R1-1GC-FALLBACK) is refused there, in the label rows and in the training rows (fail
+  closed). Train and dev rows are read through v2's assignment (v1's entries are identical in it), so a joining node's
+  released labels can be read; whether it is frozen is decided by the record's T1 set alone.
+
 Nothing here trains on real data by itself: the CLI (``python -m r1.c3.arms_freeze ...``) is run by the cluster agent
 under the runbook ``docs/r1/runbooks/DEEPTHOUGHT_T0_ARMS_RUNBOOK_20261123.md``.
 """
@@ -74,6 +83,11 @@ import numpy as np
 from r1.c3 import gate as G
 from r1.c3 import gate_input_builder as B
 from r1.c3 import p3_split
+
+
+def _assign() -> dict:
+    """The P3 assignment the train and dev reads use: v2's (R1-G5-S9 (1); every v1 entry is identical in it)."""
+    return p3_split.assignment(p3_split.load(p3_split.V2_PATH))
 from r1.c3.arms import LGBMPrior, is_duplicate, is_noop
 from r1.c3.features import FEATURES
 from r1.c3.labels import INERT, N_BINS, soft_label
@@ -162,6 +176,9 @@ def check_label_rows(labels, assign) -> None:
             raise ArmsFreezeError(f"{pid}: not source:instance:trial with an instance of the P3 split file")
         if assign[parts[1]]["split"] == "test":
             raise ArmsFreezeError(f"{pid}: a test label is not read before the test release row (§6)")
+        if assign[parts[1]]["node"] in p3_split.T1_EXTRA_TASKS:
+            raise ArmsFreezeError(f"{pid}: {assign[parts[1]]['node']} is an extra task (R1-1GC-FALLBACK), never "
+                                  "supplied to the arms (R1-G5-S9 (2))")
 
 
 def check_table_rows(rows) -> None:
@@ -183,7 +200,7 @@ def load_traindev(release_root, source: str, receipt_sha256: str):
     if receipt.get("stage") != "traindev" or receipt.get("source") != source or \
             receipt.get("counts", {}).get("evaluation_rows") != 0:
         raise ArmsFreezeError(f"{source}: not a train/dev receipt without evaluation rows")
-    check_label_rows(labels, p3_split.assignment(p3_split.load()))
+    check_label_rows(labels, _assign())
     return labels, receipt
 
 
@@ -201,7 +218,7 @@ def training_rows(source: str, rows, labels, *, assign=None, t1: B.Tier1 | None 
     """Training rows of one source's P3 train and dev instances, constructed as ``gate_input_builder._prepare``."""
     if source not in SOURCE_TIER:
         raise ArmsFreezeError(f"unknown source {source}")
-    assign = assign if assign is not None else p3_split.assignment(p3_split.load())
+    assign = assign if assign is not None else _assign()
     check_label_rows(labels, assign)
     check_table_rows(rows)
     tier = SOURCE_TIER[source]
@@ -217,6 +234,9 @@ def training_rows(source: str, rows, labels, *, assign=None, t1: B.Tier1 | None 
         if pid in seen:
             raise ArmsFreezeError(f"duplicate proposal id {pid}")
         seen.add(pid)
+        if row["node"] in p3_split.T1_EXTRA_TASKS:
+            raise ArmsFreezeError(f"{source}: row {pid} of {row['node']}, an extra task (R1-1GC-FALLBACK), is never "
+                                  "supplied to the arms (R1-G5-S9 (2))")
         if B._tier_of(row["node"]) != tier:
             raise ArmsFreezeError(f"{source}: row {pid} of node {row['node']} is not a {tier} node")
         missing = [c for c in FEATURES if c not in (row.get("features") or {})]
@@ -662,19 +682,29 @@ def required_arms(record: dict) -> list[str]:
     return names
 
 
-def _check_t1(t1) -> None:
-    """PRE-T1 A: the frozen T1 node set and its instances (each in the split file, of a frozen node; every frozen node
-    with at least one train and one dev instance)."""
+def _check_t1(t1, split_file: dict | None = None) -> None:
+    """PRE-T1 A: the frozen T1 node set and its instances (each in the split file the record cites, of a frozen node;
+    every frozen node with at least one train and one dev instance). R1-G5-S9 (2): each node one that may be supplied,
+    under its own suite; an extra-task node is refused."""
     if not isinstance(t1, dict) or set(t1) != T1_KEYS or not isinstance(t1["suites"], dict) \
             or not isinstance(t1["d3_k6"], bool) or not isinstance(t1["modes"], list) \
             or not isinstance(t1["instances"], list):
         raise ArmsFreezeError(f"t1 must be {sorted(T1_KEYS)} (PRE-T1, G5-MEM, R1-BX-D3)")
     for node, suite in t1["suites"].items():
-        if node not in p3_split.T1_NODES or suite not in G.SUITES:
+        if node in p3_split.T1_EXTRA_TASKS:
+            raise ArmsFreezeError(f"T1 node {node} is an extra task (R1-1GC-FALLBACK): labelled by G.5, never supplied "
+                                  "to the arms or the gate (R1-G5-S9 (2))")
+        if node not in p3_split.T1_SUPPLY_NODES or suite not in G.SUITES:
             raise ArmsFreezeError(f"T1 node {node} / suite {suite} not in the split file / gate.SUITES")
+        if suite != p3_split.T1_SUITES[node]:
+            raise ArmsFreezeError(f"T1 node {node}: suite {suite}, its suite is {p3_split.T1_SUITES[node]} "
+                                  "(R1-G5-S9 (2): the MLGym joiners as MLGym)")
     if t1["suites"] and not t1["modes"]:
         raise ArmsFreezeError("a non-empty T1 set needs its declared mode(s)")
-    assign = p3_split.assignment(p3_split.load())
+    try:
+        assign = p3_split.assignment(p3_split.load_pinned(split_file) if split_file is not None else p3_split.load())
+    except p3_split.SplitError as exc:
+        raise ArmsFreezeError(f"split_file: {exc}") from exc
     if len(set(t1["instances"])) != len(t1["instances"]):
         raise ArmsFreezeError("t1.instances repeats an instance")
     for inst in t1["instances"]:
@@ -828,7 +858,7 @@ def _check_constants_files(ra: dict, root, lt: dict, t1: dict, builder_sha256: s
                                           "proposals_sha256")):
             raise ArmsFreezeError(f"rule_arms: the constants were fitted on {src} partitions or tables other than "
                                   f"label_tables.{src}")
-    assign = p3_split.assignment(p3_split.load())
+    assign = _assign()
     for node in sorted(t1["suites"]):
         want = sorted(i for i in t1["instances"] if assign[i]["node"] == node and assign[i]["split"] == "dev")
         if c["nodes"][node]["dev_instances"] != want:
@@ -997,13 +1027,22 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
     _pin(record["gate"], "gate", "r1/c3/gate.py", pre["gate_sha256"])
     _pin(record["gate_input_builder"], "gate_input_builder", "r1/c3/gate_input_builder.py",
          pre["gate_input_builder_sha256"])
-    _pin(record["split_file"], "split_file", "r1/c3/splits/c3_p3_split_v1.json", p3_split.P3_SPLIT_SHA256)
+    _pin(record["split_file"], "split_file")
+    if dict(record["split_file"]) not in p3_split.SPLIT_FILES.values():
+        raise ArmsFreezeError(f"split_file must be one of {list(p3_split.SPLIT_FILES.values())} (PRE-SPLIT A, "
+                              "R1-G5-S9 (1))")
+    if verify_committed and record["split_file"]["sha256"] == p3_split.P3_SPLIT_V2_SHA256:
+        from r1.c3.release import ReleaseStop as _RS, split_v2_amendment
+        try:
+            split_v2_amendment(repo)
+        except _RS as exc:
+            raise ArmsFreezeError(str(exc)) from exc
     _pin(record["noise_source"], "noise_source", NOISE_PATH, NOISE_SHA256)
     t0 = record["t0_nodes"]
     if not isinstance(t0, list) or tuple(sorted(t0)) not in {tuple(sorted(c)) for c in B.PRIMARY_T0_CHOICES}:
         raise ArmsFreezeError("t0_nodes must be the seven C3b nodes or all eight (PRE-WDBC B)")
     t1 = record["t1"]
-    _check_t1(t1)
+    _check_t1(t1, dict(record["split_file"]))
     g1b = record["g1b_summaries"]
     if not isinstance(g1b, dict) or set(g1b) != set(t1["suites"]):
         raise ArmsFreezeError("g1b_summaries must cover exactly the T1 node set")
@@ -1188,7 +1227,7 @@ def _train_cmd(a) -> dict:
     if t1 is not None and "g5" not in tables_dirs:
         raise ArmsFreezeError("a frozen T1 set needs the g5 table and receipt")
     commit = _code_commit()
-    assign = p3_split.assignment(p3_split.load())
+    assign = _assign()
     tables, trows, inputs = {}, {}, {}
     for src in sorted(tables_dirs):
         labels, receipt = load_traindev(roots[src], src, receipts[src])

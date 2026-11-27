@@ -551,3 +551,67 @@ def test_cited_files_must_be_published_and_modules_not_shadowed(paper, data, mon
     monkeypatch.setattr(dataset, "__file__", str(Path(dataset.__file__).parent / "dataset" / "__init__.py"))
     with pytest.raises(R.ReleaseStop, match="shadowed"):
         _release("test", data)
+
+
+# ---------------------------------------------------------------------------- split file v2 (R1-G5-S9 (1))
+
+def _amendment(paper, **kw):
+    lines = {"amends": f"{R.PREREG_PATH} sha256 {paper.prereg_sha}", "plan_row": "R1-G5-S9", "pre_split": "A",
+             "split_file": f"{R.SPLIT_V2_PATH} sha256 {p3_split.P3_SPLIT_V2_SHA256}",
+             "supersedes_split_file": f"{R.SPLIT_PATH} sha256 {p3_split.P3_SPLIT_SHA256}",
+             "approved": "true", "frozen": "true", "signed_by": "synthetic", "signed_utc": "2026-11-27T12:00:00Z"}
+    lines.update(kw)
+    body = "".join(f"{k}: {v}\n" for k, v in lines.items() if v is not None)
+    paper.write(R.SPLIT_AMENDMENT_PATH, f"# synthetic PRE-SPLIT amendment\n\napproved: true\n\n```\n{body}```\n")
+
+
+def _v2_rows(paper):
+    return [("R1-G5-S9", "synthetic S9 row"),
+            ("R1-S2-LABELS-TRAINDEV-RELEASE", paper.row("T0", "traindev", split=p3_split.P3_SPLIT_V2_SHA256))]
+
+
+def test_a_v2_row_needs_the_published_pre_split_amendment_and_partitions_by_v2(paper, data, world):
+    paper.plan(_v2_rows(paper))
+    with pytest.raises(R.ReleaseStop, match="PRE-SPLIT amendment"):
+        R.release_row("T0", "traindev")
+    _amendment(paper)
+    paper.plan(_v2_rows(paper))
+    row = R.release_row("T0", "traindev")
+    assert row["split_sha256"] == p3_split.P3_SPLIT_V2_SHA256
+    assert R.split_v2_amendment()["path"] == R.SPLIT_AMENDMENT_PATH
+    rec = _release("traindev", data)
+    assert rec["split_sha256"] == p3_split.P3_SPLIT_V2_SHA256
+    rows, _ = R.traindev_labels(data[2], "sweep2")          # the reader re-derives membership by v2
+    v1 = p3_split.assignment(p3_split.load())
+    assert rows and all(v1[r["proposal_id"].split(":")[1]]["split"] in ("train", "dev") for r in rows)
+
+
+@pytest.mark.parametrize("kw,match", [
+    ({"approved": "false"}, "not published as approved"), ({"frozen": "false"}, "not published as approved"),
+    ({"split_file": f"{R.SPLIT_PATH} sha256 {p3_split.P3_SPLIT_SHA256}"}, "not published as approved"),
+    ({"plan_row": "R1-OTHER"}, "not published as approved"), ({"signed_utc": "<pending>"}, "signed_utc"),
+    ({"signed_by": None}, "exactly"), ({"extra": "x"}, "exactly"), ({"amends": "x sha256 " + "0" * 64}, "approved"),
+])
+def test_pre_split_amendment_refusals(paper, kw, match):
+    _amendment(paper, **kw)
+    paper.plan(_v2_rows(paper))
+    with pytest.raises(R.ReleaseStop, match=match):
+        R.split_v2_amendment()
+
+
+def test_pre_split_amendment_needs_the_s9_row(paper):
+    _amendment(paper)
+    paper.plan([("R1-S2-LABELS-TRAINDEV-RELEASE", paper.row("T0", "traindev"))])
+    with pytest.raises(R.ReleaseStop, match="R1-G5-S9 is absent"):
+        R.split_v2_amendment()
+
+
+def test_a_v1_receipt_keeps_partitioning_by_v1(paper, data):
+    paper.plan(T0_ROWS(paper)[:1])
+    rec = _release("traindev", data)
+    assert rec["split_sha256"] == p3_split.P3_SPLIT_SHA256
+    assert R._row_assignment({"split_sha256": p3_split.P3_SPLIT_SHA256}) == p3_split.assignment(p3_split.load())
+    assert "mlgym_titanic__s5101" in R._row_assignment({"split_sha256": p3_split.P3_SPLIT_V2_SHA256})
+    assert "mlgym_titanic__s5101" not in R._row_assignment({"split_sha256": p3_split.P3_SPLIT_SHA256})
+    with pytest.raises(R.ReleaseStop, match="cannot be loaded"):
+        R._row_assignment({"split_sha256": "0" * 64})

@@ -382,6 +382,8 @@ def test_parse_refuses_malformed_files(fitted):
             lambda d: d["fitter"].__setitem__("code_commit", "abc"),
             lambda d: d.__setitem__("fit_population", "train"),
             lambda d: d["split_file"].__setitem__("sha256", "0" * 64),
+            lambda d: d.__setitem__("split_file", dict(p3_split.SPLIT_FILES[2])),   # v2 only with a joiner (S9)
+            lambda d: d["t1"]["suites"].__setitem__("gc7rc_etth1", "MLGym"),      # pin_for_nodes then names v2
             lambda d: d["sources"].pop("g5"),
             lambda d: d["sources"]["sweep2"].__setitem__("receipt_sha256", "x"),
             lambda d: d["nodes"].pop("openml_wdbc"),

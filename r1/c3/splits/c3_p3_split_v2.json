@@ -1,0 +1,552 @@
+{
+ "instance_id": "<node>__s<seed> (seed decimal, no padding); the gate's instance id",
+ "label": "P3 instance split of the sweep-2 C3 analysis (PRE-SPLIT A as amended by R1-G5-S9 (1)), version 2; node names, seeds and salts only",
+ "missing_instances": "drop out without reassignment; reported by the gate (off_design_size, off_split)",
+ "preregistration": "docs/r1/authorizations/C3_SWEEP2_ANALYSIS_PREREG_20261121.md (R1-SWEEP2-PREREG)",
+ "schema": "c3_p3_split/v2",
+ "supersedes": {
+  "identity": "the t0 block and the t1 entries of the eight v1 nodes are byte-identical to v1; v1 is this file restricted to the v1 nodes",
+  "path": "r1/c3/splits/c3_p3_split_v1.json",
+  "sha256": "b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569"
+ },
+ "t0": {
+  "counts": {
+   "dev": 3,
+   "test": 9,
+   "train": 6
+  },
+  "nodes": {
+   "digits_mlp": {
+    "dev": [
+     "digits_mlp__s214",
+     "digits_mlp__s104",
+     "digits_mlp__s194"
+    ],
+    "test": [
+     "digits_mlp__s204",
+     "digits_mlp__s114",
+     "digits_mlp__s234",
+     "digits_mlp__s274",
+     "digits_mlp__s124",
+     "digits_mlp__s254",
+     "digits_mlp__s244",
+     "digits_mlp__s174",
+     "digits_mlp__s184"
+    ],
+    "train": [
+     "digits_mlp__s134",
+     "digits_mlp__s154",
+     "digits_mlp__s224",
+     "digits_mlp__s144",
+     "digits_mlp__s164",
+     "digits_mlp__s264"
+    ]
+   },
+   "openml_breast_w": {
+    "dev": [
+     "openml_breast_w__s155",
+     "openml_breast_w__s275",
+     "openml_breast_w__s205"
+    ],
+    "test": [
+     "openml_breast_w__s195",
+     "openml_breast_w__s175",
+     "openml_breast_w__s215",
+     "openml_breast_w__s185",
+     "openml_breast_w__s255",
+     "openml_breast_w__s105",
+     "openml_breast_w__s245",
+     "openml_breast_w__s115",
+     "openml_breast_w__s145"
+    ],
+    "train": [
+     "openml_breast_w__s125",
+     "openml_breast_w__s225",
+     "openml_breast_w__s165",
+     "openml_breast_w__s135",
+     "openml_breast_w__s265",
+     "openml_breast_w__s235"
+    ]
+   },
+   "openml_climate": {
+    "dev": [
+     "openml_climate__s184",
+     "openml_climate__s144",
+     "openml_climate__s204"
+    ],
+    "test": [
+     "openml_climate__s194",
+     "openml_climate__s254",
+     "openml_climate__s214",
+     "openml_climate__s264",
+     "openml_climate__s154",
+     "openml_climate__s164",
+     "openml_climate__s234",
+     "openml_climate__s244",
+     "openml_climate__s224"
+    ],
+    "train": [
+     "openml_climate__s104",
+     "openml_climate__s124",
+     "openml_climate__s134",
+     "openml_climate__s274",
+     "openml_climate__s114",
+     "openml_climate__s174"
+    ]
+   },
+   "openml_credit_approval": {
+    "dev": [
+     "openml_credit_approval__s130",
+     "openml_credit_approval__s100",
+     "openml_credit_approval__s260"
+    ],
+    "test": [
+     "openml_credit_approval__s230",
+     "openml_credit_approval__s150",
+     "openml_credit_approval__s210",
+     "openml_credit_approval__s120",
+     "openml_credit_approval__s270",
+     "openml_credit_approval__s200",
+     "openml_credit_approval__s250",
+     "openml_credit_approval__s190",
+     "openml_credit_approval__s180"
+    ],
+    "train": [
+     "openml_credit_approval__s110",
+     "openml_credit_approval__s220",
+     "openml_credit_approval__s240",
+     "openml_credit_approval__s160",
+     "openml_credit_approval__s170",
+     "openml_credit_approval__s140"
+    ]
+   },
+   "openml_ionosphere": {
+    "dev": [
+     "openml_ionosphere__s273",
+     "openml_ionosphere__s203",
+     "openml_ionosphere__s153"
+    ],
+    "test": [
+     "openml_ionosphere__s213",
+     "openml_ionosphere__s193",
+     "openml_ionosphere__s143",
+     "openml_ionosphere__s253",
+     "openml_ionosphere__s173",
+     "openml_ionosphere__s233",
+     "openml_ionosphere__s103",
+     "openml_ionosphere__s123",
+     "openml_ionosphere__s223"
+    ],
+    "train": [
+     "openml_ionosphere__s163",
+     "openml_ionosphere__s113",
+     "openml_ionosphere__s243",
+     "openml_ionosphere__s133",
+     "openml_ionosphere__s263",
+     "openml_ionosphere__s183"
+    ]
+   },
+   "openml_sonar": {
+    "dev": [
+     "openml_sonar__s225",
+     "openml_sonar__s255",
+     "openml_sonar__s115"
+    ],
+    "test": [
+     "openml_sonar__s135",
+     "openml_sonar__s145",
+     "openml_sonar__s235",
+     "openml_sonar__s185",
+     "openml_sonar__s245",
+     "openml_sonar__s205",
+     "openml_sonar__s175",
+     "openml_sonar__s195",
+     "openml_sonar__s275"
+    ],
+    "train": [
+     "openml_sonar__s105",
+     "openml_sonar__s125",
+     "openml_sonar__s265",
+     "openml_sonar__s215",
+     "openml_sonar__s155",
+     "openml_sonar__s165"
+    ]
+   },
+   "openml_wdbc": {
+    "dev": [
+     "openml_wdbc__s110",
+     "openml_wdbc__s270",
+     "openml_wdbc__s220"
+    ],
+    "test": [
+     "openml_wdbc__s240",
+     "openml_wdbc__s160",
+     "openml_wdbc__s190",
+     "openml_wdbc__s230",
+     "openml_wdbc__s250",
+     "openml_wdbc__s150",
+     "openml_wdbc__s140",
+     "openml_wdbc__s120",
+     "openml_wdbc__s130"
+    ],
+    "train": [
+     "openml_wdbc__s200",
+     "openml_wdbc__s100",
+     "openml_wdbc__s170",
+     "openml_wdbc__s260",
+     "openml_wdbc__s180",
+     "openml_wdbc__s210"
+    ]
+   },
+   "tabular_mlp": {
+    "dev": [
+     "tabular_mlp__s222",
+     "tabular_mlp__s252",
+     "tabular_mlp__s112"
+    ],
+    "test": [
+     "tabular_mlp__s172",
+     "tabular_mlp__s192",
+     "tabular_mlp__s262",
+     "tabular_mlp__s102",
+     "tabular_mlp__s202",
+     "tabular_mlp__s132",
+     "tabular_mlp__s232",
+     "tabular_mlp__s122",
+     "tabular_mlp__s272"
+    ],
+    "train": [
+     "tabular_mlp__s142",
+     "tabular_mlp__s182",
+     "tabular_mlp__s242",
+     "tabular_mlp__s212",
+     "tabular_mlp__s152",
+     "tabular_mlp__s162"
+    ]
+   }
+  },
+  "rule": "per node, order by sha256('c3_p3_split/v1:' + <instance id>); first 9 test, next 3 dev, last 6 train",
+  "salt": "c3_p3_split/v1",
+  "seeds": "e1b_collect._instance_seed(node, k) = 100 + 10k + (sum(ord(c) for c in node) mod 7), k = 0..17"
+ },
+ "t1": {
+  "counts": {
+   "dev": 2,
+   "test": 6,
+   "train": 4
+  },
+  "membership": {
+   "autoresearch_fixedtokens": {
+    "role": "g5_note",
+    "suite": "autoresearch",
+    "supply": "arms_and_gate"
+   },
+   "gc7rc_etth1": {
+    "role": "g5_addendum_extra_task",
+    "suite": null,
+    "supply": "never"
+   },
+   "gc7rc_forestcover": {
+    "role": "g5_addendum_extra_task",
+    "suite": null,
+    "supply": "never"
+   },
+   "mlab_cifar10": {
+    "role": "g5_note",
+    "suite": "MLAgentBench",
+    "supply": "arms_and_gate"
+   },
+   "mlab_imdb": {
+    "role": "g5_note",
+    "suite": "MLAgentBench",
+    "supply": "arms_and_gate"
+   },
+   "mlab_ogbn_arxiv": {
+    "role": "g5_note",
+    "suite": "MLAgentBench",
+    "supply": "arms_and_gate"
+   },
+   "mlgym_breakout_minatar": {
+    "role": "g5_note",
+    "suite": "MLGym",
+    "supply": "arms_and_gate"
+   },
+   "mlgym_cifar10": {
+    "role": "g5_note",
+    "suite": "MLGym",
+    "supply": "arms_and_gate"
+   },
+   "mlgym_fmnist": {
+    "role": "g5_note",
+    "suite": "MLGym",
+    "supply": "arms_and_gate"
+   },
+   "mlgym_houseprice": {
+    "role": "g5_note",
+    "suite": "MLGym",
+    "supply": "arms_and_gate"
+   },
+   "mlgym_metamaze": {
+    "role": "g5_addendum_mlgym",
+    "suite": "MLGym",
+    "supply": "arms_and_gate_after_g5_addendum"
+   },
+   "mlgym_titanic": {
+    "role": "g5_addendum_mlgym",
+    "suite": "MLGym",
+    "supply": "arms_and_gate_after_g5_addendum"
+   }
+  },
+  "nodes": {
+   "autoresearch_fixedtokens": {
+    "dev": [
+     "autoresearch_fixedtokens__s5103",
+     "autoresearch_fixedtokens__s5101"
+    ],
+    "test": [
+     "autoresearch_fixedtokens__s5105",
+     "autoresearch_fixedtokens__s5106",
+     "autoresearch_fixedtokens__s5104",
+     "autoresearch_fixedtokens__s5107",
+     "autoresearch_fixedtokens__s5111",
+     "autoresearch_fixedtokens__s5102"
+    ],
+    "train": [
+     "autoresearch_fixedtokens__s5112",
+     "autoresearch_fixedtokens__s5109",
+     "autoresearch_fixedtokens__s5108",
+     "autoresearch_fixedtokens__s5110"
+    ]
+   },
+   "gc7rc_etth1": {
+    "dev": [
+     "gc7rc_etth1__s5105",
+     "gc7rc_etth1__s5106"
+    ],
+    "test": [
+     "gc7rc_etth1__s5110",
+     "gc7rc_etth1__s5108",
+     "gc7rc_etth1__s5109",
+     "gc7rc_etth1__s5111",
+     "gc7rc_etth1__s5102",
+     "gc7rc_etth1__s5104"
+    ],
+    "train": [
+     "gc7rc_etth1__s5107",
+     "gc7rc_etth1__s5101",
+     "gc7rc_etth1__s5103",
+     "gc7rc_etth1__s5112"
+    ]
+   },
+   "gc7rc_forestcover": {
+    "dev": [
+     "gc7rc_forestcover__s5105",
+     "gc7rc_forestcover__s5112"
+    ],
+    "test": [
+     "gc7rc_forestcover__s5103",
+     "gc7rc_forestcover__s5110",
+     "gc7rc_forestcover__s5102",
+     "gc7rc_forestcover__s5108",
+     "gc7rc_forestcover__s5107",
+     "gc7rc_forestcover__s5109"
+    ],
+    "train": [
+     "gc7rc_forestcover__s5101",
+     "gc7rc_forestcover__s5106",
+     "gc7rc_forestcover__s5104",
+     "gc7rc_forestcover__s5111"
+    ]
+   },
+   "mlab_cifar10": {
+    "dev": [
+     "mlab_cifar10__s5106",
+     "mlab_cifar10__s5105"
+    ],
+    "test": [
+     "mlab_cifar10__s5104",
+     "mlab_cifar10__s5101",
+     "mlab_cifar10__s5111",
+     "mlab_cifar10__s5109",
+     "mlab_cifar10__s5108",
+     "mlab_cifar10__s5103"
+    ],
+    "train": [
+     "mlab_cifar10__s5112",
+     "mlab_cifar10__s5102",
+     "mlab_cifar10__s5107",
+     "mlab_cifar10__s5110"
+    ]
+   },
+   "mlab_imdb": {
+    "dev": [
+     "mlab_imdb__s5101",
+     "mlab_imdb__s5108"
+    ],
+    "test": [
+     "mlab_imdb__s5104",
+     "mlab_imdb__s5111",
+     "mlab_imdb__s5102",
+     "mlab_imdb__s5105",
+     "mlab_imdb__s5109",
+     "mlab_imdb__s5112"
+    ],
+    "train": [
+     "mlab_imdb__s5107",
+     "mlab_imdb__s5106",
+     "mlab_imdb__s5103",
+     "mlab_imdb__s5110"
+    ]
+   },
+   "mlab_ogbn_arxiv": {
+    "dev": [
+     "mlab_ogbn_arxiv__s5104",
+     "mlab_ogbn_arxiv__s5106"
+    ],
+    "test": [
+     "mlab_ogbn_arxiv__s5103",
+     "mlab_ogbn_arxiv__s5110",
+     "mlab_ogbn_arxiv__s5109",
+     "mlab_ogbn_arxiv__s5102",
+     "mlab_ogbn_arxiv__s5101",
+     "mlab_ogbn_arxiv__s5107"
+    ],
+    "train": [
+     "mlab_ogbn_arxiv__s5108",
+     "mlab_ogbn_arxiv__s5112",
+     "mlab_ogbn_arxiv__s5111",
+     "mlab_ogbn_arxiv__s5105"
+    ]
+   },
+   "mlgym_breakout_minatar": {
+    "dev": [
+     "mlgym_breakout_minatar__s5108",
+     "mlgym_breakout_minatar__s5105"
+    ],
+    "test": [
+     "mlgym_breakout_minatar__s5112",
+     "mlgym_breakout_minatar__s5104",
+     "mlgym_breakout_minatar__s5106",
+     "mlgym_breakout_minatar__s5101",
+     "mlgym_breakout_minatar__s5103",
+     "mlgym_breakout_minatar__s5107"
+    ],
+    "train": [
+     "mlgym_breakout_minatar__s5110",
+     "mlgym_breakout_minatar__s5102",
+     "mlgym_breakout_minatar__s5109",
+     "mlgym_breakout_minatar__s5111"
+    ]
+   },
+   "mlgym_cifar10": {
+    "dev": [
+     "mlgym_cifar10__s5106",
+     "mlgym_cifar10__s5104"
+    ],
+    "test": [
+     "mlgym_cifar10__s5108",
+     "mlgym_cifar10__s5112",
+     "mlgym_cifar10__s5102",
+     "mlgym_cifar10__s5110",
+     "mlgym_cifar10__s5103",
+     "mlgym_cifar10__s5107"
+    ],
+    "train": [
+     "mlgym_cifar10__s5105",
+     "mlgym_cifar10__s5101",
+     "mlgym_cifar10__s5111",
+     "mlgym_cifar10__s5109"
+    ]
+   },
+   "mlgym_fmnist": {
+    "dev": [
+     "mlgym_fmnist__s5101",
+     "mlgym_fmnist__s5102"
+    ],
+    "test": [
+     "mlgym_fmnist__s5105",
+     "mlgym_fmnist__s5112",
+     "mlgym_fmnist__s5103",
+     "mlgym_fmnist__s5111",
+     "mlgym_fmnist__s5108",
+     "mlgym_fmnist__s5107"
+    ],
+    "train": [
+     "mlgym_fmnist__s5109",
+     "mlgym_fmnist__s5106",
+     "mlgym_fmnist__s5104",
+     "mlgym_fmnist__s5110"
+    ]
+   },
+   "mlgym_houseprice": {
+    "dev": [
+     "mlgym_houseprice__s5102",
+     "mlgym_houseprice__s5101"
+    ],
+    "test": [
+     "mlgym_houseprice__s5108",
+     "mlgym_houseprice__s5109",
+     "mlgym_houseprice__s5107",
+     "mlgym_houseprice__s5111",
+     "mlgym_houseprice__s5105",
+     "mlgym_houseprice__s5104"
+    ],
+    "train": [
+     "mlgym_houseprice__s5103",
+     "mlgym_houseprice__s5106",
+     "mlgym_houseprice__s5112",
+     "mlgym_houseprice__s5110"
+    ]
+   },
+   "mlgym_metamaze": {
+    "dev": [
+     "mlgym_metamaze__s5106",
+     "mlgym_metamaze__s5108"
+    ],
+    "test": [
+     "mlgym_metamaze__s5102",
+     "mlgym_metamaze__s5111",
+     "mlgym_metamaze__s5105",
+     "mlgym_metamaze__s5107",
+     "mlgym_metamaze__s5104",
+     "mlgym_metamaze__s5112"
+    ],
+    "train": [
+     "mlgym_metamaze__s5103",
+     "mlgym_metamaze__s5110",
+     "mlgym_metamaze__s5109",
+     "mlgym_metamaze__s5101"
+    ]
+   },
+   "mlgym_titanic": {
+    "dev": [
+     "mlgym_titanic__s5105",
+     "mlgym_titanic__s5102"
+    ],
+    "test": [
+     "mlgym_titanic__s5110",
+     "mlgym_titanic__s5103",
+     "mlgym_titanic__s5107",
+     "mlgym_titanic__s5106",
+     "mlgym_titanic__s5108",
+     "mlgym_titanic__s5104"
+    ],
+    "train": [
+     "mlgym_titanic__s5112",
+     "mlgym_titanic__s5101",
+     "mlgym_titanic__s5111",
+     "mlgym_titanic__s5109"
+    ]
+   }
+  },
+  "role_authority": "R1-G5-S9 (author, 27 Nov 2026): split A, gate a; R1-STEP-ORDER (2)(a); R1-1GC-FALLBACK. The roles are static: whether a node's G.1b passed or its addendum exists is read from those records, never from this file",
+  "roles": {
+   "g5_addendum_extra_task": "labelled through its G.5 addendum note; never supplied to the arms or the gate; reported per node as an extra task (R1-G5-S9 (2), R1-1GC-FALLBACK)",
+   "g5_addendum_mlgym": "labelled only through its G.5 addendum note, after its G.1b determinism PASS (R1-STEP-ORDER (2)(a)); supplied to the arms and the gate as suite MLGym only with those labels (R1-G5-S9 (2)-(3))",
+   "g5_note": "labelled under the signed G.5 note; supplied to the arms and the gate"
+  },
+  "rule": "per node, order by sha256('c3_t1_split/v1:' + <node> + ':' + <instance seed>); first 6 test, next 2 dev, last 4 train (G5-SPLIT)",
+  "salt": "c3_t1_split/v1",
+  "seeds": "5101-5112"
+ }
+}
