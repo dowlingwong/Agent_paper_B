@@ -157,15 +157,38 @@ def run_smoke(*, manifest_path: str, observed_path: str, out: str, harness_root:
     return record
 
 
-def _audit_one(args: tuple[str, str, float, str, str | None]) -> dict[str, Any]:
-    chunk_dir, audit_dir, sigma, harness_root, repo_root = args
+def _expected_worker() -> dict[str, Any]:
+    """The pinned worker interpreter/version/package record G6 requires for appends."""
+    import importlib.metadata as md
+    import sys
+
+    packages: dict[str, str] = {}
+    for dist in md.distributions():
+        name = (dist.metadata.get("Name") or "").lower().replace("_", "-")
+        if not name or name in packages:
+            raise RuntimeError("duplicate or missing package name in the audit environment")
+        packages[name] = dist.version
+    versions = {name: md.version(name) for name in ("scikit-learn", "numpy", "scipy", "pandas")}
+    return {
+        "worker_python": sys.executable,
+        "worker_python_realpath": os.path.realpath(sys.executable),
+        "worker_prefix": sys.prefix,
+        "worker_versions": versions,
+        "package_list_sha256": hashlib.sha256(
+            json.dumps(packages, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
+    }
+
+
+def _audit_one(args: tuple[str, str, float, str, str | None, dict[str, Any]]) -> dict[str, Any]:
+    chunk_dir, audit_dir, sigma, harness_root, repo_root, expected = args
     if harness_root:
         os.environ["AR_HARNESS_ROOT"] = harness_root
     tmp = Path(audit_dir) / "tmp"
     tmp.mkdir(parents=True, exist_ok=True)
     cache = Cache(Path(audit_dir) / "cache.jsonl")
     try:
-        rows = audit_chunk(chunk_dir, audit_dir, sigma_node=sigma, runner=harness_runner(tmp), cache=cache)
+        rows = audit_chunk(chunk_dir, audit_dir, sigma_node=sigma,
+                           runner=harness_runner(tmp, expected_worker=expected), cache=cache)
     finally:
         for path in tmp.rglob("*"):
             if path.is_file():
@@ -182,10 +205,11 @@ def audit_smoke(*, out: str, sigma_node: float, harness_root: str | None, repo_r
     root = Path(out)
     smoke = _read_json(root / "smoke.json")
     chunks = smoke["chunks"]
+    expected = _expected_worker()
     tasks = []
     for arm, chunk_dir in sorted(chunks.items()):
         audit_dir = str(root / "audits" / arm)
-        tasks.append((chunk_dir, audit_dir, float(sigma_node), harness_root, repo_root))
+        tasks.append((chunk_dir, audit_dir, float(sigma_node), harness_root, repo_root, expected))
     results = []
     with ProcessPoolExecutor(max_workers=max(1, int(jobs))) as pool:
         futures = {pool.submit(_audit_one, task): task for task in tasks}
@@ -193,7 +217,8 @@ def audit_smoke(*, out: str, sigma_node: float, harness_root: str | None, repo_r
             results.append(future.result())
     results.sort(key=lambda r: r["audit"])
     record = {"schema": "r1_d3_smoke_audit/v1", "engineering_only": True,
-              "task": "compute/20261127-27", "results": results}
+              "task": "compute/20261127-27", "results": results,
+              "expected_worker": expected}
     record["record_sha256"] = _write_json(root / "audit.json", record)
     return record
 
