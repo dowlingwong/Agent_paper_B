@@ -7,14 +7,15 @@ on an empty RTX 6000 Ada; `kev-4b` and `qwen3.5-4b-base` STOP with CUDA OOM at m
 Under P4-MB A an OOM is an arm STOP and the author decides; no micro-batch, checkpointing or memory setting was
 changed. The probe charged **2.1603 GPU-h** against phase 1's 40 (reporting threshold).
 
-- **Task branch:** `compute-p4-ada-probe-20261127` @ `e99ebee3f9d9477798c0104e95c78474aaa357e7` (two commits over
+- **Task branch:** `compute-p4-ada-probe-20261127` @ `4e51adef` (two commits over
   `origin/main` `91cfd48a`; docs/records only, no `r1/` change). Full record:
   `docs/r1/reports/trackp_p4_probe_ada_20261127/P4_ADA_PROBE_20261127.md`, the filled probe spec, all eight sealed
   attempts (job records, receipts, logs, `out.tar`), `probe_charges.json` and the refusal.
-- **Independent review:** `compute-p4-ada-probe-review-20261127` @ `05d3048abbe23131823a878817f71c22b73845ad`,
-  **ACCEPTED WITH MINOR FINDINGS**. It reproduced the image VERSIONS pin from the OCI layer, verified all seals and
-  charges, the two PASS timings and the two empty-card OOMs, and agreed the 4B OOM is the arm STOP. Its minors are
-  fixed on the task tip (guard loops stopped; T1-complete charge; refusal wording; `p4_run.log` files now committed).
+- **Independent review:** `compute-p4-ada-probe-review-20261127` @ `609581447c369052af3a9a6873fda1bf3260b7a4`,
+  **ACCEPTED** (first review `05d3048a` accepted with minor findings; the re-check closed all four). It reproduced the
+  image VERSIONS pin from the OCI layer, verified all seals and charges, the two PASS timings and the two empty-card
+  OOMs, and agreed the 4B OOM is the arm STOP. The minors are fixed on the task tip (guard loops stopped; T1-complete
+  charge; refusal wording; `p4_run.log` files now committed).
 - **Hashes:** probe spec `540bd979…`; host config `bb0c7251…` (at `91cfd48a`); image VERSIONS `aaa1a304…`;
   T1 `versions.out` `49fec111…`; `condor_history.txt` `df41e2df…` (`760065 0 3 0.0`); charge total **2.1603**.
 - **Measured:** kev-0.8b peak 25,939 MiB, 3.7188 s/step, attempt-4 charge 0.1231; qwen3.5-0.8b-base peak 27,271 MiB,
@@ -33,7 +34,7 @@ changed. The probe charged **2.1603 GPU-h** against phase 1's 40 (reporting thre
 - **Needs:** coordinator merges the task branch and the review branch after its checks; author/coordinator decide the
   4B route and the note's harness line. No GPU job is left running; the Ada guard loops are stopped.
 
-**Task id:** compute/20261127-19. **Branch/tip:** `compute-p4-ada-probe-20261127` @ `e99ebee3`; review
-`compute-p4-ada-probe-review-20261127` @ `05d3048a`. **Tests:** `p4_lib validate --probe` rc 0; all eight seals verify;
+**Task id:** compute/20261127-19. **Branch/tip:** `compute-p4-ada-probe-20261127` @ `4e51adef`; review
+`compute-p4-ada-probe-review-20261127` @ `60958144`. **Tests:** `p4_lib validate --probe` rc 0; all eight seals verify;
 the two PASS jobs rc 0; a docs/record branch changes no code. **What happens next:** merge, then the phase-1 note
 revision and the author's 4B decision.
