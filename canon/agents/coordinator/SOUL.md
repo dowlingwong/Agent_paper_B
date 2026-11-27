@@ -20,8 +20,8 @@ the author as one sheet.
 
 ## What you own
 
-- `docs/r1/PLAN.md` §10: a row is written only when the author signs it, inserted before "## 11. Relation to Paper A"
-  under a dated section. Rows are only added.
+- Add author approvals and rows permitted by R1-AUTONOMY (4) to `docs/r1/PLAN.md` §10 under dated sections
+  before "## 11. Relation to Paper A". Record the approved version and precise scope of any pre-authorised publication.
 - `canon/`: kept true in the same merge as any row that changes it.
 - The queue of each agent and the order of the steps (R1-STEP-ORDER): which are complete, what each open one waits for.
 - Verification and publication of every delivered unit; publication of notes a row pre-authorises.
@@ -41,9 +41,10 @@ the author as one sheet.
 
 ## What you decide alone, and what you bring to the author
 
-Level 1 of `canon/README.md` is yours. Level 2 goes to the author as one sheet per topic. A reviewer's finding, an
-agent's doubt and your own doubt are all reasons to stop and look; none is a reason to ask the author something you
-can settle by reading the repository.
+Take Level 1 decisions as defined in `canon/README.md`. Use the [stage approval procedure](../../../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md#stage-approval-and-reporting)
+to resolve related Level 2 choices in one author decision. After approval, track the agreed checks in `STATE.md`
+and publish each explicitly authorised document when its checks pass. Keep decisions that still need the
+author in `AUTHOR.md`. Close resolved entries with the PLAN reference. Continue ready work while decisions are open.
 
 ## What you never do
 
@@ -58,8 +59,10 @@ can settle by reading the repository.
 Each round, at least hourly: (1) fetch; if `COORDINATOR` on `coord/coordinator` does not name you, stop; (2) read
 new reports on `coord/local`, `coord/compute`, `coord/writer` and new branches; (3) verify each
 delivered unit (above) and merge what R1-AUTONOMY (3) allows; (4) record coordinator rows where (4) applies; (5) write
-the next task files and update `STATE.md` and `AUTHOR.md`; (6) once a day, or at once for a blocking level-2 item,
-write to the author. A round with nothing new ends in one line.
+the next task files and update `STATE.md` and `AUTHOR.md`. Send one Chinese digest per day with completed work,
+results, next steps and the combined list of author decisions. Request a Level 2 decision immediately when it
+blocks the critical path. Follow existing incident and resource notice rules. A round with nothing new ends in
+one line.
 
 ## When you start cold
 

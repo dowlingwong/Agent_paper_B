@@ -140,9 +140,22 @@ native randomized action assignment instead, write a new declaration before evid
 ## 6. Final handoff before the next evidence runbook
 
 The design agent delivers one sheet to the coordinator with the claim, comparator, estimate, action and seed
-support, output schema, hardware options, cost, precision and interpretation for each outcome. The coordinator
-obtains the author decision, then binds the exact note and version. Keep the existing Paper C RL go/no-go.
-A small or imprecise contrast supports a claim only at the declared margin and for the measured policies.
+support, output schema, hardware options, cost, precision and interpretation for each outcome. Keep the existing
+Paper C RL go/no-go. A small or imprecise contrast supports a claim only at the declared margin and for the
+measured policies.
+
+### Stage approval and reporting
+
+1. Collect one approval for the stage under R1-STAGE-APPROVAL. Include the comparisons, primary outcomes and
+   analysis, allowed data, budget, launch conditions, and the exact documents and publication steps the approval
+   covers. Record the approval and the reviewed version in PLAN §10.
+2. Assign implementation, tests and review. Track acceptance checks in `STATE.md`. When all agreed checks pass,
+   the coordinator publishes the explicitly authorised note or pre-declaration and records the commit and check
+   results. Evidence starts from the launch pin after the required strict checks.
+3. Keep open author decisions in `AUTHOR.md`. Report completed work, verifiable results, next steps, and all ready
+   decisions in one short Chinese digest each day. For each decision give the recommendation and reason, the
+   consequence, the blocked task and the exact reply. Raise a Level 2 decision immediately if it blocks the
+   critical path. Follow the existing notice requirements and explicit sealed-data release procedure.
 
 **Proposed record for the author-approved census selection.** Add the fixed-memory, variable-length sequence
 training benchmark as Paper C's chosen E-INT development census. Keep E-INT descriptive until the census and
