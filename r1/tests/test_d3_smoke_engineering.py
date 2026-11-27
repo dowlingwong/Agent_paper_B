@@ -35,13 +35,12 @@ def test_smoke_arms_are_the_seven_declared_rule_arms_and_never_learned():
     assert not set(S.SMOKE_ARMS) & set(A.LEARNED_ARMS)
 
 
-def test_smoke_audit_block_is_disjoint_from_every_deployment_block_and_reserved_set():
-    smoke = set(G.audit_seeds(6301)) | set(G.audit_seeds(6302))
-    deployment = {s for seed in D3.INSTANCE_SEEDS for s in G.audit_seeds(seed)}
-    assert not smoke & deployment
-    assert smoke == set(range(6391, 6411))
-    for block in D3.declared_d3_seeds().values():
-        assert not smoke & block
+def test_smoke_audit_seeds_have_no_audit_block():
+    # The frozen pre-declaration says the smoke instances are never audited for Y.
+    with pytest.raises(G.AuditStop):
+        G.audit_seeds(6301)
+    with pytest.raises(G.AuditStop):
+        G.audit_seeds(6302)
 
 
 def test_smoke_record_is_self_hashed_and_revalidated(tmp_path):

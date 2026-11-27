@@ -63,12 +63,12 @@ def test_audit_seeds_cover_the_declared_block():
         G.audit_seeds(6200)
 
 
-def test_smoke_audit_seeds_are_a_separate_block():
-    # ENGINEERING smoke only: 6391-6400 / 6401-6410, disjoint from every deployment block.
-    assert G.audit_seeds(6301) == tuple(range(6391, 6401))
-    assert G.audit_seeds(6302) == tuple(range(6401, 6411))
-    assert not set(G.audit_seeds(6301)) & set(G.audit_seeds(6201))
-    assert not set(G.audit_seeds(6302)) & set(G.audit_seeds(6218))
+def test_smoke_audit_seeds_are_refused():
+    # The frozen pre-declaration excludes Y audits of the engineering smoke instances.
+    with pytest.raises(G.AuditStop):
+        G.audit_seeds(6301)
+    with pytest.raises(G.AuditStop):
+        G.audit_seeds(6302)
 
 
 def test_snapshot_self_hash_is_checked(tmp_path):
