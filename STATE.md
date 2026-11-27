@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 05:25 CET, `main` at `98c571d2`
+# State — 27 Nov 2026, 05:30 CET, `main` at `30f9b0ce`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -54,7 +54,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | 11 | `local/20261127-07` harness verify-seed unit **done** (harness `9bb41680`, checker `e44d966f`, ACCEPTED; checker merged); `local/20261127-08` revision 4 to frozen (after G2 and the harness unit); `local/20261126-06` unit 2 audit hosts **STOP** (re-check NOT ACCEPTED: launcher refuses shared cards against R1-CARD-SHARE; addendum binding to be designed; Ada as a G.5 audit host is a new host for a table, an author item later) — parked | §2 2A, 2B | ready in that order |
 | done | `local/20261126-13`: hygiene inventory (`2005d0b0`: 72 worktrees proposed to retire, 14 keep, 6 active; 29 untracked dirs) | §2 0 | merged `bd406db9`; retirements are the author's |
 | done | `local/20261127-09`: G.5 sd assembly and consumers merged `98c571d2`; render draft `mac-g5-sd-render-20261127` @ `bc968b3e` (P10 PASS) held for publication | §2 2B | G.5 waits for P11's TASL-2 items, the final `paper.commit`, the final review |
-| 2a | `local/20261127-12`: screening note for signature; `local/20261127-13`: rev 4 G2 fill; `local/20261127-11`: launcher venv mode | §2 2A, 4 | ready |
+| 2a | `local/20261127-12` **done** (note ready to sign, review ACCEPTED, `b2360a7a`); `local/20261127-13` **done** (rev 4 binds G2; merged); `local/20261127-11`: launcher venv mode | §2 2A, 4 | venv mode in progress |
 | (old) | `local/20261127-01`: G.5 Student-t path | §2 2B | superseded by `-09`; was STOP: re-check NOT ACCEPTED pending the author's scope (gate oracle and A2 fit) and scale (sd matching) decision (`AUTHOR.md`). Branch `mac-g5-student-t-20261127` @ `b9bc00fc` kept |
 | 2b | `local/20261126-08` final render | §2 2B | **STOP for decisions** (`mac-g5-render-20261126` @ `2959b369`; review NOT ACCEPTED on B1–B4): P10 and P11 go to the author (`sheets/G5_P10_P11_S9_SHEET_20261127.md`); B3 (copy review's verdict case) → `compute/20261127-03`; `paper.commit` filled at publication |
 | — | `local/20261126-12`: G.5 addendum code | §2 2B | blocked: the author's S9 row, after item 9 |
