@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 19:55 CET, `main` at `cbc86fc5`
+# State — 27 Nov 2026, 20:25 CET, `main` at `cbc86fc5`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -42,7 +42,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | done | `compute/20261127-14`: screening smoke **PASS** (168/168, no STOP) | §2 2A | merged `98c571d2`; note completion `local/20261127-12`, then the author signs |
 | done | `compute/20261127-17`: G2 constants artifact (sha256 `4f5f686b…`, re-fit byte-identical, review ACCEPTED) | §2 2A | merged `98c571d2`; revision 4 fill `local/20261127-13` |
 | 1d2 | `compute/20261127-28`: E-INT census on a second Ada card (R1-PAPERC-EINT-CENSUS, `d669b0bf`); smoke first; yields to Paper B | §2 3B | ready after `-27` has its card |
-| done | `compute/20261127-27`: D.3 engineering smoke (TASL-2; G1/G6 chain PASS; G7 refused the smoke seed) merged `35c42b81`. **Coordinator errors:** the card asked for a G6 audit the frozen pre-declaration excludes for the smoke, and the merge included a G6 code change that was merged as documentation without the full suite; the suite was run afterwards: zero new failures, 6 more passing. G6 smoke path removed by `compute/20261127-31` | §2 2A | — |
+| done | `compute/20261127-27`: D.3 engineering smoke (TASL-2; G1/G6 chain PASS; G7 refused the smoke seed) merged `35c42b81`. **Coordinator errors:** the card asked for a G6 audit the frozen pre-declaration excludes for the smoke, and the merge included a G6 code change that was merged as documentation without the full suite; the suite was run afterwards: zero new failures, 6 more passing. G6 smoke path removal ACCEPTED (`345f4c97`, review `6eadf655`), merge under test | §2 2A | — |
 | 1b | `compute/20261127-32`: G.5 P11 TASL-2 items (CPU sets free) | §2 2B | ready, after the screening launch |
 
 ## Local (Claude on the Mac)
