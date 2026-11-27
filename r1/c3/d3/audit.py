@@ -37,8 +37,9 @@ repetitions and w points. A cached run is reused only when its ``run_sha256`` is
 STOP. A hit is disclosed per row. The cache is bound to one audit environment: the launcher starts a fresh cache
 file per environment record and refuses to mix an environment change into one cache.
 
-This unit does not parallelise. The launcher runs one audit job per ``(stage, arm, repetition)`` and may parallelise
-the 18 instances itself; the cache is append-only JSONL, so separate processes append without rewriting.
+This unit does not parallelise. The launcher runs one audit job per ``(stage, arm, repetition)``. Separate
+processes may append cache rows, but a JSONL line write is not atomic: the launcher serialises the cache appends and
+the ``Y_final``/``Y_w`` row appends, or merges per-instance rows after the jobs.
 """
 from __future__ import annotations
 
@@ -138,11 +139,14 @@ class Cache:
                 if not line.strip():
                     continue
                 row = json.loads(line)
-                run = Run(seed=int(row["seed"]), metric=float(row["metric"]),
+                run = Run(seed=int(row["seed"]), metric=_check_metric(row["metric"], "cache"),
                           run_sha256=str(row["run_sha256"]), cached=True)
                 if not run.run_sha256:
                     raise AuditStop("a cache row without a run_sha256 is refused")
-                self.rows[(str(row["node"]), str(row["config_sha256"]), run.seed)] = run
+                key = (str(row["node"]), str(row["config_sha256"]), run.seed)
+                if key in self.rows and self.rows[key].run_sha256 != run.run_sha256:
+                    raise AuditStop(f"cache key {key} has two different run_sha256 values")
+                self.rows[key] = run
 
     def get(self, node: str, sha: str, seed: int) -> Run | None:
         row = self.rows.get((node, sha, int(seed)))
@@ -220,6 +224,8 @@ def audit_snapshot(snapshot: Mapping[str, Any], *, sigma_node: float, runner: Ru
     incumbent = dict(snapshot["incumbent_config"])
     start = dict(snapshot["start_config"])
     inc_sha, start_sha = config_sha256(incumbent), config_sha256(start)
+    if "worker_runs" in snapshot and int(snapshot["worker_runs"]) != w:
+        raise AuditStop(f"{instance_id}: snapshot w={w} but worker_runs={snapshot['worker_runs']}")
     row = {**_row_head(snapshot, sigma_node), "w": w, "w_actual": int(snapshot.get("w_actual", w)),
            "ended_on": snapshot.get("ended_on"), "final": bool(snapshot.get("final", False)),
            "config_sha256": inc_sha, "start_config_sha256": start_sha, "k": K, "seeds": list(seeds),
@@ -275,8 +281,13 @@ def audit_campaign(campaign_dir: Path | str, out_dir: Path | str, *, sigma_node:
     final = load_snapshot(bare)
     stage, arm, node = str(final["stage"]), str(final["arm"]), str(final["node"])
     rep, instance = int(final["repetition"]), str(final["instance_id"])
+    if Path(cdir).name != instance:
+        raise AuditStop(f"{cdir}: directory name differs from instance_id {instance!r}")
+    final = load_snapshot(bare, stage=stage, arm=arm, node=node, repetition=rep, instance_id=instance)
     if not math.isfinite(float(sigma_node)) or float(sigma_node) <= 0:
         raise AuditStop("sigma_node must be a positive finite number")
+    start_sha = config_sha256(final["start_config"])
+    final_w = int(final["w"])
 
     out = Path(out_dir)
     rows_w: list[dict[str, Any]] = []
@@ -290,6 +301,10 @@ def audit_campaign(campaign_dir: Path | str, out_dir: Path | str, *, sigma_node:
         snap = load_snapshot(path, stage=stage, arm=arm, node=node, repetition=rep, instance_id=instance)
         if int(snap["w"]) != w:
             raise AuditStop(f"{path}: w={snap['w']} but the file is w{w}.json")
+        if w > final_w:
+            raise AuditStop(f"{path}: w={w} is above the campaign's final w={final_w}")
+        if config_sha256(snap["start_config"]) != start_sha:
+            raise AuditStop(f"{path}: start_config differs from final.json's start configuration")
         row = audit_snapshot(snap, sigma_node=sigma_node, runner=runner, cache=cache)
         target = out / stage / arm / f"r{rep}" / f"w{w}" / f"{instance}.json"
         if target.exists():
@@ -298,23 +313,31 @@ def audit_campaign(campaign_dir: Path | str, out_dir: Path | str, *, sigma_node:
         written[w] = target
         rows_w.append(row)
 
-    final_row = audit_snapshot(final, sigma_node=sigma_node, runner=runner, cache=cache)
-    final_w = int(final["w"])
     by_w = {row["w"]: row for row in rows_w}
-    alias = written.get(final_w)
-    if alias is not None and final_row["config_sha256"] == by_w[final_w]["config_sha256"]:
-        final_row["audit_record"] = str(alias.relative_to(out))
+    if final_w in written and config_sha256(final["incumbent_config"]) == by_w[final_w]["config_sha256"]:
+        # Decide the alias before any audit: never run the same configuration a second time.
+        import copy
+        final_row = copy.deepcopy(by_w[final_w])
+        final_row["ended_on"] = final.get("ended_on")
+        final_row["final"] = True
+        final_row["primary"] = True
         final_row["alias_of_w"] = final_w
+        final_row["audit_record"] = str(written[final_w].relative_to(out))
     else:
-        # The final incumbent can differ from the pre-decision w snapshot (a keep on the last
-        # run), so a distinct final record is written under final/w<w>/ rather than overwriting
-        # the descriptive w record.
-        target = out / stage / arm / f"r{rep}" / "final" / f"w{final_w}" / f"{instance}.json"
-        if target.exists():
-            raise AuditStop(f"{target} exists: a rerun takes a new output directory")
-        final_row["record_sha256"] = _write_json(target, final_row)
-        final_row["audit_record"] = str(target.relative_to(out))
-    final_row["primary"] = True
+        final_row = audit_snapshot(final, sigma_node=sigma_node, runner=runner, cache=cache)
+        final_row["primary"] = True
+        if final_w == 0:
+            # Design §3.3: a w=0 final has no audit path; Y=0 by rule.
+            final_row["audit_record"] = None
+        else:
+            # The final incumbent can differ from the pre-decision w snapshot (a keep on the last
+            # run), so a distinct final record is written under final/w<w>/ rather than overwriting
+            # the descriptive w record.
+            target = out / stage / arm / f"r{rep}" / "final" / f"w{final_w}" / f"{instance}.json"
+            if target.exists():
+                raise AuditStop(f"{target} exists: a rerun takes a new output directory")
+            final_row["record_sha256"] = _write_json(target, final_row)
+            final_row["audit_record"] = str(target.relative_to(out))
 
     y_final = out / "Y_final.jsonl"
     y_w = out / "Y_w.jsonl"
@@ -364,12 +387,14 @@ def harness_runner(tmp: Path | str) -> Runner:
 
     def runner(node: str, files: Mapping[str, str], seeds: list[int]) -> list[Run]:
         rows = run_config(node, dict(files), [int(s) for s in seeds], str(tmp),
-                          stop_on_invalid=True)
+                          stop_on_failure=True, stop_on_invalid=True)
         out = []
         for row in rows:
             metric = row.get("metric")
             if not row.get("success"):
                 raise AuditStop(f"{node}: audit run failed at seed {row.get('seed')}: {row.get('failure')!r}")
+            if row.get("changed_files") is not False:
+                raise AuditStop(f"{node}: audit run changed editable files at seed {row.get('seed')}")
             out.append(Run(seed=int(row["seed"]), metric=_check_metric(metric, f"{node} {row.get('seed')}"),
                            run_sha256=_sha256_json(row)))
         return out

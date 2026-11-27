@@ -17,10 +17,11 @@ INC5 = {"train.py": "LEARNING_RATE_INIT = 2e-3\n"}
 INC7 = {"train.py": "LEARNING_RATE_INIT = 3e-3\n"}
 
 
-def snapshot(w, files, *, final=False, ended_on="worker_runs"):
+def snapshot(w, files, *, final=False, ended_on="worker_runs", worker_runs=None, start=None):
     return {"schema": G.SNAPSHOT_SCHEMA, "stage": STAGE, "arm": ARM, "node": NODE, "repetition": REP,
             "instance_id": INSTANCE, "w": w, "w_actual": w, "incumbent_config": dict(files),
-            "start_config": dict(START), "config_sha256": config_sha256(files),
+            "start_config": dict(start or START), "config_sha256": config_sha256(files),
+            "worker_runs": w if worker_runs is None else worker_runs,
             "final": final, "ended_on": ended_on}
 
 
@@ -99,6 +100,7 @@ def test_w_zero_is_y_zero_without_running(tmp_path):
     result = G.audit_campaign(root / "campaigns" / INSTANCE, tmp_path / "audit",
                               sigma_node=SIGMA, runner=runner)
     assert result["final"]["Y"] == 0.0 and result["final"]["audited"] is False
+    assert result["final"]["audit_record"] is None
     assert runner.calls == 0
 
 
@@ -117,17 +119,33 @@ def test_cache_reuses_runs_across_calls(tmp_path):
     assert result["w"][0]["cache"]["start_hits"] == 10
 
 
-def test_final_at_w20_aliases_the_w20_record(tmp_path):
+class DriftingRunner(FakeRunner):
+    """Every call returns a different metric; a duplicate audit would be visible."""
+
+    def __init__(self):
+        super().__init__()
+        self.drift = 0
+
+    def __call__(self, node, files, seeds):
+        rows = super().__call__(node, files, seeds)
+        self.drift += 1
+        return [G.Run(seed=r.seed, metric=r.metric + self.drift, run_sha256=r.run_sha256) for r in rows]
+
+
+def test_final_at_w20_aliases_the_w20_record_without_a_second_audit(tmp_path):
     root = write_campaign(tmp_path / "chunk", {"w5.json": snapshot(5, INC5),
                                                "w10.json": snapshot(10, INC5),
                                                "w15.json": snapshot(15, INC5),
                                                "w20.json": snapshot(20, INC7),
                                                "final.json": snapshot(20, INC7, final=True)})
+    runner = DriftingRunner()
     result = G.audit_campaign(root / "campaigns" / INSTANCE, tmp_path / "audit",
-                              sigma_node=SIGMA, runner=FakeRunner())
+                              sigma_node=SIGMA, runner=runner, cache=G.Cache(tmp_path / "cache.jsonl"))
+    w20 = [r for r in result["w"] if r["w"] == 20][0]
     assert result["final"]["alias_of_w"] == 20
     assert result["final"]["audit_record"].endswith(f"w20/{INSTANCE}.json")
-    assert not (tmp_path / "audit" / STAGE / ARM / f"r{REP}" / "w20" / f"{INSTANCE}.json").read_text() == ""
+    assert result["final"]["Y"] == w20["Y"]
+    assert runner.calls == 3  # w5 incumbent + start, w20 incumbent; no fourth call for final
 
 
 def test_a_failed_or_missing_seed_is_a_stop(tmp_path):
@@ -152,3 +170,41 @@ def test_final_at_a_w_point_with_a_different_config_gets_its_own_record(tmp_path
     assert (tmp_path / "audit" / STAGE / ARM / f"r{REP}" / "w10" / f"{INSTANCE}.json").is_file()
     w10 = [r for r in result["w"] if r["w"] == 10][0]
     assert w10["config_sha256"] != result["final"]["config_sha256"]
+
+
+def test_snapshot_w_must_match_worker_runs_and_final_w(tmp_path):
+    root = write_campaign(tmp_path / "chunk", {"w5.json": snapshot(5, INC5, worker_runs=4),
+                                               "final.json": snapshot(7, INC7, final=True)})
+    with pytest.raises(G.AuditStop):
+        G.audit_campaign(root / "campaigns" / INSTANCE, tmp_path / "a", sigma_node=SIGMA, runner=FakeRunner())
+    root2 = write_campaign(tmp_path / "chunk2", {"w10.json": snapshot(10, INC5),
+                                                 "final.json": snapshot(7, INC7, final=True)})
+    with pytest.raises(G.AuditStop):
+        G.audit_campaign(root2 / "campaigns" / INSTANCE, tmp_path / "b", sigma_node=SIGMA, runner=FakeRunner())
+
+
+def test_start_config_must_match_across_snapshots(tmp_path):
+    other = {"train.py": "LEARNING_RATE_INIT = 9e-3\n"}
+    root = write_campaign(tmp_path / "chunk", {"w5.json": snapshot(5, INC5, start=other),
+                                               "final.json": snapshot(7, INC7, final=True)})
+    with pytest.raises(G.AuditStop):
+        G.audit_campaign(root / "campaigns" / INSTANCE, tmp_path / "a", sigma_node=SIGMA, runner=FakeRunner())
+
+
+def test_cache_duplicate_key_with_a_different_sha_is_refused(tmp_path):
+    p = tmp_path / "cache.jsonl"
+    p.write_text(json.dumps({"node": NODE, "config_sha256": "a" * 64, "seed": 6701, "metric": 1.0,
+                             "run_sha256": "x"}) + "\n" +
+                 json.dumps({"node": NODE, "config_sha256": "a" * 64, "seed": 6701, "metric": 2.0,
+                             "run_sha256": "y"}) + "\n")
+    with pytest.raises(G.AuditStop):
+        G.Cache(p)
+
+
+def test_production_runner_rejects_a_changed_file_run(monkeypatch, tmp_path):
+    import r1.c3.audit as legacy
+    monkeypatch.setattr(legacy, "run_config", lambda *a, **k: [
+        {"seed": 6701, "success": True, "metric": 1.0, "changed_files": True, "failure": None}])
+    runner = G.harness_runner(tmp_path)
+    with pytest.raises(G.AuditStop):
+        runner(NODE, START, [6701])
