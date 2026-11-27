@@ -225,7 +225,7 @@ CITED = re.compile(r"^(\S+) sha256 ([0-9a-f]{64})$")
 VERDICT_ACCEPTED = re.compile(r"^Verdict: ACCEPTED\s*$", re.M)
 PLACEHOLDER = re.compile(r"<[^>]*>")
 NU_TEXT = re.compile(r"[0-9]+(?:\.[0-9]*)?(?:[eE][+-]?[0-9]+)?")
-NU_SAID = re.compile(r"(?<![\w-])(?:nu|\u03bd)\s*=\s*([^\s,;)\]}`|]*)")
+NU_SAID = re.compile(r"(?<![\w-])(?:nu|\u03bd)\s*=\s*((?:[^\s,;)\]}`|]|,(?=[0-9]))*)")
 # The T1 table readings of part 3b-2 (g5_assemble), signed in the note's t1_table_readings line (review M2); the
 # assembly refuses a note whose line differs, and without a signed note it allows only "refuse".
 TABLE_READINGS = {

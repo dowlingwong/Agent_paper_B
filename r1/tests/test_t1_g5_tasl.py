@@ -2663,11 +2663,12 @@ def test_stop_15_tails_nu(tmp_path, keys):
                  b"autoresearch_fixedtokens: student_t, nu = 4\n",
                  b"autoresearch_fixedtokens: student_t, nu = 5xyz\n",
                  b"autoresearch_fixedtokens: student_t, nu = 5e1\n",
+                 "autoresearch_fixedtokens: student_t (ν = 5,5)\n".encode(),
                  b"autoresearch_fixedtokens: student_t, nu = 5xyz; nu = 5\n",
                  b"autoresearch_fixedtokens: student_t, nu = 5\nautoresearch_fixedtokens: student_t\n"):
         ar_record_world(m, s, sp, decl=decl)
         stop("must state nu = 5 for autoresearch_fixedtokens", go, sp, note, m, node=T.AR)
-    ar_record_world(m, s, sp, decl="autoresearch_fixedtokens: student_t, ν = 5.0\n".encode())
+    ar_record_world(m, s, sp, decl="autoresearch_fixedtokens: student_t, ν = 5.0, accepted declaration\n".encode())
     assert go(sp, note, m, node=T.AR)["ran"] == T.AR
     ar_record_world(m, s, sp, decl=b"autoresearch_fixedtokens: student_t (nu = 5e0)\n",
                     edit=lambda f: f.update(tails_nu="5e0"))
