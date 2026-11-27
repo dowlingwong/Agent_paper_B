@@ -1151,6 +1151,10 @@ def expansion_relcopy_fixture(tmp_path, monkeypatch, rows=None):
     amendment = {"path": R.SPLIT_AMENDMENT_PATH, "sha256": RC.X_SPLIT_SHA256}
     monkeypatch.setattr(G, "_read_main", published.get)
     monkeypatch.setattr(R, "split_v2_amendment", lambda root: amendment)
+    monkeypatch.setattr(RC, "X_RESULT_SHA256", {
+        name: hashlib.sha256(published[f"{RC.X_RESULT}/{name}"]).hexdigest()
+        for name in ("summary.json", "ASSEMBLY.json")
+    })
     return summary_path, published, amendment
 
 
@@ -1184,6 +1188,9 @@ def test_rel_t1_g1b_copy_expansion_refuses_unbound_inputs(tmp_path, monkeypatch)
     stop("requires these records on published main", RC.copy_summary, SPEC, "x", summary, dest, repo=repo)
     published[RC.X_REVIEW] = review
     source = summary.read_bytes()
+    published[f"{RC.X_RESULT}/summary.json"] = source + b"\n"
+    stop("differs from the accepted G.1b result", RC.copy_summary, SPEC, "x", summary, dest, repo=repo)
+    published[f"{RC.X_RESULT}/summary.json"] = source
     summary.write_bytes(source + b"\n")
     stop("differs from the reviewed published result", RC.copy_summary, SPEC, "x", summary, dest, repo=repo)
     summary.write_bytes(source)

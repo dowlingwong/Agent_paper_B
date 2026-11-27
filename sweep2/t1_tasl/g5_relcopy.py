@@ -65,6 +65,10 @@ X_RUN_ID = "g1b-x-tasl-20261126-a"
 X_NOTE = "docs/r1/authorizations/g1b_x_t1_tasl_20261126.md"
 X_RESULT = "docs/r1/reports/g1b_x_20261127"
 X_REVIEW = "docs/r1/reviews/G1B_X_RESULT_REVIEW_20261127_ROUND2.md"
+X_RESULT_SHA256 = {
+    "summary.json": "67355b668aad1d930814b51e91ccd76620bdad349516d7d630a467d884feaa10",
+    "ASSEMBLY.json": "b4c90ec6a622dcd4c762ff0504751f85dde45fe5421fbb4780a61c5f565af077",
+}
 X_SPLIT_SHA256 = "970d3e45b5177f0d9f6668e9495905e1878a4ffa8eab3d73c4df6b9292a3bea7"
 KINDS = {"seven": (G.SUMMARY_SCHEMA, JN.SEVEN_RUN_ID, list(S.SEVEN), G.ASSEMBLY_SCHEMA, "G5-7"),
          "ar": (G.AR_SUMMARY_SCHEMA, JN.AR_RUN_ID, [S.AR], G.AR_ASSEMBLY_SCHEMA, "G5-AR"),
@@ -93,13 +97,16 @@ def _expansion_binding(summary: Path) -> dict:
     review = published[X_REVIEW].decode("utf-8")
     if not any(line.startswith("**Verdict: ACCEPTED.**") for line in review.splitlines()):
         raise Stop("STOP: the expansion G.1b result has no accepted review on published main")
+    for name, sha in X_RESULT_SHA256.items():
+        if N._sha(published[f"{X_RESULT}/{name}"]) != sha:
+            raise Stop(f"STOP: the published expansion {name} differs from the accepted G.1b result")
     spec_raw = published[G1B_SPEC]
     spec = json.loads(spec_raw)
     spec_sha = N._sha(spec_raw)
     note = G._note_fields(published[X_NOTE])
     if (note.get("approved"), note.get("label"), note.get("run_id"), note.get("spec_sha256"),
         note.get("labels_read")) != ("true", G.ENGINEERING_ONLY, X_RUN_ID, spec_sha, "none") or not G.is_x(spec) or \
-            spec.get("run_id") != X_RUN_ID or {entry["node"] for entry in spec["nodes"]} != set(G.X_NODES):
+            spec.get("run_id") != X_RUN_ID or sorted(entry["node"] for entry in spec["nodes"]) != sorted(G.X_NODES):
         raise Stop("STOP: the signed expansion G.1b note does not bind the four-node spec/run")
     sealed_root = Path(spec["hosts"][S.WORKER_HOST]["sealed_root"])
     expected = sealed_root.parent / "assembly" / X_RUN_ID / "summary.json"
