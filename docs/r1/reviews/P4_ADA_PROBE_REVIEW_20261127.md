@@ -10,6 +10,22 @@
 
 **ACCEPTED WITH MINOR FINDINGS.** The probe measurements, seals, charge arithmetic and the 4B-OOM-as-arm-STOP conclusion verify. The two 0.8B PASS records are complete (50/50 steps through `probe`, `stop: null`, the claimed peaks and timings), the two 4B records are the claimed CUDA OOMs on empty cards, and the total charge is 2.1603 GPU-h. Four minor findings follow: one operational cleanup (two engineering guard loops are still running), one P4-T1CHARGE-A record-completeness gap in `probe_charges.json`, one imprecise sentence about which STOP the kept refusal came from, and one false "copied verbatim … with `p4_run.log`" claim. None changes a measured value or the STOP. No re-review is needed if the fixes are applied; the guard loops must be stopped on the host by the operator.
 
+## Minor findings re-check (task tip `e99ebee3`)
+
+**Re-checked task tip:** `e99ebee3f9d9477798c0104e95c78474aaa357e7` (one commit after `616c09b2`: `compute/20261127-19: review minors - T1-complete charge, p4_run.log committed, refusal wording`). Read-only; no task-branch edits. This section supersedes the verdict paragraph above for the current tip.
+
+| Finding | Status | Evidence |
+|---|---|---|
+| M1 — guard loops still running | **closed** | `ps -p 1741570,1916154` empty; no `harness_watch2.sh` / `harness_fetch2.sh` / live `git fetch` process; no trackp process. Last `.last_fetch2` `1795766130` vs current `1795766675`; the report's closing line now says they were stopped. |
+| L1 — `probe_charges.json` lacked T1 | **closed** | `t1.source: input`, `t1_gpu_hours: 0.0`, T1 job `760065` `remote_wallclock_s: 0.0`, total `2.1603`, 8 attempts. The file is canonically equal to `p4_lib.probe_charges(root, t1_wallclock=p4_lib.T1_FROM_HISTORY)`. |
+| L2 — refusal attribution | **closed** | The report now says attempt-1 is an infrastructure attempt, that with only the two STOP-free 0.8B attempts the builder refuses for the missing arms, and that adding the 4B attempts stops at their OOM; "the substantive cause is therefore the 4B OOM, not a record defect." This matches my A–D reproduction. |
+| L3 — `p4_run.log` absent | **closed** | All eight logs are present; each sha256 equals its `SEAL_RECEIPT.json` `run_log_sha256` (e.g. kev-0.8b a1 `c1b3f370…`, a4 `d620e048…`). All 48 sealed files (8 attempts × 6) are byte-identical to the `/ceph` originals. |
+| N1 — `output_use` says H200 | **noted** | Left as runner code text; the report's `Independent review` section records it as a nit for the runner's next unit, not a record defect. No change to the verdict. |
+
+**Branch state.** `git diff --name-only 91cfd48a e99ebee3 | grep -v '^docs/'` is empty (58 files, all added under `docs/`; no non-docs change). Between `616c09b2` and `e99ebee3` the sealed tree changed only by the eight added `p4_run.log` files — `added: 8`, `removed: 0`, `changed: 0` — so every previously committed `out.tar`, `job_record.json`, `SHA256SUMS`, `SEAL_RECEIPT.json` and `direct_launch.json` is unchanged; `sha256sum -c SHA256SUMS` still passes in all eight attempts, and the spec and refusal blobs are unchanged.
+
+**Re-check verdict: ACCEPTED.** All four minor findings are closed and the branch remains docs/record-only. N1 remains a noted nit only; it is not a record defect and does not withhold acceptance. One bookkeeping follow-up: the task report's `Independent review` section still cites `05d3048a` and "ACCEPTED WITH MINOR FINDINGS"; the operator should update that citation to this review branch tip and to "ACCEPTED" when the record is next touched.
+
 ## Confirmed
 
 ### 1. Probe spec validates at probe strength; fills are the pinned values
