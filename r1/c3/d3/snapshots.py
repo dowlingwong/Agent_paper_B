@@ -566,10 +566,10 @@ class SnapshotRecorder:
 
         The w snapshot is written immediately after the charge that reaches ``w``, i.e. before
         that trial's E2 decision.  It is therefore a pre-decision record and must never be
-        aliased as final.  When the campaign reaches W, the pre-decision record is preserved
-        byte-for-byte as ``w<W>_pre.json`` (a distinct replay record) and ``w<W>.json`` is
-        rewritten from the post-decision final, so G6 audits one canonical Y(W) and G7's
-        equality check holds.
+        aliased as final.  When the campaign reaches W, the pre-decision payload is preserved
+        as ``w<W>_pre.json`` (unchanged apart from the two provenance fields ``pre_decision``
+        and ``superseded_by``; a distinct replay record) and ``w<W>.json`` is rewritten from
+        the post-decision final, so G6 audits one canonical Y(W) and G7's equality check holds.
         """
         if payload.get("ended_on") not in ENDED_ON:
             raise SnapshotStop(f"unknown ended_on {payload.get('ended_on')!r}")

@@ -9,7 +9,8 @@ changed. ENGINEERING code and synthetic tests only; no campaign, audit, label or
 
 `final.json` now comes from the post-decision incumbent on both routes, and the at-W record is canonicalised to the
 final when the campaign reaches W. A keep on the last trial reaches `final.json`; the pre-decision record is kept as a
-distinct `w<W>_pre.json` for replay. The two reproductions in
+distinct `w<W>_pre.json` for replay (its payload is unchanged apart from the two provenance fields
+`pre_decision` and `superseded_by`). The two reproductions in
 `docs/r1/reports/d3_predecl_r4_step5_20261127/REPRODUCTIONS.md` fail on the base and pass on the tip:
 the harness reproduction's recorded and live hashes now agree at both endings, and the replicate `w20` and `final`
 carry the same configuration.
@@ -72,15 +73,20 @@ On the tip the same script with `write_final_live` prints `match: true` for both
 | Base `c4250f7e` | 4,980 | 117 | 3 | 163 | 71 |
 | Tip | 4,982 | 117 | 3 | 163 | 71 |
 
-  Zero new failures: the 120 sorted `FAILED`/`ERROR` ids are identical in both runs, sha256
-  `e4ac065fe75186c26e8ecfa283b8d8d37753bc9a2196b0857fe9ddd110d99164`. The two extra passes are the new tests.
+  Zero new failures. The 120 sorted `FAILED`/`ERROR` ids at the tip are a subset of the 120 at the base
+  (`FULL_SUITE_FAILURE_IDS_FINAL_20261127.txt`, sha256 `9b0350c2376f401ee3b0d9e7bb4b1bfd12a4bdb8b107660e0301e09cf73728fb`;
+  the adapter unit's older 111-id list is untouched). The independent reviewer's rerun saw 114 failed / 4,985 passed:
+  three base failures (`test_b1_real_worker_run_is_seed_deterministic`, `test_real_worker_run_is_seed_deterministic`,
+  `test_dryrun_start_refuses_external_batch_before_log_write`) passed for it and pass individually here; they are
+  environment-flaky, and no new id appears in either run. The two extra passes over the base are the new tests.
+  At `ended_on="error"` the at-W record is not canonicalised (fail-closed; G7 would refuse a differing W/error row).
 - `git diff --check` clean.
 
 ## Files
 
 | File | sha256 |
 |---|---|
-| `r1/c3/d3/snapshots.py` | `c55a26bc75bc919800d4539cb96c64a29604d5454cc500c71e72bd52415e1267` |
+| `r1/c3/d3/snapshots.py` | `5241dcc079f606582a8e9233886a51d93b656aef3362571b4898c9ab748819a2` |
 | `r1/c3/d3/campaign_chunk.py` | `4131ffcc6946e5fd156ea159e44c466fed8b6de8d3a2e0b88731898976f96f1c` |
 | `r1/tests/test_d3_g1_snapshots.py` | `c57926a438811e9042af0d2adbed4bcebc11c2d5e270b3d1d2e0d851a1c41ef5` |
 
