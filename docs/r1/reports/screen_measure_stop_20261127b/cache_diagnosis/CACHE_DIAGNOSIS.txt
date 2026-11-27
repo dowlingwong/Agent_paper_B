@@ -1,0 +1,15 @@
+read-only diagnosis, deepthought, 2026-11-27, ENGINEERING_ONLY
+copy of the launch-verified data cache for openml_breast_w into /tmp/p4_diag_cache
+then, with /ceph/dwong/r1_prepare_20261025/venv/bin/python3 (scikit-learn 1.8.0):
+
+  from sklearn.datasets import fetch_openml
+  fetch_openml(data_id=15, as_frame=True, parser="auto",
+               data_home="/tmp/p4_diag_cache/data_cache")
+
+cache_before.txt is `find /tmp/p4_diag_cache -type f -printf "%P %s\n" | sort` before the call;
+cache_after.txt is the same after it. The new file is
+  data_cache/openml/openml.org/data/v1/download/52350/breast-w.arff.gz  6753 bytes
+The launch-verified tree has
+  data_cache/openml/openml.org/data/v1/download/52350.gz 6753 bytes
+(and no .../52350/ directory). The kept cache was not touched; its
+52350.gz mtime stayed 2026-11-27 04:12:08 +0100.
