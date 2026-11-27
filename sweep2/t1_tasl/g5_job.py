@@ -1865,6 +1865,13 @@ def load_plan(spec: dict, node: str, wave: int, purpose: str) -> dict:
     return plan
 
 
+def attempt_archive(spec: dict, job: Path, record: dict) -> Path:
+    archive = job / f"attempt-{record['attempt']}" / "out.tar"
+    if spec.get("_addendum") and (not archive.is_file() or L._sha_file(archive) != record.get("out_tar_sha256")):
+        raise Stop("STOP: the addendum archive differs from the bound job record")
+    return archive
+
+
 def next_chunk(spec: dict, node: dict, wave: int, k: int) -> tuple[dict, int, list[dict]]:
     """The wave's plan (made once, from the completed campaign attempt's ledgers, read by job code with an
     access-log line) and the first chunk without a completed attempt."""
@@ -1873,9 +1880,7 @@ def next_chunk(spec: dict, node: dict, wave: int, k: int) -> tuple[dict, int, li
         got = complete_attempt(camp, spec)
         if not got:
             raise Stop(f"STOP: no completed campaigns-wave{wave} attempt")
-        tar = camp / f"attempt-{got[0]['attempt']}" / "out.tar"
-        if spec.get("_addendum") and L._sha_file(tar) != got[0].get("out_tar_sha256"):
-            raise Stop("STOP: the addendum campaign archive differs from the bound job record")
+        tar = attempt_archive(spec, camp, got[0])
         ledgers = tar_members(spec, tar, LEDGER_MEMBER, f"audit planning: campaign ledgers of {node['node']} "
                                                        f"wave {wave}")
         prior, prior_groups = {}, set()
@@ -1973,7 +1978,9 @@ def _chunk_rows(spec: dict, node: str, wave: int, chunks, *, reused: bool = Fals
     for i in chunks:
         cdir = job_dir(spec, node, f"audits-wave{wave}", i)
         got = complete_attempt(cdir, spec)
-        tar = cdir / f"attempt-{got[0]['attempt']}" / "out.tar"
+        if not got:
+            raise Stop(f"STOP: {node} wave {wave} chunk {i} has no completed attempt")
+        tar = attempt_archive(spec, cdir, got[0])
         members = tar_members(spec, tar, CHUNK_MEMBERS, f"wave E5: audit rows of {node} wave {wave}"
                                                         + (" (reused units)" if reused else ""))
         chunk_i = json.loads("\n".join(members["out/chunk.json"]))

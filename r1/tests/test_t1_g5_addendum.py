@@ -373,3 +373,22 @@ def test_gate_noise_uses_only_exact_mlgym_addendum_bindings(tmp_path, monkeypatc
     record["nodes"][EXTRA] = record["nodes"][MLGYM]
     with pytest.raises(S.Stop, match="outside the gate noise record"):
         builder_noise(record)
+
+
+def test_e5_refuses_changed_archive_before_read(filled, tmp_path, monkeypatch):
+    spec = filled[2]()
+    spec["worker"]["runs_root"] = str(tmp_path / "runs")
+    chunk = J.job_dir(spec, MLGYM, "audits-wave1", 0) / "attempt-1"
+    chunk.mkdir(parents=True)
+    record = {"node": MLGYM, "job": "audits-wave1", "chunk": 0, "attempt": 1,
+              "run_id": RUN, "stop": None, "out_tar_sha256": "0" * 64, **SE.addendum_binding(spec)}
+    (chunk / "job_record.json").write_text(json.dumps(record))
+    (chunk / "diagnostics.json").write_text("{}")
+    (chunk / "out.tar").write_bytes(b"altered synthetic archive")
+
+    def must_not_open(*args, **kwargs):
+        pytest.fail("changed archive was opened")
+
+    monkeypatch.setattr(J, "tar_members", must_not_open)
+    with pytest.raises(S.Stop, match="archive differs from the bound job record"):
+        J._chunk_rows(spec, MLGYM, 1, [0])
