@@ -44,7 +44,9 @@ def _world(t1_nodes=SUITE_NODES):
         labels.append(lab)
         for a in ("A3", "A5"):
             preds[a][r["proposal_id"]] = rng.dirichlet(np.ones(12)).tolist()
-    srcs.append(B.Source("g5", rows, labels, evals))
+    # The synthetic G.5 source supplies the same declaration that its real build receipt would bind.
+    laws = {node: ("gaussian", None) for node in t1_nodes}
+    srcs.append(B.Source("g5", rows, labels, evals, tail_laws=laws))
     noise.update({n: {"sigma_node": W.SIG, "delta_n": 0.002} for n in t1_nodes})
     t1 = B.Tier1(suites=dict(t1_nodes), modes=("none",))
     primary, _ = B.build(srcs, preds, noise, t0_nodes=B.SEVEN_T0, t1=t1)
@@ -86,6 +88,8 @@ def test_a_node_subset_build_equals_the_full_build_with_repeats_across_instances
     full, rep = B.build(srcs, preds, noise, t0_nodes=B.SEVEN_T0, t1=t1)
     assert rep["nodes"][node]["repeats_dropped_test"] == 2
     for nodes in (["digits_mlp"], [node, "tabular_mlp"], ["mlgym_fmnist"], ["mlab_cifar10", "autoresearch_fixedtokens"]):
+        g5_subset, = [s for s in F.node_subset(srcs, nodes) if s.name == "g5"]
+        assert g5_subset.tail_laws == {n: ("gaussian", None) for n in nodes if n in SUITE_NODES}
         sub, srep = F.fold_input(srcs, preds, noise, nodes=nodes, t1=t1)
         assert sorted(n["node"] for n in sub["nodes"]) == sorted(nodes)
         assert sub["t0_nodes"] == sorted(n for n in nodes if n in G.T0_NODES)
