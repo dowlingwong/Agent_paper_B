@@ -122,6 +122,14 @@ def test_counter_lookup_returns_failed_runs_too_and_validates_inputs():
         c.charge(kind="trial", role="candidate", seed=1, config_sha256="x", success=True, metric=float("nan"))
     with pytest.raises(ValueError, match="records its metric"):
         c.charge(kind="trial", role="candidate", seed=1, config_sha256="x", success=True)
+    for bad_j in (10, -1, True, "1"):
+        with pytest.raises(ValueError, match="replicate j"):
+            c.charge(kind="replicate", role="candidate", seed=1, config_sha256="x", success=False, j=bad_j)
+    with pytest.raises(ValueError, match="names its j"):
+        c.charge(kind="replicate", role="candidate", seed=1, config_sha256="x", success=False)
+    with pytest.raises(ValueError, match="no replicate index"):
+        c.charge(kind="verify", role="candidate", seed=1, config_sha256="x", success=False, j=1)
+    assert c.used == 1
     with pytest.raises(ValueError):
         A.ChargedRunCounter(W=0)
     with pytest.raises(ValueError):

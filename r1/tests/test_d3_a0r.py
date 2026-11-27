@@ -27,7 +27,7 @@ DUP_EDITS = [("HIDDEN_UNITS", "32", "64"), ("ALPHA", "1e-4", "1e-3"), ("ALPHA", 
 
 
 def _small(ctl, cap=8):
-    return ctl.campaign_kwargs(W=20, llm_cap=cap)
+    return ctl.campaign_kwargs(d3=False, W=20, llm_cap=cap)
 
 
 def test_rule_layer_table_is_the_declared_one():
@@ -55,8 +55,14 @@ def test_campaign_kwargs_bind_w_and_the_cap_with_the_default_keep_rule():
     assert (cb.max_worker_runs, cb.max_llm_calls, kw["budget"]) == (20, 80, 80)
     with pytest.raises(ValueError, match="fixed by the arm definition"):
         ctl.campaign_kwargs(keep_rule="bayes_threshold/v1")
+    with pytest.raises(ValueError, match="fixed by the arm definition"):
+        ctl.campaign_kwargs(verify_split_policy="fixed")
+    for bad in ({"W": 10}, {"llm_cap": 40}, {"trials": 90}):
+        with pytest.raises(ValueError, match="binds"):
+            ctl.campaign_kwargs(**bad)
+    assert ctl.campaign_kwargs(W=20, llm_cap=80, trials=80)["budget"] == 80  # the declared values are accepted
     with pytest.raises(ValueError):
-        ctl.campaign_kwargs(trials=40)  # a trial budget below the cap would bind (c3_budgets, D1)
+        ctl.campaign_kwargs(d3=False, trials=40)  # a trial budget below the cap would bind (c3_budgets, D1)
 
 
 def test_a0r_skips_duplicates_without_a_run_and_keeps_on_positive_delta(tmp_path):

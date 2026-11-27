@@ -81,17 +81,34 @@ class RuleLayerController:
         self.log: list[dict] = []
 
     # ---- campaign wiring -------------------------------------------------
-    def campaign_kwargs(self, *, W: int = D3_W, llm_cap: int = D3_LLM_CALL_CAP, trials: int | None = None,
-                        **versions: str) -> dict:
+    def campaign_kwargs(self, *, d3: bool = True, W: int | None = None, llm_cap: int | None = None,
+                        trials: int | None = None, **versions: str) -> dict:
         """``run_real_campaign`` kwargs: this controller, keep rule ``default/v1`` (Delta_hat > 0) without a keep
         prior, the skip display ``one_line/v1`` (R1-SKIP-DISPLAY), split policy ``vary``, and ``c3_budgets(W, cap)``
-        (W worker runs and the LLM-call cap bind, the trial budget does not; D.3 §2 uses W = 20, cap = 80)."""
-        for key in ("keep_rule", "verify_response"):
+        (W worker runs and the LLM-call cap bind, the trial budget does not).
+
+        ``d3=True`` (the default, every D.3 campaign) binds the declared W = 20, cap = 80 and trial budget = cap
+        (§2, §3) and refuses any other value; ``d3=False`` is for engineering tests only and accepts smaller budgets.
+        The keep rule, verify response and verify split policy are fixed by the arm definition and refused."""
+        return self._kwargs(KEEP_RULE_DEFAULT, d3=d3, W=W, llm_cap=llm_cap, trials=trials, **versions)
+
+    def _kwargs(self, rule: str, /, *, d3: bool, W, llm_cap, trials, **versions) -> dict:
+        for key in ("keep_rule", "verify_response", "verify_split_policy"):
             if key in versions:
                 raise ValueError(f"{self.arm}: {key} is fixed by the arm definition (§5)")
+        if d3:
+            for name, value, declared in (("W", W, D3_W), ("llm_cap", llm_cap, D3_LLM_CALL_CAP),
+                                          ("trials", trials, D3_LLM_CALL_CAP)):
+                if value is not None and value != declared:
+                    raise ValueError(f"{self.arm}: a D.3 campaign binds {name} = {declared} (§2, §3); "
+                                     "pass d3=False only in engineering tests")
+            W, llm_cap, trials = D3_W, D3_LLM_CALL_CAP, D3_LLM_CALL_CAP
+        else:
+            W = D3_W if W is None else W
+            llm_cap = D3_LLM_CALL_CAP if llm_cap is None else llm_cap
         return {"controller": self, "skip_display": SKIP_DISPLAY,
                 "action_versions": ActionVersions.new_campaign(**{
-                    "keep_rule": KEEP_RULE_DEFAULT, "verify_response": VERIFY_RESPONSE_MEAN,
+                    "keep_rule": rule, "verify_response": VERIFY_RESPONSE_MEAN,
                     "verify_split_policy": NEW_CAMPAIGN_VERIFY_SPLIT_POLICY, **versions}),
                 **c3_budgets(W, llm_cap, trials)}
 
@@ -155,34 +172,31 @@ class LadderController(RuleLayerController):
     executed); E2 keep iff Delta_hat > eta through the harness keep rule ``bayes_threshold/v1``, served a
     ``KeepPrior`` whose threshold t* = -mu sigma^2 / tau^2 is exactly eta (mu = -eta, tau = sigma = 1: a threshold
     carrier, not a belief; gap G5's construction); no verify (the controller never asks for one).  The first valid
-    trial is kept without comparison (harness).  ``eta`` is in metric units (``ladder_eta``)."""
+    trial is kept without comparison (harness).  eta = c * sigma_node with c on the declared grid (``ladder_eta``)."""
 
-    def __init__(self, node_ctx: NodeContext, *, eta: float, rule_layer: bool | None = None,
-                 eta_source: str = "constants_file") -> None:
+    def __init__(self, node_ctx: NodeContext, *, c: float, rule_layer: bool | None = None) -> None:
         super().__init__(node_ctx, arm="LADDER",
                          rule_layer=D3_RULE_LAYER["LADDER"] if rule_layer is None else rule_layer)
-        eta = float(eta)
-        if not math.isfinite(eta):
-            raise ValueError("eta must be finite")
-        self.eta = eta
-        self.version = f"{LADDER_VERSION}[eta={eta!r}]"
-        self._prior = KeepPrior(mu=-eta, tau=1.0, sigma=1.0, source=f"ladder:{eta_source}:eta={eta!r}")
+        # eta only from a declared grid value c (the constants file writes c per node; G2), so an off-grid eta is
+        # impossible.
+        eta = ladder_eta(c, node_ctx.sigma_node)
+        self.c, self.eta = float(c), eta
+        self.version = f"{LADDER_VERSION}[c={self.c!r},eta={eta!r}]"
+        self._prior = KeepPrior(mu=-eta, tau=1.0, sigma=1.0, source=f"ladder:c={self.c!r}:eta={eta!r}")
         if self._prior.threshold != eta:  # exact: (-(-eta) * 1.0) / 1.0
             raise ValueError("the keep threshold must equal eta exactly")
 
     def keep_prior(self, view: Any) -> KeepPrior:
         return self._prior
 
-    def campaign_kwargs(self, *, W: int = D3_W, llm_cap: int = D3_LLM_CALL_CAP, trials: int | None = None,
-                        **versions: str) -> dict:
-        kwargs = super().campaign_kwargs(W=W, llm_cap=llm_cap, trials=trials, **versions)
-        kwargs["action_versions"] = ActionVersions.new_campaign(**{
-            "keep_rule": KEEP_RULE_BAYES, "verify_response": VERIFY_RESPONSE_MEAN,
-            "verify_split_policy": NEW_CAMPAIGN_VERIFY_SPLIT_POLICY, **versions})
+    def campaign_kwargs(self, *, d3: bool = True, W: int | None = None, llm_cap: int | None = None,
+                        trials: int | None = None, **versions: str) -> dict:
+        """As ``RuleLayerController.campaign_kwargs`` with keep rule ``bayes_threshold/v1`` and the carrier prior."""
+        kwargs = self._kwargs(KEEP_RULE_BAYES, d3=d3, W=W, llm_cap=llm_cap, trials=trials, **versions)
         kwargs["keep_prior"] = self._prior
         return kwargs
 
 
 def ladder_controller(node_ctx: NodeContext, *, c: float) -> LadderController:
     """Arm LADDER with eta = c * sigma_node (c from the constants file, §5.0/§5.6)."""
-    return LadderController(node_ctx, eta=ladder_eta(c, node_ctx.sigma_node), eta_source=f"c={c!r}")
+    return LadderController(node_ctx, c=c)

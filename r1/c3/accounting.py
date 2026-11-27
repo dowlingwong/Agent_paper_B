@@ -46,8 +46,6 @@ from r1.branch.matching import CampaignUsage
 REPLICATE_ROLES = ("candidate", "incumbent")
 LLM_CALL_REISSUED_EVENT = "llm_call_reissued"
 CHARGE_KINDS = ("trial", "verify", "replicate")
-# pre-declaration §4.1: replicate j = 1..9 (j = 0 is the instance seed); FIXR3 uses j <= 2, EGATE j <= 7.
-MAX_REPLICATE_J = 9
 
 
 def _jsonl(path: Path) -> list[dict]:
@@ -105,6 +103,7 @@ def replicate_entries(record: dict) -> list[dict]:
     candidate entry with j = 0 (that run is the trial's own record); an uncharged candidate entry (only incumbent
     runs are reused); the same (role, j) twice.
     """
+    from r1.c3.d3_analysis import MAX_REPLICATE_J  # §4.1: j = 1..9 (j = 0 is the instance seed); lazy import
     control = (record.get("extra") or {}).get("control") or {}
     entries = control.get("replicates")
     if entries is None:
@@ -202,6 +201,14 @@ class ChargedRunCounter:
             raise ValueError(f"charge role must be one of {REPLICATE_ROLES}")
         if not isinstance(success, bool):
             raise ValueError("success must be a boolean")
+        if j is not None:
+            from r1.c3.d3_analysis import MAX_REPLICATE_J
+            if not isinstance(j, int) or isinstance(j, bool) or not 0 <= j <= MAX_REPLICATE_J:
+                raise ValueError(f"replicate j must be None or an integer in 0..{MAX_REPLICATE_J}")
+            if kind == "verify":
+                raise ValueError("a verify run has no replicate index")
+        elif kind == "replicate":
+            raise ValueError("a replicate run names its j")
         if metric is not None and not math.isfinite(float(metric)):
             raise ValueError("a recorded metric must be finite (a non-finite result is a failed run)")
         if success and metric is None:

@@ -180,7 +180,7 @@ class EgateEngine:
     def __init__(self, instance_seed: int, *, maximize: bool = True, gate=None):
         from r1.baselines.responses import PaceStyleGate
         self.gate = PaceStyleGate() if gate is None else gate
-        if (self.gate.alpha, self.gate.clip, self.gate.max_pairs) != (0.1, 0.05, 8):
+        if type(self.gate) is not PaceStyleGate or (self.gate.alpha, self.gate.clip, self.gate.max_pairs) != (0.1, 0.05, 8):
             raise ValueError("EGATE uses PaceStyleGate as on main: alpha 0.1, clip 0.05, max_pairs 8 (§5.5)")
         self.instance_seed, self.maximize = int(instance_seed), bool(maximize)
         self.seeds = tuple(replicate_seed(self.instance_seed, j) for j in range(self.gate.max_pairs))
@@ -229,6 +229,8 @@ class EgateEngine:
             if first:  # the first valid trial: kept after one run, no test
                 self.incumbent = config_sha256
                 return self._end("kept", charged, entries, raw, {**detail, "pairs": 0, "test": None})
+            if prior_inc is None:  # a candidate identical to the incumbent has just made the incumbent's run
+                prior_inc = self._incumbent_run(counter, j)
             if prior_inc is None:
                 inc = run(role="incumbent", config_sha256=self.incumbent, seed=seed, j=j)
                 prior_inc = counter.charge(kind="replicate", role="incumbent", seed=seed,
@@ -266,7 +268,9 @@ def run_replicate_campaign(engine, proposals: list[str], run: RunFn, *, W: int =
                            on_charge: Callable | None = None) -> dict:
     """Reference loop (ENGINEERING_ONLY; for tests and as the G1 contract): step through ``proposals`` until W runs
     are spent, a step cannot be funded (``no_fundable_candidate``) or the proposals run out (``proposals_exhausted``,
-    a test-only end: in a campaign the LLM-call cap ends it).  Returns the steps, the counter and the end."""
+    a test-only end: in a campaign the LLM-call cap ends it).  Returns the steps, the counter and the end.  This
+    ``ended_on`` is descriptive only: G1 must derive the outcome table's ``ended_on`` with
+    ``r1.c3.accounting.table_ended_on`` from the campaign's runs, LLM calls and the unfundable flag."""
     counter = ChargedRunCounter(W=W, on_charge=on_charge)
     steps: list[StepResult] = []
     ended = "proposals_exhausted"

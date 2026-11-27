@@ -1,6 +1,7 @@
 """D.3 arm EGATE (pre-declaration revision 4 §5.5; gap G4). Synthetic runs only. AI-assisted (Claude)."""
 from __future__ import annotations
 
+import dataclasses
 import json
 
 import pytest
@@ -123,13 +124,54 @@ def test_failed_incumbent_run_discards_is_charged_and_never_rerun():
 
 
 def test_a_kept_candidate_brings_its_own_runs_as_the_new_incumbent():
-    run, c, e = _after_first({"c0": BASE, "up": BASE + 0.0469, "next": BASE + 0.0469 + 0.06}, W=40)
+    run, c, e = _after_first({"c0": BASE, "up": BASE + 0.0469, "next": BASE + 0.0469 + 0.06,
+                              "next8": BASE + 0.0469 + 0.06 + 0.0391}, W=60)
     e.step("up", run, c)  # kept at 7 pairs: "up" has runs at j = 0..6
     used = c.used
-    s = e.step("next", run, c)
-    charged_inc = [x["j"] for x in s.replicates if x["role"] == "incumbent" and x["charged"]]
-    assert charged_inc == ([7] if s.detail["pairs"] == 8 else [])
-    assert c.used - used == s.runs_charged
+    s = e.step("next", run, c)  # d > clip on every pair: commits at exactly 7 pairs, all incumbent runs reused
+    assert s.decision == "kept" and s.detail["pairs"] == 7
+    assert [x["j"] for x in s.replicates if x["role"] == "incumbent" and x["charged"]] == []
+    assert c.used - used == s.runs_charged == 7
+    s8 = e.step("next8", run, c)  # "next" has runs at j = 0..6: an 8-pair test charges the incumbent at j = 7 only
+    assert s8.decision == "kept" and s8.detail["pairs"] == 8
+    assert [x["j"] for x in s8.replicates if x["role"] == "incumbent" and x["charged"]] == [7]
+
+
+class Flat:
+    """metric(config) with no seed effect, so paired differences are exact."""
+
+    def __init__(self, level):
+        self.level, self.calls = level, []
+
+    def __call__(self, *, role, config_sha256, seed, j):
+        self.calls.append((role, config_sha256, seed, j))
+        return R.RunOutcome(True, self.level[config_sha256])
+
+
+@pytest.mark.parametrize("d,decision,pairs", [(0.0468, "kept", 7), (0.0467, "kept", 8), (0.039, "kept", 8),
+                                              (0.0389, "discarded", 8)])
+def test_declared_boundaries_exactly(d, decision, pairs):
+    run, c, e = Flat({"c0": 0.0, "x": d}), A.ChargedRunCounter(W=20), _engine()
+    e.step("c0", run, c)
+    s = e.step("x", run, c)
+    assert s.detail["diffs"] == [d] * pairs and s.decision == decision and s.detail["pairs"] == pairs
+
+
+def test_a_candidate_identical_to_the_incumbent_reuses_its_own_runs():
+    run, c, e = Flat({"c0": 0.9}), A.ChargedRunCounter(W=20), _engine()
+    e.step("c0", run, c)
+    s = e.step("c0", run, c)
+    assert s.decision == "discarded" and s.detail["reason"] == "max_pairs" and s.runs_charged == 8
+    assert not [x for x in run.calls if x[0] == "incumbent"]
+    assert all(not x["charged"] for x in s.replicates if x["role"] == "incumbent") and c.used == 9
+
+
+def test_only_the_repository_gate_is_accepted():
+    @dataclasses.dataclass(frozen=True)
+    class Imitation(PaceStyleGate):
+        pass
+    with pytest.raises(ValueError, match="as on main"):
+        R.EgateEngine(6201, gate=Imitation())
 
 
 def test_minimised_metrics_are_oriented():

@@ -74,21 +74,33 @@ def mechanism_counts(records: list[dict], events: list[dict], *, config_of: Call
     """``MECHANISM_KEYS`` + ``last_keep_run`` + ``worker_runs`` of one campaign (§7.5 (d)).
 
     Duplicates are the rule layer's ``duplicate`` flag in the trial's E1 ``control_decision`` detail (every D.3
-    controller logs it, with the rule layer on or off: ``RuleController``, ``d3_controllers.RuleLayerController``);
+    controller logs it, with the rule layer on or off: ``RuleController``, ``d3_controllers.RuleLayerController``;
+    an executed trial without such a record is refused, e.g. a campaign run under ``ContinueController``);
     a rule skip is a skip with ``skip_reason`` ``rule_noop``/``rule_duplicate``, a value skip one with
     ``prior_no_gain``; keeps count every kept trial (the first valid trial included); ``last_keep_run`` is the
     charged-run count when the last kept trial's runs were spent; ``config_of(record)`` gives the executed
     configuration's sha256 (G1 knows it), and a trial that ran without one is refused.
     """
-    flags: dict[str, dict] = {}
+    flags: dict[str, dict | None] = {}
     for e in events:
         if e.get("event_type") == "control_decision" and (e.get("payload") or {}).get("epoch") == "E1":
-            flags[str(e.get("trial_id"))] = ((e["payload"].get("detail") or {}).get("rule") or {})
+            detail = e["payload"].get("detail") or {}
+            if "rule" in detail:
+                flags[str(e.get("trial_id"))] = detail["rule"] or {}
+            elif str(detail.get("reason") or "").startswith(("no_features", "featurize_failed")):
+                flags[str(e.get("trial_id"))] = {}  # first trial / no incumbent metric: no rule applies
+            else:
+                flags[str(e.get("trial_id"))] = None
     w, out, configs, last_keep = 0, {k: 0 for k in D3.MECHANISM_KEYS}, set(), None
     for r in sorted(records, key=lambda r: int(r["budget_index"])):
         ran = _ran(r)
         w += charged_runs_of(r)
-        dup = bool(flags.get(str(r.get("trial_id")), {}).get("duplicate"))
+        flag = flags.get(str(r.get("trial_id")))
+        if ran and flag is None:
+            raise OutcomeTableError(f"trial {r.get('budget_index')}: executed without an E1 decision that logs the "
+                                    "rule flags (every D.3 arm must run a flag-logging controller: RuleController "
+                                    "or d3_controllers.RuleLayerController)")
+        dup = bool((flag or {}).get("duplicate"))
         out["duplicates_proposed"] += dup
         out["duplicates_executed"] += dup and ran
         reason = ((r.get("extra") or {}).get("control") or {}).get("skip_reason")
@@ -131,7 +143,7 @@ def _check_summary(s: dict, stage: str) -> str:
         raise OutcomeTableError(f"a campaign summary must hold exactly {sorted(SUMMARY_KEYS)}")
     if s["schema"] != SUMMARY_SCHEMA or s["stage"] != stage:
         raise OutcomeTableError(f"campaign summary schema must be {SUMMARY_SCHEMA!r} for stage {stage!r}")
-    for key in ("instance_seed", "repetition", "worker_runs", "llm_calls", "infra_attempts"):
+    for key in ("instance_seed", "repetition", "worker_runs", "llm_calls", "infra_attempts", "keeps", "proposals"):
         if not _is_int(s[key]):
             raise OutcomeTableError(f"campaign summary {key} must be an integer")
     cid = D3.campaign_id(stage, s["arm"], s["node"], s["instance_seed"], s["repetition"])
@@ -222,8 +234,11 @@ def build_row(stage: str, s: dict, audit: dict | None) -> dict:
             raise OutcomeTableError(f"{cid}: the last keep audit is not at last_keep_run")
         if keeps[-1]["config_sha256"] != final or float(keeps[-1]["y_raw"]) != y_raw:
             raise OutcomeTableError(f"{cid}: the last kept incumbent is the final incumbent; its audits must agree")
-    elif final != start:
-        raise OutcomeTableError(f"{cid}: no keep, so the final configuration is the start")
+    else:
+        if s["last_keep_run"] is not None:
+            raise OutcomeTableError(f"{cid}: last_keep_run must be null when there is no keep")
+        if final != start:
+            raise OutcomeTableError(f"{cid}: no keep, so the final configuration is the start")
     row = {"campaign_id": cid, "stage": stage, "arm": s["arm"], "node": s["node"],
            "instance_id": D3.instance_id(s["node"], s["instance_seed"]), "instance_seed": s["instance_seed"],
            "repetition": s["repetition"], "memory_mode": D3.HPO_MEMORY_MODE if hpo else D3.MEMORY_MODE,
@@ -243,8 +258,10 @@ def sigma_from_noise_source(summary_path=None) -> dict:
     from r1.c3.analysis_guard import refuse_sealed
     from r1.c3.dataset import noise_table
     from r1.harness import REPO
-    path = Path(summary_path) if summary_path is not None else REPO / D3.NOISE_SOURCE_PATH
+    path = D3.refuse_input_path(Path(summary_path) if summary_path is not None else REPO / D3.NOISE_SOURCE_PATH)
     refuse_sealed(path)
+    if path.suffix != ".json":
+        raise OutcomeTableError("the noise summary is a .json file")
     if hashlib.sha256(path.read_bytes()).hexdigest() != D3.NOISE_SOURCE_SHA256:
         raise OutcomeTableError("the noise summary's sha256 differs from the pinned noise source")
     table = noise_table(path)
@@ -257,7 +274,9 @@ def build_table(stage: str, summaries: Iterable[dict], audits: Iterable[dict], *
     (``d3_analysis.read_a6_declaration``); D.3a and HPO-REF take no note."""
     if stage not in D3.STAGES:
         raise OutcomeTableError(f"stage must be one of {D3.STAGES}")
-    pre = Path(predeclaration_path)
+    pre = D3.refuse_input_path(predeclaration_path)
+    if pre.suffix != ".md":
+        raise OutcomeTableError("the pre-declaration is a .md file")
     from r1.c3.analysis_guard import refuse_sealed
     refuse_sealed(pre)
     pre_sha = hashlib.sha256(pre.read_bytes()).hexdigest()
@@ -289,7 +308,7 @@ def build_table(stage: str, summaries: Iterable[dict], audits: Iterable[dict], *
 
 def write_table(table: dict, out_path) -> Path:
     """Write a validated table with exclusive create (an existing file is never overwritten)."""
-    out = Path(out_path)
+    out = D3.refuse_input_path(out_path)  # the analysis must be able to open what is written
     if out.suffix != ".json":
         raise OutcomeTableError("an outcome table is a .json file")
     D3.validate_table(table, table.get("stage"))
@@ -297,6 +316,10 @@ def write_table(table: dict, out_path) -> Path:
     if len(data) > D3.MAX_TABLE_BYTES:
         raise OutcomeTableError(f"outcome table larger than {D3.MAX_TABLE_BYTES} bytes")
     fd = os.open(out, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
-    with os.fdopen(fd, "wb") as fh:
-        fh.write(data)
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+    except BaseException:
+        out.unlink(missing_ok=True)  # the file was created by this call: no partial table is left behind
+        raise
     return out

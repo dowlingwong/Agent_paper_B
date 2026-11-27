@@ -107,6 +107,13 @@ def test_an_early_end_has_missing_budget_points_and_the_declared_ended_on():
     assert row["y_raw_w"]["15"] == 0.005
 
 
+def test_last_keep_run_without_a_keep_is_refused():
+    s = _one(arm="A1", worker_runs=0, llm_calls=80, final_config_hash=START, keeps=0, last_keep_run=3,
+             duplicates_proposed=0, duplicates_executed=0, distinct_configs_executed=0)
+    with pytest.raises(T.OutcomeTableError, match="last_keep_run must be null"):
+        T.build_row("D.3a", s, None)
+
+
 def test_a_campaign_without_a_charged_run_has_y_zero_and_no_audit():
     s = _one(arm="A1", worker_runs=0, llm_calls=80, final_config_hash=START, keeps=0, last_keep_run=None,
              duplicates_proposed=0, duplicates_executed=0, distinct_configs_executed=0)
@@ -136,6 +143,8 @@ def _by(auds):
     (lambda s, a: s.update(worker_runs=12, llm_calls=12), "has not ended"),
     (lambda s, a: s.update(unfundable="no"), "boolean"),
     (lambda s, a: s.update(extra=1), "exactly"),
+    (lambda s, a: s.update(keeps=2.0), "integer"),
+    (lambda s, a: s.update(proposals=None), "integer"),
 ])
 def test_row_refusals(mutate, match):
     s, a = _one(), _audits("D.3a", "A0", "digits_mlp", 6201)
@@ -234,7 +243,7 @@ def _config_of(record):
 
 def test_mechanism_counts_on_a_harness_campaign(tmp_path):
     ctl = a0r_controller(node_context(0.005))
-    _, events, rows, worker = run_campaign(tmp_path, SequenceBackend(DUP_EDITS), **ctl.campaign_kwargs(W=20, llm_cap=8))
+    _, events, rows, worker = run_campaign(tmp_path, SequenceBackend(DUP_EDITS), **ctl.campaign_kwargs(d3=False, W=20, llm_cap=8))
     m = T.mechanism_counts(rows, events, config_of=_config_of)
     skipped = [r for r in rows if r["decision"] == "skipped"]
     assert m["rule_skips"] == len(skipped) > 0 and m["duplicates_proposed"] >= m["rule_skips"]
@@ -253,7 +262,76 @@ def test_mechanism_counts_charge_replicates_and_refuse_an_executed_trial_without
                                                   {"role": "candidate", "j": 2, "seed": 6502, "success": True,
                                                    "charged": True}]}}},
             {"budget_index": 2, "trial_id": "t2", "worker_mode": "w", "decision": "discarded", "extra": {}}]
-    m = T.mechanism_counts(rows, [], config_of=lambda r: r["trial_id"])
+    events = [{"event_type": "control_decision", "trial_id": "t1",
+               "payload": {"epoch": "E1", "detail": {"reason": "no_features"}}},
+              {"event_type": "control_decision", "trial_id": "t2",
+               "payload": {"epoch": "E1", "detail": {"rule": {"noop": False, "duplicate": True}}}}]
+    m = T.mechanism_counts(rows, events, config_of=lambda r: r["trial_id"])
     assert (m["worker_runs"], m["last_keep_run"], m["keeps"], m["distinct_configs_executed"]) == (4, 3, 1, 2)
+    assert (m["duplicates_proposed"], m["duplicates_executed"]) == (1, 1)
     with pytest.raises(T.OutcomeTableError, match="without a configuration"):
-        T.mechanism_counts(rows, [], config_of=lambda r: None)
+        T.mechanism_counts(rows, events, config_of=lambda r: None)
+    with pytest.raises(T.OutcomeTableError, match="flag-logging controller"):
+        T.mechanism_counts(rows, events[:1], config_of=lambda r: r["trial_id"])
+    unflagged = [events[0], {**events[1], "payload": {"epoch": "E1", "detail": {}}}]
+    with pytest.raises(T.OutcomeTableError, match="flag-logging controller"):
+        T.mechanism_counts(rows, unflagged, config_of=lambda r: r["trial_id"])
+
+
+def test_a_campaign_under_continue_controller_is_refused(tmp_path):
+    from autoresearch.control_plane.action_versions import ActionVersions
+    from autoresearch.control_plane.controller import ContinueController
+    kw = a0r_controller(node_context(0.005)).campaign_kwargs(d3=False, W=20, llm_cap=6)
+    kw["controller"] = ContinueController()
+    kw["action_versions"] = ActionVersions.new_campaign()
+    _, events, rows, _ = run_campaign(tmp_path, SequenceBackend(DUP_EDITS), **kw)
+    with pytest.raises(T.OutcomeTableError, match="flag-logging controller"):
+        T.mechanism_counts(rows, events, config_of=_config_of)
+
+
+def test_over_budget_propagates_as_a_stop():
+    from r1.c3.accounting import OverBudget
+    with pytest.raises(OverBudget):
+        T.build_row("D.3a", _one(worker_runs=21), None)
+    with pytest.raises(OverBudget):
+        T.build_row("D.3a", _one(llm_calls=81), None)
+
+
+def test_path_and_write_guards(tmp_path, pre):
+    sums, auds = _design()
+    bad = tmp_path / "predeclaration.txt"
+    bad.write_text("x")
+    with pytest.raises(T.OutcomeTableError, match=".md"):
+        T.build_table("D.3a", sums, auds, predeclaration_path=bad)
+    lab = tmp_path / "labels.md"
+    lab.write_text("x")
+    with pytest.raises(D3.D3InputError):
+        T.build_table("D.3a", sums, auds, predeclaration_path=lab)
+    table = T.build_table("D.3a", sums, auds, predeclaration_path=pre)
+    with pytest.raises(D3.D3InputError):
+        T.write_table(table, tmp_path / "eval_labels.json")
+
+
+def test_a_failed_write_leaves_no_partial_file(tmp_path, pre, monkeypatch):
+    sums, auds = _design()
+    table = T.build_table("D.3a", sums, auds, predeclaration_path=pre)
+    real = T.os.fdopen
+
+    class Boom:
+        def __init__(self, fd, mode):
+            self.fh = real(fd, mode)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            self.fh.close()
+
+        def write(self, data):
+            self.fh.write(data[:10])
+            raise OSError("disk full")
+    monkeypatch.setattr(T.os, "fdopen", Boom)
+    out = tmp_path / "d3a_outcome.json"
+    with pytest.raises(OSError, match="disk full"):
+        T.write_table(table, out)
+    assert not out.exists()
