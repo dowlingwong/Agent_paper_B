@@ -25,7 +25,7 @@ Two limits are deliberate and are reported rather than worked around:
 Commands::
 
     AR_HARNESS_ROOT=<9bb41680 checkout> python -m r1.scripts.d3_smoke_engineering \
-        run   --manifest M --observed O --out OUT --repo-root .
+        run   --manifest M --observed O --out OUT --repo-root . --node digits_mlp
     ... audit --out OUT --sigma-node S --harness-root H
     ... table --out OUT --predeclaration P
 
@@ -39,6 +39,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
@@ -50,7 +51,8 @@ from r1.c3.d3.audit import AuditStop, Cache, audit_chunk, harness_runner
 from r1.c3.d3.campaign_chunk import ChunkSpec, ChunkStop, _sample_compute_apps, run_chunk
 from r1.harness import harness_commit
 
-SMOKE_NODE = "openml_climate"          # the design's smoke node
+DESIGN_NODE = "openml_climate"          # the design's smoke node
+SMOKE_NODE = "digits_mlp"               # this host has no OpenML cache; deviation recorded
 ENGINEERING_NODES = ("openml_climate", "digits_mlp")
 SMOKE_SEEDS = (6301, 6302)
 SMOKE_SEED = 6301
@@ -86,8 +88,8 @@ def _spec(arm: str, *, node: str, seed: int, manifest: A.Manifest, observed: Map
         campaign_model_source=source,
         notes={"engineering_only": True, "task": "compute/20261127-27", "run_id": run_id,
                "smoke_seed": int(seed), "smoke_arms": list(SMOKE_ARMS),
-               "design_node": SMOKE_NODE,
-               "design_deviation": None if node == SMOKE_NODE else f"ran on {node}, not {SMOKE_NODE}"},
+               "design_node": DESIGN_NODE,
+               "design_deviation": None if node == DESIGN_NODE else f"ran on {node}, not {DESIGN_NODE}"},
     )
 
 
@@ -120,6 +122,53 @@ def write_manifest(*, out: str, campaign_model: str, proposer_sha256: str, base_
     return payload
 
 
+
+def _verify_record(path: str | Path) -> dict[str, Any]:
+    """Read a record written by ``_write_json`` and verify its self-hash."""
+    payload = _read_json(path)
+    claimed = payload.pop("record_sha256", None)
+    text = json.dumps(payload, indent=1, sort_keys=True, allow_nan=False, default=str) + "\n"
+    actual = hashlib.sha256(text.encode()).hexdigest()
+    if claimed != actual:
+        raise AuditStop(f"{path}: record_sha256 {claimed!r} does not hash the record ({actual})")
+    return payload
+
+
+def _validate_smoke(root: Path) -> dict[str, Any]:
+    """Refuse a stale/edited smoke record or any campaign that is not the reserved smoke seed."""
+    record = _verify_record(root / "smoke.json")
+    if record.get("engineering_only") is not True:
+        raise AuditStop("the smoke record is not labelled engineering_only")
+    if int(record.get("seed", -1)) not in SMOKE_SEEDS:
+        raise AuditStop(f"the smoke record seed {record.get('seed')!r} is not a smoke seed")
+    if str(record.get("node")) not in ENGINEERING_NODES:
+        raise AuditStop(f"the smoke record node {record.get('node')!r} is not an engineering node")
+    if str(record.get("stage")) != "a":
+        raise AuditStop("the smoke record is not stage a")
+    sigma = record.get("sigma_node")
+    if sigma is None or not float(sigma) > 0:
+        raise AuditStop("the smoke record carries no positive sigma_node")
+    for arm, chunk_dir in sorted((record.get("chunks") or {}).items()):
+        chunk = Path(chunk_dir)
+        chunk_record = _read_json(chunk / "chunk.json")
+        if chunk_record.get("stage") != "a" or chunk_record.get("arm") != arm:
+            raise AuditStop(f"{chunk}: chunk stage/arm differ from smoke.json")
+        if chunk_record.get("node") != record["node"] or int(chunk_record.get("W", -1)) != A.W or \
+                int(chunk_record.get("llm_cap", -1)) != A.LLM_CAP:
+            raise AuditStop(f"{chunk}: chunk node/W/LLM cap differ from the smoke declaration")
+        if (chunk_record.get("notes") or {}).get("engineering_only") is not True:
+            raise AuditStop(f"{chunk}: chunk is not labelled engineering_only")
+        wanted = f"{record['node']}__s{int(record['seed'])}"
+        if chunk_record.get("instances") != [wanted]:
+            raise AuditStop(f"{chunk}: chunk instances {chunk_record.get('instances')!r} are not [{wanted!r}]")
+        for camp in sorted((chunk / "campaigns").glob("*/campaign.json")):
+            payload = _read_json(camp)
+            if payload.get("stage") != "a" or payload.get("arm") != arm:
+                raise AuditStop(f"{camp}: campaign stage/arm differ from smoke.json")
+            if payload.get("node") != record["node"] or int(payload.get("instance_seed", -1)) not in SMOKE_SEEDS:
+                raise AuditStop(f"{camp}: campaign node/seed are not the reserved smoke values")
+    return record
+
 def run_smoke(*, manifest_path: str, observed_path: str, out: str, harness_root: str | None,
               repo_root: str | None, node: str, seed: int, arms: tuple[str, ...],
               run_id: str) -> dict[str, Any]:
@@ -133,7 +182,7 @@ def run_smoke(*, manifest_path: str, observed_path: str, out: str, harness_root:
         raise A.AdapterStop("observed proposer differs from the manifest")
     if observed.get("memory_check") != "pass" or observed.get("lease") is not True:
         raise A.AdapterStop("the observed record must show memory_check=pass and lease=true")
-    actual = harness_commit()
+    actual = harness_commit(Path(harness_root)) if harness_root else harness_commit()
     A.check_harness(manifest, actual)
     root = Path(out)
     if root.exists():
@@ -167,10 +216,11 @@ def run_smoke(*, manifest_path: str, observed_path: str, out: str, harness_root:
         "run_id": run_id, "stage": "a", "node": node, "seed": int(seed), "arms": list(arms),
         "chunks": chunks, "observed": dict(observed),
         "manifest_sha256": hashlib.sha256(Path(manifest_path).read_bytes()).hexdigest(),
+        "sigma_node": float(constants.noise[node]["sigma_node"]),
         "harness_commit": manifest.harness_commit,
         "harness_actual": actual,
-        "design_node": SMOKE_NODE,
-        "design_deviation": None if node == SMOKE_NODE else f"ran on {node}, not {SMOKE_NODE}",
+        "design_node": DESIGN_NODE,
+        "design_deviation": None if node == DESIGN_NODE else f"ran on {node}, not {DESIGN_NODE}",
         "design_note": ("The signed smoke fixes openml_climate and says it is never audited for Y; "
                         "the task card asks for one instance per arm and a G6 audit. Every output here "
                         "is ENGINEERING_ONLY and is not evidence."),
@@ -180,28 +230,34 @@ def run_smoke(*, manifest_path: str, observed_path: str, out: str, harness_root:
 
 
 def _expected_worker() -> dict[str, Any]:
-    """The worker identity G6's append guard requires, from the same ``python3`` it will probe."""
-    import importlib.metadata as md
-
+    """The worker identity G6's append guard requires, from the same ``python3`` it probes."""
     command = shutil.which("python3", path=os.environ.get("PATH"))
     if not command:
         raise AuditStop("python3 is not on PATH for the audit worker")
-    packages: dict[str, str] = {}
-    for dist in md.distributions():
-        name = (dist.metadata.get("Name") or "").lower().replace("_", "-")
-        if not name or name in packages:
-            raise AuditStop("duplicate or missing package name in the audit environment")
-        packages[name] = dist.version
-    versions = {name: md.version(name) for name in ("scikit-learn", "numpy", "scipy", "pandas")}
+    code = """import hashlib, importlib.metadata as m, json, os, sys
+p={}
+for d in m.distributions():
+ n=(d.metadata.get('Name') or '').lower().replace('_','-')
+ if not n or n in p: raise ValueError('duplicate or missing package name')
+ p[n]=d.version
+v={n:m.version(n) for n in ('scikit-learn','numpy','scipy','pandas')}
+print(json.dumps({'worker_python':sys.executable,'worker_python_realpath':os.path.realpath(sys.executable),
+ 'prefix':sys.prefix,'base_prefix':sys.base_prefix,'versions':v,
+ 'package_list_sha256':hashlib.sha256(json.dumps(p,sort_keys=True,separators=(',',':')).encode()).hexdigest()}))
+"""
+    try:
+        observed = json.loads(subprocess.check_output([command, "-B", "-c", code], text=True, timeout=30))
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        raise AuditStop(f"the audit worker probe failed: {exc}") from exc
+    if observed.get("prefix") == observed.get("base_prefix"):
+        raise AuditStop("the audit worker runs in a base environment, not a venv")
     return {
-        "worker_python": command,
-        "worker_python_realpath": os.path.realpath(command),
-        "worker_prefix": sys.prefix,
-        "worker_versions": versions,
-        "package_list_sha256": hashlib.sha256(
-            json.dumps(packages, sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
+        "worker_python": observed["worker_python"],
+        "worker_python_realpath": observed["worker_python_realpath"],
+        "worker_prefix": observed["prefix"],
+        "worker_versions": observed["versions"],
+        "package_list_sha256": observed["package_list_sha256"],
     }
-
 
 def _audit_one(args: tuple[str, str, float, str, dict[str, Any]]) -> dict[str, Any]:
     chunk_dir, audit_dir, sigma, harness_root, expected = args
@@ -224,17 +280,20 @@ def _audit_one(args: tuple[str, str, float, str, dict[str, Any]]) -> dict[str, A
     return {"chunk": chunk_dir, "audit": audit_dir, "campaigns": len(rows)}
 
 
-def audit_smoke(*, out: str, sigma_node: float, harness_root: str | None, jobs: int = 4) -> dict[str, Any]:
+def audit_smoke(*, out: str, sigma_node: float | None, harness_root: str | None, jobs: int = 4) -> dict[str, Any]:
     root = Path(out)
-    smoke = _read_json(root / "smoke.json")
+    smoke = _validate_smoke(root)
     if (root / "audits").exists():
         raise AuditStop(f"refusing an existing audit root {root / 'audits'}")
+    declared_sigma = float(smoke["sigma_node"])
+    if sigma_node is not None and abs(float(sigma_node) - declared_sigma) > 1e-12:
+        raise AuditStop(f"sigma_node {sigma_node} differs from the smoke record's {declared_sigma}")
     chunks = smoke["chunks"]
     expected = _expected_worker()
     tasks = []
     for arm, chunk_dir in sorted(chunks.items()):
         audit_dir = str(root / "audits" / arm)
-        tasks.append((chunk_dir, audit_dir, float(sigma_node), harness_root, expected))
+        tasks.append((chunk_dir, audit_dir, declared_sigma, harness_root, expected))
     results = []
     with ProcessPoolExecutor(max_workers=max(1, int(jobs))) as pool:
         futures = {pool.submit(_audit_one, task): task for task in tasks}
@@ -243,7 +302,7 @@ def audit_smoke(*, out: str, sigma_node: float, harness_root: str | None, jobs: 
     results.sort(key=lambda r: r["audit"])
     record = {"schema": "r1_d3_smoke_audit/v1", "engineering_only": True,
               "task": "compute/20261127-27", "results": results,
-              "expected_worker": expected,
+              "expected_worker": expected, "sigma_node": declared_sigma,
               "note": "Engineering check of the G6 audit path; these rows are not Y evidence and "
                       "never enter an outcome table."}
     record["record_sha256"] = _write_json(root / "audit.json", record)
@@ -253,7 +312,7 @@ def audit_smoke(*, out: str, sigma_node: float, harness_root: str | None, jobs: 
 def table_check(*, out: str, predeclaration: str, noise_summary: str | None) -> dict[str, Any]:
     """Try G7's row builder on the seven real smoke rows; report, never fabricate, a table."""
     root = Path(out)
-    smoke = _read_json(root / "smoke.json")
+    smoke = _validate_smoke(root)
     arms = tuple(smoke["arms"])
     summaries = AS.load_summaries(root / "chunks" / arm for arm in arms)
     audits = AS.load_audits(root / "audits" / arm for arm in arms)
@@ -263,16 +322,20 @@ def table_check(*, out: str, predeclaration: str, noise_summary: str | None) -> 
     rows, failures = [], []
     for summary in summaries:
         try:
-            rows.append(T.build_row("D.3a", summary, by.get(T._check_summary(summary, "D.3a"))))
+            cid = T._check_summary(summary, "D.3a")
         except Exception as exc:  # noqa: BLE001 - a refusal is the result, not a table
-            failures.append({"campaign_id": summary.get("campaign_id"), "error": str(exc)})
+            failures.append({"campaign_id": None, "arm": summary.get("arm"), "error": str(exc)})
+            continue
+        try:
+            rows.append(T.build_row("D.3a", summary, by.get(cid)))
+        except Exception as exc:  # noqa: BLE001 - a refusal is the result, not a table
+            failures.append({"campaign_id": cid, "arm": summary.get("arm"), "error": str(exc)})
     if failures:
         record = {"schema": "r1_d3_smoke_table/v1", "engineering_only": True,
                   "status": "REFUSED", "task": "compute/20261127-27",
                   "failures": failures,
-                  "reason": ("G7.build_row uses d3_analysis.audit_seeds, which accepts only the "
-                             "deployment seeds 6201-6218. The signed analysis is hash-pinned and "
-                             "cannot be changed here; no table was written."),
+                  "reason": ("G7.build_row refused the smoke rows; the first refusal is: "
+                             + failures[0]["error"]),
                   "predeclaration": predeclaration,
                   "noise_summary": noise_summary}
         record["record_sha256"] = _write_json(root / "table.json", record)
@@ -301,7 +364,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--run-id", default=RUN_ID)
     a = sub.add_parser("audit")
     a.add_argument("--out", required=True)
-    a.add_argument("--sigma-node", type=float, required=True)
+    a.add_argument("--sigma-node", type=float, default=None)
     a.add_argument("--harness-root", default=None)
     a.add_argument("--jobs", type=int, default=4)
     t = sub.add_parser("table")
