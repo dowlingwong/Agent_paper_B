@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from dataclasses import replace
 
 import pytest
 
@@ -111,6 +112,8 @@ def _run(tmp, controller, *, W=20, cap=80, seeded=True):
         "verify_split_policy": "vary",
     }, recorder)
     run_real_campaign(**kwargs)
+    recorder._worker = kwargs["worker"]
+    recorder._node_spec = kwargs["node_spec"]
     return recorder
 
 
@@ -142,18 +145,21 @@ def test_exact_w_snapshots_include_a_verify_block(tmp_path):
     assert len(TrialAppendStore(tmp_path / "campaign" / "ledger.jsonl").read_all()) == 16  # 16 main + 4 verify = 20 runs
 
 
-def test_final_alias_at_w20(tmp_path):
+def test_final_is_live_at_w20_and_never_aliases_the_pre_decision_snapshot(tmp_path):
     recorder = _run(tmp_path, VerifyOnce(at=99), W=20)
     assert recorder.count == 20
-    digest = recorder.write_final(w_final=20, ended_on="worker_runs")
+    digest = recorder.write_final_live(
+        w_final=20, ended_on="worker_runs", worker=recorder._worker, node_spec=recorder._node_spec,
+        ledger_path=tmp_path / "campaign" / "ledger.jsonl",
+    )
     snap = _load(tmp_path, "final.json")
     assert snap["final"] is True and snap["ended"] is True
     assert snap["ended_on"] == "worker_runs"
-    assert snap["alias_of"] == "w20.json"
-    assert snap["alias_sha256"] == recorder.snapshot_hashes()["w20.json"]
+    assert "alias_of" not in snap
     w20 = _load(tmp_path, "w20.json")
-    assert snap["controller_state_sha256"] == w20["controller_state_sha256"]
-    assert snap["incumbent_config"] == w20["incumbent_config"]
+    assert w20["config_sha256"] == snap["config_sha256"]
+    pre = _load(tmp_path, "w20_pre.json")
+    assert pre["pre_decision"] is True and pre["superseded_by"] == "final.json"
     assert len(digest) == 64
 
 
@@ -287,6 +293,65 @@ def test_controller_repr_fallback_is_refused():
 
 
 # ---------------------------------------------------------------------------
+class _ScriptedManager(ToggleBackend):
+    deterministic = False
+
+
+class _ImprovingWorker(ConfigMetricWorker):
+    """Apply fixture edits and report a strictly improving synthetic metric."""
+
+    def run_trial(self, proposal, node_spec, budget_index):
+        result = super().run_trial(proposal, node_spec, budget_index)
+        return replace(result, parsed_metrics={"val_score": 0.50 + 0.01 * self.runs})
+
+
+@pytest.mark.parametrize("max_calls,ended_on", [(80, "worker_runs"), (7, "llm_call_cap")])
+def test_final_is_the_live_last_keep_at_w_and_an_early_cap(tmp_path, max_calls, ended_on):
+    """Revision 4 step (5) finding 1: a keep on the final trial must reach final.json.
+
+    At W the pre-decision w20 record is preserved as w20_pre.json and w20.json is
+    canonicalised from the post-decision final; at an early call cap the final carries the
+    terminating keep.
+    """
+    spec = load_registered_node(NODE, repo_root=HARNESS)
+    node = _node_copy(tmp_path)
+    campaign = tmp_path / "campaign"
+    records_path = campaign / "ledger.jsonl"
+    rec = SnapshotRecorder(campaign, "a", "A0", NODE, 0, f"{NODE}__s6201")
+    worker = _ImprovingWorker(node)
+    kwargs = wrap({
+        "node_spec": spec,
+        "campaign_id": rec.instance_id,
+        "budget": 20,
+        "manager_mode": "baseline_manager",
+        "memory_mode": "append_only_summary",
+        "records_path": records_path,
+        "worker": worker,
+        "proposal_backend": _ScriptedManager(),
+        "controller": VerifyOnce(at=99),
+        "compute_budget": ParityBudget(max_worker_runs=20, max_llm_calls=max_calls, recorder=rec),
+        "verify_runs": 2,
+        "verify_split_policy": "vary",
+    }, rec)
+    run_real_campaign(**kwargs)
+    rec.write_final_live(w_final=rec.count, ended_on=ended_on, worker=kwargs["worker"],
+                         node_spec=kwargs["node_spec"], ledger_path=records_path)
+    rows = TrialAppendStore(records_path).read_all()
+    final = _load(tmp_path, "final.json")
+    expected = config_sha256({path: (node / path).read_text() for path in final["incumbent_config"]})
+    last = rows[-1]
+    decision = getattr(last.decision, "value", last.decision)
+    assert rec.count == (max_calls if max_calls < 20 else 20)
+    assert str(decision).lower() in {"keep", "kept"}
+    assert final["config_sha256"] == expected
+    assert final["last_kept_trial_index"] == last.budget_index
+    if rec.count == 20:
+        w20 = _load(tmp_path, "w20.json")
+        pre = _load(tmp_path, "w20_pre.json")
+        assert w20["config_sha256"] == final["config_sha256"]
+        assert pre["pre_decision"] is True and pre["config_sha256"] != final["config_sha256"]
+
+
 # Replicate-arm recorder callbacks: begin_step / on_charge / write_final_from_state
 # ---------------------------------------------------------------------------
 
@@ -357,7 +422,14 @@ def test_replicate_final_is_separate_from_w20_and_carries_the_last_keep(tmp_path
     assert snap["last_kept_trial_index"] == 4
     assert "alias_of" not in snap
     assert snap["controller_state_sha256"] == sha256_json({"steps": 5})
-    assert _load(tmp_path, "w20.json")["incumbent_config"] == pre
+    # The final governs at W: the canonical w20 carries the post-decision config, and the
+    # pre-decision record is preserved separately for replay.
+    assert _load(tmp_path, "w20.json")["incumbent_config"] == post
+    assert _load(tmp_path, "w20.json")["config_sha256"] == config_sha256(post)
+    assert _load(tmp_path, "w20.json")["canonical_final"] == "final.json"
+    pre_record = _load(tmp_path, "w20_pre.json")
+    assert pre_record["incumbent_config"] == pre
+    assert pre_record["pre_decision"] is True and pre_record["superseded_by"] == "final.json"
 
 
 def test_w_zero_final_refuses_a_non_cap_end(tmp_path):

@@ -24,8 +24,10 @@ Limits recorded honestly in the snapshot payload:
   controller that issues its own calls must consume the harness budget; the wrapper does
   not add a second copy.  A manager call made after the E1 hook (a revision) is not visible
   to the wrapper; ``llm_calls_basis`` names the source.  No G1 decision depends on it.
-* The snapshot is written immediately after the run that reaches the exact ``w``.  No
-  later mutation and no imputed ``w`` point.
+* The exact-``w`` snapshot is written immediately after the run that reaches ``w``.  At
+  W only, after the final decision, the pre-decision record is preserved as
+  ``w<W>_pre.json`` and ``w<W>.json`` is rewritten from the post-decision final (the final
+  governs; R1-D3-OUTCOMES2 §7.5(a)).  No other ``w`` point is imputed or mutated.
 """
 from __future__ import annotations
 
@@ -222,6 +224,21 @@ def _last_kept_trial_index(ledger_prefix: list[Any]) -> int | None:
     return last
 
 
+def _decision_value(record: Mapping[str, Any]) -> str:
+    decision = record.get("decision")
+    if isinstance(decision, Mapping):
+        decision = decision.get("value", decision)
+    return str(decision).lower()
+
+
+def _last_kept_from_rows(rows: list[Mapping[str, Any]]) -> int | None:
+    last = None
+    for row in rows:
+        if _decision_value(row) in ("keep", "kept") and row.get("budget_index") is not None:
+            last = int(row["budget_index"])
+    return last
+
+
 @dataclass(frozen=True)
 class ParityBudget(ComputeBudget):
     """A ``ComputeBudget`` that reports every charge to the G1 recorder.
@@ -298,8 +315,10 @@ class SnapshotRecorder:
     _controller_calls: int = 0
     _controller_state_at_hook: str = ""
     _written: dict[int, str] = field(default_factory=dict)
+    _pre_written: dict[int, str] = field(default_factory=dict)
     _final_written: bool = False
     _pending: dict[str, Any] | None = None
+    _post_decision_state: str | None = None
 
     # ---- harness hook -----------------------------------------------------
     def __call__(self, ctx: SnapshotContext) -> None:
@@ -342,10 +361,16 @@ class SnapshotRecorder:
                 self._trial.llm_calls = int(calls)
 
     # ---- controller wrapper callbacks ------------------------------------
-    def note_decision(self, epoch: str, action: str) -> None:
+    def note_decision(self, epoch: str, action: str, controller: Any | None = None) -> None:
         self._controller_calls += 1
         if self._trial is not None and epoch in ("E1", "E2"):
             self._trial.pending_action = action
+        if epoch in ("E1", "E2"):
+            # The final record is post-decision (unlike the exact-w snapshots, which keep the
+            # E1 state by coordinator condition 3).  The harness gives us the live controller
+            # object here, so hash its state after the decision.
+            if controller is not None:
+                self._post_decision_state = controller_state_sha256(controller)
 
     # ---- counting worker callback ----------------------------------------
     def note_run(self, run_kind: str, where: str) -> None:
@@ -500,29 +525,155 @@ class SnapshotRecorder:
         self._written[w] = digest
         return digest
 
-    def write_final(self, *, w_final: int, ended_on: str) -> str:
-        """Write ``snapshots/final.json`` at the campaign's actual final charged count."""
-        if ended_on not in ENDED_ON:
-            raise SnapshotStop(f"unknown ended_on {ended_on!r}")
+    def _final_payload(self, *, w: int, ended_on: str,
+                       incumbent_config: Mapping[str, Any],
+                       start_config: Mapping[str, Any] | None = None,
+                       last_kept_trial_index: int | None = None,
+                       llm_calls: int | None = None,
+                       controller_state_sha256_value: str | None = None,
+                       trial_id: str | None = None, step_index: int | None = None,
+                       pending: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """The canonical post-decision final payload.
+
+        ``incumbent_config`` is the live configuration after the last decision (read from the
+        node on the harness route, or the engine's post-decision incumbent on the replicate
+        route), never a cached pre-E1 copy.
+        """
+        contents = _files_config(dict(incumbent_config))
+        payload: dict[str, Any] = {
+            "schema": SNAPSHOT_SCHEMA, "stage": self.stage, "arm": self.arm, "node": self.node,
+            "repetition": int(self.repetition), "instance_id": self.instance_id,
+            "w": int(w), "w_actual": int(w), "incumbent_config": contents,
+            "start_config": _files_config(dict(start_config)) if start_config is not None
+            else (self.start_config or {}),
+            "last_kept_trial_index": None if last_kept_trial_index is None else int(last_kept_trial_index),
+            "worker_runs": int(w),
+            "llm_calls": int(llm_calls) if llm_calls is not None else getattr(self._last_budget, "llm_calls", 0),
+            "llm_calls_basis": "budget_observed_at_run",
+            "ended": True,
+            "config_sha256": config_sha256(contents),
+            "controller_state_sha256": controller_state_sha256_value or self._post_decision_state
+            or self._controller_state_at_hook,
+            "pending_action": None, "trial_id": trial_id, "step_index": step_index,
+            "run_kind": "final", "timestamp_utc": utc_now(), "final": True, "ended_on": ended_on,
+        }
+        if pending is not None:
+            payload["pending"] = _jsonable(pending)
+        return payload
+
+    def _write_final_payload(self, payload: Mapping[str, Any], *, w_final: int) -> str:
+        """Write final.json; canonicalise the at-W record if one exists.
+
+        The w snapshot is written immediately after the charge that reaches ``w``, i.e. before
+        that trial's E2 decision.  It is therefore a pre-decision record and must never be
+        aliased as final.  When the campaign reaches W, the pre-decision record is preserved
+        byte-for-byte as ``w<W>_pre.json`` (a distinct replay record) and ``w<W>.json`` is
+        rewritten from the post-decision final, so G6 audits one canonical Y(W) and G7's
+        equality check holds.
+        """
+        if payload.get("ended_on") not in ENDED_ON:
+            raise SnapshotStop(f"unknown ended_on {payload.get('ended_on')!r}")
         path = Path(self.out_dir) / "snapshots" / "final.json"
         if path.exists() or self._final_written:
             raise SnapshotStop(f"refusing to overwrite {path}")
-        if w_final == 20 and 20 in self._written:
-            # True alias: copy the already-written w20 payload, then add the final fields.
-            # Recomputing it would use the E2 state and would not be the same record.
-            source = Path(self.out_dir) / "snapshots" / "w20.json"
-            payload = json.loads(source.read_text(encoding="utf-8"))
-            payload["final"] = True
-            payload["ended"] = True
-            payload["ended_on"] = ended_on
-            payload["run_kind"] = "final"
-            payload["alias_of"] = "w20.json"
-            payload["alias_sha256"] = self._written[20]
-        else:
-            payload = self._payload(w=w_final, final=True, ended_on=ended_on, run_kind="final")
+        if int(w_final) != int(payload["w"]):
+            raise SnapshotParityStop(
+                f"final payload w={payload['w']} differs from the recorder's charged count {w_final}"
+            )
+        if int(w_final) in SNAPSHOT_WS and payload.get("ended_on") != "error":
+            source = Path(self.out_dir) / "snapshots" / f"w{int(w_final)}.json"
+            if source.is_file():
+                pre = json.loads(source.read_text(encoding="utf-8"))
+                pre["pre_decision"] = True
+                pre["superseded_by"] = "final.json"
+                pre_path = Path(self.out_dir) / "snapshots" / f"w{int(w_final)}_pre.json"
+                if pre_path.exists():
+                    raise SnapshotStop(f"refusing to overwrite {pre_path}")
+                self._pre_written[int(w_final)] = _atomic_write_json(pre_path, pre)
+                canonical = dict(payload)
+                canonical["final"] = False
+                canonical["ended"] = False
+                canonical.pop("ended_on", None)
+                canonical["run_kind"] = "final-at-w"
+                canonical["canonical_final"] = "final.json"
+                self._written[int(w_final)] = _atomic_write_json(source, canonical)
         digest = _atomic_write_json(path, payload)
         self._final_written = True
         return digest
+
+    def write_final(self, *, w_final: int, ended_on: str) -> str:
+        """Write ``snapshots/final.json`` (single call; w=0 keeps its historical meaning).
+
+        At w>0 the live post-decision incumbent is required: use :meth:`write_final_live`
+        for a harness campaign and :meth:`write_final_from_state` for a replicate campaign.
+        """
+        if ended_on not in ENDED_ON:
+            raise SnapshotStop(f"unknown ended_on {ended_on!r}")
+        if int(w_final) != self.count:
+            raise SnapshotParityStop(
+                f"final w_final={w_final} differs from the recorder's charged count {self.count}"
+            )
+        if int(w_final) != 0:
+            raise SnapshotStop("a final at w>0 needs the live incumbent and ledger; use write_final_live")
+        payload = self._final_payload(
+            w=0, ended_on=ended_on, incumbent_config=self.start_config or {},
+            last_kept_trial_index=None,
+            llm_calls=getattr(self._last_budget, "llm_calls", 0) if self._last_budget is not None else 0,
+            trial_id=None, step_index=None,
+        )
+        return self._write_final_payload(payload, w_final=0)
+
+    def write_final_live(self, *, w_final: int, ended_on: str, worker: Any,
+                         node_spec: Any, ledger_path: str | Path | None = None,
+                         incumbent_config: Mapping[str, Any] | None = None,
+                         state: Any | None = None,
+                         last_kept_trial_index: int | None = None,
+                         llm_calls: int | None = None,
+                         trial_id: str | None = None, step_index: int | None = None,
+                         pending: Mapping[str, Any] | None = None) -> str:
+        """Write the harness route's post-decision final from the live node configuration.
+
+        ``worker`` is the live worker (a ``CountingWorker`` delegates ``node_root``); the
+        editable files after ``run_real_campaign`` are the terminal incumbent, including a
+        keep on the final trial.  The ledger supplies the last kept trial index, the final
+        trial id and the LLM count.  The post-decision controller state is the one captured
+        by the last E1/E2 decision; the exact-w snapshots keep the E1 state as before.
+        """
+        if ended_on not in ENDED_ON:
+            raise SnapshotStop(f"unknown ended_on {ended_on!r}")
+        if int(w_final) != self.count:
+            raise SnapshotParityStop(
+                f"final w_final={w_final} differs from the recorder's charged count {self.count}"
+            )
+        contents = dict(incumbent_config) if incumbent_config is not None else read_worker_config(worker, node_spec)
+        if int(w_final) == 0:
+            contents = dict(contents or self.start_config or {})
+        elif not contents:
+            raise SnapshotStop("a kept campaign must provide its live final config contents")
+        rows: list[dict[str, Any]] = []
+        if ledger_path is not None and Path(ledger_path).is_file():
+            for line in Path(ledger_path).read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    rows.append(json.loads(line))
+        if rows:
+            if last_kept_trial_index is None:
+                last_kept_trial_index = _last_kept_from_rows(rows)
+            last = rows[-1]
+            if llm_calls is None and last.get("llm_calls") is not None:
+                llm_calls = int(last["llm_calls"])
+            if trial_id is None:
+                trial_id = last.get("trial_id")
+            if step_index is None:
+                step_index = last.get("step_index")
+        if llm_calls is None and self._last_budget is not None:
+            llm_calls = getattr(self._last_budget, "llm_calls", None)
+        state_sha = sha256_json(state) if state is not None else (self._post_decision_state
+                                                                  or self._controller_state_at_hook)
+        payload = self._final_payload(w=int(w_final), ended_on=ended_on, incumbent_config=contents,
+                                      last_kept_trial_index=last_kept_trial_index,
+                                      llm_calls=llm_calls, controller_state_sha256_value=state_sha,
+                                      trial_id=trial_id, step_index=step_index, pending=pending)
+        return self._write_final_payload(payload, w_final=int(w_final))
 
     def write_final_from_state(self, *, w_final: int, ended_on: str,
                                incumbent_config: Mapping[str, Any], state: Any,
@@ -532,17 +683,13 @@ class SnapshotRecorder:
                                pending: Mapping[str, Any] | None = None) -> str:
         """Write the replicate arm's post-decision ``final.json``.
 
-        Unlike the harness route, the replicate exact-``w`` snapshot is the pre-decision
-        state inside the last step, so ``final.json`` is a separate record: it carries the
-        **config contents** of the campaign's last kept trial (``start_config`` when no
-        trial was kept) and the post-decision projection.  It is never an alias of
-        ``w20.json``.
+        The replicate exact-``w`` snapshot is the pre-decision state inside the last step;
+        at W it is preserved as ``w<W>_pre.json`` and the canonical ``w<W>.json`` is
+        rewritten from this post-decision record (the final governs), so one audit serves
+        both and G7's Y(W) = final equality holds.
         """
         if ended_on not in ENDED_ON:
             raise SnapshotStop(f"unknown ended_on {ended_on!r}")
-        path = Path(self.out_dir) / "snapshots" / "final.json"
-        if path.exists() or self._final_written:
-            raise SnapshotStop(f"refusing to overwrite {path}")
         if int(w_final) != self.count:
             raise SnapshotParityStop(
                 f"final w_final={w_final} differs from the recorder's charged count {self.count}"
@@ -551,43 +698,20 @@ class SnapshotRecorder:
             raise SnapshotStop(f"a campaign with w_final = 0 can only end llm_call_cap, not {ended_on!r}")
         if state is None:
             raise SnapshotStop("write_final_from_state needs the engine/counter projection")
-        if w_final == 0:
+        if int(w_final) == 0:
             contents = dict(incumbent_config or self.start_config or {})
         else:
             if not incumbent_config:
                 raise SnapshotStop("a kept campaign must pass its final config contents")
             contents = dict(incumbent_config)
-        payload: dict[str, Any] = {
-            "schema": SNAPSHOT_SCHEMA,
-            "stage": self.stage,
-            "arm": self.arm,
-            "node": self.node,
-            "repetition": int(self.repetition),
-            "instance_id": self.instance_id,
-            "w": int(w_final),
-            "w_actual": int(w_final),
-            "incumbent_config": _files_config(contents),
-            "start_config": self.start_config or {},
-            "last_kept_trial_index": None if last_kept_trial_index is None else int(last_kept_trial_index),
-            "worker_runs": int(w_final),
-            "llm_calls": int(llm_calls),
-            "llm_calls_basis": "budget_observed_at_run",
-            "ended": True,
-            "config_sha256": config_sha256(_files_config(contents)),
-            "controller_state_sha256": sha256_json(state),
-            "pending_action": None,
-            "trial_id": trial_id,
-            "step_index": step_index,
-            "run_kind": "final",
-            "timestamp_utc": utc_now(),
-            "final": True,
-            "ended_on": ended_on,
-        }
-        if pending is not None:
-            payload["pending"] = _jsonable(pending)
-        digest = _atomic_write_json(path, payload)
-        self._final_written = True
-        return digest
+        payload = self._final_payload(w=int(w_final), ended_on=ended_on, incumbent_config=contents,
+                                      last_kept_trial_index=last_kept_trial_index,
+                                      llm_calls=llm_calls, controller_state_sha256_value=sha256_json(state),
+                                      trial_id=trial_id, step_index=step_index, pending=pending)
+        return self._write_final_payload(payload, w_final=int(w_final))
+
+    def pre_decision_hashes(self) -> dict[str, str]:
+        return {f"w{w}_pre.json": digest for w, digest in sorted(self._pre_written.items())}
 
     def snapshot_hashes(self) -> dict[str, str]:
         return {f"w{w}.json": digest for w, digest in sorted(self._written.items())}
@@ -636,7 +760,7 @@ class RecordingController:
 
     def decide(self, view: Any, mask: Mapping[str, bool]) -> Any:
         decision = self._inner.decide(view, mask)
-        self.recorder.note_decision(str(view.epoch), str(decision.action))
+        self.recorder.note_decision(str(view.epoch), str(decision.action), controller=self._inner)
         return decision
 
     def __getattr__(self, name: str) -> Any:
