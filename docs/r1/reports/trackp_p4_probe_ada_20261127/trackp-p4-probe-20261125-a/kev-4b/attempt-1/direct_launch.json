@@ -1,0 +1,70 @@
+{
+ "arm": "kev-4b",
+ "card_shared": false,
+ "command": [
+  "/bin/bash",
+  "p4_probe.sh",
+  "p4_probe_spec.json",
+  "kev-4b",
+  "ada_rtx6000"
+ ],
+ "ended_utc": "2026-11-27T07:36:28Z",
+ "exit_code": 2,
+ "expected_hostname": "ucrtasl",
+ "gpu": {
+  "compute_capability": "8.9",
+  "driver": "545.23.08",
+  "index": 2,
+  "memory_free_mib": 48427.0,
+  "memory_total": "49140 MiB",
+  "name": "NVIDIA RTX 6000 Ada Generation",
+  "uuid": "GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154"
+ },
+ "host_class": "ada_rtx6000",
+ "host_config": {
+  "path": "r1/scripts/configs/trackp_ada_v1.json",
+  "sha256": "bb0c7251a5d47e04e82e33c738160be317bfbf59984b82a0d611b0798c4fa908"
+ },
+ "hostname": "ucrtasl",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949",
+ "image_executed": false,
+ "job_dir": "/data1/zli538/paperb_p4_20261127/jobs/trackp-p4-probe-20261125-a/kev-4b/20261127T065833Z-1755258-762100",
+ "label": "ENGINEERING_ONLY",
+ "lease": {
+  "acquired_utc": "2026-11-27T06:58:32Z",
+  "gpu_index": 2,
+  "lock_path": "/data1/zli538/r1_locks/gpu2.lock"
+ },
+ "memory_needed_mib": 46000,
+ "mode": "probe",
+ "other_processes_end": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "other_processes_start": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "refusal": null,
+ "run_id": "trackp-p4-probe-20261125-a",
+ "runtime": "venv",
+ "runtime_version": "Python 3.12.10",
+ "schema": "trackp_p4_direct_launch/1",
+ "ssh_alias": "ada_server",
+ "stage": {
+  "dir": "/data1/zli538/paperb_p4_20261127/stages/stage_kev-4b",
+  "manifest_sha256": "529c70b92ad22e01147fd05c6039d8510094a892951e73ae1bbc3cec3cb9f36b",
+  "submit_marker_sha256": null
+ },
+ "started_utc": "2026-11-27T06:58:32Z",
+ "status": "finished",
+ "timeout": "none (R1-NO-TIMEOUT)",
+ "uid": 1008,
+ "user": "zli538",
+ "venv": {
+  "python": "/data1/zli538/paperb_p4_20261127/venv/bin/python",
+  "version": "3.12.10"
+ },
+ "wall_clock_basis": "the GPU lease span (one card)",
+ "wall_clock_s": 2275.079
+}

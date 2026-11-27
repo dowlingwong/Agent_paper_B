@@ -1,0 +1,80 @@
+{
+ "arm": "kev-0.8b",
+ "card_processes_end": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "card_processes_start": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "clone": {
+  "commit": "91cfd48a67f8d62d4e20826976cbdbdbcfcaf505",
+  "origin_main": "91cfd48a67f8d62d4e20826976cbdbdbcfcaf505",
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git"
+ },
+ "code": {
+  "p4_lib_sha256": "f011a65ff247d201827c7282233bf1b8a9532474309ac4ed5210625aa153d6c2",
+  "template_sha256": "45ac32a50b4d1de826c94800907049c45426505ad06c193dd3b632cba9039d9e"
+ },
+ "condor": null,
+ "finished_utc": "2026-11-27T06:27:37Z",
+ "gpu": {
+  "compute_capability": "8.9",
+  "driver": "545.23.08",
+  "host_class": "ada_rtx6000",
+  "memory_total": "49140 MiB",
+  "name": "NVIDIA RTX 6000 Ada Generation",
+  "uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be"
+ },
+ "gpu_hours": 0.009,
+ "host": {
+  "euid": 1008,
+  "hostname": "ucrtasl",
+  "kernel": "5.15.0-151-generic",
+  "logical_cpus": 96,
+  "uid": 1008
+ },
+ "host_class": "ada_rtx6000",
+ "image": null,
+ "kept": [],
+ "label": "ENGINEERING_ONLY",
+ "launch": "direct",
+ "lease": {
+  "env": "P4_LEASED_GPU_UUID",
+  "leased_uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be"
+ },
+ "mode": "probe",
+ "oom": false,
+ "output_use": "ENGINEERING_ONLY H200 SFT fit and timing probe (P4-PROBE A): synthetic labels, at most 50 steps, one base; nothing kept as an arm; no label file, receipt or freeze record read; its GPU-hours count against P4-CAP (P4-PROBECAP A)",
+ "paper_commit": "91cfd48a67f8d62d4e20826976cbdbdbcfcaf505",
+ "phase": 1,
+ "probe": {
+  "labels": "synthetic",
+  "lr": 1e-05,
+  "rule": "P4-PROBE A (R1-P4-TESTPLAN-DECISIONS): at most 50 steps of sft-dev on synthetic labels, one job per base, nothing kept as an arm; it counts as no training run. walltime_s is the probe job's +RequestWalltime and the charge of a probe attempt with no readable record.",
+  "sample_ms": 500,
+  "seed": 0,
+  "steps": 50,
+  "walltime_s": 7200
+ },
+ "run_id": "trackp-p4-probe-20261125-a",
+ "schema": "trackp_p4_probe_record/1",
+ "spec_sha256": "540bd9798017260ca391612351706189712221c269482a7d47385695160a50a2",
+ "started_utc": "2026-11-27T06:27:05Z",
+ "steps": [
+  "identity",
+  "clone"
+ ],
+ "stop": "STOP: unexpected FileNotFoundError: [Errno 2] No such file or directory: 'uv'",
+ "stop_class": "infrastructure",
+ "venv": {
+  "python": "/data1/zli538/paperb_p4_20261127/venv/bin/python",
+  "version": "3.12.10"
+ },
+ "visible_devices": {
+  "CUDA_VISIBLE_DEVICES": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be",
+  "NVIDIA_VISIBLE_DEVICES": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be",
+  "_CONDOR_AssignedGPUs": null
+ }
+}

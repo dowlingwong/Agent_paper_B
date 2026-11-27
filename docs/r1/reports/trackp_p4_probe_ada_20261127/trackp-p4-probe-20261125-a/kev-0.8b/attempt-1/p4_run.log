@@ -1,0 +1,3 @@
+P4 probe venv job start 2026-11-27T06:27:05Z host=ucrtasl arm=kev-0.8b host_class=ada_rtx6000 uid=1008
+STOP: unexpected FileNotFoundError: [Errno 2] No such file or directory: 'uv'
+P4 probe venv job end 2026-11-27T06:27:37Z rc=2

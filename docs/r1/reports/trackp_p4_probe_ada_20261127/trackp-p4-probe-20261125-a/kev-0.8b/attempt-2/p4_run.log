@@ -1,0 +1,3 @@
+P4 probe venv job start 2026-11-27T06:28:53Z host=ucrtasl arm=kev-0.8b host_class=ada_rtx6000 uid=1008
+STOP: trackp.py sft-data failed rc=1; see 000_sft-data.log
+P4 probe venv job end 2026-11-27T06:33:01Z rc=2

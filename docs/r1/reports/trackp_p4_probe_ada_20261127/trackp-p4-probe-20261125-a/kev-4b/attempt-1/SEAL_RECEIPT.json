@@ -1,0 +1,36 @@
+{
+ "schema": "trackp_p4_seal_receipt/1",
+ "run_id": "trackp-p4-probe-20261125-a",
+ "arm": "kev-4b",
+ "attempt": 1,
+ "sealed_path": "/ceph/srv/dwong/paperb/trackp_p4/trackp-p4-probe-20261125-a/kev-4b/attempt-1",
+ "record_readable": true,
+ "sums": "verified",
+ "identity_verified": true,
+ "stop": "STOP: CUDA OOM in sft-dev at micro-batch 8 (P4-MB; the author decides); see 001_sft-dev.log",
+ "stop_class": "arm",
+ "charged_gpu_hours": 0.632,
+ "kind": "probe",
+ "charge_basis": "max(direct launcher wall clock, job_record.gpu_hours)",
+ "launch": "direct",
+ "host_class": "ada_rtx6000",
+ "job_record_sha256": "d433b2a29b3a352a23f3dbcfefe68d69209c64300b8a0d0ae4d52bebaa09cd3a",
+ "run_log_sha256": "a5a480871009ec58c713b3ebeff63f621cf723d0956347d6e41e6ef0a2fc6681",
+ "direct_launch_sha256": "393e8a5abfed2eb1e46b0a54d6ae7f9258ac305eb37ef1e3ae1b225e7d241ceb",
+ "launcher_status": "finished",
+ "launcher_wall_clock_s": 2275.079,
+ "launcher_exit_code": 2,
+ "gpu_uuid": "GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154",
+ "stage_manifest_sha256": "529c70b92ad22e01147fd05c6039d8510094a892951e73ae1bbc3cec3cb9f36b",
+ "other_processes_start": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "other_processes_end": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "card_shared": false,
+ "source_dir": "/work/dwong/paperb/work/trackp-p4-probe-20261127/out/kev-4b/20261127T065833Z-1755258-762100",
+ "sealed_utc": "2026-11-27T07:43:27Z"
+}

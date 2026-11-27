@@ -1,0 +1,36 @@
+{
+ "schema": "trackp_p4_seal_receipt/1",
+ "run_id": "trackp-p4-probe-20261125-a",
+ "arm": "qwen3.5-0.8b-base",
+ "attempt": 1,
+ "sealed_path": "/ceph/srv/dwong/paperb/trackp_p4/trackp-p4-probe-20261125-a/qwen3.5-0.8b-base/attempt-1",
+ "record_readable": true,
+ "sums": "verified",
+ "identity_verified": true,
+ "stop": "STOP: trackp.py sft-data refused: STOP: ValueError: origin/main is stale or missing; fetch before evidence use",
+ "stop_class": "protocol",
+ "charged_gpu_hours": 0.1588,
+ "kind": "probe",
+ "charge_basis": "max(direct launcher wall clock, job_record.gpu_hours)",
+ "launch": "direct",
+ "host_class": "ada_rtx6000",
+ "job_record_sha256": "c5d2d5a3a10c008329a17a6a6604822cef8cf199ac44c75520aed3c0503cf7d2",
+ "run_log_sha256": "d41a625752b1c3d791a68b96393944c24fa479241185e34bbed1e8ba3d87622d",
+ "direct_launch_sha256": "4c7998cc81fa6a9c9e925298dce7e86a3f5f3c208a5125d92d03d42c90680501",
+ "launcher_status": "finished",
+ "launcher_wall_clock_s": 571.59,
+ "launcher_exit_code": 2,
+ "gpu_uuid": "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77",
+ "stage_manifest_sha256": "1a5b58fd6ecc84176af4f8f9b7d4c90f1aafe80c0bdc3f508217164475584f40",
+ "other_processes_start": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "other_processes_end": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "card_shared": false,
+ "source_dir": "/work/dwong/paperb/work/trackp-p4-probe-20261127/out/qwen3.5-0.8b-base/20261127T065833Z-1755255-1950b7",
+ "sealed_utc": "2026-11-27T07:11:40Z"
+}

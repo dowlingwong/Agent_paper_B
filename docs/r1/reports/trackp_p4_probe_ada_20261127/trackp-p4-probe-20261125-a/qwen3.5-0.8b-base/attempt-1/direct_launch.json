@@ -1,0 +1,70 @@
+{
+ "arm": "qwen3.5-0.8b-base",
+ "card_shared": false,
+ "command": [
+  "/bin/bash",
+  "p4_probe.sh",
+  "p4_probe_spec.json",
+  "qwen3.5-0.8b-base",
+  "ada_rtx6000"
+ ],
+ "ended_utc": "2026-11-27T07:08:04Z",
+ "exit_code": 2,
+ "expected_hostname": "ucrtasl",
+ "gpu": {
+  "compute_capability": "8.9",
+  "driver": "545.23.08",
+  "index": 6,
+  "memory_free_mib": 48427.0,
+  "memory_total": "49140 MiB",
+  "name": "NVIDIA RTX 6000 Ada Generation",
+  "uuid": "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+ },
+ "host_class": "ada_rtx6000",
+ "host_config": {
+  "path": "r1/scripts/configs/trackp_ada_v1.json",
+  "sha256": "bb0c7251a5d47e04e82e33c738160be317bfbf59984b82a0d611b0798c4fa908"
+ },
+ "hostname": "ucrtasl",
+ "image_digest": "ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949",
+ "image_executed": false,
+ "job_dir": "/data1/zli538/paperb_p4_20261127/jobs/trackp-p4-probe-20261125-a/qwen3.5-0.8b-base/20261127T065833Z-1755255-1950b7",
+ "label": "ENGINEERING_ONLY",
+ "lease": {
+  "acquired_utc": "2026-11-27T06:58:32Z",
+  "gpu_index": 6,
+  "lock_path": "/data1/zli538/r1_locks/gpu6.lock"
+ },
+ "memory_needed_mib": 46000,
+ "mode": "probe",
+ "other_processes_end": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "other_processes_start": {
+  "count": 0,
+  "memory_mib": 0.0
+ },
+ "refusal": null,
+ "run_id": "trackp-p4-probe-20261125-a",
+ "runtime": "venv",
+ "runtime_version": "Python 3.12.10",
+ "schema": "trackp_p4_direct_launch/1",
+ "ssh_alias": "ada_server",
+ "stage": {
+  "dir": "/data1/zli538/paperb_p4_20261127/stages/stage_qwen08",
+  "manifest_sha256": "1a5b58fd6ecc84176af4f8f9b7d4c90f1aafe80c0bdc3f508217164475584f40",
+  "submit_marker_sha256": null
+ },
+ "started_utc": "2026-11-27T06:58:32Z",
+ "status": "finished",
+ "timeout": "none (R1-NO-TIMEOUT)",
+ "uid": 1008,
+ "user": "zli538",
+ "venv": {
+  "python": "/data1/zli538/paperb_p4_20261127/venv/bin/python",
+  "version": "3.12.10"
+ },
+ "wall_clock_basis": "the GPU lease span (one card)",
+ "wall_clock_s": 571.59
+}

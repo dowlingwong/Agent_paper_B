@@ -1,0 +1,14 @@
+P4 probe venv job start 2026-11-27T06:46:13Z host=ucrtasl arm=kev-0.8b host_class=ada_rtx6000 uid=1008
+{
+ "ok": true,
+ "arm": "kev-0.8b",
+ "memory": {
+  "samples": 372,
+  "peak_memory_used_mib": 25939.0,
+  "memory_total_mib": 49140.0,
+  "headroom_frac": 0.4721,
+  "unparsed_lines": 0
+ },
+ "s_per_step_wall": 3.7188
+}
+P4 probe venv job end 2026-11-27T06:53:35Z rc=0
