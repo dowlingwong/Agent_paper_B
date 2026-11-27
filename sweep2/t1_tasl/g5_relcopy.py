@@ -19,7 +19,9 @@ and what part 3a's switch checks (``g5_tasl.check_seven_copy`` / ``check_g1b_cop
   ``autoresearch_fixedtokens``, bound to its ``ASSEMBLY.json`` (``g1b_tasl_ar_assembly/1``) and ``runs.jsonl``; copied
   to ``<dest>/``. It prints the completion record's ``noise_floor_copy`` and ``g1b_sealed_summary`` lines (G5-ARPEND A)
   or the spec's ``noise_floor.ar`` fields (G5-ARPEND B).
-* **D6 A (R1-T1-FEAT-DECISIONS, amending REL-T1-G1B's copy list).** For both kinds the step also copies the run
+* **Expansion** (run ``g1b-x-tasl-20261126-a``): the four-node TASL-2 assembly beside ``sealed_g1b``. The source
+  must match the published summary and assembly, the signed G.1b spec and the published PRE-SPLIT v2 amendment.
+* **D6 A (R1-T1-FEAT-DECISIONS, amending REL-T1-G1B's copy list).** The step also copies the run
   directory's ``ASSEMBLY.json`` and ``runs.jsonl`` byte-identically beside the summary copy, each with its sha256 in
   ``COPY_RECORD.json`` (``assembly_copy``, ``assembly_sha256``, ``runs_copy``, ``runs_sha256``), in the spec fields it
   prints (``noise_floor.seven.*``, or ``noise_floor.ar.*`` under G5-ARPEND B) and in the needles the review must name.
@@ -34,8 +36,8 @@ and what part 3a's switch checks (``g5_tasl.check_seven_copy`` / ``check_g1b_cop
   ``r1.c3.analysis_guard.refuse_sealed``'s check (``g5_noise._refuse_sealed``) before it is opened and must be a
   regular file. The files are written from the checked bytes into a sibling directory renamed into place at the end;
   a STOP leaves no partial copy.
-* **Out of the sealed G.1b tree.** The summary must lie under the G.1b spec's sealed root (``sealed_g1b``) and be a
-  regular file (no symlink on its path). ``dest`` is a repository path under ``docs/r1/reports/``; nothing is
+* **Source and destination.** The summary is a regular file with no symlink on its path. The original two kinds
+  come from their G.1b spec's sealed root. ``dest`` is a repository path under ``docs/r1/reports/``; nothing is
   overwritten. The copies are committed and reviewed by the coordinating chat; the review names each copy's path and
   sha256, the sealed path, and for the seven nodes the gate copy and its sha256 (3a's ``check_g1b_copy``).
 """
@@ -59,13 +61,54 @@ import g5_tasl as S  # noqa: E402
 L = G.L
 Stop = G.Stop
 COPY_SCHEMA = "g5_rel_t1_g1b_copy/1"
+X_RUN_ID = "g1b-x-tasl-20261126-a"
+X_NOTE = "docs/r1/authorizations/g1b_x_t1_tasl_20261126.md"
+X_RESULT = "docs/r1/reports/g1b_x_20261127"
+X_REVIEW = "docs/r1/reviews/G1B_X_RESULT_REVIEW_20261127_ROUND2.md"
+X_SPLIT_SHA256 = "970d3e45b5177f0d9f6668e9495905e1878a4ffa8eab3d73c4df6b9292a3bea7"
 KINDS = {"seven": (G.SUMMARY_SCHEMA, JN.SEVEN_RUN_ID, list(S.SEVEN), G.ASSEMBLY_SCHEMA, "G5-7"),
-         "ar": (G.AR_SUMMARY_SCHEMA, JN.AR_RUN_ID, [S.AR], G.AR_ASSEMBLY_SCHEMA, "G5-AR")}
+         "ar": (G.AR_SUMMARY_SCHEMA, JN.AR_RUN_ID, [S.AR], G.AR_ASSEMBLY_SCHEMA, "G5-AR"),
+         "x": (G.X_SUMMARY_SCHEMA, X_RUN_ID, list(G.X_NODES), G.X_ASSEMBLY_SCHEMA, "G5-X")}
 
 
 def _sealed_roots(spec: dict, family: str) -> set[Path]:
     g1b = json.loads((S.REPO_ROOT / S.FAMILY_SPECS[family]).read_text())
     return {Path(h["sealed_root"]).resolve() for h in g1b["hosts"].values() if h.get("sealed_root")}
+
+
+def _expansion_binding(summary: Path) -> dict:
+    from g5_addendum import G1B_SPEC, release
+
+    try:
+        amendment = release.split_v2_amendment(S.REPO_ROOT)
+    except release.ReleaseStop as exc:
+        raise Stop(str(exc)) from None
+    if amendment["sha256"] != X_SPLIT_SHA256:
+        raise Stop("STOP: the expansion copy needs the published R1-G5-S9 PRE-SPLIT v2 amendment")
+
+    paths = (X_NOTE, G1B_SPEC, f"{X_RESULT}/summary.json", f"{X_RESULT}/ASSEMBLY.json", X_REVIEW)
+    published = {path: G._read_main(path) for path in paths}
+    if missing := [path for path, raw in published.items() if not raw]:
+        raise Stop(f"STOP: expansion G.1b copy requires these records on published main: {missing}")
+    review = published[X_REVIEW].decode("utf-8")
+    if not any(line.startswith("**Verdict: ACCEPTED.**") for line in review.splitlines()):
+        raise Stop("STOP: the expansion G.1b result has no accepted review on published main")
+    spec_raw = published[G1B_SPEC]
+    spec = json.loads(spec_raw)
+    spec_sha = N._sha(spec_raw)
+    note = G._note_fields(published[X_NOTE])
+    if (note.get("approved"), note.get("label"), note.get("run_id"), note.get("spec_sha256"),
+        note.get("labels_read")) != ("true", G.ENGINEERING_ONLY, X_RUN_ID, spec_sha, "none") or not G.is_x(spec) or \
+            spec.get("run_id") != X_RUN_ID or {entry["node"] for entry in spec["nodes"]} != set(G.X_NODES):
+        raise Stop("STOP: the signed expansion G.1b note does not bind the four-node spec/run")
+    sealed_root = Path(spec["hosts"][S.WORKER_HOST]["sealed_root"])
+    expected = sealed_root.parent / "assembly" / X_RUN_ID / "summary.json"
+    if summary != expected:
+        raise Stop(f"STOP: expansion summary must be {expected}")
+    return {"summary_raw": published[f"{X_RESULT}/summary.json"],
+            "assembly_raw": published[f"{X_RESULT}/ASSEMBLY.json"],
+            "spec_sha256": spec_sha, "spec_json_sha256": N._sha(json.dumps(spec, sort_keys=True).encode()),
+            "pre_split_amendment": f"{amendment['path']} sha256 {amendment['sha256']}"}
 
 
 def check_source(spec: dict, kind: str, summary: Path) -> dict:
@@ -79,12 +122,14 @@ def check_source(spec: dict, kind: str, summary: Path) -> dict:
     run_dir = summary.parent
     asm_path, runs_path, gate_path = run_dir / "ASSEMBLY.json", run_dir / "runs.jsonl", run_dir / "crosscheck_gate.json"
     N._refuse_sealed(summary, asm_path, runs_path, gate_path)          # before any of them is opened (review m1)
+    expansion = _expansion_binding(summary) if kind == "x" else None
     if not summary.is_file():
         raise Stop(f"STOP: {summary} is not a file")
-    roots = _sealed_roots(spec, family)
-    if not any(r in summary.resolve().parents for r in roots):
-        raise Stop(f"STOP: {summary} is not in the sealed G.1b tree {sorted(map(str, roots))} (REL-T1-G1B: copied out "
-                   f"of the sealed tree)")
+    if expansion is None:
+        roots = _sealed_roots(spec, family)
+        if not any(r in summary.resolve().parents for r in roots):
+            raise Stop(f"STOP: {summary} is not in the sealed G.1b tree {sorted(map(str, roots))} (REL-T1-G1B: copied out "
+                       f"of the sealed tree)")
     raw = summary.read_bytes()
     s = json.loads(raw)
     if s.get("schema") != schema or s.get("label") != G.ENGINEERING_ONLY or s.get("run_id") != run_id:
@@ -94,12 +139,21 @@ def check_source(spec: dict, kind: str, summary: Path) -> dict:
     if not asm_path.is_file() or not runs_path.is_file() or asm_path.is_symlink() or runs_path.is_symlink():
         raise Stop(f"STOP: {run_dir} is not an assembled G.1b run directory (ASSEMBLY.json, runs.jsonl as regular "
                    f"files)")
-    asm_raw, runs_raw = asm_path.read_bytes(), runs_path.read_bytes()
+    asm_raw = asm_path.read_bytes()
+    if expansion and (raw != expansion["summary_raw"] or asm_raw != expansion["assembly_raw"]):
+        raise Stop("STOP: expansion G.1b source summary or ASSEMBLY.json differs from the reviewed published result")
     asm = json.loads(asm_raw)
+    if expansion and (asm.get("spec_json_sha256") != expansion["spec_json_sha256"] or
+                      sorted(job.get("node", "") for job in asm.get("jobs", ())) != sorted(nodes) or
+                      any(job.get("spec_sha256") != expansion["spec_sha256"] for job in asm["jobs"])):
+        raise Stop("STOP: expansion G.1b assembly does not bind all four jobs to the published spec")
+    runs_raw = runs_path.read_bytes()
     if s.get("assembly_sha256") != N._sha(asm_raw) or asm.get("schema") != asm_schema or \
             asm.get("run_id") != run_id or asm.get("runs_sha256") != N._sha(runs_raw):
         raise Stop(f"STOP: {summary} is not bound to its directory's ASSEMBLY.json ({asm_schema}) and runs.jsonl")
     rows = N.g1b_rows(runs_raw, str(runs_path))     # D6 A: no record of any node at a seed in 7001-7010
+    if expansion and {row.get("node") for row in rows} != set(nodes):
+        raise Stop("STOP: expansion G.1b runs.jsonl must cover exactly the four expansion nodes")
     for node in sorted(nodes):                       # what g5_noise.derive checks on the copies (review M1:
         v = s["verdicts"].get(node) or {}            # g1b_lib.summarise writes no counts for a node that failed
         n_edits, pj = v.get("n_edits"), v.get("paired_joint_n")      # determinism or was stopped; such a verdict
@@ -135,6 +189,8 @@ def check_source(spec: dict, kind: str, summary: Path) -> dict:
         if problems:
             raise Stop(f"STOP: {gate_path} does not bind this assembly and the TASL-7 nodes: {problems}")
         out.update(gate=gate_path, gate_raw=gate_raw, gate_sha256=N._sha(gate_raw))
+    elif expansion:
+        out.update(pre_split_amendment=expansion["pre_split_amendment"], g1b_spec_sha256=expansion["spec_sha256"])
     return out
 
 
@@ -150,14 +206,14 @@ def copy_summary(spec: dict, kind: str, summary: Path, dest: str, *, repo: Path 
     """Copy one sealed G.1b summary (and, for the seven nodes, its cross-check gate record beside it), with its run's
     ``ASSEMBLY.json`` and ``runs.jsonl`` (D6 A), into the repository at ``dest`` (a directory under docs/r1/reports/,
     new), byte-identically from the bytes ``check_source`` checked, with ``COPY_RECORD.json``. Everything is written
-    into a new sibling directory and renamed to ``dest`` only once every file is written and verified; on any STOP
-    that directory (created here) is removed, so a STOP leaves no partial ``dest`` (review m2)."""
+    into a new sibling directory. Once every file is verified, reserve ``dest`` exclusively and rename into it.
+    A STOP leaves no partial copy (review m2)."""
     repo = Path(repo or S.REPO_ROOT)
     if not S._rel_ok(dest) or not dest.startswith("docs/r1/reports/"):
         raise Stop("STOP: dest must be a repository path under docs/r1/reports/")
     src = check_source(spec, kind, summary)
     target = repo / dest.rstrip("/")
-    if target.exists() or any(p.is_symlink() for p in [target, *target.parents] if p.exists()):
+    if target.exists() or any(p.is_symlink() for p in [target, *target.parents]):
         raise Stop(f"STOP: {target} exists (a REL-T1-G1B copy is written once)")
     target.parent.mkdir(parents=True, exist_ok=True)
     work = Path(tempfile.mkdtemp(prefix=f".{target.name}.partial-", dir=target.parent))
@@ -166,9 +222,15 @@ def copy_summary(spec: dict, kind: str, summary: Path, dest: str, *, repo: Path 
     os.chmod(work, 0o777 & ~umask)                   # as a plain mkdir would create it (mkdtemp gives 0700)
     try:
         record = _write_copies(src, kind, dest.rstrip("/"), work)
-        if target.exists():
-            raise Stop(f"STOP: {target} exists (a REL-T1-G1B copy is written once)")
-        os.rename(work, target)
+        try:
+            target.mkdir()
+        except FileExistsError:
+            raise Stop(f"STOP: {target} exists (a REL-T1-G1B copy is written once)") from None
+        try:
+            os.rename(work, target)
+        except BaseException:
+            target.rmdir()      # the empty reservation created by this invocation
+            raise
     except BaseException:
         shutil.rmtree(work, ignore_errors=True)
         raise
@@ -200,13 +262,18 @@ def _write_copies(src: dict, kind: str, base: str, work: Path) -> dict:
                                  "noise_floor.seven.gate_sha256": src["gate_sha256"],
                                  **{f"noise_floor.seven.{k}": v for k, v in runs.items()}}
         record["review_must_name"] = [rel, src["sha256"], str(src["summary"]), gate_rel, src["gate_sha256"], *needles]
-    else:
+    elif kind == "ar":
         record["completion_record_lines"] = [f"noise_floor_copy: {rel} sha256 {src['sha256']}",
                                              f"g1b_sealed_summary: {src['summary']} sha256 {src['sha256']}"]
         record["spec_fields_under_arpend_b"] = {"noise_floor.ar.copy": rel, "noise_floor.ar.sha256": src["sha256"],
                                                 "noise_floor.ar.sealed_path": str(src["summary"]),
                                                 **{f"noise_floor.ar.{k}": v for k, v in runs.items()}}
         record["review_must_name"] = [rel, src["sha256"], str(src["summary"]), *needles]
+    else:
+        record.update(pre_split_amendment=src["pre_split_amendment"], g1b_spec_sha256=src["g1b_spec_sha256"],
+                      g1b_copy={"copy": rel, "sha256": src["sha256"], "sealed_path": str(src["summary"]), **runs},
+                      review_must_name=[rel, src["sha256"], str(src["summary"]), *needles,
+                                        src["pre_split_amendment"], src["g1b_spec_sha256"]])
     record["d21_verdict"] = {n: "qualifies" if q else "does_not_qualify" for n, q in src["qualifies_D21"].items()}
     with (work / "COPY_RECORD.json").open("x") as fh:
         fh.write(json.dumps(record, indent=1, sort_keys=True) + "\n")

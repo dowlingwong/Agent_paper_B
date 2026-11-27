@@ -3114,7 +3114,7 @@ def main(argv=None) -> int:
     cs.add_argument("--reason", required=True)
     sp = sub.add_parser("server-span"); sp.add_argument("spec"); sp.add_argument("receipt")
     rc = sub.add_parser("rel-copy"); rc.add_argument("spec"); rc.add_argument("--kind", required=True,
-                                                                            choices=("seven", "ar"))
+                                                                            choices=("seven", "ar", "x"))
     rc.add_argument("--summary", required=True); rc.add_argument("--dest", required=True)
     asm = sub.add_parser("assemble"); asm.add_argument("spec"); asm.add_argument("--stage", required=True,
                                                                                choices=("traindev", "test"))
