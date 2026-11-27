@@ -87,7 +87,7 @@ def _factory(spec, seed, cdir, recorder):
 
 
 def _spec(**kw):
-    base = dict(stage="a", arm="A2", node=NODE, repetition=0, instance_seeds=tuple(range(6201, 6219)),
+    base = dict(stage="a", arm="A0", node=NODE, repetition=0, instance_seeds=tuple(range(6201, 6219)),
                 W=20, llm_cap=80, launcher="ssh", host="TASL-2", campaign_model_source=SOURCE)
     base.update(kw)
     return ChunkSpec(**base)
@@ -124,7 +124,7 @@ def test_one_chunk_writes_layout_records_and_sums(tmp_path):
     assert (first / "snapshots" / "final.json").is_file()
     assert (first / "SHA256SUMS").is_file()
     camp = json.loads((first / "campaign.json").read_text())
-    assert camp["record_name"] == f"a__A2__{NODE}__s6201__r0"
+    assert camp["record_name"] == f"a__A0__{NODE}__s6201__r0"
     assert camp["campaign_id"] == f"{NODE}__s6201"
     cs = json.loads((first / "summary.json").read_text())
     from r1.c3.d3_outcome_table import SUMMARY_KEYS

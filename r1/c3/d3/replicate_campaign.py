@@ -294,7 +294,8 @@ def run_replicate_campaign(*, instance_id: str, repetition: int, unit: Replicate
         })
         trials.append({
             "instance_id": instance_id, "budget_index": step_index, "trial_id": trial_id,
-            "worker_mode": "ran", "decision": result.decision,
+            "worker_mode": "ran" if charged_this_step else "control_plane",
+            "decision": result.decision,
             "llm_calls": int(budget.llm_calls),
             "last_kept_trial_index": last_kept,
             "extra": {"control": {"replicates": list(result.replicates),

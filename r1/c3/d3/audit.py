@@ -287,7 +287,10 @@ def g7_rows(result: Mapping[str, Any]) -> list[dict[str, Any]]:
             "y_raw": float(row["y_raw"]),
         })
 
-    add("final", result["final"])
+    # G7 forbids any audit row for a campaign with no charged run (§10; build_row's runs==0
+    # branch expects an empty audit).  The descriptive Y_final.jsonl row is still written.
+    if int(result["final"].get("w", 0)) != 0:
+        add("final", result["final"])
     for row in result["w"]:
         if not row.get("missing_w"):
             add(str(row["w"]), row)
@@ -373,7 +376,8 @@ def audit_campaign(campaign_dir: Path | str, out_dir: Path | str, *, sigma_node:
     rows_keep: list[dict[str, Any]] = []
     keep_dir = cdir / "keeps"
     if keep_dir.is_dir():
-        for path in sorted(keep_dir.glob("keep-*.json")):
+        for path in sorted(keep_dir.glob("keep-*.json"),
+                           key=lambda p: int(p.stem.rsplit("-", 1)[1])):
             payload = json.loads(path.read_text(encoding="utf-8"))
             run, files = int(payload["keep_run"]), dict(payload["files"])
             sha = config_sha256(files)

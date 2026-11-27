@@ -103,13 +103,13 @@ def _audit_case(cdir, out):
     rows = audit.g7_rows(result)
     cid = D3.campaign_id("D.3a", json.loads((cdir / "summary.json").read_text())["arm"],
                          NODE, SEED, 0)
-    return result, table._audits_by_campaign(rows)[cid]
+    return result, table._audits_by_campaign(rows).get(cid, {"keep": []})
 
 
-def harness_case(root, *, early=False, final_keep=True):
+def harness_case(root, *, early=False, final_keep=True, expect=None, stop=False):
     node = _node_copy(root)
     worker = SyntheticWorker(node, final_keep=final_keep)
-    ended_on = "llm_call_cap" if early else "worker_runs"
+    ended_on = "stop" if stop else ("llm_call_cap" if early else "worker_runs")
 
     def factory(spec, seed, cdir, recorder):
         return wrap({
@@ -134,12 +134,14 @@ def harness_case(root, *, early=False, final_keep=True):
     assert summary["schema"] == SUMMARY_SCHEMA and summary["stage"] == "D.3a"
     assert set(summary) == table.SUMMARY_KEYS
     assert len(list((cdir / "keeps").glob("keep-*.json"))) == summary["keeps"]
+    if expect is not None:
+        assert (summary["worker_runs"], summary["last_keep_run"], summary["keeps"]) == expect
     _, audits = _audit_case(cdir, root / "g6")
-    row = table.build_row("D.3a", summary, audits)
-    return summary, audits, row
+    row = None if stop else table.build_row("D.3a", summary, audits)
+    return summary, audits, row, chunk, root / "g6"
 
 
-def replicate_case(root, arm, *, final_keep=True):
+def replicate_case(root, arm, *, final_keep=True, expect=None):
     def validate(proposal):
         files = {"train.py": f"X = {proposal}\n"}
         return files, config_sha256(files)
@@ -162,9 +164,11 @@ def replicate_case(root, arm, *, final_keep=True):
     cdir = chunk / "campaigns" / INSTANCE
     summary = json.loads((cdir / "summary.json").read_text())
     assert summary["schema"] == SUMMARY_SCHEMA and summary["stage"] == "D.3a"
+    if expect is not None:
+        assert (summary["worker_runs"], summary["last_keep_run"], summary["keeps"]) == expect
     _, audits = _audit_case(cdir, root / "g6")
     row = table.build_row("D.3a", summary, audits)
-    return summary, audits, row
+    return summary, audits, row, chunk, root / "g6"
 
 
 def _clone(summary, audits, *, arm, node, seed, repetition=0):
@@ -188,19 +192,77 @@ def test_seven_production_cases_pass_g7():
 
     root = Path(tempfile.mkdtemp(prefix="d3-integration-"))
     cases = [
-        harness_case(root / "hk", early=False, final_keep=True),
-        harness_case(root / "hd", early=False, final_keep=False),
-        harness_case(root / "he", early=True, final_keep=True),
-        replicate_case(root / "fk", "FIXR3", final_keep=True),
-        replicate_case(root / "fd", "FIXR3", final_keep=False),
-        replicate_case(root / "ek", "EGATE", final_keep=True),
-        replicate_case(root / "ed", "EGATE", final_keep=False),
+        harness_case(root / "hk", early=False, final_keep=True, expect=(20, 20, 20)),
+        harness_case(root / "hd", early=False, final_keep=False, expect=(20, 19, 19)),
+        harness_case(root / "he", early=True, final_keep=True, expect=(7, 7, 7)),
+        replicate_case(root / "fk", "FIXR3", final_keep=True, expect=(20, 20, 6)),
+        replicate_case(root / "fd", "FIXR3", final_keep=False, expect=(20, 17, 5)),
+        replicate_case(root / "ek", "EGATE", final_keep=True, expect=(20, 20, 2)),
+        replicate_case(root / "ed", "EGATE", final_keep=False, expect=(20, 1, 1)),
     ]
     assert len(cases) == 7
-    for summary, audits, row in cases:
+    for summary, audits, row, chunk, audit_dir in cases:
         assert row["campaign_id"] == D3.campaign_id(
             "D.3a", summary["arm"], summary["node"], summary["instance_seed"], summary["repetition"])
         assert row["status"] == "complete"
+        assert row["y_raw"] == audits["final"]["y_raw"]
+        assert row["final_config_hash"] == audits["final"]["config_sha256"]
+        if audits["keep"]:
+            assert row["last_keep_run"] == audits["keep"][-1]["keep_run"]
+            assert row["y_raw"] == audits["keep"][-1]["y_raw"]
+        # The production disk boundary: the G1 summary and the G6 g7 rows load from disk.
+        assert assemble.load_summaries([chunk]) == [summary]
+        assert len(assemble.load_audits([audit_dir])) == len(
+            [1] + [1 for point in ("5", "10", "15", "20") if point in audits]
+            + [1 for _ in audits["keep"]])
+
+    # A zero-run campaign: G7 forbids any audit row, and the descriptive Y_final row remains.
+    row = _zero_run_case(root / "z")
+    assert row["worker_runs"] == 0 and row["y_raw"] == 0.0
+
+    # A stopped campaign is written as "stopped" and G7 refuses it (no table row).
+    summary, audits, _, _, _ = harness_case(root / "st", early=False, final_keep=True, stop=True)
+    assert summary["status"] == "stopped"
+    with pytest.raises(table.OutcomeTableError):
+        table.build_row("D.3a", summary, audits)
+
+
+class _NoRunEngine:
+    arm = "EGATE"
+    version = "no-run/v1"
+    instance_seed = SEED
+    steps = 0
+    incumbent = None
+    seeds = ()
+    zero_variance_cases = 0
+
+    def step(self, candidate_sha, run_one, counter):
+        from types import SimpleNamespace
+        return SimpleNamespace(runs_charged=0, decision="discarded", replicates=[],
+                               display_metric=None, detail={})
+
+
+def _zero_run_case(root):
+    from r1.c3.d3.replicate_campaign import ReplicateUnit
+
+    def validate(proposal):
+        files = {"train.py": f"X = {proposal}\n"}
+        return files, config_sha256(files)
+
+    def factory(spec, seed, cdir, recorder):
+        return ReplicateUnit(_NoRunEngine(), lambda step, _inc, _calls: step, validate,
+                             lambda *a, **k: (_ for _ in ()).throw(AssertionError("no run expected")),
+                             {"train.py": "X = -1\n"})
+
+    chunk = root / "chunk"
+    run_chunk(_spec("EGATE"), chunk, replicate_factory=factory, manifest=MANIFEST, observed=OBSERVED)
+    cdir = chunk / "campaigns" / INSTANCE
+    summary = json.loads((cdir / "summary.json").read_text())
+    assert summary["worker_runs"] == 0 and summary["last_keep_run"] is None and summary["keeps"] == 0
+    result, audits = _audit_case(cdir, root / "g6")
+    rows = audit.g7_rows(result)
+    assert not [r for r in rows if r["point"] == "final"]
+    return table.build_row("D.3a", summary, None)
 
 
 def test_full_design_assembly_accepts_g7_and_analysis():
@@ -215,17 +277,39 @@ def test_full_design_assembly_accepts_g7_and_analysis():
     egate = replicate_case(root / "e", "EGATE", final_keep=False)
     templates = {"A0": harness, "A0R": harness, "A1": harness, "A2": harness,
                  "LADDER": harness, "FIXR3": fixr3, "EGATE": egate}
-    summaries, audits = [], []
+    chunk_dirs, audits = [], []
     for arm in D3.ARMS_D3A:
+        chunk = root / "chunks" / f"arm-{arm}"
+        chunk_dirs.append(chunk)
         for node in D3.NODES:
             for seed in D3.INSTANCE_SEEDS:
                 s, a = _clone(templates[arm][0], templates[arm][1], arm=arm, node=node, seed=seed)
-                summaries.append(s)
+                inst = D3.instance_id(node, seed)
+                cdir = chunk / "campaigns" / inst
+                cdir.mkdir(parents=True, exist_ok=True)
+                (cdir / "summary.json").write_text(json.dumps(s, indent=1, sort_keys=True) + "\n",
+                                                   encoding="utf-8")
                 audits.extend(a)
-    result = table.build_table("D.3a", summaries, audits, predeclaration_path=PREDECLARATION)
+    audit_root = root / "audit"
+    audit_root.mkdir()
+    (audit_root / "g7_rows.jsonl").write_text(
+        "".join(json.dumps(a, sort_keys=True) + "\n" for a in audits), encoding="utf-8")
+    result = assemble.build("D.3a", chunk_dirs, [audit_root], predeclaration_path=PREDECLARATION)
     assert len(result["rows"]) == len(D3.ARMS_D3A) * len(D3.NODES) * len(D3.INSTANCE_SEEDS)
     out = table.write_table(result, root / "table.json")
     loaded = D3.load_table(out, "D.3a")
     report = D3.analyse(loaded, d3b_not_run="not_started")
     assert report["schema"] == D3.REPORT_SCHEMA
     assert report["families"]["D.3a"]["family"] == "D.3a"
+
+
+def test_rule_arm_without_e1_events_is_a_stop():
+    from r1.c3.d3 import summary as S
+
+    records = [{"budget_index": 1, "worker_mode": "ran", "decision": "keep",
+                "trial_id": "t1", "extra": {}}]
+    with pytest.raises(S.SummaryStop):
+        S.mechanism_counts(records, [], config_by_trial={1: {"config_sha256": "a" * 64}},
+                           arm="A2")
+    # A0 / FIXR3 / EGATE have no rule layer; the same record is accepted.
+    S.mechanism_counts(records, [], config_by_trial={1: {"config_sha256": "a" * 64}}, arm="A0")

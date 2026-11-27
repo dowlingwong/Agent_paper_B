@@ -31,7 +31,7 @@ from r1.c3.d3.snapshots import (
     utc_now,
     wrap,
 )
-from r1.c3.d3.summary import build_campaign_summary, keep_records
+from r1.c3.d3.summary import COMPLETE_ENDED_ON, build_campaign_summary, keep_records
 
 CHUNK_SCHEMA = "r1_d3_chunk/v1"
 CAMPAIGN_SCHEMA = "r1_d3_campaign/v1"
@@ -288,7 +288,7 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
         campaign_summary = build_campaign_summary(
             stage=spec.stage, arm=spec.arm, node=spec.node, instance_seed=seed,
             repetition=spec.repetition, gpu_model=str(observed.get("model") or ""),
-            status="complete" if ended_on in ENDED_ON else "stopped",
+            status="complete" if ended_on in COMPLETE_ENDED_ON else "stopped",
             records=run_rows, events=events, config_by_trial=config_by_trial,
             start_config=recorder.start_config or {}, final_config=final_config,
             worker_runs=w_final, llm_calls=llm_calls, ended_on=ended_on,
@@ -404,7 +404,7 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
         campaign_summary = build_campaign_summary(
             stage=spec.stage, arm=spec.arm, node=spec.node, instance_seed=seed,
             repetition=spec.repetition, gpu_model=str(observed.get("model") or ""),
-            status="complete" if summary["ended_on"] in ENDED_ON else "stopped",
+            status="complete" if summary["ended_on"] in COMPLETE_ENDED_ON else "stopped",
             records=summary["trials"], events=summary["events"],
             config_by_trial=config_by_trial,
             start_config=summary["start_config"], final_config=summary["final_config"],

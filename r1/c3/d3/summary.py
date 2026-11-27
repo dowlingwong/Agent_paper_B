@@ -22,6 +22,8 @@ RULE_SKIP_REASONS = ("rule_noop", "rule_duplicate")
 VALUE_SKIP_REASONS = ("prior_no_gain",)
 #: Arms whose controller has no rule layer and therefore logs no E1 rule flags.
 NO_RULE_FLAGS = ("A0", "FIXR3", "EGATE")
+#: A campaign that ended on one of these is complete; a stop/error is not a table row.
+COMPLETE_ENDED_ON = ("worker_runs", "llm_call_cap", "no_fundable_candidate")
 
 
 class SummaryStop(RuntimeError):
@@ -81,9 +83,7 @@ def mechanism_counts(records: Iterable[dict], events: Iterable[dict], *,
         ran = _ran(record)
         w += charged_runs_of(record)
         flag = flags.get(str(record.get("trial_id")))
-        # An empty event log is a fixture/legacy campaign (the chunk tests); a real campaign
-        # writes events, and a flag-logging arm that omits its E1 flags is a STOP there.
-        if ran and flag is None and arm not in NO_RULE_FLAGS and events:
+        if ran and flag is None and arm not in NO_RULE_FLAGS:
             raise SummaryStop(
                 f"trial {record.get('budget_index')}: executed without an E1 decision that logs the "
                 "rule flags (A1/A2/LADDER/A0R must run a flag-logging controller)")
