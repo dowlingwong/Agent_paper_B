@@ -136,6 +136,8 @@ VERSIONS = Path("/opt/r1/VERSIONS.txt")
 SEALED_ROOT = Path("/ceph/srv/dwong/paperb/trackp_p4")
 ENV3_FREEZE = "docs/r1/reports/trackp_phase2_20261026/pip_freeze_trackp-gpu.txt"
 ENV3_FREEZE_SHA256 = "50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08"
+ENV3_FREEZE_SORTED_SHA256 = "e607c1d87221999015c1cd988c38dbc2e8deb51938403e2ca2c0c2832755419b"
+VENV_LEASE_FD_ENV = "P4_VENV_LEASE_FD"
 HOST_CONFIG = "r1/scripts/configs/trackp_htcondor_v2.json"   # the nemo2_h200 class's host config
 ADA_HOST_CONFIG = "r1/scripts/configs/trackp_ada_v1.json"      # the ada_rtx6000 class's host config
 # R1-HOST-FREE (1): the admitted host classes. A job is told its class (``--host-class``); the landed GPU must be that
@@ -459,8 +461,12 @@ def threshold_report(proj: dict, charged: float | None = None) -> dict:
 
 # =============================================================================================== helpers
 def _sh(argv, *, cwd=None, env=None, timeout=3600) -> subprocess.CompletedProcess:
+    opts = {}
+    if os.environ.get("P4_VENV_PYTHON"):
+        # A native training subprocess retains the launcher flock if its parents exit first.
+        opts["pass_fds"] = (venv_lease_fd(),)
     return subprocess.run(list(map(str, argv)), cwd=cwd, env=env, capture_output=True, text=True, encoding="utf-8",
-                          errors="replace", timeout=timeout)       # UTF-8 whatever the locale; never a decode error
+                          errors="replace", timeout=timeout, **opts)
 
 
 def _git(repo: Path, *args: str, timeout: int = 600) -> subprocess.CompletedProcess:
@@ -550,6 +556,17 @@ def ada_venv_config(block: dict | None) -> dict:
 
 def job_python() -> str:
     return os.environ.get("P4_VENV_PYTHON") or ENV3_PYTHON
+
+
+def venv_lease_fd() -> int:
+    try:
+        fd = int(os.environ[VENV_LEASE_FD_ENV])
+        if fd < 3:
+            raise ValueError("reserved standard descriptor")
+        os.fstat(fd)
+    except (KeyError, ValueError, OSError):
+        raise Stop("STOP: the Ada venv job did not inherit the launcher lease descriptor") from None
+    return fd
 
 
 def verify_ada_venv(spec: dict, clone: Path) -> dict:
@@ -687,7 +704,7 @@ def env3_freeze(spec: dict, clone: Path, sh=_sh) -> dict:
         raise Stop(f"STOP: uv pip freeze of env3 failed: {res.stderr.strip()[:200]}")
     try:
         record = _phase1(clone).check_env3_freeze(res.stdout, _read_utf8(pinned))
-        if native and record["status"] != "identical":
+        if native and (record["status"] != "identical" or record["sha256_sorted"] != ENV3_FREEZE_SORTED_SHA256):
             raise Stop("STOP: the Ada venv freeze must equal the pinned package lock")
         freeze_key = "venv_freeze_sha256" if native else "image_freeze_sha256"
         return {**record, "pinned_sha256": ENV3_FREEZE_SHA256,
@@ -701,7 +718,7 @@ def env3_freeze(spec: dict, clone: Path, sh=_sh) -> dict:
 def check_venv_gpu(gpu: dict, sh=_sh) -> None:
     """Check actual CUDA visibility after the venv freeze has passed."""
     code = ("import torch\n"
-            "assert torch.cuda.device_count() == 1\n"
+            "if torch.cuda.device_count() != 1: raise SystemExit(2)\n"
             "print(f'GPU-{torch.cuda.get_device_properties(0).uuid}')")
     result = sh([job_python(), "-B", "-c", code], timeout=120)
     if result.returncode != 0 or result.stdout.strip() != gpu["uuid"]:
@@ -2220,6 +2237,7 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
             "paper_commit": rec["paper_commit"], "host_config_sha256": rec["configs"]["host_config"]["sha256"],
             "sft_config_sha256": rec["configs"]["sft_config"]["sha256"],
             "env3_freeze": {x: rec["env3_freeze"].get(x) for x in ("status", "image_line", "local_label")},
+            **({"venv_freeze_sha256": rec["env3_freeze"]["venv_freeze_sha256"]} if rec.get("venv") else {}),
             "staging_seconds": rec["staging"].get("seconds"), "staged_bytes": rec["staging"].get("bytes"),
             "labels": rec["data"]["labels"], "sft_data_sha256": rec["data"]["sft_data_sha256"],
             "n_train": rec["data"]["n_train"], "micro_batch": run["protocol"]["micro_batch"],
@@ -2573,6 +2591,7 @@ def launch_runtime_verified(launch: dict | None, record: dict, spec: dict) -> bo
     return (record.get("host_class") == "ada_rtx6000" and record.get("image") is None and
             launch.get("image_executed") is False and isinstance(venv, dict) and venv == launch.get("venv") and
             freeze.get("status") == "identical" and freeze.get("pinned_sha256") == ENV3_FREEZE_SHA256 and
+            freeze.get("sha256_sorted") == ENV3_FREEZE_SORTED_SHA256 and
             re.fullmatch(r"[0-9a-f]{64}", str(freeze.get("venv_freeze_sha256"))) is not None)
 
 

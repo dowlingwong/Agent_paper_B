@@ -368,7 +368,7 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main, blob_on_ma
 
 def check_first_record(path: Path | None, spec: dict, spec_sha256: str, sealed_root: Path = lib.SEALED_ROOT) -> dict:
     """The first arm's sealed record must be STOP-free on a working path (its own admitted host class, that class's
-    GPU, the image, an admitted env3 freeze) before the other arms are submitted (on any admitted class)."""
+    GPU, its runtime and an admitted env3 freeze) before the other arms are submitted."""
     first = spec["first_arm"]
     if path is None:
         raise Stop(f"STOP: submit {first} alone first; the other arms need --first-record")
@@ -381,10 +381,18 @@ def check_first_record(path: Path | None, spec: dict, spec_sha256: str, sealed_r
         raise Stop("STOP: the first arm's sealed outputs do not verify against SHA256SUMS")
     record = json.loads(path.read_text())
     receipt = json.loads((path.parent / "SEAL_RECEIPT.json").read_text())
+    launch = None
+    if record.get("venv"):
+        launch = lib.read_direct_launch(path.parent)
+        launch_path = path.parent / lib.DIRECT_LAUNCH_FILE
+        if launch is None or receipt.get("identity_verified") is not True or \
+                receipt.get("direct_launch_sha256") != hashlib.sha256(launch_path.read_bytes()).hexdigest():
+            raise Stop("STOP: the first Ada venv arm lacks its verified, receipted launch record")
+        lib.direct_launch_matches(launch, spec, first, "job", record)
     checks = {"run_id": record.get("run_id") == spec["run_id"], "arm": record.get("arm") == first,
               "spec_sha256": record.get("spec_sha256") == spec_sha256,
               "receipt": receipt.get("job_record_sha256") == hashlib.sha256(path.read_bytes()).hexdigest(),
-              "image": (record.get("image") or {}).get("digest") == spec["image"]["digest"],
+              "image": lib.launch_runtime_verified(launch, record, spec),
               "gpu": record.get("host_class") in spec["hosts"] and
               (record.get("gpu") or {}).get("name") == lib.HOST_CLASSES[record["host_class"]]["gpu_name"],
               "env3_freeze": (record.get("env3_freeze") or {}).get("status") in ("identical", "causal_conv1d_only"),

@@ -75,6 +75,7 @@ LAUNCH_SCHEMA = "trackp_p4_direct_launch/1"          # = p4_lib.DIRECT_LAUNCH_SC
 LAUNCH_FILE = "direct_launch.json"                    # = p4_lib.DIRECT_LAUNCH_FILE
 ENGINEERING_ONLY = "ENGINEERING_ONLY"
 LEASED_GPU_ENV = "P4_LEASED_GPU_UUID"                 # = p4_lib.LEASED_GPU_ENV
+VENV_LEASE_FD_ENV = "P4_VENV_LEASE_FD"                # = p4_lib.VENV_LEASE_FD_ENV
 RUNTIMES = ("apptainer", "docker", "venv")
 MODES = {"job": "p4_job.sh", "probe": "p4_probe.sh"}
 SPEC_FILES = {"job": "p4_spec.json", "probe": "p4_probe_spec.json"}
@@ -356,7 +357,10 @@ class Launch(object):
             if self.container_name and self.record["runtime"] == "docker":
                 self.run(["docker", "kill", self.container_name])
             try:
-                self.proc.terminate()
+                if self.record["runtime"] == "venv":
+                    os.killpg(self.proc.pid, signal.SIGTERM)
+                else:
+                    self.proc.terminate()
             except OSError:
                 pass
 
@@ -481,14 +485,19 @@ class Launch(object):
         self.record["status"] = "running"
         self._save()
         # The native job inherits only the host tool search path and the job's own settings.
-        environ = ({"PATH": self.environ.get("PATH", os.defpath)} if self.record["runtime"] == "venv"
-                   else self.environ)
+        native = self.record["runtime"] == "venv"
+        lease_fd = self.lease.fileno()
+        environ = ({"PATH": self.environ.get("PATH", os.defpath), VENV_LEASE_FD_ENV: str(lease_fd)}
+                   if native else self.environ)
         env = dict(environ, **extra_env)
+        process_opts = {"start_new_session": True} if native else {}
         old = {s: signal.signal(s, self._on_signal) for s in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)}
         try:
             # review M1: the child inherits the lease's descriptor, so a SIGKILLed launcher does not free the card
             # while the container runs (apptainer runs in the child; a docker container is found by its label)
-            self.proc = self.popen(argv, cwd=self.job_dir, env=env, pass_fds=(self.lease.fileno(),))
+            self.proc = self.popen(argv, cwd=self.job_dir, env=env, pass_fds=(lease_fd,), **process_opts)
+            if native and self.interrupted is not None:
+                self._on_signal(self.interrupted, None)
             rc = self.proc.wait()                       # no timeout: R1-NO-TIMEOUT
         finally:
             for s, h in old.items():
@@ -521,8 +530,11 @@ class Launch(object):
             except Refusal as exc:
                 self.record["other_processes_end"] = {"error": str(exc)}
             if self.interrupted is not None:
-                self._finish("interrupted", rc, "STOP: the launcher received signal {}; the container was stopped "
-                                                "(a repeat is a new stage, never a resume)".format(self.interrupted))
+                action = ("the native job process group received a stop request" if self.record["runtime"] == "venv"
+                          else "the container was stopped")
+                self._finish("interrupted", rc, "STOP: the launcher received signal {}; {} "
+                                                "(a repeat is a new stage, never a resume)".format(self.interrupted,
+                                                                                                  action))
             else:
                 self._finish("finished", rc)
             return self.summary()

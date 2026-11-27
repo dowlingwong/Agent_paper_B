@@ -293,8 +293,9 @@ class _Host:
             return _res(0, self.running)
         return _res(0)
 
-    def popen(self, argv, cwd=None, env=None, pass_fds=()):
+    def popen(self, argv, cwd=None, env=None, pass_fds=(), start_new_session=False):
         self.argv, self.env, self.pass_fds, host = argv, env, pass_fds, self
+        self.start_new_session = start_new_session
         lock = Path(json.loads(Path(cwd, L.DIRECT_LAUNCH_FILE).read_text())["lease"]["lock_path"])
 
         class Proc:
@@ -473,7 +474,8 @@ def test_the_apptainer_command_scopes_the_card_and_unknown_runtimes_are_refused(
         D.container_argv({**desc, "host": {"container_runtime": "singularity"}}, "/w", UUID, 1, 1, "n")
 
 
-def test_ada_venv_uses_the_same_probe_entry_under_the_lease_and_seals_as_venv(tmp_path):
+@pytest.mark.parametrize("mode", ["probe", "job"])
+def test_ada_venv_uses_the_same_entry_under_the_lease_and_seals_as_venv(tmp_path, mode):
     repo = tmp_path / "repo"
     config = repo / L.ADA_HOST_CONFIG
     config.parent.mkdir(parents=True)
@@ -481,28 +483,44 @@ def test_ada_venv_uses_the_same_probe_entry_under_the_lease_and_seals_as_venv(tm
     values = tmp_path / "fill.json"
     values.write_text(json.dumps(_ada_values(str(tmp_path / "work"), str(tmp_path / "locks"),
                                             **{"direct.container_runtime": "venv", "direct.ssh_alias": "ada_server"})))
-    spec = _probe_spec(FH.fill(values, config)["sha256"])
-    stage = _stage(tmp_path, repo, spec)
+    config_sha = FH.fill(values, config)["sha256"]
+    spec = _probe_spec(config_sha) if mode == "probe" else _launch_spec(config_sha)
+    stage = _stage(tmp_path, repo, spec, mode=mode)
+    if mode == "job":
+        (stage / "P4_SUBMIT_STARTED_kev-0.8b.json").write_text(
+            json.dumps({"arm": "kev-0.8b", "launch_kind": "direct",
+                        "stage_manifest_sha256": _sha((stage / "STAGE_MANIFEST.json").read_bytes())}))
     desc = D.load_descriptor(str(stage), "kev-0.8b")
     assert desc["host"]["ssh_alias"] == "ada_server"
     venv = desc["host"]["venv"]
     assert venv["version"] == "3.12.10"
-    freeze = {"status": "identical", "pinned_sha256": L.ENV3_FREEZE_SHA256, "venv_freeze_sha256": "a" * 64}
-    host = _Host(record_over={"venv": venv, "image": None, "env3_freeze": freeze})
+    freeze = {"status": "identical", "pinned_sha256": L.ENV3_FREEZE_SHA256, "venv_freeze_sha256": "a" * 64,
+              "sha256_sorted": L.ENV3_FREEZE_SORTED_SHA256}
+    record_over = {"venv": venv, "image": None, "env3_freeze": freeze}
+    if mode == "job":
+        record_over.update(mode=None, steps=["identity", "test_path"],
+                           spec_sha256=_sha((stage / "p4_spec.json").read_bytes()))
+    host = _Host(record_over=record_over)
     run = host.run
     host.run = lambda argv: _res(0, "Python 3.12.10\n") if argv == [venv["python"], "--version"] else run(argv)
     launch = D.Launch(str(stage), "kev-0.8b", 3, run=host.run, popen=host.popen, hostname="ucrtasl", now=host.now,
                       environ={"PATH": "/usr/bin", "PYTHONPATH": "/wrong", "HF_TOKEN": "fixture"})
     out = launch.main()
     assert out["status"] == "finished"
-    assert host.argv == ["/bin/bash", "p4_probe.sh", L.PROBE_SPEC_FILE, "kev-0.8b", ADA]
+    assert host.argv == ["/bin/bash", D.MODES[mode], D.SPEC_FILES[mode], "kev-0.8b", ADA]
+    assert host.start_new_session and host.env[D.VENV_LEASE_FD_ENV] == str(host.pass_fds[0])
     assert len(host.pass_fds) == 1 and host.env["P4_VENV_PYTHON"] == venv["python"]
     assert host.env[L.LEASED_GPU_ENV] == host.env["CUDA_VISIBLE_DEVICES"] == UUID
     assert not {"PYTHONPATH", "HF_TOKEN"} & host.env.keys()
     job = Path(out["job_dir"])
     record = json.loads((job / L.DIRECT_LAUNCH_FILE).read_text())
     assert record["runtime"] == "venv" and record["venv"] == venv and record["image_executed"] is False
-    assert L.seal(job, spec, "kev-0.8b", tmp_path / "sealed")["identity_verified"] is True
+    sealed_root = tmp_path / "sealed"
+    receipt = L.seal(job, spec, "kev-0.8b", sealed_root)
+    assert receipt["identity_verified"] is True
+    if mode == "job":
+        first_record = Path(receipt["sealed_path"]) / "job_record.json"
+        assert SW.check_first_record(first_record, spec, record_over["spec_sha256"], sealed_root)
     bad = {**freeze, "status": "causal_conv1d_only"}
     assert not L.launch_runtime_verified(record, {"host_class": ADA, "venv": venv, "env3_freeze": bad}, spec)
 
@@ -536,6 +554,27 @@ def test_ada_venv_requires_exact_lock_and_cuda_uuid(monkeypatch):
     L.check_venv_gpu(gpu, lambda *a, **k: _res(0, UUID + "\n"))
     with pytest.raises(L.Stop, match="exactly the leased GPU"):
         L.check_venv_gpu(gpu, lambda *a, **k: _res(0, "GPU-other\n"))
+
+
+def test_native_interrupt_signals_the_job_group_and_training_inherits_the_lease(monkeypatch, tmp_path):
+    import signal
+    from types import SimpleNamespace
+
+    calls = []
+    launch = D.Launch(str(tmp_path), "kev-0.8b", 3)
+    launch.record = {"runtime": "venv"}
+    launch.proc = SimpleNamespace(pid=12345)
+    monkeypatch.setattr(D.os, "killpg", lambda group, sig: calls.append((group, sig)))
+    launch._on_signal(signal.SIGINT, None)
+    assert calls == [(12345, signal.SIGTERM)]
+    monkeypatch.setenv("P4_VENV_PYTHON", "/test/ada/venv/bin/python")
+    with D.take_lease(str(tmp_path / "gpu3.lock")) as lease:
+        monkeypatch.setenv(L.VENV_LEASE_FD_ENV, str(lease.fileno()))
+        monkeypatch.setattr(L.subprocess, "run", lambda argv, **kw: calls.append(kw["pass_fds"]) or _res())
+        L._sh(["synthetic-training"])
+        assert calls[-1] == (lease.fileno(),)
+    with pytest.raises(L.Stop, match="did not inherit"):
+        L._sh(["synthetic-training"])
 
 
 def test_list_cards_shows_free_memory_and_other_processes():
