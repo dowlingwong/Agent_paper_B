@@ -21,35 +21,34 @@
   \newcommand{\TBD}[1]{\textbf{[TBD: #1]}}
 \fi
 \input{generated/numbers.tex}
-% Gate-outcome switch. results.tex and limitations.tex carry the text for both outcomes of the
-% single primary read of the preregistered gate, selected by \ifGatePassed. The switch stays unset
-% until that read. Afterwards, uncomment exactly one of the two lines after the \newif lines.
-% While it is unset, a draft build shows the not-passed text under a TBD banner, and a build with
-% \FinalPaper defined stops. To see the other text in a draft build without editing this file:
-%   latexmk -pdf -usepretex='\def\DraftGatePassed{}' main.tex
-% (ignored once the switch is set). A statistical STOP of the gate is neither outcome; its text
-% is not drafted.
+% Select an outcome only after the gate record is released. An unset gate simulates a verdict
+% in drafts; \DraftGatePassed and \DraftGateStopped preview the other two renderings.
 \newif\ifGatePassed
+\newif\ifGateStopped
 \newif\ifGateOutcomeSet
-% \GateOutcomeSettrue\GatePassedtrue    % the gate passes
-% \GateOutcomeSettrue\GatePassedfalse   % the gate does not pass
-\ifGateOutcomeSet\else\ifdefined\DraftGatePassed\GatePassedtrue\fi\fi
+% \GateOutcomeSettrue\GatePassedtrue
+% \GateOutcomeSettrue\GatePassedfalse
+% \GateOutcomeSettrue\GateStoppedtrue
+\ifGateOutcomeSet\else
+  \ifdefined\DraftGateStopped\GateStoppedtrue\else
+    \ifdefined\DraftGatePassed\GatePassedtrue\fi
+  \fi
+\fi
 \ifdefined\FinalPaper
   \ifGateOutcomeSet\else
     \PackageError{paper}{Gate-outcome switch not set}{Set the switch in main.tex after the gate read.}
   \fi
 \fi
-% Closed-loop outcome switches (added 26 Nov 2026; AI-assisted, writer; R1-ALIGN-OUTCOME).
-% The headline of the paper is the closed loop (D.3). Its declared reading has five cases
-% (docs/r1/proposals/GOAL_METRIC_ALIGNMENT_PROPOSAL_20261126.md, section 6): rule arms gain or not,
-% learned arms gain over A2 or not, gate passes or not. results.tex defines the five texts once and
-% selects one by these switches and \ifGatePassed. The switches stay unset until D.3's
-% pre-declared analysis has been run on the audited campaigns. While they are unset, a draft build
-% prints, under a TBD banner, every declared reading that is compatible with the gate outcome the
-% build shows, and a build with \FinalPaper stops. After the analysis, uncomment exactly one line.
+% Set the closed-loop switches from the released D.3 analysis. When \RuleGaintrue,
+% \RuleLayerAlonetrue selects the declared de-duplication reading and \RuleSourceUncleartrue
+% reports that the decomposition does not attribute the gain. Leave both false when A2 - A0R
+% rejects favourably. If D.3b stops, select the dedicated reading with \LearnedNotRuntrue.
 \newif\ifRuleGain      % A2 > A0 in the pre-declared sense
 \newif\ifLearnedGain   % A3 or A5 > A2 in the pre-declared sense
 \newif\ifLoopOutcomeSet
+\newif\ifRuleLayerAlone
+\newif\ifRuleSourceUnclear
+\newif\ifLearnedNotRun
 % \LoopOutcomeSettrue\RuleGaintrue\LearnedGaintrue
 % \LoopOutcomeSettrue\RuleGaintrue\LearnedGainfalse
 % \LoopOutcomeSettrue\RuleGainfalse

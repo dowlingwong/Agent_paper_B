@@ -11,7 +11,7 @@
 \label{app:readings}
 \TBD{The closed-loop outcome is not known. Section~\ref{sec:results} prints the reading for the case in which the rule arms and a learned arm gain. The other two readings for this build's gate outcome follow. This subsection disappears once the outcome is set.}
 
-\emph{If the rule arms gain and the learned arms do not:} \ifGatePassed\ReadingRulePass\else\ReadingRuleFail\fi
+\emph{If the rule arms gain and the learned arms do not:} \ReadingRuleForGate
 
 \emph{If the rule arms do not gain:} \ReadingNegative
 \fi
@@ -74,6 +74,9 @@ A positive control supports the reading of Table~\ref{tab:c1} (Table~\ref{tab:ap
 \subsection{The offline ladder and the gate (C3)}
 \label{app:gate-full}
 
+\ifGateStopped
+The reason for the statistical STOP is given in Section~\ref{sec:results-gate}.
+\else
 The gate was read once, on \GateReadDate, after the arms-frozen record had fixed every arm, split and gate file \TBD{citations of the arms-frozen record and of the test release record}. The read covers the seven primary T0 nodes and \TOneNodesUsed. \GateEligibleNodes{} met the eligibility conditions of Section~\ref{sec:setup} and entered the IQM; \GateExcludedNodes. The Holm step-down ranked \GateHolmFirst{} first, so that arm was tested at the 97.5\% level and the other at 95\%. The primary test input leaves out test proposals that repeat a training or development proposal; this removed \GateDupLeftOut. Repeats concentrate on early proposals, because every instance of a node starts from the same configuration, so the primary estimand weighs later proposals more than the full test population does. \TBD{Counts of partial and divergent proposals on the evaluation seeds, per arm. If utilities tie: the number of ties, and the statement that the PoI counts a tie as one half and that the calibration evidence of the pass rule covers continuous utilities only.}
 
 \begin{table*}[t]
@@ -193,3 +196,4 @@ In leave-one-suite-out (Table~\ref{tab:loso}), the fold arms are retrained witho
 
 \paragraph{Secondary arms and the second proposer.}
 The secondary arms are compared with A2 per node (Table~\ref{tab:app-secondary}): A4, the other model size of A5, the same fine-tuning applied to the base model, and the tabular foundation model \citep{hollmann2025tabpfn}. A4 asks how far the proposer can judge its own proposals; we report it beside A5 without a test. \TBD{A4 against A5, descriptive.} Sweep~1 enters the analysis only as a descriptive stratum (Table~\ref{tab:app-sweep1}). A table that transfers arms from one proposer's training instances to the other proposer's test instances is outside the preregistered scope and was not read. The per-node gate table, with the numbers of training, development and test instances, the eligibility statistics and the denominators, is Table~\ref{tab:app-gate-nodes}.
+\fi
