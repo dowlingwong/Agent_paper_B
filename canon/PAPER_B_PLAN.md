@@ -1,11 +1,9 @@
 # Paper B (route R1): the plan as it stands
 
-> **Draft for author review, 26 Nov 2026.** The proposed research framing is for review before runbook drafting. The dated decisions in `docs/r1/PLAN.md` §10 govern execution.
-
-**As of 26 Nov 2026, `main` after the rows of "26 November 2026 (g)". AI-assisted (coordinating chat, Claude).**
-A view, not an authority: `docs/r1/PLAN.md` §10 rows control wherever they differ (R1-CANON-FOLDER). It introduces no
-decision. No calendar date and no wall-clock limit decides anything (R1-STEP-ORDER, R1-NO-TIMEOUT). Nothing is
-established yet: the gate is unread, no arm is frozen, no closed-loop campaign has run.
+**Execution snapshot, 27 Nov 2026.** [PLAN §10](../docs/r1/PLAN.md#10-open-decisions) and the published launch
+notes govern execution (R1-CANON-FOLDER). The [live queue](https://github.com/dowlingwong/Agent_paper_B/blob/coord/coordinator/STATE.md)
+tracks current work. Steps start when their prerequisites are complete and reviewed (R1-STEP-ORDER).
+The gate is unread, arms freeze is pending, and the campaign results are still to be collected.
 
 ## 1. Question and claims (R1-ALIGN-OUTCOME)
 
@@ -19,8 +17,8 @@ raise the fresh-seed audited gain of a campaign, and by how much?
 | C1 | Control errors of the default keep rule: false keeps, missed keeps, the winner's curse, wasted runs. Supporting, not a first measurement (R1-C1-POSITION) | Fresh-seed audits of sweeps 1 and 2 |
 | C2 | The one-step rule under noise for a ledger-dependent proposer, and the conditions under which it is globally optimal | Main-text statements pass the independent proof check and the coordinator's spot check (R1-PROOF-POLICY) |
 
-Both confirmatory families (the gate; D.3's contrasts) are reported whatever they show. The declared reading of every
-outcome combination is §6 of `docs/r1/proposals/GOAL_METRIC_ALIGNMENT_PROPOSAL_20261126.md`. No multi-step claim is
+Report the offline gate and both D.3 contrast families whatever they show. The declared outcome readings are in
+[D.3 rev 4 §7.4](../docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261122.md). No multi-step claim is
 made; that is Paper C. Wording rules: the learned object is a forecaster, the policy is a derived rule, the term "RL"
 is not used (R1-BX-D9).
 
@@ -45,7 +43,7 @@ compute handoffs for these comparisons.
 | Part | Content | Rows |
 |---|---|---|
 | T0 | Eight CPU nodes, single-parameter edits; seven in the primary set, `openml_wdbc` a sensitivity row. Two sweeps (7B manager; `gemma4_31b` thinking off), 18 instances per node, W = 20 | R1-MAIN-PROPOSER, PRE-WDBC |
-| T1 | Eight GPU nodes from MLAgentBench, MLGym and autoresearch, code-level diffs, 12 instances per node; all enter C3 (D21 is recorded, not a filter). Up to four more nodes: each joins when its G.1b passes determinism | R1-T1-D21-SCOPE, R1-T1-NODE-EXPANSION, R1-G5-EXPANSION-JOIN, R1-STEP-ORDER |
+| T1 | Eight GPU nodes from MLAgentBench, MLGym and autoresearch, with code-level diffs and 12 instances per node. Eligible expansion nodes join G.5 through an addendum after G.1b determinism PASS. For the expansion, the MLGym nodes enter the arms and primary gate and the 1GC nodes are reported separately. | R1-T1-D21-SCOPE, R1-STEP-ORDER, R1-G5-S9 |
 | Arms | A0 default; A1 index policy; A2 A1 + rule layer; A3 tabular forecaster; A4 LLM self-assessment; A5 fine-tuned small LM; A6 after the gate only | R1-C3 (ladder), R1-ARMS-DECISIONS |
 | Offline gate | A3 and A5 against A2: IQM of gap closed and probability of improvement, Holm; split 1/3 : 1/6 : 1/2; price 0.1 σ_node; simulated power 0.36 at effect 0.3 (0.26 for T1 × 6) | R1-BX-D8-V3-A/B, R1-BX-D8-CONFIRM-V31 |
 | D.3a | T0, seven nodes × 18 new instances, W = 20, 80 LLM calls; arms A0, A0R, A1, A2, FIXR3, EGATE, LADDER; Y = audited final-vs-start gain / σ_node, K = 10 | R1-D3-MIN, R1-MINSUB-CHOICES (4), R1-D3-DECOMP |
@@ -65,13 +63,13 @@ when the four required parts are, and never delays them (R1-STEP-ORDER).
 | T0 labels | Both sweeps audited; label tables frozen; train/dev released (sweep 2: 850/422; sweep 1: 593/276); A3's T0 run reviewed | — |
 | T1 noise floors | G.1b sealed for all eight nodes; cross-host checks xc2 and xc3 PASS (seven nodes may audit on TASL-7) | — |
 | T1 pilot | G.4b PASS: 126 of 180 proposals ran (0.70); liveness 0.62 to 0.82 per node | — |
-| T1 labels (G.5) | Code and draft note revision 13 on `main`; 216.9 GPU-h projected of 425; pilot-basis PASS on TASL-2; houseprice's CPU-set check STOPped on a procedure defect (it blocks that node only) | The fix (local worker); the author signs the note (S1–S14) |
-| Expansion nodes | Titanic, ETTh1, MetaMaze, Forest Cover: kits and census PASS; G.1b spec on `main` (launch commit `7d0279d8`); four host checks and two determinism checks PASS, reviewed | Kit c1 disposition record (P2), note published, runs; each node that passes joins G.5 by addendum |
-| Decision models (P.4) | Runner, probe mode, charging on `main`; host-config fill on a branch; the pool has had no batch GPU since 24 Nov | A direct-launch path for a host that fits (Ada first, R1-HOST-FREE), probe, author signs the revised phase-1 note |
-| Gate | Preregistered 21 Nov, amended 23 Nov; unread | Arms-frozen record, then one read |
-| Closed loop D.3 | Pre-declaration draft revision 3 (unsigned, branch `mac-d3-predecl-20261122`); runner, audit, table and three arms not built | R1-D3-ORDER |
-| Theory | Main-text statements limited to those passing R1-PROOF-POLICY | The remaining checks before the gate read; the theory section is shortened in the restructure |
-| Manuscript | `papers/r1`, about 22k words, both gate outcomes written | Restructure after R1-ALIGN-OUTCOME: question first, decomposition as the main table, procedure to the appendix |
+| T1 labels (G.5) | The author signed rev 13 and settled P10, P11 and S9. The Student-t scope and scale are signed in R1-G5-TAILS-CONSUMERS. Pilot basis passed on TASL-2 and the houseprice CPU-set fix is merged. | Review the sd-matched assembly path, complete the remaining note checks and publish G.5. Review and bind the downstream consumers before arms freeze. |
+| Expansion nodes | Kit c1 and the launch note are published. ETTh1 is sealed and Titanic, MetaMaze and Forest Cover are running in the latest compute report. | Seal and assemble the remaining results, then add eligible nodes to G.5 under S9. |
+| Decision models (P.4) | Direct launcher and Ada host template merged. The Ada environment smoke passed. | Confirm the launch account, fill and review the Ada host configuration, then run the probe on one RTX 6000 Ada. The phase-1 note follows the probe. |
+| Gate | Preregistered and unread. | Review the Student-t consumer amendment, freeze the arms, then perform the one authorised read. |
+| Closed loop D.3 | Rev 4 and verify-seed option A are signed. Several controller units are merged. | Finish G1/G6, the constants and the verify-seed check. Run the HTCondor preflight in parallel, then the per-arm smoke and the stage-specific authorizations. |
+| Theory | Use main-text statements that pass R1-PROOF-POLICY. | Complete the remaining checks before the gate read. |
+| Manuscript | The matched-budget decomposition leads `papers/r1`. Both gate drafts are available. | Insert authorised effect estimates and intervals, and attribute supported gains to the component contrasts. |
 
 ## 4. Order of steps (R1-STEP-ORDER)
 
@@ -79,17 +77,22 @@ No calendar date decides anything. A step starts when the steps it depends on ar
 cut, shortened or reordered to meet a date.
 
 **To the gate**
-1. Expansion G.1b: kit c1 record, note published, the four nodes run. A node with determinism PASS joins the T1 set.
-2. G.5: the author signs the note; label runs on the eight nodes; each passing expansion node joins by addendum.
-3. Decision models (P.4): a launch path on a host that fits, the probe, the author signs the phase-1 note, training.
-4. G.5 labels complete for every node of the set; then the T1 train/dev release row (author).
-5. Arms trained, selected and calibrated; the arms-frozen record; the one gate read (B.7).
+
+1. Complete and seal expansion G.1b. A node with determinism PASS joins G.5 through an addendum under S9.
+2. Review the sd-matched G.5 assembly and finish the note checks. Publish the signed authorization and collect the labels.
+3. Complete the Ada P.4 probe, sign the phase-1 note and run training. Prepare the probe in parallel with G.5.
+4. After labels complete for the T1 set, publish the train/dev release. Apply the reviewed target consumers to
+   SFT, training and fitting as appropriate.
+5. Freeze the trained and calibrated arms after the reviewed preregistration amendment. Read the gate once (B.7).
 
 **To the closed loop** (beside 1 to 5)
-6. Screening measurement: fix, smoke, the author signs, run.
-7. D.3 pre-declaration revision 4, reviewed; the author signs.
-8. Units G1, G3 to G8 and A0R, each reviewed; the per-arm smoke.
-9. D.3a (does not wait for the gate); D.3b after the arms-frozen record; D.3c after the G.5 labels (optional).
+
+6. Merge the reviewed screening fix, repeat the smoke, obtain the launch signature and run the screening measurement.
+7. Complete the reviewed G2 constants and verify-seed check, then freeze and publish the signed D.3 rev 4.
+8. Finish the runner and audit. Check an ETP L40S or TOpAS A100 through HTCondor in parallel with implementation,
+   then run the per-arm smoke on a matched GPU layout.
+9. Launch D.3a under its authorization and D.3b under its authorization after arms freeze, whatever the gate verdict.
+   D.3c may enter after G.5 and arms freeze under its own approved design and authorization.
 
 **To the paper**
 10. Test release rows and the post-freeze reads; the manuscript with the numbers. The submission version is complete
@@ -105,44 +108,18 @@ cut, shortened or reordered to meet a date.
 - GPU-hour figures are reporting thresholds: expansion G.1b 40; G.5 425; P.4 phase 1 40 (the probe counts); D.3a's
   projection 140. Reaching one is reported to the author at once and does not stop the work unless a defect is found.
 
-## 6. Next actions by owner (26 Nov)
+## 6. Next actions by owner
 
-**Compute agent** (every server; R1-AGENT-COMPUTE)
-1. Kit c1 disposition record for the four kits (P2 of the expansion note); then the four runs from `7d0279d8` once
-   the note is published.
-2. Survey of free resources on every host, and Ada's readiness for decision-model training, LLM serving and T1
-   audits (R1-HOST-FREE).
-3. G.5 on the TASL pair after its note is signed; houseprice's CPU-set check after the local worker's fix.
-4. D.3: the screening measurement (after its fix and the author's signature); the campaign runner G1 and the Y audit
-   G6 with the Y(w) points, each reviewed, with a launcher that does not depend on HTCondor.
-5. P.4: the probe and the SFT runs on the first host that fits, once the direct-launch path and the note exist.
-6. The torch test files of the host-config fill; who holds TASL-7's GPU.
+- **Compute** advances the Ada P.4 probe and D.3 HTCondor preflight in parallel, completes the G.1b and P11 checks,
+  and finishes the assigned D.3 runner and audit units. For TOpAS, stage inputs explicitly and verify their hashes in the container.
+- **Local** finishes the G.5 assembly and consumer paths with independent review, supplies the D.3 constants and
+  verify-seed unit, and resumes the HPO references after the G1/G6 interfaces are ready.
+- **Coordinator** publishes reviewed units and authorised notes after their checks, updates the live queue and
+  routes any decision that changes the experimental design or launch scope.
+- **Writer and design** keep the outcome readings and evidence in sync. Use the [claim-to-table sheet](../docs/r1/proposals/PAPER_B_CLAIM_TABLE_SHEET_20261126.md)
+  to place the actual effects and intervals in the manuscript when released.
 
-**Local worker** (Mac)
-0. The fix that makes the three sealed attempts of houseprice's CPU-set check producible.
-0a. The rows of 26 Nov (g) in the notes and specs not yet signed or launched: no time bound in a check, no deadline,
-   the shared-card repeat rule, GPU-hour figures as thresholds; reviewed values are kept (R1-NO-TIMEOUT (2)).
-0b. R1-HOST-FREE units: a direct-launch path and host configuration for P.4 on a host outside HTCondor; audit hosts
-   for G.5 beyond the TASL pair, each gated by a per-node cross-host PASS, through an addendum note; a launcher for
-   D.3 that does not depend on HTCondor.
-1. D.3 pre-declaration revision 4 (the rows of 26 Nov (d)), with `d3_analysis.py`; `mac-screen-measure-20261123`
-   brought onto `main`.
-2. Decision sheet S9: how an expansion node joins the frozen eight-node split.
-3. D.3 units: A0R, FIXR3, EGATE, LADDER, run accounting, the outcome table, the A5 sidecar path and image.
-4. The G.5 addendum mechanism; the two test-only fixes; the HPO reference unit; the D.3c scoping memo.
-5. Paper C: one consolidated branch on current `main` (lowest priority).
+## 7. Author decisions
 
-**Coordinator**
-- Publish the expansion note; prepare the G.5 signing sheet; merge reviewed units; report which steps are complete.
-
-**Writer and designer**
-- Restructure the manuscript after R1-ALIGN-OUTCOME; the Paper C manuscript skeleton after the consolidation.
-
-From R1-AUTONOMY on, the live queue is the task files on branch `coord/coordinator`; this section is the snapshot of
-26 Nov.
-
-## 7. Waiting on the author
-
-- G.5 note: S1 to S14 (the pilot-basis PASS is on `main`); S9.
-- Signatures: screening-measurement note; D.3 pre-declaration; P.4 phase-1 note (after the probe).
-- Nothing outside the repository blocks: work may move to Ada (R1-HOST-FREE) and may share a card (R1-CARD-SHARE).
+Use the [live decision list](https://github.com/dowlingwong/Agent_paper_B/blob/coord/coordinator/AUTHOR.md) for
+open design choices, phase-specific signatures and test releases.
