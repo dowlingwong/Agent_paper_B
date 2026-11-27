@@ -1,0 +1,33 @@
+{
+ "schema": "trackp_p4_host_fill/2",
+ "host_class": "ada_rtx6000",
+ "comment": "Host-side input of r1/scripts/htcondor/trackp_p4/p4_fill_host_config.py for ada_rtx6000, confirmed on Ada as zli538 on 27 Nov 2026 (compute/20261127-18).",
+ "values": {
+  "bases.kev-0.8b.adapter_local_path": "models/kev-0.8b",
+  "bases.kev-0.8b.local_path": "models/qwen3.5-0.8b-base",
+  "bases.kev-4b.adapter_local_path": "models/kev-4b",
+  "bases.kev-4b.local_path": "models/qwen3.5-4b-base",
+  "bases.laya.local_path": "models/laya",
+  "bases.qwen3.5-0.8b-base.local_path": "models/qwen3.5-0.8b-base",
+  "bases.qwen3.5-4b-base.local_path": "models/qwen3.5-4b-base",
+  "bases.startlux-0.8b.local_path": "models/startlux-0.8b",
+  "bases.startlux-2b.local_path": "models/startlux-2b",
+  "bases.startlux-4b.local_path": "models/startlux-4b",
+  "direct.container_runtime": "venv",
+  "direct.hostname": "ucrtasl",
+  "direct.lock_dir": "/data1/zli538/r1_locks",
+  "direct.min_free_mib": "46000",
+  "direct.shm_size": "16g",
+  "direct.ssh_alias": "ada_server",
+  "direct.work_root": "/data1/zli538/paperb_p4_20261127/jobs",
+  "gpu.compute_capability": "8.9",
+  "gpu.lock_path": "gpu0.lock",
+  "gpu.name": "NVIDIA RTX 6000 Ada Generation",
+  "hf_home": "hf",
+  "models_dir": "models",
+  "runs_dir": "out",
+  "venv.causal_conv1d": "1.7.0 built from the pinned sdist for sm_89, wheel sha256 8f676dbd2d42588d4fa85aabcb2da8f1bd9bf46dbdeea7b51c7dddf01e4e3e6f, R1-TRACKP-IMAGE-V22-B; imports on the Ada venv",
+  "venv.path": "/opt/r1/envs/trackp",
+  "work_dir": "."
+ }
+}

@@ -155,11 +155,14 @@ def check_hardware(spec: ChunkSpec, observed: Mapping[str, Any], manifest: Mappi
         raise ChunkStop("the declared lease is not held (observed lease must be true)")
 
 
-CampaignFactory = Callable[[ChunkSpec, int, Path, SnapshotRecorder], tuple[dict[str, Any], str]]
+CampaignFactory = Callable[[ChunkSpec, int, Path, SnapshotRecorder],
+                           tuple[dict[str, Any], "str | Callable[[SnapshotRecorder], str]"]]
 """``(spec, seed, campaign_dir, recorder) -> (run_real_campaign kwargs, ended_on)``.
 
 The factory must pass ``wrap(kwargs, recorder)`` to ``run_real_campaign``; it returns the
-``ended_on`` value (one of :data:`ENDED_ON`).  It must not write ``snapshots/final.json``.
+``ended_on`` value (one of :data:`ENDED_ON`) or a resolver called with the recorder after the
+campaign, when the end is only known from the final budget (the real adapter uses
+``accounting.table_ended_on``).  It must not write ``snapshots/final.json``.
 """
 
 
@@ -219,9 +222,17 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
             raise ChunkStop("the factory campaign_id is not the instance id")
         if kwargs.get("snapshot_hook") is not recorder:
             raise ChunkStop("the factory did not bind the chunk recorder as the snapshot hook")
-        if ended_on not in ENDED_ON:
+        if callable(ended_on):
+            resolver = ended_on
+        elif ended_on in ENDED_ON:
+            resolver = None
+        else:
             raise ChunkStop(f"unknown ended_on {ended_on!r}")
         run_real_campaign(**kwargs)
+        if resolver is not None:
+            ended_on = resolver(recorder)
+        if ended_on not in ENDED_ON:
+            raise ChunkStop(f"unknown ended_on {ended_on!r}")
         w_final = recorder.count
         if recorder._last_budget is not None and recorder._last_budget.worker_runs != w_final:
             raise ChunkStop("charged-run parity failed at the end of a campaign")
