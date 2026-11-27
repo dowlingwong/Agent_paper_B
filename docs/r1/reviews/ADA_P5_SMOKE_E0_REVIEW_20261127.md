@@ -1,9 +1,9 @@
-# Verdict: ACCEPTED WITH MINORS (re-check: one required artifact still missing)
+# Verdict: ACCEPTED
 Task: `compute/20261127-29` (with `compute/20261127-33` item 2)
-Reviewed tip: `compute-p5-ada-smoke-e0-20261127` @ `dd6a529b243f63dcb335509728976c178920e795` (initial review at `eab09bc9…`; base `origin/main` `1afa7d62…`)
+Reviewed tip: `compute-p5-ada-smoke-e0-20261127` @ `28e451ea12d948c3ca542de2e6747952ed43dd3d` (initial review at `eab09bc9…`, re-checks at `dd6a529b…` and `28e451ea…`; base `origin/main` `1afa7d62…`)
 
 Independent review of `docs/r1/reports/trackp_p5_ada_20261127/` at the tip above. I did not write the record.
-All work was read-only: worktrees at `eab09bc9` (initial review) and `dd6a529b` (re-check), local
+All work was read-only: worktrees at `eab09bc9` (initial review), `dd6a529b` and `28e451ea` (re-checks), local
 hashing/re-computation, and read-only `ssh ada_server` hashing/cat of the receipts named by the record. No GPU
 job was launched, no file was written on Ada, and no label was read.
 
@@ -35,7 +35,8 @@ Read-only; no GPU job, no write on Ada, no label read.
 - The memory wording is corrected: "0 MiB foreign-process memory; card total 5–8 MiB" matches the lease
   (`other_processes.memory_mib = 0`) and the captures (5 MiB start, 8 MiB end).
 
-**Still open (required).** `smoke_lease.jsonl` is **not in the branch**. The tree at `dd6a529b` has 11 files
+**Still open at this tip (required), closed at `28e451ea` below.** `smoke_lease.jsonl` was **not in the branch**
+at `dd6a529b`. The tree there has 11 files
 under the record directory and none is the lease:
 
 ```
@@ -44,17 +45,48 @@ git cat-file -e dd6a529b:docs/r1/reports/trackp_p5_ada_20261127/smoke_lease.json
 fatal: path '.../smoke_lease.jsonl' does not exist in 'dd6a529b'
 ```
 
-The record nevertheless cites `smoke_lease.jsonl` at lines 20 and 31 and lists it under "Captured files (this
-directory)" at line 81. The lease hash `69d0d2d03b83f63de043d1132baaeddb391c24ad00818b29cac511dc5c5f52e2`
-still matches the 515-byte host file `/data1/zli538/paperb_p4_20261127/p5_20261127_b/smoke/lease.jsonl`, so
-the evidence is genuine and the recorded hash is right; the branch simply does not carry the file. **The
-record still has a dangling reference.** Required: commit the lease (e.g. as `smoke_lease.jsonl`, hash
-`69d0d2d0…`) or remove/repoint the three citations. Until that is done, required fix M1 is only half closed.
+The record at that tip nevertheless cited `smoke_lease.jsonl` at lines 20 and 31 and listed it under "Captured
+files (this directory)" at line 81. The lease hash
+`69d0d2d03b83f63de043d1132baaeddb391c24ad00818b29cac511dc5c5f52e2` already matched the 515-byte host file
+`/data1/zli538/paperb_p4_20261127/p5_20261127_b/smoke/lease.jsonl`, so the evidence was genuine and the
+recorded hash right; the branch simply did not carry the file, which made the reference dangling. At that tip
+the required fix was to commit the lease (hash `69d0d2d0…`) or remove/repoint the three citations, so M1 was
+only half closed.
 
-Because one required artifact is still missing, the final verdict remains **ACCEPTED WITH MINORS**, with M1
-open. The scientific result is unchanged and reconfirmed: the smoke PASS is real and the E0 equivalence is a
-STOP. The optional "only" caveat about the changed config comment was not taken; it is cosmetic and I do not
-ask for it again.
+At `dd6a529b` one required artifact was still missing, so the verdict at that tip remained **ACCEPTED WITH
+MINORS**, with M1 open. The final re-check below closes it.
+
+### Final re-check at `28e451ea` (27 Nov 2026)
+
+`smoke_lease.jsonl` is now in the branch. The `*.jsonl` ignore rule had kept it out; it was force-added in this
+tip. Verified read-only:
+
+```
+git ls-remote origin refs/heads/compute-p5-ada-smoke-e0-20261127
+28e451ea12d948c3ca542de2e6747952ed43dd3d
+git cat-file -e 28e451ea:docs/r1/reports/trackp_p5_ada_20261127/smoke_lease.jsonl    # present
+git show 28e451ea:docs/r1/reports/trackp_p5_ada_20261127/smoke_lease.jsonl | shasum -a 256
+69d0d2d03b83f63de043d1132baaeddb391c24ad00818b29cac511dc5c5f52e2
+git diff --name-status dd6a529b 28e451ea
+A  docs/r1/reports/trackp_p5_ada_20261127/smoke_lease.jsonl
+```
+
+The hash matches the record and the 515-byte host file. The lease content is the same start/end pair already
+embedded in `smoke_report.json`: card 0, UUID `GPU-9be33fd1-8eeb-497d-772a-87362d6720be`,
+`other_processes {count: 0, memory_mib: 0}` at both samples.
+
+No citation is dangling now. I extracted every backticked `.json`/`.jsonl`/`.txt`/`.md`/`.py` filename from the
+record and checked each against the tree at `28e451ea`; all 12 resolve:
+
+```
+comparison_e0e.json  e0_config_ref.json  e0b_report.json  e0c_report.json
+e0e_manifest.json    e0e_report.json     gpu_after.txt    gpu_before.txt
+p5_compare_ada.py    p5_reference.json   smoke_lease.jsonl smoke_report.json
+```
+
+The tree has 13 files (the record plus the 12 cited files). **M1 is closed.** The scientific result is
+unchanged and reconfirmed: the smoke PASS is real and the E0 equivalence is a STOP. The optional "only" caveat
+about the changed config comment was not taken; it is cosmetic and I do not ask for it again.
 
 ## 1. Hashes and the E0 data manifest
 
@@ -84,7 +116,7 @@ bb0c7251a5d47e04e82e33c738160be317bfbf59984b82a0d611b0798c4fa908
 ```
 
 At `eab09bc9` the two hashes that could not be checked from the branch (the smoke report and the smoke lease)
-matched the host files; at `dd6a529b` the smoke report is committed and only the lease remains host-only:
+matched the host files; at `dd6a529b` the smoke report was committed, and at `28e451ea` the lease is too:
 
 ```
 ssh ada_server 'sha256sum /data1/zli538/paperb_p4_20261127/p5_20261127_b/smoke/*'
@@ -255,14 +287,14 @@ the different paper commit). The conclusion stands; a short reword would make it
 
 ## Minors
 
-Status after `dd6a529b`: M1 half closed; M2–M4 closed; M5 not taken (cosmetic).
+Status after `28e451ea`: M1–M4 closed; M5 not taken (cosmetic).
 
 1. **Required — the smoke evidence is not in the branch.** The record cites `lease.jsonl` and the smoke report
    hash, but the branch contains neither a smoke `report.json` nor `lease.jsonl` (the single `report.json` is
    E0e). The hashes match the host files, so the claim is true, but a reader of the record cannot check it and
    the `lease.jsonl` reference is dangling in the record directory. Commit the smoke report and lease (e.g.
-   under `smoke/`), or state explicitly that they are host-only and correct the path. **At `dd6a529b` the
-   reports are committed but `smoke_lease.jsonl` is still absent; see the addendum.**
+   under `smoke/`), or state explicitly that they are host-only and correct the path. **Closed at `28e451ea`:
+   the reports and `smoke_lease.jsonl` are committed; see the addendum.**
 2. **Required — disclose `e0d`.** Say that a third scene, the `screen` launch into `e0d`, was aborted at step 0
    and produced no report; it is not the comparison and not one of the two scenes with reports. **Closed.**
 3. **Recommended — name the drift.** State that the reference is pre-R1-E0-HEADFIT (`8e13e77` runs the AdamW
@@ -282,13 +314,12 @@ Status after `dd6a529b`: M1 half closed; M2–M4 closed; M5 not taken (cosmetic)
 - The cause of the `e0d` abort is not documented beyond the truncated log; no label or evidence data was read
   to infer it.
 - I did not re-run the smoke or E0, did not read labels, and did not write on Ada.
-- `e0d`'s step-0 checkpoint remains only on the host. At `dd6a529b` the record, smoke report, `e0b`/`e0c`/E0e
-  reports, E0e manifest, comparison, config copy and reference are committed; only `smoke_lease.jsonl` is not.
+- `e0d`'s step-0 checkpoint remains only on the host. At `28e451ea` the record, smoke report, smoke lease,
+  `e0b`/`e0c`/E0e reports, E0e manifest, comparison, config copy and reference are all committed.
 
 ## Disposition
 
 The smoke PASS and the E0 STOP are independently confirmed. The record must not be cited as an Ada E0
-equivalence, and the phase-1 note's `ada_smoke_e0` line remains blocked. The `e0d` disclosure and the drift and
-memory wording are fixed. The smoke may be cited as a PASS once `smoke_lease.jsonl` is committed (or the three
-citations are removed/repointed); that is the one remaining required minor. No tolerance, reference or result
-should be changed to turn the miss into a pass.
+equivalence, and the phase-1 note's `ada_smoke_e0` line remains blocked. The `e0d` disclosure, the drift and
+memory wording, and the smoke-lease packaging are all fixed. **Final verdict: ACCEPTED.** No tolerance,
+reference or result should be changed to turn the miss into a pass.
