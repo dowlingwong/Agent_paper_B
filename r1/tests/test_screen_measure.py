@@ -652,8 +652,10 @@ class RunnerStopTest(unittest.TestCase):
         out = self.tmp / "deepthought2"
         out.mkdir()
         manifest = {"preflight": {"launch_host": "deepthought2"}}
+        sysconf = sm.os.sysconf
         with mock.patch.object(sm.os, "sched_getaffinity", return_value=set(range(64)), create=True), \
-                mock.patch.object(sm.os, "sysconf", return_value=128), \
+                mock.patch.object(sm.os, "sysconf", side_effect=lambda key: (
+                    128 if key == "SC_NPROCESSORS_ONLN" else sysconf(key))), \
                 mock.patch.object(sm.os, "getloadavg", return_value=(65, 0, 0)):
             result = sm.execute(out, _c0_jobs(), _fake_run, manifest, 2, None, str(self.tmp), monitor=True)
         self.assertIsNone(result["stop"])
@@ -698,7 +700,7 @@ class PreflightTest(unittest.TestCase):
         for name, value in (("evidence_paper_provenance", {"provenance": "ok"}),
                             ("evidence_environment", {"environment": "ok"}),
                             ("sweep2_harness_equivalence", {"equivalence": "ok"})):
-            patcher = mock.patch.object(self.audit, name, side_effect=lambda *a, _n=name, _v=value:
+            patcher = mock.patch.object(self.audit, name, side_effect=lambda *a, _n=name, _v=value, **kw:
                                         (self.calls.append(_n), _v)[1])
             patcher.start()
             self.addCleanup(patcher.stop)
