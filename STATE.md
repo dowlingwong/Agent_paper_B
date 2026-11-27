@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 01:00 CET, `main` at `4490a0a9`
+# State — 27 Nov 2026, 01:15 CET, `main` at the merge of the test-only unit and the D.3c memo
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
