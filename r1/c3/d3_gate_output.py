@@ -152,8 +152,8 @@ def stage_inputs(sources, predictions: dict, noise: dict) -> None:
 def _read_published(relative: Path) -> bytes:
     _path(relative)
     path = relative.as_posix()
-    data = release._committed(path)
-    if data != release._git("show", f"refs/remotes/origin/main:{path}"):
+    data = release._git("show", f"refs/remotes/origin/main:{path}")
+    if data != release._committed(path):
         raise ValueError(f"{relative}: committed bytes differ from published main")
     return data
 
