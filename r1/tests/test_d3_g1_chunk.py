@@ -208,3 +208,55 @@ def test_w_zero_final_uses_start_config(tmp_path):
     assert snap["w"] == 0 and snap["worker_runs"] == 0 and snap["final"] is True
     assert snap["incumbent_config"] == {"train.py": "x = 1\n"}
     assert len(digest) == 64
+
+
+def _replicate_factory():
+    from r1.c3.d3.replicate_campaign import ReplicateUnit
+    from r1.c3.d3.snapshots import config_sha256
+    from r1.c3.d3_replicate import Fixr3Engine
+
+    def factory(spec, seed, cdir, recorder):
+        def propose(step_index, incumbent_config, llm_calls):
+            return step_index
+
+        def validate(proposal):
+            contents = {"train.py": f"X = {proposal}\n"}
+            return contents, config_sha256(contents)
+
+        def run_trial(proposal, config, train_seed, j, budget_index):
+            return True, 0.5 + 0.01 * j, 0.0
+
+        return ReplicateUnit(engine=Fixr3Engine(seed), propose=propose, validate=validate,
+                             run_trial=run_trial, start_config={"train.py": "X = -1\n"})
+    return factory
+
+
+def test_replicate_chunk_writes_the_same_layout(tmp_path):
+    spec = _spec(arm="FIXR3")
+    out = tmp_path / "chunk"
+    summary = run_chunk(spec, out, manifest=_manifest(spec), observed=_observed(),
+                        replicate_factory=_replicate_factory())
+    assert summary["campaigns"] == 18
+    assert summary["campaign_kind"] == "replicate"
+    assert summary["worker_runs"] == 18 * 18
+    chunk = json.loads((out / "chunk.json").read_text())
+    assert chunk["campaign_kind"] == "replicate" and chunk["arm"] == "FIXR3"
+    first = out / "campaigns" / f"{NODE}__s6201"
+    camp = json.loads((first / "campaign.json").read_text())
+    assert camp["campaign_kind"] == "replicate"
+    assert camp["record_name"] == f"a__FIXR3__{NODE}__s6201__r0"
+    assert (first / "ledger.jsonl").is_file() and (first / "runs.jsonl").is_file()
+    assert (first / "events.jsonl").is_file()
+    ledger = [json.loads(line) for line in (first / "ledger.jsonl").read_text().splitlines()]
+    assert ledger and all("replicates" in row["extra"]["control"] for row in ledger)
+    assert (first / "snapshots" / "w5.json").is_file()
+    assert (first / "snapshots" / "final.json").is_file()
+    assert not (first / "snapshots" / "w20.json").exists()
+    assert (first / "SHA256SUMS").is_file()
+
+
+def test_replicate_factory_and_harness_factory_are_exclusive(tmp_path):
+    spec = _spec()
+    with pytest.raises(ChunkStop):
+        run_chunk(spec, tmp_path / "chunk", _factory, manifest=_manifest(spec), observed=_observed(),
+                  replicate_factory=_replicate_factory())
