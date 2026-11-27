@@ -1,0 +1,7 @@
+stop_utc=2026-11-27T00:40:46Z
+paper_commit=bd406db9d03f3bbdf3471431d1af96748e1f9556
+harness_commit=6adf3859de66c4814fcf376eed59880fbd8eeaf7
+python=3.13.15
+sklearn=1.8.0
+stop=openml_breast_w cache holds 0 ARFF files, not one
+partial_dir=/work/dwong/screen_prep_20261126/data_cache_ENG_20261127T004046Z_STOP_arff_suffix
