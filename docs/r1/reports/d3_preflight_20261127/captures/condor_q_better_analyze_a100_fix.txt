@@ -1,0 +1,52 @@
+
+
+-- Schedd: deepthought.etp.kit.edu : <129.13.101.137:9618?...
+The Requirements expression for job 760152.000 is
+
+    ((TARGET.GPUs_DeviceName is "NVIDIA A100-PCIE-40GB")) &&
+    (TARGET.Arch == "X86_64") && TARGET.HasContainer && TARGET.HasDockerURL &&
+    (TARGET.Disk >= RequestDisk) && (TARGET.Memory >= RequestMemory) &&
+    (TARGET.Cpus >= RequestCpus) && (TARGET.GPUs >= RequestGPUs) &&
+    (TARGET.HasFileTransfer)
+
+    [0]    : TARGET.GPUs_DeviceName is "NVIDIA A100-PCIE-40GB"
+    [1]    : TARGET.Arch == "X86_64"
+    [2]    : [0] && [1]
+    [3]    : TARGET.HasContainer
+    [4]    : [2] && [3]
+    [5]    : TARGET.HasDockerURL
+    [6]    : [4] && [5]
+    [7]    : TARGET.Disk >= RequestDisk
+    [8]    : [6] && [7]
+    [9]    : TARGET.Memory >= RequestMemory
+    [10]   : [8] && [9]
+    [11]   : TARGET.Cpus >= RequestCpus
+    [12]   : [10] && [11]
+    [13]   : TARGET.GPUs >= RequestGPUs
+    [14]   : [12] && [13]
+    [15]   : TARGET.HasFileTransfer
+    [16]   : [14] && [15]
+
+Job 760152.000 defines the following attributes:
+
+    RequestCpus = 8
+    RequestDisk = 150000000 (kb)
+    RequestGPUs = 1
+    RequestMemory = 131100 (mb)
+
+The Requirements expression for job 760152.000 reduces to these conditions:
+
+        Slots
+Step   Matched  Condition
+----- --------- ---------
+[0]           0  TARGET.GPUs_DeviceName is "NVIDIA A100-PCIE-40GB"
+
+
+760152.000:  Run analysis summary ignoring user priority.  Of 23 slots on 23 machines,
+     23 slots are rejected by your job's requirements
+      0 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+
+WARNING:  Be advised:
+   No machines matched the job's constraints
+

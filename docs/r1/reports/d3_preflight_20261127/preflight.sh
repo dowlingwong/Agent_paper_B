@@ -5,7 +5,10 @@ mkdir -p handback
 trap 'rc=$?; printf "%s\n" "$rc" > handback/exit_status.txt; exit "$rc"' EXIT
 exec > >(tee handback/preflight.log) 2>&1
 export GIT_TERMINAL_PROMPT=0 PYTHONDONTWRITEBYTECODE=1
-echo "D.3 HTCondor preflight start $(date -u +%FT%TZ) host=$(hostname -f) user=$(id -un)"
+EXPECTED_NAME="${2:-NVIDIA_L40S}"
+EXPECTED_NAME="${EXPECTED_NAME/_/ }"
+EXPECTED_CAP="${3:-8.9}"
+echo "D.3 HTCondor preflight start $(date -u +%FT%TZ) host=$(hostname -f) user=$(id -un) expected_gpu=$EXPECTED_NAME cap=$EXPECTED_CAP"
 echo "=== os ==="
 cat /etc/os-release
 echo "=== image identity ==="
@@ -21,12 +24,13 @@ echo "gpu_count=$gpu_count"
 [ "$gpu_count" -eq 1 ] || { echo "STOP: expected exactly one visible GPU, got $gpu_count"; exit 2; }
 gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1 | xargs)
 gpu_cap=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -1 | xargs)
-[ "$gpu_name" = "NVIDIA L40S" ] || { echo "STOP: GPU is $gpu_name, not NVIDIA L40S"; exit 2; }
-[ "$gpu_cap" = "8.9" ] || { echo "STOP: compute capability $gpu_cap != 8.9"; exit 2; }
+[ "$gpu_name" = "$EXPECTED_NAME" ] || { echo "STOP: GPU is $gpu_name, not $EXPECTED_NAME"; exit 2; }
+[ "$gpu_cap" = "$EXPECTED_CAP" ] || { echo "STOP: compute capability $gpu_cap != $EXPECTED_CAP"; exit 2; }
 echo "=== inputs (transferred; hashes checked in-container) ==="
 sha256sum -c PREFLIGHT_INPUTS.sha256 | tee handback/input-hashes.txt
 echo "=== env3 torch / CUDA ==="
 PY=/opt/r1/envs/trackp/bin/python
+export EXPECTED_NAME EXPECTED_CAP
 "$PY" - <<'PY' | tee handback/torch.txt
 import json, torch
 out = {
@@ -39,6 +43,7 @@ out = {
 }
 print(json.dumps(out, indent=1, sort_keys=True))
 assert out["cuda_available"] and out["device_count"] == 1
-assert out["device_name"] == "NVIDIA L40S" and out["capability"] == [8, 9]
+assert out["device_name"] == __import__("os").environ["EXPECTED_NAME"], out["device_name"]
+assert ".".join(str(x) for x in out["capability"]) == __import__("os").environ["EXPECTED_CAP"], out["capability"]
 PY
 echo "D.3 HTCondor preflight end $(date -u +%FT%TZ)"

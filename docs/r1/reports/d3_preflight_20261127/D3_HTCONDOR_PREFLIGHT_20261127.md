@@ -8,14 +8,21 @@ input was read inside a job. This is a capacity finding, not a STOP of evidence 
 - **Base:** `origin/main` `e153df24ee3435bbe0b2fa994297b15250550c30`
 - **Branch:** `compute-preflight-blockers-20261127`
 - **Submitted from:** deepthought, `dwong`, 27 Nov 2026 04:07–04:10 UTC
-- **Request shape (both jobs):** 1 GPU, 8 CPUs, 131,072 MB, 150,000,000 KB disk, `+RequestWalltime = 3600`,
-  `universe = container`, image `ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949` (v2.2).
-  No request value was edited to get a slot.
+- **Request shape (all jobs):** 1 GPU, 8 CPUs, 131,072 MB requested (the slot analyzer reports the effective
+  131,100 MB after the 128 MB quantum), 150,000,000 KB disk, `+RequestWalltime = 3600`, `universe = container`,
+  image `ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949` (v2.2).
+  No request value was edited to get a slot. The two JDLs now pass the expected GPU name and capability to the
+  same script, so the A100 leg checks A100/8.0 rather than the L40S/8.9 defaults.
 
 | Job | Target | Outcome | Submit record |
 |---|---|---|---|
 | `760148` | ETP `NVIDIA L40S` | Idle, no match: the L40S slot has `Start = false`; removed | `captures/preflight.submit` |
-| `760149` | TOpAS `NVIDIA A100-PCIE-40GB` | Idle, no match: no runnable A100; removed | `captures/preflight_a100.submit` |
+| `760149` | TOpAS `NVIDIA A100-PCIE-40GB` | Superseded attempt: submitted before the identity arguments were separated (the script default was L40S); no queue capture was kept; removed | `captures/preflight_a100.submit` |
+| `760152` | TOpAS `NVIDIA A100-PCIE-40GB` | Idle, no match: no runnable A100; removed | `captures/preflight_a100_fix.submit` |
+
+The corrected A100 job `760152` was submitted at 2026-11-27T03:20:09Z and captured while idle: `JobStatus = 1`,
+`RequestMemory = 131100`, no `RemoteHost`/`AssignedGPUs`, and `condor_q -better-analyze` reports 0 of 23 slots
+matching (`captures/condor_q_a100_fix.txt`, `captures/condor_q_better_analyze_a100_fix.txt`).
 
 ## Evidence
 
@@ -25,11 +32,12 @@ input was read inside a job. This is a capacity finding, not a STOP of evidence 
   deepthought2 prints `False` (`captures/startd_START.txt`). Job 760148 therefore had no machine willing to run
   it (`captures/condor_q_better_analyze.txt`, `captures/condor_q_reverse_l40s.txt`).
 - **TOpAS A100** (`c03-001-167/175/179`): `167` and `179` advertise A100-PCIE-40GB but have `GPUs = 0` free;
-  `175` has 5 free GPUs but `Start = false`/`Requirements = false`
-  (`captures/topas_gpu_slots_start.txt`). The other TOpAS GPUs are Tesla V100S-PCIE-32GB, outside the card the
-  task names.
+  `175` has 5 free GPUs but `Start = false`/`Requirements = false`. Captured at 2026-11-27T03:20:09Z in
+  `captures/topas_a100_slots_fix.txt`; the earlier undated capture is `captures/topas_gpu_slots_start.txt`.
+  The other TOpAS GPUs are Tesla V100S-PCIE-32GB, outside the card the task names.
 - **ETP pool:** 22 visible slots, no H200/H100/A100; the committed H200 request `760065` remains Idle. The two
-  TITAN X slots are on deepthought; no L40S or A100 was runnable.
+  TITAN X slots are on deepthought; no L40S or A100 was runnable. The dated ETP refresh is
+  `captures/etp_gpu_slots_fix.txt`.
 - **Active jobs seen before submitting** (not ours, not touched): `760142`, `760143`, `760145`, `760147`
   (`lucid_torch_job.sh`, running on TOpAS A100 `c03-001-179`/`167`), plus idle `759624`, `759625`, `760065`
   (`captures/condor_q_all.txt`, `captures/condor_q_run.txt`).
@@ -42,7 +50,12 @@ input was read inside a job. This is a capacity finding, not a STOP of evidence 
 | `p4_probe_spec.json` | `45ac32a50b4d1de826c94800907049c45426505ad06c193dd3b632cba9039d9e` |
 | `D3_PREDECL_R4_20261127.md` | `68f56dc2cb4768ca1729486510c695870aa8e19a08e0194ef99f3b835c3d5001` |
 
+The transfer manifest `PREFLIGHT_INPUTS.sha256` is committed beside the script; the three hashes above are the
+same values it lists, and the reviewer also checked them against `origin/main`.
+
 All inputs are approved non-sealed files. The container digest is pinned; it was not pulled because no job started.
+`preflight_a100_fix.submit` is the `condor_submit` output for `760152`; the earlier `preflight_a100.submit` names
+the superseded `760149`.
 
 ## What remains unverified
 

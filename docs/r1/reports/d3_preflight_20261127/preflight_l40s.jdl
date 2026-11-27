@@ -1,7 +1,7 @@
 universe = container
 container_image = docker://ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949
 executable = preflight.sh
-arguments = $(ClusterId).$(ProcId)
+arguments = $(ClusterId).$(ProcId) NVIDIA_L40S 8.9
 requirements = (TARGET.GPUs_DeviceName =?= "NVIDIA L40S")
 +RemoteJob = True
 request_GPUs = 1
