@@ -377,7 +377,7 @@ def audit_chunk(chunk_dir: Path | str, out_dir: Path | str, *, sigma_node: float
 # the production runner (deepthought; no label)
 # ---------------------------------------------------------------------------
 
-def harness_runner(tmp: Path | str) -> Runner:
+def harness_runner(tmp: Path | str, *, prepare_cache=None, expected_worker: dict | None = None) -> Runner:
     """The default runner: ``r1.c3.audit.run_config`` one configuration at a time.
 
     ``run_config`` copies the harness node, overwrites the editable files with the configuration's texts and runs the
@@ -386,8 +386,13 @@ def harness_runner(tmp: Path | str) -> Runner:
     from r1.c3.audit import run_config
 
     def runner(node: str, files: Mapping[str, str], seeds: list[int]) -> list[Run]:
+        runner_kwargs = {}
+        if prepare_cache is not None:
+            runner_kwargs["prepare_cache"] = prepare_cache
+        if expected_worker is not None:
+            runner_kwargs["journal_identity"] = {"expected_worker": expected_worker}
         rows = run_config(node, dict(files), [int(s) for s in seeds], str(tmp),
-                          stop_on_failure=True, stop_on_invalid=True)
+                          stop_on_failure=True, stop_on_invalid=True, **runner_kwargs)
         out = []
         for row in rows:
             metric = row.get("metric")
