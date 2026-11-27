@@ -1,4 +1,11 @@
-"""Capture preregistration §4 step 6 and export the A§4.2 point utilities for D.3 §7.5(e)."""
+"""Capture preregistration §4 step 6 and export the A§4.2 point utilities for D.3 §7.5(e).
+
+After the test release, the step-5 operator passes receipted builder sources, the hash-checked
+frozen A3/A5 predictions, and the PRE-DELTA noise pins to ``stage_inputs``. Publish its receipt
+and the three named inputs. From that published state use ``capture RUN`` once for each of
+``primary``, ``dup_secondary`` and ``wdbc_sensitivity``. Archive each capture and its manifest
+on main before calling ``utility``. A recorded statistical STOP is a valid step-6 capture.
+"""
 
 from __future__ import annotations
 
@@ -7,9 +14,11 @@ from contextlib import redirect_stdout
 import json
 import math
 from pathlib import Path
+import re
+import subprocess
 import sys
 
-from r1.c3 import analysis_guard, arms_freeze, gate, release
+from r1.c3 import analysis_guard, arms_freeze, gate, gate_input_builder, p3_split, release
 from r1.c3.d3_analysis import NODES, OFFLINE_ONLINE_ARMS
 from r1.c3.d3_constants import load_noise
 from r1.c3.release import _sha
@@ -17,6 +26,7 @@ from r1.harness import REPO
 
 
 CAPTURE_ROOT = Path("results/r1/evidence/d8_gate_step6")
+STAGING_ROOT = Path("results/r1/evidence/d8_gate_step5")
 UTILITY_PATH = Path("results/r1/evidence/d3_offline_online_utility/gate_utility.json")
 UTILITY_KEY = "per_node_utility"
 RUNS = ("primary", "dup_secondary", "wdbc_sensitivity")
@@ -24,6 +34,9 @@ INPUT_NAME = "input.json"
 REPORT_NAME = "gate_report.json"
 STOP_NAME = "statistical_stop.txt"
 MANIFEST_NAME = "SHA256SUMS"
+BUILD_RECEIPT = "build.json"
+BUILD_SCHEMA = "r1_d8_step5_gate_inputs/v1"
+BUILD_PINS = ("arms_frozen_sha256", "prereg_sha256", "gate_sha256", "builder_sha256", "split_sha256")
 REPORT_FIELDS = {
     "schema", "gate_version", "verdict", "first_ranked_arm", "arms", "nodes", "excluded_from_iqm",
     "ineligible_nodes", "below_test_floor", "off_design_size", "off_split", "t1_suites_without_labelled_node",
@@ -38,8 +51,12 @@ def _json(data: bytes) -> dict:
             gate._no_constant(raw)
         return value
 
-    return json.loads(data, object_pairs_hook=gate._no_duplicate_keys,
+    return json.loads(data.decode("utf-8"), object_pairs_hook=gate._no_duplicate_keys,
                       parse_constant=gate._no_constant, parse_float=finite_float)
+
+
+def _encode(obj: dict) -> bytes:
+    return (json.dumps(obj, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8")
 
 
 def _manifest(files: dict[str, bytes]) -> bytes:
@@ -58,8 +75,7 @@ def _release_record() -> tuple[dict, dict]:
     """Check both published test release rows and their common committed arms-frozen record."""
     rows = [release.release_row(tier, "test") for tier in gate.TIERS]
     t0, t1 = rows
-    for key in ("arms_frozen_path", "arms_frozen_sha256", "split_sha256", "prereg_sha256", "gate_sha256",
-                "builder_sha256"):
+    for key in ("arms_frozen_path", *BUILD_PINS):
         if t0[key] != t1[key]:
             raise ValueError(f"test release rows differ on {key}")
     published_plan = release._git("show", "refs/remotes/origin/main:docs/r1/PLAN.md").decode("utf-8")
@@ -77,6 +93,9 @@ def _release_record() -> tuple[dict, dict]:
         raise ValueError("arms-frozen record schema is invalid")
     arms_freeze._pin(record["noise_source"], "noise_source", arms_freeze.NOISE_PATH, arms_freeze.NOISE_SHA256)
     arms_freeze._pin(record["gate"], "gate", release.GATE_PATH, t0["gate_sha256"])
+    arms_freeze._pin(record["gate_input_builder"], "gate_input_builder", release.BUILDER_PATH, t0["builder_sha256"])
+    if record["split_file"] != p3_split.pin_of_sha(t0["split_sha256"]):
+        raise ValueError("arms-frozen split differs from the test release")
     analysis_guard.require_d8_confirmation()
     gate._require_pins()
     return record, t0
@@ -95,7 +114,85 @@ def _validated_input(data: bytes, run: str, record: dict) -> dict:
     return nodes
 
 
-def _validate_report(data: bytes, nodes: dict, gate_sha256: str) -> dict:
+def stage_inputs(sources, predictions: dict, noise: dict) -> None:
+    """Run the pinned step-5 builder on the operator's receipted and frozen inputs, binding its named exports.
+
+    The caller assembles the sources with release.builder_source, verifies the frozen prediction and PRE-DELTA
+    pins, and commits this staging directory before invoking step 6.
+    """
+    directory = _path(STAGING_ROOT)
+    if directory.exists():
+        raise FileExistsError(f"{STAGING_ROOT} already exists; retain the existing builder export")
+    record, row = _release_record()
+    layout = record["t1"]
+    g5 = next((source for source in sources if source.name == "g5"), None)
+    t1 = None
+    if layout["suites"]:
+        if g5 is None or g5.split_sha256 != row["split_sha256"]:
+            raise ValueError("G.5 builder source does not bind the frozen split")
+        t1 = gate_input_builder.Tier1(layout["suites"], tuple(layout["modes"]), layout["d3_k6"],
+                                     tail_laws=g5.tail_laws)
+    split = _path(Path(record["split_file"]["path"]))
+    runs = gate_input_builder.runs(sources, predictions, noise, primary_t0=record["t0_nodes"],
+                                 t1=t1, split_path=split)
+    inputs = {run: _encode(runs[run][0]) for run in RUNS}
+    for run, data in inputs.items():
+        _validated_input(data, run, record)
+    receipt = {"schema": BUILD_SCHEMA, "pins": {key: row[key] for key in BUILD_PINS},
+               "inputs": {run: _sha(data) for run, data in inputs.items()},
+               "reports": {run: runs[run][1] for run in RUNS}}
+    directory.mkdir(parents=True, exist_ok=False)
+    for run, data in inputs.items():
+        with (directory / f"{run}.json").open("xb") as handle:
+            handle.write(data)
+    with (directory / BUILD_RECEIPT).open("xb") as handle:
+        handle.write(_encode(receipt))
+
+
+def _read_published(relative: Path) -> bytes:
+    _path(relative)
+    path = relative.as_posix()
+    data = release._committed(path)
+    if data != release._git("show", f"refs/remotes/origin/main:{path}"):
+        raise ValueError(f"{relative}: committed bytes differ from published main")
+    return data
+
+
+def _build_receipt(row: dict) -> tuple[dict, str]:
+    data = _read_published(STAGING_ROOT / BUILD_RECEIPT)
+    receipt = _json(data)
+    if (not isinstance(receipt, dict) or set(receipt) != {"schema", "pins", "inputs", "reports"}
+            or receipt["schema"] != BUILD_SCHEMA or receipt["pins"] != {key: row[key] for key in BUILD_PINS}
+            or not isinstance(receipt["inputs"], dict) or set(receipt["inputs"]) != set(RUNS)
+            or not isinstance(receipt["reports"], dict) or set(receipt["reports"]) != set(RUNS)
+            or not all(isinstance(report, dict) for report in receipt["reports"].values())
+            or not all(isinstance(digest, str) and re.fullmatch(r"[0-9a-f]{64}", digest)
+                       for digest in receipt["inputs"].values())):
+        raise ValueError("committed step-5 receipt does not bind the three builder exports and frozen release")
+    return receipt, _sha(data)
+
+
+def _require_fields(value, fields: dict, label: str) -> None:
+    if (not isinstance(value, dict) or set(value) != set(fields)
+            or any(type(value[key]) not in kinds for key, kinds in fields.items())):
+        raise ValueError(f"{label} differs from the v3.1 report schema")
+
+
+def _protocol(nodes: dict, gate_sha256: str) -> dict:
+    return {
+        "gate_version": gate.GATE_VERSION, "interval": gate.INTERVAL, "resamples": gate.N_RESAMPLES,
+        "seed": gate.SEED, "rng": gate.RNG, "numpy_version": gate.NUMPY_VERSION, "numpy_pin": gate.NUMPY_VERSION,
+        "environment": gate.ENVIRONMENT, "elig_z_min": gate.ELIG_Z_MIN, "test_floor": gate.TEST_FLOOR,
+        "split": gate.SPLIT, "design_instances": gate.DESIGN_INSTANCES,
+        "design_split": {tier: list(counts) for tier, counts in gate.DESIGN_SPLIT.items()},
+        "quantile_method": gate.QUANTILE_METHOD, "tstar_inf": gate.TSTAR_INF, "t0_nodes": list(gate.T0_NODES),
+        "declared_t0_nodes": [name for name, node in nodes.items() if node["tier"] == "T0"],
+        "suites": list(gate.SUITES), "family_alpha": gate.FAMILY_ALPHA, "levels": list(gate.LEVELS),
+        "practical_size": gate.PRACTICAL_SIZE, "arms": list(gate.ARMS), "gate_sha256": gate_sha256,
+    }
+
+
+def _validate_report(data: bytes, nodes: dict, gate_sha256: str) -> None:
     report = _json(data)
     if not isinstance(report, dict) or set(report) != REPORT_FIELDS:
         raise ValueError("gate stdout does not have the v3.1 report fields")
@@ -104,15 +201,17 @@ def _validate_report(data: bytes, nodes: dict, gate_sha256: str) -> dict:
             or not isinstance(report["arms"], dict) or set(report["arms"]) != set(gate.ARMS)
             or not all(isinstance(arm, dict) for arm in report["arms"].values())
             or not isinstance(report["nodes"], dict) or set(report["nodes"]) != set(nodes)
-            or not isinstance(report["protocol"], dict)
-            or report["protocol"].get("gate_sha256") != gate_sha256):
+            or _encode(report["protocol"]) != _encode(_protocol(nodes, gate_sha256))):
         raise ValueError("gate stdout differs from its schema, input population or gate pin")
-    for name, node in nodes.items():
-        actual = report["nodes"][name]
-        if not isinstance(actual, dict) or any(actual.get(key) != node[key]
-                                               for key in ("tier", "suite", "n_train", "n_dev", "n_test")):
-            raise ValueError(f"{name}: gate report differs from the input layout")
-    return report
+    fields = dict.fromkeys(("tested", "passed", "meets_practical_size"), (bool,))
+    fields.update(dict.fromkeys(("rank", "resamples_with_infinite_tstar"), (int,)))
+    fields.update(dict.fromkeys(("level", "lower_iqm_gap_closed", "lower_probability_of_improvement", "ranking_p_iqm",
+                                 "ranking_p_poi", "ranking_p_composite", "iqm_gap_closed", "se_iqm_gap_closed",
+                                 "probability_of_improvement"), (int, float)))
+    fields["tstar_quantile"] = (int, float, type(None))
+    for arm, result in report["arms"].items():
+        _require_fields(result, fields, arm)
+    _bind_point_report(report, nodes)
 
 
 def _statistical_stop(nodes: dict) -> bytes | None:
@@ -123,23 +222,21 @@ def _statistical_stop(nodes: dict) -> bytes | None:
     return None
 
 
-def capture(run: str, input_path: Path, input_sha256: str) -> None:
+def capture(run: str) -> None:
     """Run the unchanged gate CLI once in a fresh, fixed capture directory."""
     if run not in RUNS:
         raise ValueError("unknown step-6 gate run")
     relative = CAPTURE_ROOT / run
     directory = _path(relative)
-    analysis_guard.refuse_sealed(input_path)
     if directory.exists():
         raise FileExistsError(f"{relative} already exists; retain the existing gate attempt")
-    if input_path.is_symlink() or not input_path.is_file():
-        raise ValueError("gate input must be a regular staged file")
     record, release_row = _release_record()
     if release._git("ls-tree", "--name-only", "refs/remotes/origin/main", "--", relative.as_posix()):
         raise FileExistsError(f"{relative} already exists on published main; retain the existing gate attempt")
-    data = input_path.read_bytes()
-    if _sha(data) != input_sha256:
-        raise ValueError("gate input sha256 differs from the supplied builder export hash")
+    receipt, _ = _build_receipt(release_row)
+    data = _read_published(STAGING_ROOT / f"{run}.json")
+    if _sha(data) != receipt["inputs"][run]:
+        raise ValueError(f"{run}: staged input differs from the named builder export hash")
     nodes = _validated_input(data, run, record)
     directory.mkdir(parents=True, exist_ok=False)
     staged_input = directory / INPUT_NAME
@@ -189,9 +286,7 @@ def _committed_capture(run: str) -> dict[str, bytes]:
     if _path(relative / STOP_NAME).exists():
         names.append(STOP_NAME)
     for name in names:
-        source = relative / name
-        _path(source)
-        files[name] = release._committed(source.as_posix())
+        files[name] = _read_published(relative / name)
     raw_manifest = files.pop(MANIFEST_NAME)
     if raw_manifest != _manifest(files):
         raise ValueError(f"{run}: committed step-6 files differ from SHA256SUMS")
@@ -200,17 +295,39 @@ def _committed_capture(run: str) -> dict[str, bytes]:
 
 def _bind_point_report(report: dict, nodes: dict) -> None:
     eligible, point_rows, point_summary = gate._point(nodes)
+    counts = {name: [node[f"n_{part}"] for part in gate.SPLITS] for name, node in nodes.items()}
+    t1_by_suite = {suite: sum(node["tier"] == "T1" and node["suite"] == suite for node in nodes.values())
+                   for suite in gate.SUITES}
+    metadata = {
+        "excluded_from_iqm": [name for name in nodes if name not in eligible],
+        "ineligible_nodes": {name: node["ineligible_reasons"] for name, node in nodes.items() if name not in eligible},
+        "below_test_floor": [name for name, node in nodes.items() if "test_floor" in node["ineligible_reasons"]],
+        "off_design_size": {name: {"n_total": node["n_total"], "design": gate.DESIGN_INSTANCES[node["tier"]]}
+                            for name, node in nodes.items() if node["n_total"] != gate.DESIGN_INSTANCES[node["tier"]]},
+        "off_split": {name: {"counts": counts[name], "p3": list(gate.DESIGN_SPLIT[node["tier"]])}
+                      for name, node in nodes.items() if node["n_total"] == gate.DESIGN_INSTANCES[node["tier"]]
+                      and tuple(counts[name]) != gate.DESIGN_SPLIT[node["tier"]]},
+        "t1_suites_without_labelled_node": [suite for suite, count in t1_by_suite.items() if count == 0],
+        "node_counts": {"total": len(nodes), "t1_by_suite": t1_by_suite,
+                        "by_tier": {tier: sum(node["tier"] == tier for node in nodes.values()) for tier in gate.TIERS}},
+        "tier_descriptive": gate._tier_descriptive(nodes, point_rows, eligible),
+    }
+    for key, value in metadata.items():
+        if _encode(report[key]) != _encode(value):
+            raise ValueError(f"{key}: gate report metadata differs from the input")
     for name, point_row in point_rows.items():
+        if not isinstance(report["nodes"][name], dict):
+            raise ValueError(f"{name}: gate report node differs from the v3.1 schema")
         actual = dict(report["nodes"][name])
         if name in eligible:
             count = actual.pop("resamples_nonpositive_denominator", None)
             if type(count) is not int or not 0 <= count <= gate.N_RESAMPLES:
                 raise ValueError(f"{name}: invalid gate resample count")
-        if actual != point_row:
-            raise ValueError(f"{name}: committed gate point row differs from the primary input")
+        if _encode(actual) != _encode(point_row):
+            raise ValueError(f"{name}: gate point row differs from the input")
     for arm, summary in point_summary.items():
         if any(report["arms"][arm].get(key) != value for key, value in summary.items()):
-            raise ValueError(f"{arm}: committed gate summary differs from the primary input")
+            raise ValueError(f"{arm}: gate summary differs from the input")
 
 
 def write_utility() -> None:
@@ -219,15 +336,18 @@ def write_utility() -> None:
     if path.parent.exists():
         raise FileExistsError(f"{UTILITY_PATH.parent} already exists; retain the existing utility artifact")
     record, row = _release_record()
+    receipt, receipt_sha = _build_receipt(row)
     captures = {run: _committed_capture(run) for run in RUNS}
+    for run, files in captures.items():
+        if _sha(files[INPUT_NAME]) != receipt["inputs"][run]:
+            raise ValueError(f"{run}: committed step-6 input differs from the named builder export hash")
     files = captures["primary"]
     nodes = _validated_input(files[INPUT_NAME], "primary", record)
     if STOP_NAME in files:
         if files[REPORT_NAME] or files[STOP_NAME] != _statistical_stop(nodes):
             raise ValueError("committed primary gate STOP differs from the primary input")
     else:
-        report = _validate_report(files[REPORT_NAME], nodes, row["gate_sha256"])
-        _bind_point_report(report, nodes)
+        _validate_report(files[REPORT_NAME], nodes, row["gate_sha256"])
     utility = _point_utilities(nodes, load_noise(REPO))
     artifact = {
         "schema": "r1_d3_gate_utility/v1",
@@ -235,11 +355,12 @@ def write_utility() -> None:
         "arms_frozen_sha256": row["arms_frozen_sha256"],
         "gate_sha256": row["gate_sha256"],
         "noise_sha256": arms_freeze.NOISE_SHA256,
+        "step5_receipt_sha256": receipt_sha,
         "step6_sha256": {name: _sha(data) for name, data in files.items()},
         "gate_statistical_stop": STOP_NAME in files,
         UTILITY_KEY: utility,
     }
-    data = (json.dumps(artifact, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8")
+    data = _encode(artifact)
     path.parent.mkdir(parents=True, exist_ok=False)
     with path.open("xb") as handle:
         handle.write(data)
@@ -252,16 +373,14 @@ def main(argv=None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     capture_cmd = commands.add_parser("capture")
     capture_cmd.add_argument("run", choices=RUNS)
-    capture_cmd.add_argument("input", type=Path)
-    capture_cmd.add_argument("input_sha256")
     commands.add_parser("utility")
     args = parser.parse_args(argv)
     try:
         if args.command == "capture":
-            capture(args.run, args.input, args.input_sha256)
+            capture(args.run)
         else:
             write_utility()
-    except (KeyError, OSError, RuntimeError, ValueError, TypeError) as exc:
+    except (KeyError, OSError, RuntimeError, TypeError, ValueError, subprocess.CalledProcessError) as exc:
         print(f"gate output stopped: {exc}", file=sys.stderr)
         return 1
     return 0
