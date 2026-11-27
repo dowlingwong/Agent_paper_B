@@ -11,6 +11,9 @@ training, no label read. Task `compute/20261127-18` (with `compute/20261127-13`)
   `ec42f76d0e01bb15ab450e74a820e7587894090df34399c86dd25332345a1ca9`
 - **Host check:** `.../host_check.txt` sha256 `516fea06…`; **check-config:** `.../check_config.json` sha256
   `34748ceb…`
+- **Review:** `compute-p4-ada-hostconfig-review-20261127` @ `f173ede7` — **`Verdict: ACCEPTED`** (two non-blocking
+  prose minors: the old `experiment_zhixu` name in the config comment and the legacy `venv.path`/3.12.15 line; the
+  runtime uses `direct.venv` 3.12.10).
 
 ## Host facts (Ada, `ssh ada_server`, 27 Nov 2026 05:22 UTC)
 
@@ -72,6 +75,11 @@ in a copy (`_ada_template()`), and the shipped-config placeholder assertion chec
 - `r1/tests/test_trackp_p4_runner.py`: **159 passed**.
 - `r1/tests/test_trackp_sft.py` + `r1/tests/test_trackp_cli.py`: **35 passed, 9 skipped**.
 - No test assertion was relaxed; the fill tests still require the 26 values and every refusal.
+- Full `r1/tests` with `--continue-on-collection-errors`, harness `9bb41680`, Python 3.12.8, pytest 9.2.0:
+  base `98c571d2` **108 failed / 4914 passed / 161 skipped / 3 errors**; tip `77e364e7` **108 / 4918 / 161 / 3**;
+  the 111 sorted FAILED/ERROR ids are identical (sha256
+  `971166036fa365bcb10f01f051c756a7b90c1e94e0b0c1637bedcbd28b7c1f19`); **+4 passed (the venv merge's tests), zero
+  new failures**. The branch base `66cc33f2` adds the reviewed Ada venv launcher on top of that baseline.
 
 ## What this does not do
 
