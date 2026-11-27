@@ -2,10 +2,12 @@
 
 **Result: PASS.** `kev-4b` and `qwen3.5-4b-base` both ran the 50-step synthetic `sft-dev` probe on an empty
 RTX 6000 Ada card with micro-batch 8 and gradient checkpointing on (R1-P4-4B-CHECKPOINT), rc 0, no STOP. The
-launch-verified peaks are **14,135 MiB** and **16,959 MiB** (the earlier OOM runs reached 48,385 / 48,399 MiB),
+sampler-measured peaks are **14,135 MiB** and **16,959 MiB** (the earlier OOM runs reached 48,385 / 48,399 MiB),
 and the measured wall times are 10.0458 and 9.9981 s/step. The combined probe record now gives the Ada class
 an estimate for all four bases; the probe charge is **3.10 GPU-h** against phase 1's 40 (a reporting
-threshold). ENGINEERING_ONLY: no SFT evidence run, no label, evaluation, test or sealed read.
+threshold). ENGINEERING_ONLY: no SFT evidence run and no label, evaluation or test read; the only sealed
+file read was the prior `kev-0.8b/attempt-4` probe record, the required first-arm gate (not sealed evidence
+data).
 
 - **Task:** `compute/20261127-24`; PLAN **R1-P4-4B-CHECKPOINT** (author, 27 Nov: "签 P4-4B A"),
   R1-P4-TESTPLAN-DECISIONS (P4-PROBE A, P4-PROBECAP A), R1-P4-PROBE-CHARGE, R1-HOST-FREE, R1-CARD-SHARE,
@@ -75,9 +77,9 @@ p4_probe_charge_file: trackp-p4-probe-20261127-b _wallclock.json fa49096f…
 1. `ada_sft_probe:` record `docs/r1/reports/trackp_p4_probe_ada_20261127b/P4_ADA_4B_REPROBE_20261127.md`
    with the four `p4_estimate_hours` lines above; the Ada class now has an estimate for every base.
 2. `p4_probe_gpu_hours: 3.10` (the note's `gpu_hours_cap:` line), and the two charge-file hashes.
-3. The 4B fit decision is resolved on Ada: activation checkpointing at micro-batch 8 fits both 4B arms on an
-   empty 48 GB card with wide margin (headroom 0.7124 and 0.6549 of the card), so no H200 route is needed for
-   these two arms.
+3. The Ada class fits both 4B arms with activation checkpointing at micro-batch 8 on an empty 48 GB card
+   (headroom 0.7124 and 0.6549 of the card). This is a measured fit; the class choice for the note remains
+   the coordinator's/author's.
 
 ## Decided alone
 

@@ -1,5 +1,20 @@
 {
- "charge_files": {},
+ "charge_files": {
+  "trackp-p4-probe-20261125-a": [
+   {
+    "file": "_wallclock.json",
+    "path": "/ceph/srv/dwong/paperb/trackp_p4/trackp-p4-probe-20261125-a/_wallclock.json",
+    "sha256": "9a1949a156a23a735a6aae45888c99abc1935b17c069526d7dd6d227b4bf595c"
+   }
+  ],
+  "trackp-p4-probe-20261127-b": [
+   {
+    "file": "_wallclock.json",
+    "path": "/ceph/srv/dwong/paperb/trackp_p4/trackp-p4-probe-20261127-b/_wallclock.json",
+    "sha256": "fa49096f90319db735d775e0bdb1be3baf6cbd882fa31583c3ae1049c18f0877"
+   }
+  ]
+ },
  "pending": [],
  "runs": {
   "trackp-p4-probe-20261125-a": {
@@ -7,7 +22,7 @@
     {
      "arm": "kev-0.8b",
      "attempt": "attempt-1",
-     "charge_basis": "receipt (direct launcher record)",
+     "charge_basis": "_wallclock.json",
      "charged_gpu_hours": 0.0092,
      "cluster_check": "direct launch (no HTCondor job)",
      "cluster_id": null,
@@ -19,7 +34,7 @@
     {
      "arm": "kev-0.8b",
      "attempt": "attempt-2",
-     "charge_basis": "receipt (direct launcher record)",
+     "charge_basis": "_wallclock.json",
      "charged_gpu_hours": 0.0688,
      "cluster_check": "direct launch (no HTCondor job)",
      "cluster_id": null,
@@ -31,7 +46,7 @@
     {
      "arm": "kev-0.8b",
      "attempt": "attempt-3",
-     "charge_basis": "receipt (direct launcher record)",
+     "charge_basis": "_wallclock.json",
      "charged_gpu_hours": 0.0596,
      "cluster_check": "direct launch (no HTCondor job)",
      "cluster_id": null,
@@ -43,7 +58,7 @@
     {
      "arm": "kev-0.8b",
      "attempt": "attempt-4",
-     "charge_basis": "receipt (direct launcher record)",
+     "charge_basis": "_wallclock.json",
      "charged_gpu_hours": 0.1231,
      "cluster_check": "direct launch (no HTCondor job)",
      "cluster_id": null,
@@ -55,7 +70,7 @@
     {
      "arm": "kev-4b",
      "attempt": "attempt-1",
-     "charge_basis": "receipt (direct launcher record)",
+     "charge_basis": "_wallclock.json",
      "charged_gpu_hours": 0.632,
      "cluster_check": "direct launch (no HTCondor job)",
      "cluster_id": null,
@@ -67,7 +82,7 @@
     {
      "arm": "qwen3.5-0.8b-base",
      "attempt": "attempt-1",
-     "charge_basis": "receipt (direct launcher record)",
+     "charge_basis": "_wallclock.json",
      "charged_gpu_hours": 0.1588,
      "cluster_check": "direct launch (no HTCondor job)",
      "cluster_id": null,
@@ -79,7 +94,7 @@
     {
      "arm": "qwen3.5-0.8b-base",
      "attempt": "attempt-2",
-     "charge_basis": "receipt (direct launcher record)",
+     "charge_basis": "_wallclock.json",
      "charged_gpu_hours": 0.4511,
      "cluster_check": "direct launch (no HTCondor job)",
      "cluster_id": null,
@@ -91,7 +106,7 @@
     {
      "arm": "qwen3.5-4b-base",
      "attempt": "attempt-1",
-     "charge_basis": "receipt (direct launcher record)",
+     "charge_basis": "_wallclock.json",
      "charged_gpu_hours": 0.6577,
      "cluster_check": "direct launch (no HTCondor job)",
      "cluster_id": null,
@@ -101,7 +116,13 @@
      "stop": "STOP: CUDA OOM in sft-dev at micro-batch 8 (P4-MB; the author decides); see 001_sft-dev.log"
     }
    ],
-   "charge_files": [],
+   "charge_files": [
+    {
+     "file": "_wallclock.json",
+     "path": "/ceph/srv/dwong/paperb/trackp_p4/trackp-p4-probe-20261125-a/_wallclock.json",
+     "sha256": "9a1949a156a23a735a6aae45888c99abc1935b17c069526d7dd6d227b4bf595c"
+    }
+   ],
    "pending": [],
    "total": 2.1603
   },
@@ -110,7 +131,7 @@
     {
      "arm": "kev-4b",
      "attempt": "attempt-1",
-     "charge_basis": "receipt (direct launcher record)",
+     "charge_basis": "_wallclock.json",
      "charged_gpu_hours": 0.4474,
      "cluster_check": "direct launch (no HTCondor job)",
      "cluster_id": null,
@@ -122,7 +143,7 @@
     {
      "arm": "qwen3.5-4b-base",
      "attempt": "attempt-1",
-     "charge_basis": "receipt (direct launcher record)",
+     "charge_basis": "_wallclock.json",
      "charged_gpu_hours": 0.4833,
      "cluster_check": "direct launch (no HTCondor job)",
      "cluster_id": null,
@@ -132,7 +153,13 @@
      "stop": null
     }
    ],
-   "charge_files": [],
+   "charge_files": [
+    {
+     "file": "_wallclock.json",
+     "path": "/ceph/srv/dwong/paperb/trackp_p4/trackp-p4-probe-20261127-b/_wallclock.json",
+     "sha256": "fa49096f90319db735d775e0bdb1be3baf6cbd882fa31583c3ae1049c18f0877"
+    }
+   ],
    "pending": [],
    "total": 0.9307
   }
@@ -170,8 +197,7 @@
     "versions.submit": "3c1cc1afe95b44efd62c983f99a6035a73723acc3284df1b8eb26803fd952afb"
    }
   },
-  "source": "input",
-  "wallclock_source": "docs/r1/reports/trackp_p4_cluster_20261125/T1_versions/condor_history.txt"
+  "source": "trackp-p4-probe-20261127-b/_wallclock.json"
  },
  "t1_gpu_hours": 0.0,
  "total": 3.091,
