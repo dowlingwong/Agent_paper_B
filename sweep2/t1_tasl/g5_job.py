@@ -81,6 +81,21 @@ LEDGER_SCHEMA = "trackg_v2_diff_campaign_ledger/v1"
 ENGINE_FILE = "src/autoresearch/trackg/audit_g5.py"      # one of P5's two declared trackg additions
 ENGINE_MODULE = "autoresearch.trackg.audit_g5"
 ENGINES = {"campaign": (ENGINE_MODULE, "campaign", ENGINE_FILE), "audit": (ENGINE_MODULE, "audit", ENGINE_FILE)}
+# The G.1b census override is process-local. G.5 imports the allowlist once at module import.
+CPU_ONLY_ENGINE = """\
+import json, sys
+from pathlib import Path
+from autoresearch.trackg import noise_floor
+
+node, command, flag, infile, *args = sys.argv[1:]
+if (command, flag) not in {('campaign', '--campaign'), ('audit', '--chunk')} or '--gpu-uuid' in args:
+    sys.exit('STOP: invalid CPU-only G.5 engine invocation')
+if json.loads(Path(infile).read_bytes())['node'] != node:
+    sys.exit('STOP: G.5 input names another node than the CPU-only override')
+noise_floor.CPU_ONLY_NODES = frozenset(noise_floor.CPU_ONLY_NODES) | {node}
+from autoresearch.trackg import audit_g5
+sys.exit(audit_g5.main([command, flag, infile, *args]))
+"""
 ENGINE_CONTRACT = "g5_tasl_engine_contract/1"              # the marker the engine module must carry, with both schemas
 # R1-EXAM-B1-TRUNCATION-INVALID lives in the engine module (harness report G5_ENGINES_20261123 §2 item 7, §7 item 5;
 # review decision 2): manager_v2_diff.py and G.4's pilot stay unchanged.
@@ -657,12 +672,17 @@ def job_dir(spec: dict, node: str, job: str, chunk: int | None = None) -> Path:
     return d / f"chunk-{chunk}" if chunk is not None else d
 
 
-def complete_attempt(d: Path) -> tuple[dict, dict] | None:
+def complete_attempt(d: Path, spec: dict | None = None) -> tuple[dict, dict] | None:
     """The completed attempt of a job directory (stop None), with its record and diagnostics; None if none."""
     for _, p in G.attempts(d):
         rec_path, diag_path = p / "job_record.json", p / "diagnostics.json"
         if rec_path.is_file() and diag_path.is_file():
             rec = json.loads(rec_path.read_text())
+            if spec is not None and spec.get("_addendum"):
+                SE.addendum_binding(spec, rec)
+                parts = SE._attempt_parts(spec, p)
+                if any(rec.get(key) != parts[key] for key in ("node", "job", "chunk", "attempt")):
+                    raise Stop("STOP: the completed addendum attempt record names another job or chunk")
             if rec.get("stop") is None:
                 return rec, json.loads(diag_path.read_text())
     return None
@@ -708,14 +728,14 @@ def node_diagnostics(spec: dict, node: str) -> list[dict]:
     for job in S.JOBS:
         kind, _ = job_parts(job)
         if kind == "campaigns":
-            got = complete_attempt(job_dir(spec, node, job))
+            got = complete_attempt(job_dir(spec, node, job), spec)
             if got:
                 out.append(got[1])
         else:
             base = job_dir(spec, node, job)
             if base.is_dir():
                 for c in sorted(base.glob("chunk-*")):
-                    got = complete_attempt(c)
+                    got = complete_attempt(c, spec)
                     if got:
                         out.append(got[1])
     return out
@@ -725,8 +745,8 @@ def audits_done(spec: dict, node: str, wave: int) -> bool:
     index = plan_path(spec, node, wave)
     if not index.is_file():
         return False
-    n = json.loads(index.read_text())["chunks"]
-    return all(complete_attempt(job_dir(spec, node, f"audits-wave{wave}", c)) for c in range(n))
+    n = read_plan_index(spec, node, wave)["chunks"]
+    return all(complete_attempt(job_dir(spec, node, f"audits-wave{wave}", c), spec) for c in range(n))
 
 
 def wave_checks_path(spec: dict, node: str, wave: int) -> Path:
@@ -758,7 +778,7 @@ def check_order(spec: dict, node: str, job: str) -> None:
         raise Stop(f"STOP 9: consumed GPU-hours {consumed} above the cap {spec['key_values']['cap_gpu_hours']} "
                    f"(counted per G5-TASL-GPUH)")
     if kind == "campaigns":
-        if complete_attempt(job_dir(spec, node, job)):
+        if complete_attempt(job_dir(spec, node, job), spec):
             raise Stop(f"STOP: {node} {job} is complete")
         if wave == 2:
             if not audits_done(spec, node, 1):
@@ -767,7 +787,7 @@ def check_order(spec: dict, node: str, job: str) -> None:
             if checks["stops"]:
                 raise Stop(f"STOP: {node} wave-1 checks STOPped the node before wave 2: {checks['stops']}")
     else:
-        if not complete_attempt(job_dir(spec, node, f"campaigns-wave{wave}")):
+        if not complete_attempt(job_dir(spec, node, f"campaigns-wave{wave}"), spec):
             raise Stop(f"STOP: {node} {job} needs campaigns-wave{wave} complete (§3)")
 
 
@@ -859,6 +879,7 @@ RECORD_KEYS = {"schema", "label", "run_id", "node", "family", "job", "wave", "ch
                "ptrace_scope", "cgroup", "harness", "environment", "data", "server_record", "server_props_before",
                "server_props_after", "server_stopped", "latency_probe_before", "latency_probe_after", "deadline_epoch",
                "started_utc", "finished_utc", "gpu_seconds", "engine", "engine_rc", "out_tar_sha256", "plan_sha256",
+               "cpu_leases", "cpu_preflight", "addendum_note_sha256",
                "stop", "stop_class", "node_log", "output_use", "owner", "worker_host", "claim_sha256", "crosshost_pass"}
 
 
@@ -1290,6 +1311,10 @@ def worker_shim(spec: dict, node: dict, context: dict) -> tuple[dict, dict]:
     if node["env"] not in envs or node["env"] not in w["env_python"]:
         raise Stop(f"STOP: {node['node']}'s environment {node['env']!r} is not resolved")
     shim = {"hosts": {host: w}, "harness": {"commit": fam["g5_commit"]}, "envs": envs}
+    if spec.get("_addendum"):
+        if host != S.WORKER_HOST:
+            raise Stop("STOP: the addendum's worker and audits stay on the TASL-2 census CPU set")
+        shim.update(schema=G.X_SCHEMA, cpu_preflight=spec["_addendum"]["cpu_preflight"])
     node["host"] = host
     if host == S.WORKER_HOST and node["node"] in spec["tasl2_cpus"]["replacements"]:     # R1-TASL2-CPU
         node["cpus"] = S.tasl2_node_cpus(spec, node["node"])          # its TASL-2 set replaces the G.1b set
@@ -1309,11 +1334,15 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
     spec_path = Path(spec_path)
     spec = S.load_spec(spec_path)
     node = S.node_entry(spec, node_name)
+    addendum = spec.get("_addendum")
     kind, wave = job_parts(job)
     host = context.get("host", S.WORKER_HOST)
     server_record = server_record or context.get("server_record")
     claim = claim_sha = None
     try:                         # refusals before the lease are recorded too (m7)
+        if addendum and (context.get("K"), context.get("K_row"), (context.get("launch") or {}).get("paper_commit")) != \
+                (addendum["_K"], addendum["_K_row"], spec["paper"]["commit"]):
+            raise Stop("STOP: the expansion job must use the checked addendum launch and the base note's K")
         if host == S.AUDIT_HOST:                                  # R1-G5-AUDIT-TWO-CARDS
             if kind != "audits":
                 raise Stop(f"STOP: only audit chunks run on {S.AUDIT_HOST}")
@@ -1344,11 +1373,19 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         record["claim_sha256"] = claim_sha
         record["crosshost_pass"] = context.get("crosshost_pass")          # the PASS records the switch checked
     gpu = None if node["device"] == "cpu" else w["gpu_uuid"]
-    lease_cm = G.gpu_lease(w["lease"])          # on TASL-7 the proposer server's lease: no shared card
+    leases = contextlib.ExitStack()
     base = run_root(spec)
     try:
-        record["lease"] = lease_cm.__enter__()
+        # Keep the main G.5 worker slot even for CPU-only expansion jobs. The census CPU lease also excludes G.1b.
+        record["lease"] = leases.enter_context(G.gpu_lease(w["lease"]))
+        if addendum:
+            # S13 takes both worker CPU-set leases before taking any distinct census-set lease.
+            cpu_leases = ("~/r1_locks/cpus-0-3.lock", "~/r1_locks/cpus-4-7.lock", addendum["cpu_lease"])
+            record["cpu_leases"] = [leases.enter_context(G.gpu_lease(path, "CPU-set lease", "G.5 S13 and census set"))
+                                    for path in dict.fromkeys(cpu_leases)]
+            record["addendum_note_sha256"] = addendum["note_sha256"]
     except Exception as exc:  # noqa: BLE001
+        leases.close()
         G.write_refusal(base, node_name, f"STOP: {exc}", record)
         raise Stop(str(exc)) from exc
     try:
@@ -1356,6 +1393,8 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             record["engine"] = check_engines(Path(fam["harness_dir"]), fam["g5_commit"], git)
             record["host"] = G.host_identity(shim, host)
             record["affinity"] = G.check_affinity(shim, wnode)
+            if addendum:
+                record["cpu_preflight"] = G.cpu_busy_check(shim, wnode, "before the G.5 job")
             record["gpu"] = G.gpu_check(shim, host, smi) if gpu else {"device": "cpu"}
             if gpu and record["gpu"].get("name") != spec["gpu_model"]:          # one table, one GPU model
                 raise Stop(f"STOP: {record['gpu'].get('name')!r} is not the table's GPU model {spec['gpu_model']}")
@@ -1439,6 +1478,8 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
                 mod, cmd, _ = ENGINES["audit"]
                 argv = [python, "-m", mod, cmd, "--chunk", str(out / "chunk.json")]
                 eng_out = out / "audit"
+            if addendum and node.get("cpu_only") == "census_override":
+                argv[1:3] = ["-c", CPU_ONLY_ENGINE, node_name]
             record["deadline_epoch"] = deadline
             argv += ["--harness-root", str(harness), "--out", str(eng_out)] + (["--gpu-uuid", gpu] if gpu else [])
             record["foreign_checks"].append(G.check_no_foreign(gpu, "before the engine", smi))
@@ -1523,7 +1564,7 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         _write_json(attempt_dir / "diagnostics.json", diag)
         L._write_sums(attempt_dir, ("out.tar", "job_record.json", "diagnostics.json"))
     finally:
-        lease_cm.__exit__(None, None, None)
+        leases.close()
     if kind == "audits" and host == S.WORKER_HOST and record["stop"] is None and audits_done(spec, node_name, wave):
         record["wave_checks"] = wave_checks(spec, node_name, wave)
     if record["stop"]:
@@ -1794,12 +1835,23 @@ def _write_plan(spec: dict, node: str, wave: int, plan: dict) -> dict:
              "chunks": plan["chunks"], "groups": len(plan["groups"]), "units": len(plan["units"]),
              "plan_json_sha256": hashlib.sha256(raw).hexdigest(), "plan_tar_sha256": L._sha_file(tar_path),
              "campaign_attempt": plan["campaign_attempt"], "campaign_out_tar_sha256": plan["campaign_out_tar_sha256"]}
+    if spec.get("_addendum"):
+        index.update(run_id=spec["run_id"], **SE.addendum_binding(spec))
     _write_json(plan_path(spec, node, wave), index)
     return index
 
 
-def load_plan(spec: dict, node: str, wave: int, purpose: str) -> dict:
+def read_plan_index(spec: dict, node: str, wave: int) -> dict:
     index = json.loads(plan_path(spec, node, wave).read_text())
+    if spec.get("_addendum"):
+        SE.addendum_binding(spec, index)
+        if (index.get("node"), index.get("wave")) != (node, wave):
+            raise Stop("STOP: the addendum plan index names another node or wave")
+    return index
+
+
+def load_plan(spec: dict, node: str, wave: int, purpose: str) -> dict:
+    index = read_plan_index(spec, node, wave)
     tar_path = plan_path(spec, node, wave).parent / "plan.tar"
     if L._sha_file(tar_path) != index["plan_tar_sha256"]:
         raise Stop(f"STOP: {tar_path} differs from its index")
@@ -1813,15 +1865,22 @@ def load_plan(spec: dict, node: str, wave: int, purpose: str) -> dict:
     return plan
 
 
+def attempt_archive(spec: dict, job: Path, record: dict) -> Path:
+    archive = job / f"attempt-{record['attempt']}" / "out.tar"
+    if spec.get("_addendum") and (not archive.is_file() or L._sha_file(archive) != record.get("out_tar_sha256")):
+        raise Stop("STOP: the addendum archive differs from the bound job record")
+    return archive
+
+
 def next_chunk(spec: dict, node: dict, wave: int, k: int) -> tuple[dict, int, list[dict]]:
     """The wave's plan (made once, from the completed campaign attempt's ledgers, read by job code with an
     access-log line) and the first chunk without a completed attempt."""
     if not plan_path(spec, node["node"], wave).is_file():
         camp = job_dir(spec, node["node"], f"campaigns-wave{wave}")
-        got = complete_attempt(camp)
+        got = complete_attempt(camp, spec)
         if not got:
             raise Stop(f"STOP: no completed campaigns-wave{wave} attempt")
-        tar = camp / f"attempt-{got[0]['attempt']}" / "out.tar"
+        tar = attempt_archive(spec, camp, got[0])
         ledgers = tar_members(spec, tar, LEDGER_MEMBER, f"audit planning: campaign ledgers of {node['node']} "
                                                        f"wave {wave}")
         prior, prior_groups = {}, set()
@@ -1834,11 +1893,12 @@ def next_chunk(spec: dict, node: dict, wave: int, k: int) -> tuple[dict, int, li
         plan.update(chunks=len(chunks), chunk_runs=chunks, campaign_attempt=got[0]["attempt"],
                     campaign_out_tar_sha256=got[0].get("out_tar_sha256"))
         _write_plan(spec, node["node"], wave, plan)
-    index = json.loads(plan_path(spec, node["node"], wave).read_text())
+    index = read_plan_index(spec, node["node"], wave)
     if index["K"] != k:
         raise Stop(f"STOP: the wave's plan was made at K = {index['K']}, the note now says K = {k}")
     claimed = claimed_chunks(spec, node["node"], wave)       # R1-G5-AUDIT-TWO-CARDS: claimed chunks run on TASL-7
-    done = {i for i in range(index["chunks"]) if complete_attempt(job_dir(spec, node["node"], f"audits-wave{wave}", i))}
+    done = {i for i in range(index["chunks"])
+            if complete_attempt(job_dir(spec, node["node"], f"audits-wave{wave}", i), spec)}
     for i in range(index["chunks"]):
         if i in done or i in claimed:
             continue
@@ -1905,7 +1965,7 @@ def audit_diagnostics(spec: dict, node: dict, wave: int, record: dict, plan: dic
     elif index == plan["chunks"] - 1:                          # the wave's last chunk: E5 over all chunks
         all_rows = rows + _chunk_rows(spec, node["node"], wave, range(plan["chunks"] - 1))
         if plan.get("reused_units"):                            # reused units' rows come from wave 1
-            p1 = json.loads(plan_path(spec, node["node"], 1).read_text())
+            p1 = read_plan_index(spec, node["node"], 1)
             reused = set(plan["reused_units"])
             all_rows += [r for r in _chunk_rows(spec, node["node"], 1, range(p1["chunks"]), reused=True)
                          if r["unit"] in reused]
@@ -1917,8 +1977,10 @@ def _chunk_rows(spec: dict, node: str, wave: int, chunks, *, reused: bool = Fals
     out = []
     for i in chunks:
         cdir = job_dir(spec, node, f"audits-wave{wave}", i)
-        got = complete_attempt(cdir)
-        tar = cdir / f"attempt-{got[0]['attempt']}" / "out.tar"
+        got = complete_attempt(cdir, spec)
+        if not got:
+            raise Stop(f"STOP: {node} wave {wave} chunk {i} has no completed attempt")
+        tar = attempt_archive(spec, cdir, got[0])
         members = tar_members(spec, tar, CHUNK_MEMBERS, f"wave E5: audit rows of {node} wave {wave}"
                                                         + (" (reused units)" if reused else ""))
         chunk_i = json.loads("\n".join(members["out/chunk.json"]))
@@ -2010,6 +2072,7 @@ def close_attempt(spec: dict, spec_path: Path, node: str, job: str, attempt_dir:
                   "latest_mtime_utc": utc(latest), "gpu_seconds": round(max(0.0, closed - start), 1),
                   "gpu_seconds_to_latest_mtime": round(max(0.0, latest - start), 1), "end_basis": "closed",
                   "stop": f"STOP: closed without a job record: {reason.strip()}", "stop_class": "infrastructure"}
+        record.update(SE.addendum_binding(spec))
         _write_json(attempt_dir / "job_record.json", record)
     return record
 
@@ -2021,14 +2084,20 @@ def serve_launch(spec_path: Path, note_path: Path, *, enable: bool, on_main=G._n
     both keys and the TASL launch binding; then ``g4_tasl.serve_spec`` (lease, binary, build directory, GGUF, exam
     settings, server record) with the G.5 spec."""
     spec_path = Path(spec_path)
-    spec = S.load_spec(spec_path)
+    spec = S.load_spec(spec_path, note_path=note_path, read_main=read_main)
     S.validate_spec(spec, launch=True)
-    S.check_note(note_path, spec_path, spec=spec, on_main=on_main, read_main=read_main)
+    rows = S.PLAN_ROWS
+    if spec.get("_addendum"):
+        from g5_addendum import ROWS
+
+        rows += ROWS
+    else:
+        S.check_note(note_path, spec_path, spec=spec, on_main=on_main, read_main=read_main)
     if not enable or os.environ.get(S.ENABLE_ENV) != "1":
         raise Stop(f"STOP: the G.5 proposer server is disabled (needs --enable AND {S.ENABLE_ENV}=1)")
 
     def bind(repo, s, rows):
         imports = S.check_import_sources(repo)
         return {**G.verify_launch_tasl(repo, s, rows, spec_path=spec_path), "imports": imports}
-    binding = (launch_binding or bind)(S.REPO_ROOT, spec, S.PLAN_ROWS)
+    binding = (launch_binding or bind)(S.REPO_ROOT, spec, rows)
     return (server or T4.serve_spec)(spec, spec_path) | {"launch": binding}

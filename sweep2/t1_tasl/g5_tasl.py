@@ -118,6 +118,7 @@ import g1b_tasl_join as J  # noqa: E402
 L = G.L
 Stop, NodeStop = G.Stop, G.NodeStop
 SCHEMA = "g5_tasl_labels/v1"
+ADDENDUM_SCHEMA = "g5_tasl_addendum/v1"
 EVIDENCE = "EVIDENCE"
 GPU_MODEL = G.GPU_MODEL
 ADA_MODEL = "NVIDIA RTX 6000 Ada Generation"
@@ -259,8 +260,17 @@ CUDA_C12_HOSTS = {"TASL-2": ("c12_record", "c12_sha256", "c12_review"),
 
 
 # =============================================================================================== small helpers
-def load_spec(path: Path) -> dict:
-    return json.loads(Path(path).read_text())
+def load_spec(path: Path, *, note_path: Path | None = None, draft: bool = False, read_main=G._read_main) -> dict:
+    path = Path(path)
+    raw = json.loads(path.read_text())
+    if raw.get("schema") == ADDENDUM_SCHEMA:
+        import g5_addendum
+
+        check_import_sources()
+        return g5_addendum.bind(path, note_path, draft=draft, read_main=read_main)
+    if "_addendum" in raw:
+        raise Stop("STOP: expansion bindings must come from a signed G.5 addendum")
+    return raw
 
 
 def _get(spec: dict, path: tuple):
@@ -963,6 +973,9 @@ def tasl2_node_cpus(spec: dict, node: str) -> str:
 def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     """The spec schema and its consistency with the decisions. Returns the options, the projection, the unsigned
     decisions and the launch blockers; ``launch=True`` raises on any blocker or unfilled field."""
+    if spec.get("_addendum"):
+        # load_spec has already validated the exact published base and expansion bindings.
+        return {"spec": spec, "options": options(spec), "launch_blockers": [], "run_id": spec["run_id"]}
     allow = not launch
     if spec.get("schema") != SCHEMA or spec.get("label") != EVIDENCE:
         raise Stop(f"STOP: spec must be {SCHEMA}, label {EVIDENCE}")
@@ -2778,7 +2791,8 @@ IMPORT_SOURCES = {**T4.IMPORT_SOURCES, "g4_tasl": "sweep2/t1_tasl/g4_tasl.py",
                   "g1b_crosscheck": "sweep2/t1_tasl/g1b_crosscheck.py", "g1b_tasl_join": "sweep2/t1_tasl/g1b_tasl_join.py",
                   "g5_job": "sweep2/t1_tasl/g5_job.py", "g5_seal": "sweep2/t1_tasl/g5_seal.py",
                   "g5_assemble": "sweep2/t1_tasl/g5_assemble.py", "g5_relcopy": "sweep2/t1_tasl/g5_relcopy.py",
-                  "g5_features": "sweep2/t1_tasl/g5_features.py", "g5_noise": "sweep2/t1_tasl/g5_noise.py"}
+                  "g5_features": "sweep2/t1_tasl/g5_features.py", "g5_noise": "sweep2/t1_tasl/g5_noise.py",
+                  "g5_addendum": "sweep2/t1_tasl/g5_addendum.py"}
 
 
 def check_import_sources(repo: Path = None) -> dict:
@@ -2803,6 +2817,65 @@ def job_runner(spec_path, node_name, job, context) -> dict:
     return g5_job.run_job(spec_path, node_name, job, context)
 
 
+def launch_addendum(spec_path: Path, spec: dict, node: dict, *, job: str, today: date, read_main,
+                    checkout=None, mpath_check=None, launch_binding=None, runner=None, server_record=None,
+                    pilot_check=None) -> dict:
+    """The same settings and host checks, with the addendum's own deployment and launch pin."""
+    from g5_addendum import ROWS
+    import g5_job
+
+    check_import_sources()
+    a = spec["_addendum"]
+    name, family = node["node"], node["family"]
+    fam = spec["harness_families"][family]
+    repo = Path(fam["harness_dir"])
+    o = options(spec)
+    rows = (*PLAN_ROWS, *ROWS)
+    for row in dict.fromkeys(rows):
+        plan_row(row, read_main)
+    for row, terms in ((T1_FEAT_ROW, T1_FEAT_TERMS), (D21_SCOPE_ROW, D21_SCOPE_TERMS),
+                       (PILOT_DATES_ROW, PILOT_DATES_TERMS), (TASL2_CPU_ROW, TASL2_CPU_TERMS)):
+        plan_row(row, read_main, terms=terms)
+        rows += (row,)
+    for row, terms in decision_row_checks(spec, o):
+        plan_row(row, read_main, terms=terms)
+        rows += (row,)
+    if a["_K_row"]:
+        rows += (a["_K_row"],)
+    context = {"job": job, "K": a["_K"], "K_row": a["_K_row"], "options": o, "host": WORKER_HOST,
+               "host_check": {family: a["host_check"]}, "d21": a["noise"]["scope"][name]["d21"],
+               "pilot_basis": (pilot_check or pilot_basis_check)(a["base_spec"], read_main)}
+    if spec["key_values"]["cuda_ipc"]["mode"] == "c12":
+        context["cuda_ipc"] = check_c12(spec, read_main)
+    # Read the published engineering summary again through the same noise checks as the main node path.
+    copy = a["noise"]
+    raw = read_main(copy["copy"])
+    if raw is None or _sha_bytes(raw) != copy["sha256"]:
+        raise Stop("STOP: the G.1b copy changed during the addendum launch check")
+    context["noise_precheck"] = noise_precheck(dict(copy, raw=raw), name, read_main)
+    context["freeze_wait"] = freeze_wait_check(spec, today=today, deadline=a["_freeze"])
+    context["checkout"] = (checkout or family_checkout)(spec, family)
+    context["measurement_path"] = (mpath_check or measurement_path_check)(repo, fam["g1b_pin"], fam["g5_commit"])
+    if context["measurement_path"].get("g5_commit") != fam["g5_commit"]:
+        raise Stop("STOP: the measurement-path check ran on another commit")
+    context["engine"] = g5_job.check_engines(repo, fam["g5_commit"])
+    reference = spec["harness_families"]["G5-7"]["g5_commit"]
+    files = [TRACKG + name for name in (*ENGINE_FILES, "audit_g5.py", "diagnostics_g5.py")]
+    same_engines = G._sh(["git", "-C", str(repo), "diff", "--quiet", reference, fam["g5_commit"], "--", *files])
+    if same_engines.returncode:
+        raise Stop("STOP: the expansion campaign and audit engines must match the signed main G.5 engines")
+    if job.startswith("audits"):
+        context["audit_seeds"] = audit_seeds(spec, a["_K"])
+    if server_record is not None:
+        context["server_record"] = str(server_record)
+
+    def bind(repo_root, settings, plan_rows):
+        return G.verify_launch_tasl(repo_root, settings, plan_rows, spec_path=spec_path)
+
+    context["launch"] = (launch_binding or bind)(REPO_ROOT, spec, tuple(dict.fromkeys(rows)))
+    return (runner or job_runner)(spec_path, name, job, context) | {"context": context}
+
+
 def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable: bool, today: date,
            on_main=G._note_on_main, read_main=G._read_main, list_main=list_main, pin_check=None, mpath_check=None,
            checkout=None, launch_binding=None, runner=None, server_record: Path | None = None,
@@ -2824,9 +2897,17 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
                    f"({TWO_CARDS_ROW})")
     if (host == AUDIT_HOST) != (chunk is not None):
         raise Stop(f"STOP: a {AUDIT_HOST} audit job names its claimed chunk; a {WORKER_HOST} job takes none")
-    spec = load_spec(spec_path)
+    spec = load_spec(spec_path, note_path=note_path, read_main=read_main)
     validate_spec(spec, launch=True)
     node = node_entry(spec, node_name)
+    if spec.get("_addendum"):
+        if host != WORKER_HOST:
+            raise Stop(f"STOP: {node_name}'s addendum uses its TASL-2 census CPU set for both waves")
+        if not enable or os.environ.get(ENABLE_ENV) != "1":
+            raise Stop(f"STOP: real G.5 runs are disabled (needs --enable AND {ENABLE_ENV}=1)")
+        return launch_addendum(spec_path, spec, node, job=job, today=today, read_main=read_main,
+                               checkout=checkout, mpath_check=mpath_check, launch_binding=launch_binding,
+                               runner=runner, server_record=server_record, pilot_check=pilot_check)
     if host == AUDIT_HOST and node["family"] not in spec["tasl7_audits"]["families"]:
         raise Stop(f"STOP: {node_name}'s audits stay on {WORKER_HOST} (family {node['family']}; ar-cond7a exists only "
                    f"there)")
@@ -2961,7 +3042,7 @@ def part_3b2(a) -> dict:
         raise Stop(f"STOP: the assembly uses the committed spec {g5_assemble.SPEC_REL} (the release check re-derives "
                    f"from it)")
     return g5_assemble.assemble(spec_path, a.stage, Path(a.table), Path(a.evidence),
-                                note_path=Path(a.note) if a.note else None)
+                                note_path=Path(a.note) if a.note else None, addendum_paths=a.addendum_spec)
 
 
 def main(argv=None) -> int:
@@ -3038,6 +3119,7 @@ def main(argv=None) -> int:
     asm = sub.add_parser("assemble"); asm.add_argument("spec"); asm.add_argument("--stage", required=True,
                                                                                choices=("traindev", "test"))
     asm.add_argument("--table", required=True); asm.add_argument("--evidence", required=True)
+    asm.add_argument("--addendum-spec", action="append", default=[], help="one published expansion spec, repeatable")
     asm.add_argument("--note", help="the signed note docs/r1/authorizations/<run_id>.md (its t1_table_readings line); "
                                     "without it only the refuse reading applies")
     a = ap.parse_args(argv)
@@ -3056,9 +3138,9 @@ def main(argv=None) -> int:
                      "paper_commit": spec["paper"]["commit"], "spec_sha256": L._sha_file(Path(a.spec))}
             print("\n".join(f"{key}: {value}" for key, value in lines.items()))
         elif a.cmd == "check-note":
-            spec = load_spec(Path(a.spec))
+            spec = load_spec(Path(a.spec), note_path=Path(a.note), draft=a.draft)
             validate_spec(spec, launch=not a.draft)
-            fields = check_note(Path(a.note), Path(a.spec), spec=spec, draft=a.draft)
+            fields = spec.get("_addendum") or check_note(Path(a.note), Path(a.spec), spec=spec, draft=a.draft)
             print(json.dumps({"ok": True, "K": fields["_K"], "mode": "draft" if a.draft else "strict"}, indent=1))
         elif a.cmd == "check-ar-record":
             spec = load_spec(Path(a.spec))
