@@ -184,6 +184,13 @@ def config_sha256(config: Mapping[str, Any]) -> str:
     return sha256_json(digests)
 
 
+def _decision_text(value: Any) -> str:
+    """Normalise a harness ``TrialDecision`` (or a string) to the ledger's decision text."""
+    if value is None:
+        return ""
+    return str(getattr(value, "value", value))
+
+
 def _worker_root(worker: Any) -> Path | None:
     for attr in ("node_root", "_node_root"):
         value = getattr(worker, attr, None)
@@ -319,6 +326,7 @@ class SnapshotRecorder:
     _final_written: bool = False
     _pending: dict[str, Any] | None = None
     _post_decision_state: str | None = None
+    _trial_configs: list[dict[str, Any]] = field(default_factory=list)
 
     # ---- harness hook -----------------------------------------------------
     def __call__(self, ctx: SnapshotContext) -> None:
@@ -348,6 +356,16 @@ class SnapshotRecorder:
         # E1 capture (the only deliberate update is the budget's llm_calls).
         if self._trial is None:
             raise SnapshotStop(f"hook {ctx.epoch} arrived before an E1 state")
+        if ctx.epoch == "E2":
+            # Capture the configuration the worker actually executed for this trial.  The
+            # ledger decides whether it was kept; this list is the G1 record G7's summary and
+            # G6's per-keep audits are built from (never a recomputed edit chain).
+            live = read_worker_config(ctx.worker, ctx.node_spec)
+            self.note_trial_config(
+                trial_id=str(ctx.trial_id), budget_index=int(ctx.budget_index),
+                decision=_decision_text(getattr(ctx.provisional, "decision", None)),
+                config=live, w=int(self.count),
+            )
 
     def observe_budget(self, budget: Any, *, where: str) -> None:
         """Record the exact budget and check charged-run parity at the charge."""
@@ -361,6 +379,24 @@ class SnapshotRecorder:
                 self._trial.llm_calls = int(calls)
 
     # ---- controller wrapper callbacks ------------------------------------
+    # ---- per-trial configuration records (G1 -> G7/G6 integration) -------
+    def note_trial_config(self, *, trial_id: str, budget_index: int, decision: str,
+                          config: Mapping[str, Any], w: int) -> None:
+        """Record one executed trial's live configuration (the ledger decides keep/discard)."""
+        contents = _files_config(dict(config))
+        self._trial_configs.append({
+            "trial_id": str(trial_id), "budget_index": int(budget_index),
+            "decision": str(decision), "w": int(w),
+            "config_sha256": config_sha256(contents), "files": contents,
+        })
+
+    def trial_configs(self) -> list[dict[str, Any]]:
+        """Every executed trial configuration captured at E2, in trial order."""
+        return [dict(row) for row in self._trial_configs]
+
+    def config_by_trial(self) -> dict[int, dict[str, Any]]:
+        return {int(row["budget_index"]): dict(row) for row in self._trial_configs}
+
     def note_decision(self, epoch: str, action: str, controller: Any | None = None) -> None:
         self._controller_calls += 1
         if self._trial is not None and epoch in ("E1", "E2"):

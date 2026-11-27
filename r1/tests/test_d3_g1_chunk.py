@@ -87,7 +87,7 @@ def _factory(spec, seed, cdir, recorder):
 
 
 def _spec(**kw):
-    base = dict(stage="a", arm="A2", node=NODE, repetition=0, instance_seeds=tuple(range(6201, 6219)),
+    base = dict(stage="a", arm="A0", node=NODE, repetition=0, instance_seeds=tuple(range(6201, 6219)),
                 W=20, llm_cap=80, launcher="ssh", host="TASL-2", campaign_model_source=SOURCE)
     base.update(kw)
     return ChunkSpec(**base)
@@ -124,10 +124,13 @@ def test_one_chunk_writes_layout_records_and_sums(tmp_path):
     assert (first / "snapshots" / "final.json").is_file()
     assert (first / "SHA256SUMS").is_file()
     camp = json.loads((first / "campaign.json").read_text())
-    assert camp["record_name"] == f"a__A2__{NODE}__s6201__r0"
+    assert camp["record_name"] == f"a__A0__{NODE}__s6201__r0"
     assert camp["campaign_id"] == f"{NODE}__s6201"
     cs = json.loads((first / "summary.json").read_text())
-    assert cs["worker_runs"] == 20 and cs["ended_on"] == "worker_runs"
+    from r1.c3.d3_outcome_table import SUMMARY_KEYS
+    assert set(cs) == SUMMARY_KEYS and cs["schema"] == "r1_d3_campaign_summary/v1"
+    assert cs["worker_runs"] == 20 and cs["status"] == "complete"
+    assert camp["ended_on"] == "worker_runs"
     assert chunk["gpu_model"] == "NVIDIA RTX 4090"
     assert chunk["memory_check"] == "pass"
     assert chunk["proposer_check"] == "pass" and chunk["model_check"] == "pass"
