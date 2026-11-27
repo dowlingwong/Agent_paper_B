@@ -12,7 +12,7 @@ written. No label, evaluation, test or sealed value was read. No campaign result
 |---|---|
 | Task | `compute/20261127-27` (with `compute/20261126-00` takeover) |
 | Base | `origin/main` `d669b0bf`; merged `280c0015` |
-| Deliverable branch | `compute-d3-smoke-20261127` @ `b662c718` (report/captures at `546be763`; full-suite captures added at `b662c718`) |
+| Deliverable branch | `compute-d3-smoke-20261127` @ `7ecc3594` (report/captures at `546be763`; full-suite captures added at `b662c718`; P5 blocker note at `7ecc3594`) |
 | Review branch | `compute-d3-smoke-review-20261127` @ `936b2c58` |
 | Review | `docs/r1/reviews/D3_SMOKE_ENGINEERING_REVIEW_20261127.md` sha256 `30657df4f3d7e702c82360ebfb970f1235db9977fe6d18384aa9102a21e25b45`; **ACCEPTED** |
 | Run | `d3-smoke-engineering-20261127-a`, root `/home/dowling/r1_tracks/work/d3smoke_20261127/run-d` on TASL-2 |
