@@ -1447,7 +1447,7 @@ def _run_probe(spec_path: Path, spec: dict, loaded: dict, arm: str, job_dir: Pat
                     "gradient_checkpointing": checkpointing,
                     "host_class": cls, "launch": HOST_CLASSES[cls]["launch"],
                     "started_utc": _utc(started), "stop": None, "stop_class": None, "steps": [], "probe": probe,
-                    "output_use": "ENGINEERING_ONLY H200 SFT fit and timing probe (P4-PROBE A): synthetic labels, at "
+                    "output_use": "ENGINEERING_ONLY SFT fit and timing probe (P4-PROBE A): synthetic labels, at "
                                   "most 50 steps, one base; nothing kept as an arm; no label file, receipt or freeze "
                                   "record read; its GPU-hours count against P4-CAP (P4-PROBECAP A)"}
     out = job_dir / "out"
