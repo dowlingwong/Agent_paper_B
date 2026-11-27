@@ -1739,6 +1739,12 @@ preregistration, the gate code and every signed note are unchanged.
 |---|---|
 | R1-P4-E0-SAME-CODE-REFERENCE | **Re-run the P.4 E0 reference on TASL-7 with the same code and configuration used by the Ada E0 comparison run** (author, 27 Nov 2026, in Codex chat, “批准在 TASL-7 用与 Ada 相同的代码和配置重做参照”, answering `AUTHOR.md` at `a536afe7`). Bind the run to the Ada comparison recorded in `972f0e70`: paper `c80f83bc`, `e0_config_ref.json` SHA-256 `9773547dc286f638792b53b06cc7133d61209c2d9e92cdfd4982a062c1a2c054`, matching data, model and seed. Compute verifies the TASL-7 environment and lease, runs the reference and reports the comparison against the pinned Ada run with the existing comparator and tolerances. Keep the 26 October reference as a historical record. The Ada phase-1 note and A5 SFT remain gated by accepted E0 equivalence and reviewed timing disposition under R1-P4-PHASE1-SIGNATURE. |
 
+### 27 November 2026 (l) — Mac worker and coordinator documentation (author)
+
+| ID | Decision |
+|---|---|
+| R1-MAC-WORKFLOW-APPROVAL | **Approve the four Mac worker and coordinator documentation edits for review and publication** (author, 27 Nov 2026, in Codex chat, “都没问题，我允许的，签署同意并commit， push”, responding to the four-file review and the Mac checkout item in `AUTHOR.md` at `a536afe7`). Scope: the worker launch guide in `README.md`, task cadence and agent runtimes in `canon/README.md`, the dispatch procedure in the coordinator's `SOUL.md`, and its linked work-order and §7 updates in `AUTOML_AS_DAC_NEXT_PHASE_20261126.md`. Carry the changes onto published main with its newer manuscript, stage approval and preflight procedures retained. The coordinator may publish the reviewed document changes under R1-CODEX-RECORDED-SIGNATURES. The locally provisioned launcher and other checkout changes are outside this approval. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
