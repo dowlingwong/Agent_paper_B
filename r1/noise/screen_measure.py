@@ -506,9 +506,12 @@ def code_pins(repo: Path = REPO) -> dict:
 def cotenancy(workers_running: int, *, host_wide: bool = False) -> dict:
     """The accepted B.2 convention: cores left to other users = cpus - (1-min load - our running workers)."""
     # The deepthought2 launch caps its own affinity. The host's load average still covers the whole machine.
-    cpus = os.cpu_count() or 1
-    if not host_wide and hasattr(os, "sched_getaffinity"):
+    if host_wide:
+        cpus = os.sysconf("SC_NPROCESSORS_ONLN")
+    elif hasattr(os, "sched_getaffinity"):
         cpus = len(os.sched_getaffinity(0))
+    else:
+        cpus = os.cpu_count() or 1
     load = os.getloadavg()[0]
     free = cpus - max(0.0, load - workers_running)
     return {"utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "cpus": cpus, "load1": load,

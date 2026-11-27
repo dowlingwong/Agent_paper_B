@@ -653,7 +653,7 @@ class RunnerStopTest(unittest.TestCase):
         out.mkdir()
         manifest = {"preflight": {"launch_host": "deepthought2"}}
         with mock.patch.object(sm.os, "sched_getaffinity", return_value=set(range(64)), create=True), \
-                mock.patch.object(sm.os, "cpu_count", return_value=128), \
+                mock.patch.object(sm.os, "sysconf", return_value=128), \
                 mock.patch.object(sm.os, "getloadavg", return_value=(65, 0, 0)):
             result = sm.execute(out, _c0_jobs(), _fake_run, manifest, 2, None, str(self.tmp), monitor=True)
         self.assertIsNone(result["stop"])
