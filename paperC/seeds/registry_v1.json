@@ -1,0 +1,633 @@
+{
+  "domains": {
+    "COUNT_DOMAIN": 1000,
+    "K_DOMAIN": 90,
+    "MARGIN": 1000,
+    "note": "declared bounds; the code puts no upper bound on the run-time counts"
+  },
+  "paper_b": [
+    {
+      "hi": 12,
+      "kind": "rng_key",
+      "lo": 11,
+      "name": "rng_key_11",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed@fab88fce"
+    },
+    {
+      "hi": 43,
+      "kind": "external",
+      "lo": 42,
+      "name": "node_default_seed",
+      "note": "the harness nodes' default train/split seed: noise-floor 'default' runs and the fixed partner seed of train-only / split-only runs (r1/noise/e1_noise_floor.py plan_runs passes None; STATUS.md records 42)",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    },
+    {
+      "hi": 78,
+      "kind": "rng_key",
+      "lo": 77,
+      "name": "rng_key_77",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed@fab88fce"
+    },
+    {
+      "hi": 79,
+      "kind": "rng_key",
+      "lo": 78,
+      "name": "rng_key_78",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed@fab88fce"
+    },
+    {
+      "hi": 997,
+      "kind": "formula",
+      "lo": 100,
+      "name": "e1b_instances",
+      "note": "k < 90 over all node-name residues mod 7 (declared; bounded by the next block at 1001); sweeps use k < 18 (seeds 100..276)",
+      "path": "r1/headroom/e1b_collect.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "_instance_seed"
+    },
+    {
+      "hi": 778,
+      "kind": "rng_key",
+      "lo": 777,
+      "name": "rng_key_777",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:kw:seed@fab88fce"
+    },
+    {
+      "hi": 1000,
+      "kind": "literal",
+      "lo": 999,
+      "name": "e2e_worker_seed_999",
+      "note": "LocalWorker(train_seed=999, split_seed=999) in the end-to-end check",
+      "path": "r1/e2e.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "train_seed"
+    },
+    {
+      "hi": 1000,
+      "kind": "rng_key",
+      "lo": 999,
+      "name": "rng_key_999",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/e2e.py:kw:seed@d4ea56c1"
+    },
+    {
+      "hi": 1001,
+      "kind": "rng_key",
+      "lo": 1000,
+      "name": "rng_key_1000",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed0@fab88fce"
+    },
+    {
+      "hi": 2001,
+      "kind": "base_count",
+      "lo": 1001,
+      "name": "noise_floor_train",
+      "note": "SEED_BASE + s, s < n_seeds (run-time; declared domain 1000); C1 uses 30",
+      "path": "r1/noise/e1_noise_floor.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "SEED_BASE['train']"
+    },
+    {
+      "hi": 1235,
+      "kind": "rng_key",
+      "lo": 1234,
+      "name": "rng_key_1234",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/c3/train/model.py:rngcall:@fab88fce"
+    },
+    {
+      "hi": 3001,
+      "kind": "base_count",
+      "lo": 2001,
+      "name": "noise_floor_split",
+      "note": "SEED_BASE + s, s < n_seeds (run-time; declared domain 1000); C1 uses 30",
+      "path": "r1/noise/e1_noise_floor.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "SEED_BASE['split']"
+    },
+    {
+      "hi": 4001,
+      "kind": "base_count",
+      "lo": 3001,
+      "name": "noise_floor_joint",
+      "note": "SEED_BASE + s, s < n_seeds (run-time; declared domain 1000); C1 uses 30",
+      "path": "r1/noise/e1_noise_floor.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "SEED_BASE['joint']"
+    },
+    {
+      "hi": 6001,
+      "kind": "base_count",
+      "lo": 5001,
+      "name": "e1b_leaf_audits",
+      "note": "AUDIT_SEED_BASE + i, i < k_audit (run-time; declared domain 1000); E1b used 5001..5006",
+      "path": "r1/headroom/e1b_collect.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "AUDIT_SEED_BASE"
+    },
+    {
+      "hi": 7011,
+      "kind": "literal",
+      "lo": 7001,
+      "name": "c3_audits",
+      "note": "",
+      "path": "r1/c3/audit.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "DEFAULT_SEEDS"
+    },
+    {
+      "hi": 8011,
+      "kind": "prose_only",
+      "lo": 8001,
+      "name": "trackg_g1b_audits",
+      "note": "plan \u00a711.1 'G.1b 8001\u20138010'; no code defines it on the canonical, Track S or Track G branches",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    },
+    {
+      "hi": 9001,
+      "kind": "rng_key",
+      "lo": 9000,
+      "name": "rng_key_9000",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed@fab88fce"
+    },
+    {
+      "hi": 9100,
+      "kind": "literal",
+      "lo": 9001,
+      "name": "exam_instances",
+      "note": "",
+      "path": "r1/exam/namespace.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "INSTANCE_SEEDS"
+    },
+    {
+      "hi": 9101,
+      "kind": "rng_key",
+      "lo": 9100,
+      "name": "rng_key_9100",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed@fab88fce"
+    },
+    {
+      "hi": 9300,
+      "kind": "literal",
+      "lo": 9101,
+      "name": "exam_audits",
+      "note": "",
+      "path": "r1/exam/namespace.py",
+      "ref": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+      "symbol": "AUDIT_SEEDS"
+    },
+    {
+      "hi": 20001,
+      "kind": "rng_key",
+      "lo": 20000,
+      "name": "rng_key_20000",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/simulate_controls.py:def:seed0@fab88fce"
+    },
+    {
+      "hi": 30250,
+      "kind": "literal",
+      "lo": 30000,
+      "name": "tracks_instances_S0.4",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 30500,
+      "kind": "literal",
+      "lo": 30250,
+      "name": "tracks_instances_tune",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 31000,
+      "kind": "literal",
+      "lo": 30500,
+      "name": "tracks_instances_S0.5",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 32000,
+      "kind": "literal",
+      "lo": 31000,
+      "name": "tracks_instances_S3",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 33000,
+      "kind": "literal",
+      "lo": 32000,
+      "name": "tracks_instances_campaign",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 35000,
+      "kind": "prose_only",
+      "lo": 33001,
+      "name": "tracks_audits_legacy",
+      "note": "Track S's earlier audit layout (dev audits 33001\u201333005, audits 34001+, phase-keyed 33001+ \u2026 33601+), superseded by AUDIT_SEED_BASES; reserved because early runs may have used it",
+      "path": "r1/tracks/IMPLEMENTATION_NOTES.md",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": null
+    },
+    {
+      "hi": 35002,
+      "kind": "rng_key",
+      "lo": 35001,
+      "name": "tracks_selection_key",
+      "note": "RNG key for fork selection, not a worker seed",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "SELECTION_SEED"
+    },
+    {
+      "hi": 37000,
+      "kind": "literal",
+      "lo": 36000,
+      "name": "tracks_instances_synthetic",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 37031,
+      "kind": "literal",
+      "lo": 37001,
+      "name": "tracks_s11_factorial",
+      "note": "",
+      "path": "r1/tracks/probes/s1_factorial.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "S11_SEEDS"
+    },
+    {
+      "hi": 40000,
+      "kind": "literal",
+      "lo": 39000,
+      "name": "tracks_instances_fixture",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "INSTANCE_SEED_BLOCKS"
+    },
+    {
+      "hi": 200000,
+      "kind": "literal",
+      "lo": 100000,
+      "name": "tracks_audits_S0.4",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 300000,
+      "kind": "literal",
+      "lo": 200000,
+      "name": "tracks_audits_S0.5",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 400000,
+      "kind": "literal",
+      "lo": 300000,
+      "name": "tracks_audits_tune",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 500000,
+      "kind": "literal",
+      "lo": 400000,
+      "name": "tracks_audits_S3",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 600000,
+      "kind": "literal",
+      "lo": 500000,
+      "name": "tracks_audits_campaign",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 700000,
+      "kind": "literal",
+      "lo": 600000,
+      "name": "tracks_audits_synthetic",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 800000,
+      "kind": "literal",
+      "lo": 700000,
+      "name": "tracks_audits_fixture",
+      "note": "",
+      "path": "r1/tracks/collect.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "AUDIT_SEED_BASES, AUDIT_BLOCK_CAPACITY"
+    },
+    {
+      "hi": 2000000,
+      "kind": "literal",
+      "lo": 1000000,
+      "name": "tracks_oracle_select",
+      "note": "synthetic-world campaign seeds (in memory)",
+      "path": "r1/tracks/oracle.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "ORACLE_SELECT_BASE, ORACLE_EVAL_BASE, ORACLE_BLOCK_SIZE"
+    },
+    {
+      "hi": 3000000,
+      "kind": "literal",
+      "lo": 2000000,
+      "name": "tracks_oracle_eval",
+      "note": "synthetic-world campaign seeds (in memory)",
+      "path": "r1/tracks/oracle.py",
+      "ref": "fab88fced839c5fb794ed62a0742b4646cb76ea2",
+      "symbol": "ORACLE_SELECT_BASE, ORACLE_EVAL_BASE, ORACLE_BLOCK_SIZE"
+    },
+    {
+      "hi": 20261013,
+      "kind": "rng_key",
+      "lo": 20261012,
+      "name": "rng_key_20261012",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/headroom/e1b_compare.py:SEED@d4ea56c1; r1/baselines/evaluate.py:def:seed@d4ea56c1; r1/branch/bootstrap.py:def:seed@d4ea56c1"
+    },
+    {
+      "hi": 20261020,
+      "kind": "rng_key",
+      "lo": 20261019,
+      "name": "rng_key_20261019",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/c3/dataset.py:PLAN_SEED@d4ea56c1; r1/theory/t5_report.py:BASE_SEED@d4ea56c1; r1/c3/offline_eval.py:SEED@d4ea56c1; r1/diagnostics/di_test.py:SEED@d4ea56c1"
+    },
+    {
+      "hi": 20261027,
+      "kind": "rng_key",
+      "lo": 20261026,
+      "name": "rng_key_20261026",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/c3/train/exam_synthetic.py:SEED@fab88fce; r1/exam/guards.py:def:seed@d4ea56c1"
+    },
+    {
+      "hi": 20261030,
+      "kind": "rng_key",
+      "lo": 20261029,
+      "name": "rng_key_20261029",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/tracks/probes/s1_factorial.py:BOOT_SEED@fab88fce; r1/tracks/simulate_controls.py:def:seed@fab88fce; r1/tracks/probes/determinism.py:argparse:@fab88fce"
+    },
+    {
+      "hi": 20261108,
+      "kind": "rng_key",
+      "lo": 20261107,
+      "name": "rng_key_20261107",
+      "note": "RNG root, not a worker seed",
+      "path": null,
+      "ref": null,
+      "symbol": "r1/scripts/b1_q2_reference.py:SEED@d4ea56c1"
+    }
+  ],
+  "paper_b_internal_overlaps": [
+    "e1b_instances [100,997) overlaps rng_key_777 [777,778)",
+    "e2e_worker_seed_999 [999,1000) overlaps rng_key_999 [999,1000)",
+    "noise_floor_train [1001,2001) overlaps rng_key_1234 [1234,1235)"
+  ],
+  "paper_b_internal_overlaps_worker_seeds": [],
+  "paper_c": [
+    {
+      "hi": 60000,
+      "kind": "proposal",
+      "lo": 50000,
+      "name": "paperc_instances",
+      "note": "campaign instance seeds (also worker seeds); train/dev/test sub-blocks fixed in SPT-0",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    },
+    {
+      "hi": 61000,
+      "kind": "proposal",
+      "lo": 60000,
+      "name": "paperc_rng_keys",
+      "note": "keys for fork selection, epsilon draws and other design randomness (not worker seeds)",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    },
+    {
+      "hi": 62000,
+      "kind": "proposal",
+      "lo": 61000,
+      "name": "paperc_train_seeds",
+      "note": "seeds of Paper C's own model training (SPT-5): optimisers and samplers, not node runs",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    },
+    {
+      "hi": 11000000,
+      "kind": "proposal",
+      "lo": 10000000,
+      "name": "paperc_audits",
+      "note": "fresh audit seeds; per-instance stride as in Track S (above Track S's oracle blocks 1e6-3e6, below the date-valued RNG keys)",
+      "path": null,
+      "ref": null,
+      "symbol": null
+    }
+  ],
+  "paper_c_campaign_prefix": "pc-",
+  "paper_c_claims": [
+    {
+      "block": "paperc_rng_keys",
+      "index_ranges": {
+        "p3_decomposition": [
+          3000000,
+          4000000
+        ],
+        "p3_evaluation": [
+          2000000,
+          3000000
+        ],
+        "p3_selection": [
+          1000000,
+          2000000
+        ],
+        "p4_dev": [
+          4000000,
+          5000000
+        ],
+        "p4_test": [
+          5000000,
+          6000000
+        ],
+        "p8_dev": [
+          6000000,
+          7000000
+        ],
+        "p8_test": [
+          7000000,
+          8000000
+        ],
+        "p9_dev": [
+          8000000,
+          9000000
+        ],
+        "p9_test": [
+          9000000,
+          10000000
+        ],
+        "recorded": [
+          0,
+          10000
+        ]
+      },
+      "name": "esyn_rng_root",
+      "phase": "P3",
+      "use": "E-SYN campaign generator: SeedSequence([60001, world code, i]). Recorded campaigns: instance_seed 50000 + i (audit seeds 10,000,000 + n_audit i are nominal labels). The index ranges below are numerically inside Paper B's tracks_oracle_* ranges, but they enter only this Paper C root key, so their streams are disjoint from Track S's.",
+      "value": 60001
+    },
+    {
+      "block": "paperc_rng_keys",
+      "name": "esyn_decision_uniforms",
+      "phase": "P4",
+      "use": "per-decision uniforms of stochastic E-SYN policies: SeedSequence([60002, world code, i, step]); logged as eps_seed so that check_campaign replays the policy.",
+      "value": 60002
+    },
+    {
+      "block": "paperc_rng_keys",
+      "name": "esyn_fork_design",
+      "phase": "P6",
+      "use": "E-SYN fork design: SeedSequence([60003, 0, world code, i, trial, epoch code, design_rep]) selection uniforms; [60003, 1, ..., continuation index, replicate] continuation proposals (shared by the arms); [60003, 2, ..., continuation index, replicate, arm code] continuation measurements.",
+      "value": 60003
+    },
+    {
+      "block": "paperc_train_seeds",
+      "name": "analysis_resampling",
+      "phase": "P6",
+      "use": "analysis randomness: numpy default_rng([61001, purpose, ...]); purpose 1: tau^2 cluster bootstrap; 2: N6 cross-fitting folds and bootstraps; 3: N6 fold draws of the P6 validation's leakage check. Block choice: these are samplers of Paper C's own analysis (resampling and fold assignment), not node, worker or design draws, which is the block's 'samplers' use; the value never seeds a campaign.",
+      "value": 61001
+    },
+    {
+      "block": "paperc_rng_keys",
+      "name": "ope_behaviour_components",
+      "phase": "P7",
+      "use": "E-SYN OPE campaign-level mixture assignment: SeedSequence([60004, OPE world code, instance]); the existing 60002 key supplies within-campaign epsilon decisions.",
+      "value": 60004
+    },
+    {
+      "block": "paperc_train_seeds",
+      "name": "ope_fqe_fit",
+      "phase": "P7",
+      "use": "seed passed to each CPU LightGBM FQE fit, derived from SeedSequence([61002, OPE world code, replicate, fit block]); no campaign or worker draws.",
+      "value": 61002
+    },
+    {
+      "block": "paperc_rng_keys",
+      "name": "learner_behaviour_components",
+      "phase": "P8",
+      "use": "E-SYN learner campaign-level mixture assignment: SeedSequence([60005, learner world code, instance]); the existing 60002 key supplies within-campaign epsilon decisions.",
+      "value": 60005
+    },
+    {
+      "block": "paperc_train_seeds",
+      "name": "learner_cpu_fit",
+      "phase": "P8",
+      "use": "R0 LightGBM and R1 CPU PyTorch initialisation and batch sampling from SeedSequence([61003, learner world code, fit repetition]); no campaign or worker draws.",
+      "value": 61003
+    },
+    {
+      "block": "paperc_train_seeds",
+      "name": "power_pipeline",
+      "phase": "P9",
+      "use": "E-SYN power replay uses SeedSequence([61004, purpose, node index, repetition]) for fit seeds and the independent known-variance Normal control. No worker seeds.",
+      "value": 61004
+    }
+  ],
+  "paper_c_roles": {
+    "audit": "paperc_audits",
+    "eps": "paperc_rng_keys",
+    "instance": "paperc_instances",
+    "train": "paperc_train_seeds",
+    "worker": "paperc_instances"
+  },
+  "pins": {
+    "canonical": "d4ea56c101e2f127c75dd49a22e758a24c7e1596",
+    "tracks": "fab88fced839c5fb794ed62a0742b4646cb76ea2"
+  },
+  "scan_skipped_textual": [
+    "r1/c3/audit.py:SEEDS_FILE",
+    "r1/exam/namespace.py:_SEED_KEYS",
+    "r1/tracks/probes/determinism.py:SEED_KEY"
+  ],
+  "schema": "paperc_seed_registry/v1"
+}
