@@ -51,7 +51,7 @@ AR_HARNESS_ROOT=<harness9bb> python -m pytest -q \
 47 passed
 ```
 
-Focused new tests: **14 passed**; chunk + snapshot focus: 44 passed. The full `r1/tests` suite was
+Focused new tests: **17 passed**; chunk + snapshot focus: 47 passed. The full `r1/tests` suite was
 run on base and tip by the independent review; the failure-id lists were identical (114 failed /
 4,985 passed on base, 114 / 5,003 on tip at the accepted R3 tip; the same 117 failure/error ids, zero new).
 
