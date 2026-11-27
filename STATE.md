@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 02:05 CET, `main` at `bd406db9`
+# State — 27 Nov 2026, 02:20 CET, `main` at the P.4 merge (see below)
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -7,7 +7,7 @@ authority: the signed PLAN on `main` and the signed notes. `HANDOVER.md` is the 
 **On `main` since the handover:** `95249de3` rows (f)(g) (one compute agent, free placement, shared cards, TIMEOUT A, no
 dates); `b7e8a6aa` build source of the v2.2 image; `ef06a65c` **R1-G5-SIGNATURE** (G.5 signed, S1–S14 as recommended, S6 =
 2027-12-31, S4 = acceptance line; the coordinator publishes the note once its records, render and review exist);
-`54082a05` the ancestor–descendant screening test with its re-check review; `bd406db9` screening fix, P.4 direct launch and Ada host config, D.3 pre-declaration revision 4 (draft, unsigned), hygiene inventory; `6684e840` test-only unit, D.3c memo; `4490a0a9` copy review verdict line, P11 evidence table, redacted survey, manuscript restructure (title option 1, eight pages) and claim sheet; `e9c29a16` **R1-G5-TAILS, R1-G5-P11, R1-G5-S9** (author, 27 Nov); `9d87bebf` positive control and T5 shared-noise; `47df6f55` houseprice CPU-set fix (local/20261126-01); `166db0eb` **kit c1 record, seven-node REL-T1-G1B
+`54082a05` the ancestor–descendant screening test with its re-check review; P.4 merge: sft-select missing-runs STOP and the H200 host-config fill (torch files 194/194; `cluster/20261126-01` done by this merge); `bd406db9` screening fix, P.4 direct launch and Ada host config, D.3 pre-declaration revision 4 (draft, unsigned), hygiene inventory; `6684e840` test-only unit, D.3c memo; `4490a0a9` copy review verdict line, P11 evidence table, redacted survey, manuscript restructure (title option 1, eight pages) and claim sheet; `e9c29a16` **R1-G5-TAILS, R1-G5-P11, R1-G5-S9** (author, 27 Nov); `9d87bebf` positive control and T5 shared-noise; `47df6f55` houseprice CPU-set fix (local/20261126-01); `166db0eb` **kit c1 record, seven-node REL-T1-G1B
 copy, and the published expansion note `g1b_x_t1_tasl_20261126.md`** (strict check PASS, four gates PASS).
 
 **Workers (23:22 CET, seen in their tmux panes):** Local (`paperb-local`) is working, on the houseprice CPU-set evidence (item 1).
@@ -25,13 +25,13 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | 2 | `compute/20261127-01` (= `experiment/20261126-03`): houseprice CPU-set check on TASL-2 | §2 2B | next: ready (fix on `main` `47df6f55`); waits on the 0-3/4-7 leases while the expansion runs |
 | 2b | `compute/20261126-11`: survey redaction | §4 | delivered `f60a2225`, **incomplete** (truncated `ps` user column in `Ada.txt` l.49–62); fix in `compute/20261127-02` item 2, then merge |
 | 2c | `compute/20261127-03`: copy review's verdict case (G.5 B3); P11 evidence table | §2 2B | ready, after the launch |
-| 3 | `cluster/20261126-01`: torch tests of the P.4 host-config fill | §4 P.4 | ready |
+| done | `cluster/20261126-01`: torch tests of the fill | §4 P.4 | fill merged with the STOP fix by the coordinator (torch env, 194/194) |
 | 4 | `cluster/20261126-02` with `compute/20261126-02`: D.3 G1 runner and G6 audit, launcher outside HTCondor (design revision first) | §2 2A | ready |
 | 5 | `experiment/20261126-02` and `cluster/20261126-03`: TASL-7 second sample; pool watch with a second Ada sample | §4 | recurring |
 | 6 | `compute/20261126-03`: acknowledge rows (g) | — | with the next report |
 | done | kit c1 record (`experiment/20261126-01`, `compute/20261126-04`); REL-T1-G1B copy (`compute/20261126-05`); survey (`compute/20261126-01`; Ada: LLM serving ready, P.4 training not ready: no torch env, no container runtime) | | merged `166db0eb` (survey: after item 2) |
 | — | `compute/20261126-06`: G.5 campaigns on the TASL pair | §2 2B | blocked: G.5 note published (coordinator), after `local/20261126-08` render and review (local) |
-| — | `compute/20261126-07`: P.4 probe on Ada | §2 2B, §4 | blocked: the Ada venv (`compute/20261127-06`) and the missing-runs STOP fix (`local/20261127-02`, branch `mac-p4-runs-stop-20261127` pushed, no report yet); the direct launcher and Ada host config are on `main` `bd406db9`. Earlier: a torch environment on Ada (the survey: a venv from the P.4 lock without sudo, or a container runtime from the host owner); the route goes to the author if a venv is not acceptable |
+| — | `compute/20261126-07`: P.4 probe on Ada | §2 2B, §4 | blocked: the Ada venv (`compute/20261127-06`) (the missing-runs STOP fix and the H200 fill are merged); the direct launcher and Ada host config are on `main` `bd406db9`. Earlier: a torch environment on Ada (the survey: a venv from the P.4 lock without sudo, or a container runtime from the host owner); the route goes to the author if a venv is not acceptable |
 | 1e | `compute/20261127-07`: screening smoke | §2 2A | **STOP** at `data-cache` (ARFF identified by suffix; sklearn 1.8 names it `<id>.gz`); fix `local/20261127-05`, then repeat |
 | — | `compute/20261126-09`: D.3 per-arm smoke | §2 2A | blocked: item 4 (compute), `local/20261126-05` item 1 and `local/20261126-03` (local) |
 
