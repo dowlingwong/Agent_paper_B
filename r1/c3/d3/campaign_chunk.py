@@ -236,7 +236,13 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
         w_final = recorder.count
         if recorder._last_budget is not None and recorder._last_budget.worker_runs != w_final:
             raise ChunkStop("charged-run parity failed at the end of a campaign")
-        final_sha = recorder.write_final(w_final=w_final, ended_on=ended_on)
+        # The harness route's final is the live incumbent after the last E2 decision, not the
+        # recorder's cached E1 state (revision 4 step (5) finding 1).  At W the recorder keeps
+        # the pre-decision w<W> record as w<W>_pre.json and canonicalises w<W>.json from final.
+        final_sha = recorder.write_final_live(
+            w_final=w_final, ended_on=ended_on, worker=kwargs["worker"],
+            node_spec=kwargs["node_spec"], ledger_path=kwargs["records_path"],
+        )
         record = {
             "schema": CAMPAIGN_SCHEMA,
             "campaign_kind": "harness",
@@ -244,6 +250,7 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
             "repetition": spec.repetition, "instance_id": inst, "instance_seed": seed,
             "worker_runs": w_final, "llm_calls": getattr(recorder._last_budget, "llm_calls", None),
             "ended_on": ended_on, "snapshots": recorder.snapshot_hashes(),
+            "pre_decision_snapshots": recorder.pre_decision_hashes(),
             "final_sha256": final_sha, "snapshot_schema": SNAPSHOT_SCHEMA,
         }
         record["record_name"] = f"{spec.stage}__{spec.arm}__{inst}__r{spec.repetition}"
@@ -357,6 +364,7 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
             "repetition": spec.repetition, "instance_id": inst, "instance_seed": seed,
             "worker_runs": summary["worker_runs"], "llm_calls": summary["llm_calls"],
             "ended_on": summary["ended_on"], "snapshots": summary["snapshots"],
+            "pre_decision_snapshots": recorder.pre_decision_hashes(),
             "final_sha256": summary["final_sha256"], "snapshot_schema": SNAPSHOT_SCHEMA,
             "zero_variance_cases": sum(int(s.get("zero_variance_cases") or 0) for s in summary["steps"]),
         }
@@ -375,6 +383,7 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
             "campaign_kind": "replicate", "worker_runs": summary["worker_runs"],
             "llm_calls": summary["llm_calls"], "ended_on": summary["ended_on"],
             "snapshots": summary["snapshots"], "final_sha256": summary["final_sha256"],
+            "pre_decision_snapshots": recorder.pre_decision_hashes(),
             "zero_variance_cases": record["zero_variance_cases"],
         })
         _write_json(cdir / "campaign.json", record)
