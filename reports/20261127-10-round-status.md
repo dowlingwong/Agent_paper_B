@@ -9,7 +9,8 @@
 |---|---|---|
 | `compute/20261127-05` with `-08` (G.5 P11 host tests) | TASL-7 server run PASS; record **ACCEPTED** with two MINOR notes | `compute-g5-p11-hosttest-20261127` @ `ba5f1e4a`; review `compute-g5-p11-hosttest-review-20261127` @ `f87a17cc` |
 | `compute/20261127-09` item 2 (D.3 G1/G6 revision 6c) | revision 6c-3 **ACCEPTED FOR CODE** | `compute-d3-g1-design-r6c-20261127` @ `c1832cf6`; review `compute-d3-g1-design-r6c-review-20261127` @ `354f5ed5` |
-| `compute/20261127-06` with `-11` (Ada P.4 venv) | PASS: freeze 121/121 equal to the lock; torch CUDA smoke 0.53 s on an empty card | `compute-ada-p4-venv-20261127` @ `ef146a64` |
+| `compute/20261127-09` item 1 (G1 core corrections) | **ACCEPTED** after R1/R2 CHANGES REQUIRED; 20 tests, full suite zero new failing ids | `compute-d3-g1-snapshot-20261127` @ `44075323`; review `compute-d3-g1-core-review-20261127` @ `381262de` |
+| `compute/20261127-06` with `-11` (Ada P.4 venv) | PASS, **ACCEPTED** (R2); freeze 121/121 equal to the lock; torch CUDA smoke 0.53 s on an empty card | `compute-ada-p4-venv-20261127` @ `a1d0cf74`; review `compute-ada-p4-venv-review-20261127` @ `a2efbb40` |
 | `compute/20261127-10` (no force push) | acknowledged; this round used new commits only | — |
 | `compute/20261126-03` / rows (g) | still acknowledged; no new deliverable | — |
 
@@ -20,8 +21,8 @@ Details are in the separate reports `20261127-08-g5-p11-host-run.md`, `20261127-
 | Item | State | What the next round checks |
 |---|---|---|
 | Expansion G.1b (`compute/20261126-10`) | `gc7rc_etth1` **finished 00:34:07Z and sealed**; `mlgym_metamaze` (pid 106579, ~150/460 train runs), `gc7rc_forestcover` (pid 106573, ~65), `mlgym_titanic` (pid 106578, ~53), all CPU-only on TASL-2 sets 0-3 / 4-7 / 12-15 | node completion, then `seal`, `assemble`, `summarise`; no GPU used |
-| Houseprice CPU-set (`compute/20261127-01`) | driver started `01:32:50Z` on TASL-2, waiting for `cpus-0-3.lock`/`cpus-4-7.lock`; no run root created; capture `/home/dowling/r1_engineering/cpuset_20261127_20261127T013250Z`, driver pid 208315 | whether MetaMaze and Forest Cover finished; if the driver timed out after 1 h, rerun it; no scene consumed |
-| G1 core review (`compute/20261127-09` item 1) | independent reviewer running the full `r1/tests` base/tip check (`51cf07f7`); tip log shows 100 failed / 4344 passed vs base 100 / 4328 — same failing set to be confirmed; review branch not pushed by the round end | the review branch tip and verdict; the coordinator merges on ACCEPTED |
+| Houseprice CPU-set (`compute/20261127-01`) | driver started `01:32:50Z`; waited 720 × 5 s and **timed out at ~02:32Z with `STOP: a lease stayed busy for an hour; nothing ran`**; no run root or sealed scene was created; capture `/home/dowling/r1_engineering/cpuset_20261127_20261127T013250Z` | rerun it when MetaMaze/Forest Cover release the 0-3/4-7 leases; no scene consumed |
+| G1 core review (`compute/20261127-09` item 1) | **accepted**: R3 `Verdict: ACCEPTED`; 20 unit tests, full suite base 100/4328 vs tip 100/4348, same 103 failing/error ids, zero new; four MINOR notes | the coordinator merges `44075323`; then the G1 replicate-driver code unit from revision 6c |
 | Screening smoke (`compute/20261127-07`) | STOP at `data-cache` stands; local fix `mac-screen-arff-content-20261127` @ `cb684870` is pushed but not merged and no repeat task is on `coord/coordinator` | whether the fix is merged and a repeat card is issued |
 | G.5 campaigns (`compute/20261126-06`) | blocked on the published G.5 note | note publication |
 | D.3 per-arm smoke (`compute/20261126-09`) | blocked on the G1 adapter, G2 constants and local units | those dependencies |
@@ -52,3 +53,15 @@ review rather than change the accepted captures.
    fill and the calling-account decision.
 5. Screening smoke repeat once the local fix is on `main` and a task is issued.
 6. G.5 campaigns remain blocked on the G.5 note; D.3 per-arm smoke on G1/G2/local units.
+
+
+## End-of-round note (02:35Z)
+
+- G1 core: **ACCEPTED** (`44075323`; R3 `d1eb7670…`); report `20261127-12-g1-core-accepted.md`.
+- Houseprice: the waiter timed out after one hour with nothing run; rerun it next round.
+- Expansion: ETTh1 sealed; MetaMaze/ Forest Cover/ Titanic still running (train/split); no seal to do yet.
+- Ada: venv **ACCEPTED**; P.4 probe still needs its own task/note and the `trackp_ada_v1.json` host fill.
+- Screening repeat: local fix `cb684870` is not on `main`; no repeat task yet. The report is a `for: compute`
+  hand-off, but it names the merge precondition.
+- Remaining blocked: G.5 campaigns (note), D.3 per-arm smoke (G1/G2/local), P.4 probe (task/note), screening
+  repeat (merge/task).
