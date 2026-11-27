@@ -80,6 +80,14 @@ signed text).
 
 ## 6. Running elsewhere / blocked
 
+- **`compute/20261127-30` (screening evidence, second re-issue): RUNNING.** Under the signed note on `main`
+  (`85d41476…`, `approved: true`) from clean code `c12136d6`; run id `SMEAS_EVIDENCE_20261127T1550Z`, deepthought
+  16 workers, cache tree `3843b53c…`, output
+  `/work/dwong/screen_measure_20261127/paper_c12136d6/results/r1/screen_measure/SMEAS_EVIDENCE_20261127T1550Z`,
+  tmux `smeas_reissue2`. Strict preflight passed (design/cotenancy/lineage/worker-runtime written); no STOP at the
+  start. The first attempt with stamp `1548Z` was a preflight refusal only (`origin/main` stale after the coordinator's
+  new merge); it created no output and is not a run. Next round: check the manifest/run count, then run the exact
+  analysis command.
 - **Expansion G.1b (`compute/20261126-10`):** ETTh1, MetaMaze and **Forest Cover** sealed; Forest Cover attempt-1
   `determinism` PASS, `stop: null`, seal receipt `2940254a…`. Titanic was 84/150 joint runs at 15:33Z, still running;
   assemble/summarise wait for its seal.
