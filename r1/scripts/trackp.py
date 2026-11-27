@@ -398,6 +398,19 @@ def cmd_sft_select(args, cfg) -> dict:
     from r1.c3.train import sft as SFT
     if not args.runs:
         raise R.TrackPStop("sft-select needs --runs")
+    # local/20261127-02: a missing or unreadable run is a protocol STOP (rc 2) before any read by select_lr, not a
+    # FileNotFoundError (rc 1, infrastructure); the placeholder config used to stop earlier and hid this
+    bad = []
+    for r in args.runs:
+        rep_path = Path(r) / "stage_s" / "sft_report.json"
+        try:
+            if not rep_path.is_file():
+                raise OSError("missing")
+            json.loads(rep_path.read_text())
+        except (OSError, ValueError) as exc:
+            bad.append(f"{rep_path} ({type(exc).__name__}: {exc})")
+    if bad:
+        raise R.TrackPStop(f"sft-select: run report missing or unreadable: {'; '.join(bad)}")
     rep = SFT.select_lr([Path(r) / "stage_s" for r in args.runs])
     print(f"label status of the compared runs: {rep['label_status']}", file=sys.stderr)
     return {"report": rep, "base": {}, "model_files": {}, "lease": [], "data": [rep]}
