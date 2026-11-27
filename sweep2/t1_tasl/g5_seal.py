@@ -138,8 +138,13 @@ def abandon_path(spec: dict, node: str, job: str, chunk: int) -> Path:
     return run_root(spec) / REMOTE / "abandoned" / node / job / f"chunk-{chunk}.json"
 
 
-def final_path(spec: dict) -> Path:
-    return run_root(spec) / REMOTE / REMOTE_HOST / "final.json"
+def final_path(spec: dict, host: str = REMOTE_HOST) -> Path:
+    return run_root(spec) / REMOTE / host / "final.json"
+
+
+def claim_hosts(spec: dict) -> list[str]:
+    """The hosts the run's claims name: TASL-7, and any audit host an addendum admitted (R1-HOST-FREE (3))."""
+    return sorted({json.loads(p.read_text()).get("host", REMOTE_HOST) for p in claim_files(spec)})
 
 
 def claim_state(spec: dict, claim: dict) -> str:
@@ -171,24 +176,35 @@ def _utc_of(paths) -> list[str]:
 def check_remote_final(spec: dict) -> dict | None:
     """Before ``seal_run``, if any TASL-7 claim exists: no claim open, and the final registration of TASL-7's access log
     (``g5_job.finalize_remote``) exists, made after every registration and abandonment, naming the last registered
-    copy of the log. None when TASL-7 ran nothing."""
+    copy of the log. None when TASL-7 ran nothing. With claims for an addendum's audit hosts (R1-HOST-FREE (3)) the
+    same holds per host, over that host's own registrations, abandonments and log copies; the result is then
+    ``{"hosts": {host: final}}`` (TASL-7 alone keeps the signed form)."""
     if not claim_files(spec):
         return None
     if open_claims(spec):
         raise Stop(f"STOP: TASL-7 claims are open {[(c['node'], c['job'], c['chunk']) for c in open_claims(spec)]}; "
                    f"every TASL-7 attempt must be registered (or the claim abandoned) before the run is sealed")
-    fp = final_path(spec)
+    hosts = claim_hosts(spec)
+    if hosts == [REMOTE_HOST]:
+        return _host_final(spec, REMOTE_HOST, only=True)
+    return {"hosts": {h: _host_final(spec, h, only=False) for h in hosts}}
+
+
+def _host_final(spec: dict, host: str, *, only: bool) -> dict:
+    fp = final_path(spec, host)
     if not fp.is_file():
-        raise Stop("STOP: TASL-7 ran audit chunks but its access log has no final registration (g5_tasl.py "
-                   "finalize-remote) after its last job")
+        raise Stop(f"STOP: {host} ran audit chunks but its access log has no final registration (g5_tasl.py "
+                   f"finalize-remote) after its last job")
     final = json.loads(fp.read_text())
     remote = run_root(spec) / REMOTE
-    later = [u for u in _utc_of(list((remote / "registrations").rglob("*.json")) +
-                                list((remote / "abandoned").rglob("*.json"))) if u > final.get("utc", "")]
-    logs = sorted((remote / REMOTE_HOST).glob("access_log-*.jsonl"), key=lambda q: int(q.stem.split("-")[1]))
+    recs = list((remote / "registrations").rglob("*.json")) + list((remote / "abandoned").rglob("*.json"))
+    if not only:                                 # several hosts: each host's own records (abandonments name theirs)
+        recs = [p for p in recs if json.loads(p.read_text()).get("host", REMOTE_HOST) == host]
+    later = [u for u in _utc_of(recs) if u > final.get("utc", "")]
+    logs = sorted((remote / host).glob("access_log-*.jsonl"), key=lambda q: int(q.stem.split("-")[1]))
     if later or not logs or final.get("access_log_sha256") != L._sha_file(logs[-1]):
-        raise Stop("STOP: the final TASL-7 access-log registration is not the last TASL-7 record (a registration or an "
-                   "abandonment came after it, or it names another log copy)")
+        raise Stop(f"STOP: the final {host} access-log registration is not the last {host} record (a registration or "
+                   f"an abandonment came after it, or it names another log copy)")
     return final
 
 

@@ -84,7 +84,13 @@ the spec without launch). AI-assisted (Claude). Authority: the G.5 authorization
   recompute, a ``tasl7_audits`` block moves to TASL-7 only what R1-G5-AUDIT-TWO-CARDS and ``g5_job`` allow: audit
   chunks of the eligible nodes (``--tasl7-nodes``, default the G5-7 nodes whose PASS is on main), never a wave's first
   chunk (the TASL-2 job that makes the wave's plan takes it) or its last (E5), and never while a campaign wave holds
-  the server (TASL-7's lease); the GPU-hours stay inside the cap.
+  the server (TASL-7's lease); the GPU-hours stay inside the cap. The recompute counts the TASL pair only.
+* **Audit hosts beyond the TASL pair** (R1-HOST-FREE (3), R1-G5-SIGNATURE (3); ``g5_audit_hosts``). ``launch(...,
+  host=<name>, chunk=i, addendum=<spec>, addendum_note=<note>)``: an audit chunk on a card an addendum admits, with the
+  addendum spec bound to this spec by sha256 and its note on main bound to this note, and the node's admission there
+  (cross-host PASS against its sealed TASL-2 attempt, host check, C12 where required, and the hardware class: a card of
+  another GPU model only with the author's row R1-G5-AUDIT-HOST-CLASS). The spec, ``note_lines`` and every TASL-pair
+  path are unchanged; a TASL-2 or TASL-7 job refuses an addendum.
 """
 from __future__ import annotations
 
@@ -2720,7 +2726,8 @@ IMPORT_SOURCES = {**T4.IMPORT_SOURCES, "g4_tasl": "sweep2/t1_tasl/g4_tasl.py",
                   "g1b_crosscheck": "sweep2/t1_tasl/g1b_crosscheck.py", "g1b_tasl_join": "sweep2/t1_tasl/g1b_tasl_join.py",
                   "g5_job": "sweep2/t1_tasl/g5_job.py", "g5_seal": "sweep2/t1_tasl/g5_seal.py",
                   "g5_assemble": "sweep2/t1_tasl/g5_assemble.py", "g5_relcopy": "sweep2/t1_tasl/g5_relcopy.py",
-                  "g5_features": "sweep2/t1_tasl/g5_features.py", "g5_noise": "sweep2/t1_tasl/g5_noise.py"}
+                  "g5_features": "sweep2/t1_tasl/g5_features.py", "g5_noise": "sweep2/t1_tasl/g5_noise.py",
+                  "g5_audit_hosts": "sweep2/t1_tasl/g5_audit_hosts.py"}
 
 
 def check_import_sources(repo: Path = None) -> dict:
@@ -2748,7 +2755,8 @@ def job_runner(spec_path, node_name, job, context) -> dict:
 def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable: bool, today: date,
            on_main=G._note_on_main, read_main=G._read_main, list_main=list_main, pin_check=None, mpath_check=None,
            checkout=None, launch_binding=None, runner=None, server_record: Path | None = None,
-           host: str = WORKER_HOST, chunk: int | None = None, pilot_check=None, pilot_main_check=None) -> dict:
+           host: str = WORKER_HOST, chunk: int | None = None, pilot_check=None, pilot_main_check=None,
+           addendum: Path | None = None, addendum_note: Path | None = None) -> dict:
     """The G.5 switch at every job start (§9). Off unless both keys are given; every check below must pass before the
     runner is called (the default runner is ``g5_job.run_job``, part 3b-1). ``server_record``: the proposer's
     ``server_record.json`` copied from TASL-7, for campaign jobs. ``host``: TASL-2, or TASL-7 for an audit chunk under
@@ -2756,23 +2764,43 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
     host check on main; under ``cuda_ipc: c12`` TASL-7's C12 record; the TASL-7 checkout of the G5-7 commit).
     ``pilot_check``: P3 in full at a TASL-2 job start (default ``pilot_basis_check``: the files on main and the sealed
     G.4b attempts, which are on TASL-2); ``pilot_main_check``: P3's half on main at a TASL-7 job start (default
-    ``pilot_basis_main_check``; review m5)."""
+    ``pilot_basis_main_check``; review m5). ``addendum`` / ``addendum_note`` (R1-HOST-FREE (3), ``g5_audit_hosts``):
+    only for an audit host beyond the TASL pair, an audit chunk as on TASL-7, with the addendum spec bound to this
+    spec, the addendum note on main bound to this note, and the node's admission on that host
+    (``g5_audit_hosts.check_admission``) in place of TASL-7's cross-host PASS and host check. A TASL-2 or TASL-7 job
+    takes neither, and its checks are the signed ones."""
     if job not in JOBS:
         raise Stop(f"STOP: job must be one of {JOBS}")
-    if host not in JOB_HOSTS:
+    if host not in JOB_HOSTS and addendum is None:
         raise Stop(f"STOP: host must be one of {JOB_HOSTS}")
-    if host == AUDIT_HOST and not job.startswith("audits"):
-        raise Stop(f"STOP: only audit chunks run on {AUDIT_HOST}; campaign waves keep one worker slot on {WORKER_HOST} "
+    if (addendum is None) != (addendum_note is None) or (addendum is not None and host in JOB_HOSTS):
+        raise Stop(f"STOP: an addendum spec and its note (both) name an audit host beyond {JOB_HOSTS}; a job on the "
+                   f"TASL pair takes neither")
+    if host != WORKER_HOST and not job.startswith("audits"):
+        raise Stop(f"STOP: only audit chunks run on {host}; campaign waves keep one worker slot on {WORKER_HOST} "
                    f"({TWO_CARDS_ROW})")
-    if (host == AUDIT_HOST) != (chunk is not None):
-        raise Stop(f"STOP: a {AUDIT_HOST} audit job names its claimed chunk; a {WORKER_HOST} job takes none")
+    if (host != WORKER_HOST) != (chunk is not None):
+        raise Stop(f"STOP: a {AUDIT_HOST if host == WORKER_HOST else host} audit job names its claimed chunk; a "
+                   f"{WORKER_HOST} job takes none")
     spec = load_spec(spec_path)
     validate_spec(spec, launch=True)
     node = node_entry(spec, node_name)
     if host == AUDIT_HOST and node["family"] not in spec["tasl7_audits"]["families"]:
         raise Stop(f"STOP: {node_name}'s audits stay on {WORKER_HOST} (family {node['family']}; ar-cond7a exists only "
                    f"there)")
+    entry = add = None
+    if addendum is not None:                           # R1-HOST-FREE (3): an audit host admitted by an addendum
+        import g5_audit_hosts as AH                    # noqa: PLC0415 - it imports this module
+        add = AH.load_addendum(addendum)
+        AH.validate_addendum(spec, spec_path, add, launch=True)
+        entry = AH.host_entry(add, host)
+        if node["family"] not in entry["families"]:
+            raise Stop(f"STOP: {node_name}'s audits stay on {WORKER_HOST} (family {node['family']}; {host} takes the "
+                       f"G5-7 family only)")
     fields = check_note(note_path, spec_path, spec=spec, on_main=on_main, read_main=read_main)
+    if entry is not None:
+        AH.check_note(addendum_note, addendum, spec_path, note_path, spec=spec, add=add, on_main=on_main,
+                      read_main=read_main)
     if not enable or os.environ.get(ENABLE_ENV) != "1":
         raise Stop(f"STOP: real G.5 runs are disabled (needs --enable AND {ENABLE_ENV}=1)")
     o = options(spec)
@@ -2794,6 +2822,8 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
         rows.append(row)
     if fields["_K_row"]:
         rows.append(fields["_K_row"])
+    if entry is not None:
+        rows += [AH.HOST_FREE_ROW, AH.SIGNATURE_ROW, AH.CARD_SHARE_ROW]
     fam = node["family"]
     seven_check = spec["harness_families"]["G5-7"]["isolation_host_check"]
     context["host_check"] = {"G5-7": G.check_host_record({"hostname": spec["worker"]["hostname"],
@@ -2850,6 +2880,12 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
     if host == AUDIT_HOST:                                           # R1-G5-AUDIT-TWO-CARDS
         context["crosshost_pass"] = check_crosshost_pass(spec, node_name, read_main, list_main)
         context["host_check"][AUDIT_HOST] = tasl7_host_check(spec, read_main)
+    elif entry is not None:                                          # R1-HOST-FREE (3): the addendum's admission
+        adm = AH.check_admission(spec, entry, node_name, read_main, list_main)
+        context.update(crosshost_pass=adm["crosshost_pass"], admission=adm, audit_host=entry,
+                       addendum={"path": str(addendum), "sha256": L._sha_file(Path(addendum)),
+                                 "note": str(addendum_note)})
+        context["host_check"][host] = adm["host_check"]
     else:                    # R1-TASL2-CPU: a replacement set's fixed-seed determinism record before its first use
         context["tasl2_cpuset"] = check_cpuset_record(spec, node_name, read_main, list_main)
     context["freeze_wait"] = freeze_wait_check(spec, today=today, deadline=fields["_freeze"])        # STOP 14
@@ -2936,24 +2972,41 @@ def main(argv=None) -> int:
     r = sub.add_parser("run"); r.add_argument("spec"); r.add_argument("--note", required=True)
     r.add_argument("--node", required=True); r.add_argument("--job", required=True, choices=JOBS)
     r.add_argument("--enable", action="store_true"); r.add_argument("--server-record")
-    r.add_argument("--host", default=WORKER_HOST, choices=JOB_HOSTS)
-    r.add_argument("--chunk", type=int, help="TASL-7 only: the claimed chunk (R1-G5-AUDIT-TWO-CARDS)")
+    r.add_argument("--host", default=WORKER_HOST,
+                   help=f"one of {JOB_HOSTS}, or an audit host of the --addendum (R1-HOST-FREE (3))")
+    r.add_argument("--chunk", type=int, help="TASL-7 (or an addendum host) only: the claimed chunk (R1-G5-AUDIT-TWO-CARDS)")
+    r.add_argument("--addendum", help="an addendum host only: the audit-hosts addendum spec (g5_audit_hosts)")
+    r.add_argument("--addendum-note", help="an addendum host only: its signed addendum note")
     cc = sub.add_parser("claim-chunk"); cc.add_argument("spec"); cc.add_argument("--node", required=True)
     cc.add_argument("--wave", type=int, required=True, choices=(1, 2)); cc.add_argument("--chunk", type=int, required=True)
+    cc.add_argument("--host", default=AUDIT_HOST, help="TASL-7, or an audit host of the --addendum")
+    for q in (cc,):
+        q.add_argument("--addendum", help="the audit-hosts addendum spec, for a host beyond the TASL pair")
+    ah = sub.add_parser("addendum-lines", help="R1-HOST-FREE (3): validate an audit-hosts addendum spec and render the "
+                                                "key lines of its note")
+    ah.add_argument("spec"); ah.add_argument("--addendum", required=True); ah.add_argument("--launch", action="store_true")
+    an = sub.add_parser("check-addendum-note", help="R1-HOST-FREE (3): the addendum note against its spec")
+    an.add_argument("spec"); an.add_argument("--addendum", required=True); an.add_argument("--note", required=True)
+    an.add_argument("--g5-note", required=True); an.add_argument("--draft", action="store_true")
+    hx = sub.add_parser("host-xc-spec", help="the cross-check spec of an addendum host: validate, print the projection")
+    hx.add_argument("xc_spec")
     rg = sub.add_parser("register-chunk"); rg.add_argument("spec"); rg.add_argument("attempt_dir")
     rg.add_argument("--node", required=True); rg.add_argument("--wave", type=int, required=True, choices=(1, 2))
     rg.add_argument("--chunk", type=int, required=True)
     rg.add_argument("--access-log", required=True, help="a copy of TASL-7's <run_id>/_access_log.jsonl")
     rg.add_argument("--node-log", help="a copy of the TASL-7 node wrapper log the attempt's record names")
+    rg.add_argument("--addendum", help="for a claim of an addendum host: the addendum spec the claim names")
     ab = sub.add_parser("abandon-claim"); ab.add_argument("spec"); ab.add_argument("--node", required=True)
     ab.add_argument("--wave", type=int, required=True, choices=(1, 2)); ab.add_argument("--chunk", type=int, required=True)
     ab.add_argument("--reason", required=True); ab.add_argument("--access-log", required=True)
     fr = sub.add_parser("finalize-remote"); fr.add_argument("spec"); fr.add_argument("--access-log", required=True)
+    fr.add_argument("--host", default=AUDIT_HOST, help="TASL-7, or an addendum host (its own final registration)")
     sv = sub.add_parser("serve"); sv.add_argument("spec"); sv.add_argument("--note", required=True)
     sv.add_argument("--enable", action="store_true")
     for name in ("cpus", "logdir"):
         q = sub.add_parser(name); q.add_argument("spec"); q.add_argument("--node", required=True)
-        q.add_argument("--host", default=WORKER_HOST, choices=JOB_HOSTS)
+        q.add_argument("--host", default=WORKER_HOST, help=f"one of {JOB_HOSTS}, or an audit host of the --addendum")
+        q.add_argument("--addendum", help="for an audit host beyond the TASL pair: the addendum spec")
     cs2 = sub.add_parser("cpuset-spec", help="R1-TASL2-CPU: the derived G.1b spec of a replacement set's check")
     cs2.add_argument("spec"); cs2.add_argument("--node", required=True); cs2.add_argument("--run-id", required=True)
     cs2.add_argument("--out", required=True, help="written once (no overwrite)")
@@ -3023,6 +3076,16 @@ def main(argv=None) -> int:
             spec = load_spec(Path(a.spec))
             validate_spec(spec)
             node = node_entry(spec, a.node)
+            if a.addendum or a.host not in JOB_HOSTS:              # R1-HOST-FREE (3): the addendum host's values
+                import g5_audit_hosts as AH                      # noqa: PLC0415
+                add = AH.load_addendum(Path(a.addendum)) if a.addendum else None
+                if add is None or a.host in JOB_HOSTS:
+                    raise Stop(f"STOP: --addendum names an audit host beyond {JOB_HOSTS} (and only such a host)")
+                AH.validate_addendum(spec, Path(a.spec), add)
+                w = AH.host_entry(add, a.host)
+                cpus = w["node_cpus"].get(a.node) or w["cpus"]
+                print(cpus if a.cmd == "cpus" else str(Path(w["runs_root"]) / spec["run_id"] / "_logs"))
+                return 0
             w = spec["worker"] if a.host == WORKER_HOST else spec["tasl7_audits"]        # g5t7: TASL-7's own values
             cpus = tasl2_node_cpus(spec, a.node) if a.host == WORKER_HOST else (node.get("cpus") or w["cpus"])
             print(cpus if a.cmd == "cpus" else str(Path(w["runs_root"]) / spec["run_id"] / "_logs"))
@@ -3055,14 +3118,37 @@ def main(argv=None) -> int:
             validate_spec(spec, launch=True)
             sp = Path(a.spec)
             if a.cmd == "claim-chunk":
-                out = g5_job.claim_chunk(spec, sp, a.node, a.wave, a.chunk)
+                out = g5_job.claim_chunk(spec, sp, a.node, a.wave, a.chunk, host=a.host,
+                                         addendum=Path(a.addendum) if a.addendum else None)
             elif a.cmd == "register-chunk":
                 out = g5_job.register_attempt(spec, sp, Path(a.attempt_dir), a.node, a.wave, a.chunk,
-                                              Path(a.access_log), node_log=Path(a.node_log) if a.node_log else None)
+                                              Path(a.access_log), node_log=Path(a.node_log) if a.node_log else None,
+                                              addendum=Path(a.addendum) if a.addendum else None)
             elif a.cmd == "abandon-claim":
                 out = g5_job.abandon_claim(spec, sp, a.node, a.wave, a.chunk, a.reason, Path(a.access_log))
             else:
-                out = g5_job.finalize_remote(spec, sp, Path(a.access_log))
+                out = g5_job.finalize_remote(spec, sp, Path(a.access_log), host=a.host)
+            print(json.dumps(out, indent=1))
+        elif a.cmd in ("addendum-lines", "check-addendum-note", "host-xc-spec"):     # R1-HOST-FREE (3)
+            import g5_audit_hosts as AH                      # noqa: PLC0415
+            check_import_sources()
+            if a.cmd == "host-xc-spec":
+                out = AH.check_host_xc_spec(json.loads(Path(a.xc_spec).read_text()))
+            else:
+                spec = load_spec(Path(a.spec))
+                validate_spec(spec, launch=a.cmd == "addendum-lines" and a.launch)
+                add = AH.load_addendum(Path(a.addendum))
+                AH.validate_addendum(spec, Path(a.spec), add,
+                                     launch=a.launch if a.cmd == "addendum-lines" else not a.draft)
+                if a.cmd == "addendum-lines":
+                    lines = {"approved": "false", "g5_note": f"{NOTE_DIR}/{spec['run_id']}.md",
+                             **AH.note_lines(spec, Path(a.spec), add, Path(a.addendum)),
+                             "addendum_spec_sha256": L._sha_file(Path(a.addendum))}
+                    print("\n".join(f"{key}: {value}" for key, value in lines.items()))
+                    return 0
+                AH.check_note(Path(a.note), Path(a.addendum), Path(a.spec), Path(a.g5_note), spec=spec, add=add,
+                              draft=a.draft)
+                out = {"ok": True, "mode": "draft" if a.draft else "strict"}
             print(json.dumps(out, indent=1))
         elif a.cmd == "wave-checks":
             import g5_job                                    # noqa: PLC0415
@@ -3099,7 +3185,8 @@ def main(argv=None) -> int:
         else:
             out = launch(Path(a.spec), Path(a.note), a.node, job=a.job, enable=a.enable, today=date.today(),
                          server_record=Path(a.server_record) if a.server_record else None, host=a.host,
-                         chunk=a.chunk)
+                         chunk=a.chunk, addendum=Path(a.addendum) if a.addendum else None,
+                         addendum_note=Path(a.addendum_note) if a.addendum_note else None)
             print(json.dumps({"ok": True, "node": a.node, "job": a.job}, indent=1, default=str))
     except Stop as exc:
         print(str(exc), file=sys.stderr)

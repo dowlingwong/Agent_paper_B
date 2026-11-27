@@ -1,0 +1,174 @@
+{
+ "schema": "g5_audit_host_crosscheck_spec/1",
+ "label": "ENGINEERING_ONLY",
+ "status": "draft: not launched; its runner (the short kind of g1b_crosscheck.py for a host outside the signed G.1b spec, with that host's GPU check) is a later reviewed unit",
+ "run_id": "g1b-tasl-20261121-b-xh-ada-a",
+ "comment": "The short cross-check of the eight T1 nodes on one RTX 6000 Ada card of the Ada host (ucrtasl), as xc3: per node the default part (n_edits + 1 configurations x default, default_repeat = 10 runs) under the node's G.1b environment and harness pin, compared bit for bit with the node's sealed TASL-2 attempt (references). A PASS is what an addendum note lists to admit the node's G.5 audit chunks on an Ada card (g5_audit_hosts.check_admission) and what R1-HOST-FREE (2)(b) asks before a node's Ada results are used with its TASL floor; it does not by itself make the RTX 6000 Ada the table's hardware class (R1-HOST-FREE (2)(a); R1-G5-AUDIT-HOST-CLASS, proposed). The host's identity fields are filled from the compute agent's survey before a note can bind this spec; the G.1b census ran on RTX 6000 Ada cards, so the estimate ratio is 1.0.",
+ "rule_id": "R1-HOST-FREE",
+ "rule": "R1-HOST-FREE (2)(b): a node's results from a second host are used with the first host's noise floor only when that node has a cross-host PASS between the two (the default part bit-identical, as in xc2 and xc3); R1-G5-SIGNATURE (3) and R1-HOST-FREE (3): further hosts join the G.5 note by addendum notes",
+ "host": {
+  "name": "Ada",
+  "hostname": "ucrtasl",
+  "gpu_model": "NVIDIA RTX 6000 Ada Generation",
+  "gpu_uuid": "PENDING: the card's nvidia-smi UUID (compute agent survey)",
+  "driver": "PENDING: nvidia-smi driver_version (compute agent survey)",
+  "lease": "PENDING: the card's lease file under ~/r1_locks/ (compute agent)",
+  "card_share": {
+   "rule": "R1-CARD-SHARE",
+   "min_free_mib": 24576
+  },
+  "base": "/data1/dowling/r1_tracks/t1_tasl",
+  "runs_root": "/data1/dowling/r1_tracks/t1_tasl/runs",
+  "uv": "PENDING: uv path on ucrtasl (compute agent survey)",
+  "cpus": "PENDING: a CPU set of 8 CPUs on ucrtasl (compute agent survey)",
+  "env_python": {
+   "torch312": "PENDING: torch312 interpreter on ucrtasl (freeze-checked at job start)",
+   "jax312": "PENDING: jax312 interpreter on ucrtasl (freeze-checked at job start)",
+   "ar-cond7a": "PENDING: ar-cond7a interpreter on ucrtasl (freeze 11def6ad\u2026)"
+  },
+  "extra_env": {
+   "XLA_FLAGS": "PENDING: --xla_gpu_cuda_data_dir=<the CUDA 12.2 directory on ucrtasl>",
+   "AR_HOUSEPRICE_TRAIN_CSV": "PENDING: the house-prices train.csv path on ucrtasl"
+  },
+  "isolation_host_check": {
+   "record": "PENDING: docs/r1/reports/<dir>/ADA_ISOLATION_HOST_CHECK_<date>.md",
+   "sha256": "PENDING"
+  }
+ },
+ "g1b_specs": {
+  "G5-7": {
+   "path": "sweep2/t1_tasl/g1b_tasl_spec.json",
+   "sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+   "run_id": "g1b-tasl-20261121-b",
+   "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702"
+  },
+  "G5-AR": {
+   "path": "sweep2/t1_tasl/g1b_tasl_ar_spec.json",
+   "sha256": "65da95db375505506e65abac32eaa99f21be914d5a638870f4a03c5b5173f345",
+   "run_id": "g1b-ar-tasl-20261122-a",
+   "harness_commit": "2d09f9a9871160fc8f34bcc25b1aa37b1c0c81fe"
+  }
+ },
+ "nodes": [
+  "mlab_cifar10",
+  "mlab_imdb",
+  "mlab_ogbn_arxiv",
+  "mlgym_cifar10",
+  "mlgym_fmnist",
+  "mlgym_breakout_minatar",
+  "mlgym_houseprice",
+  "autoresearch_fixedtokens"
+ ],
+ "part": "default: configurations c0..c<n_edits> x conditions default and default_repeat, as xc3 (g1b_crosscheck.DEFAULT_CONDITIONS)",
+ "references": {
+  "mlab_cifar10": {
+   "family": "G5-7",
+   "run_id": "g1b-tasl-20261121-b-xc2-TASL-2",
+   "attempt": 1,
+   "spec_sha256": "af30beb06094229d8b0fd45315258f8783992e5a1acc14d2ba015bdebdbaf850",
+   "job_record_sha256": "c863ea61f64c12b483009bfecb13d58c3bc51476a6ed1b6e1e3ea6a5629dbb81",
+   "source": {
+    "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlab_cifar10_20261122.json",
+    "sha256": "e5264c0b4f03d29b1e01f7348ca9a7e0aa4bbf5af4638f070963c08743b55987"
+   }
+  },
+  "mlab_imdb": {
+   "family": "G5-7",
+   "run_id": "g1b-tasl-20261121-b",
+   "attempt": 1,
+   "spec_sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465",
+   "job_record_sha256": "4468021ac41507b4a9161746e8f178d0ae98c938e18e3b91167d1d806d3c4eae",
+   "source": {
+    "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json",
+    "sha256": "9cce90640315f5de6a8ce0ce1de9456eada82fc25214950fc8a18ce4ff515920"
+   }
+  },
+  "mlab_ogbn_arxiv": {
+   "family": "G5-7",
+   "run_id": "g1b-tasl-20261121-b",
+   "attempt": 1,
+   "spec_sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465",
+   "job_record_sha256": "45583b2717b1b0817c4e2c1e5cec7202a47b718b4ffd4d52e71dc66b249c0cac",
+   "source": {
+    "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_ogbn_arxiv_20261125.json",
+    "sha256": "b42e485ce259b5c9711e71d7062a5c276b12d51e46910f8580c29a17b427a838"
+   }
+  },
+  "mlgym_cifar10": {
+   "family": "G5-7",
+   "run_id": "g1b-tasl-20261121-b-xc2-TASL-2",
+   "attempt": 1,
+   "spec_sha256": "73254656ff33cc9b596b85837ebaf2b958537aa35beb71e1970daf6a70dcd750",
+   "job_record_sha256": "f30edd055eb6513c4c43555c1ad38a08450cac429d7e5e98d603f549be44f5e2",
+   "source": {
+    "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_cifar10_20261122.json",
+    "sha256": "cbd4b05f664e237654558f91c0d89583a15d3dadbefdcdde7202afb4171efb29"
+   }
+  },
+  "mlgym_fmnist": {
+   "family": "G5-7",
+   "run_id": "g1b-tasl-20261121-b",
+   "attempt": 3,
+   "spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+   "job_record_sha256": "5476148acbbdd15d1afcf675c94b5b3cf03269af35673a5a3a6942d3ef4d55ef",
+   "source": {
+    "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_fmnist_20261125.json",
+    "sha256": "cb2ac690825e0928d2c2ebed8ce0f4eead780b3279856221f28687f5d8876565"
+   }
+  },
+  "mlgym_breakout_minatar": {
+   "family": "G5-7",
+   "run_id": "g1b-tasl-20261121-b-xc2-TASL-2",
+   "attempt": 1,
+   "spec_sha256": "6a50c785948a3b5bd0f84fc16545eccd579902349335b8ea87fdf72f9548b873",
+   "job_record_sha256": "13409befcbcc356504e3a5ba539819b9b0d7a2d097539ef8c11388a00fc92f7f",
+   "source": {
+    "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC2_STEP1_VERDICT_mlgym_breakout_minatar_20261122.json",
+    "sha256": "29fe460eab12544a5e24964651a095ffa28e9d4c1314d3d4b9eaaddefcb6ca0a"
+   }
+  },
+  "mlgym_houseprice": {
+   "family": "G5-7",
+   "run_id": "g1b-tasl-20261121-b",
+   "attempt": 1,
+   "spec_sha256": "060aac91ba452a69e4e898b66b92ebd5bfc0887c2933cfd2e438d93d17ecb465",
+   "job_record_sha256": "15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa",
+   "source": {
+    "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlgym_houseprice_20261125.json",
+    "sha256": "6c7da4409966ff5e7145f2c1f2b5a6d0f51c5675919c1d6a63a0aa0b644fa87c"
+   }
+  },
+  "autoresearch_fixedtokens": {
+   "family": "G5-AR",
+   "run_id": "g1b-ar-tasl-20261122-a",
+   "attempt": 1,
+   "spec_sha256": "65da95db375505506e65abac32eaa99f21be914d5a638870f4a03c5b5173f345",
+   "job_record_sha256": "d4d080185cb3608a457cf0ebd605c486880fb83446c851909fb85b01cbfca77c",
+   "source": {
+    "record": "docs/r1/reports/tasl_chain_20261122/AR_G1B_TASL2_RESULT_20261122.md",
+    "sha256": "9dcd1f0cebebc747a48af0ce0f2c087846e1526fd531185bb00ee949d3ac3f79"
+   }
+  }
+ },
+ "verdicts": {
+  "mlab_cifar10": "docs/r1/reports/g5_audit_hosts_20261127/G5_AUDIT_HOST_XC_VERDICT_Ada_mlab_cifar10_20261127.json",
+  "mlab_imdb": "docs/r1/reports/g5_audit_hosts_20261127/G5_AUDIT_HOST_XC_VERDICT_Ada_mlab_imdb_20261127.json",
+  "mlab_ogbn_arxiv": "docs/r1/reports/g5_audit_hosts_20261127/G5_AUDIT_HOST_XC_VERDICT_Ada_mlab_ogbn_arxiv_20261127.json",
+  "mlgym_cifar10": "docs/r1/reports/g5_audit_hosts_20261127/G5_AUDIT_HOST_XC_VERDICT_Ada_mlgym_cifar10_20261127.json",
+  "mlgym_fmnist": "docs/r1/reports/g5_audit_hosts_20261127/G5_AUDIT_HOST_XC_VERDICT_Ada_mlgym_fmnist_20261127.json",
+  "mlgym_breakout_minatar": "docs/r1/reports/g5_audit_hosts_20261127/G5_AUDIT_HOST_XC_VERDICT_Ada_mlgym_breakout_minatar_20261127.json",
+  "mlgym_houseprice": "docs/r1/reports/g5_audit_hosts_20261127/G5_AUDIT_HOST_XC_VERDICT_Ada_mlgym_houseprice_20261127.json",
+  "autoresearch_fixedtokens": "docs/r1/reports/g5_audit_hosts_20261127/G5_AUDIT_HOST_XC_VERDICT_Ada_autoresearch_fixedtokens_20261127.json"
+ },
+ "pass_rule": "g1b_crosscheck.compare's rule for the short mode: both attempts complete, both deterministic (default = default_repeat), and every (configuration, condition) outcome identical between the Ada attempt and the reference; otherwise a STOP verdict, which keeps the node's audits on the TASL pair (R1-XC3-FAIL-READING) and means its Ada results are not used with its TASL floor",
+ "estimate": {
+  "ratio_ada_over_census": 1.0,
+  "ratio_sensitivity": 1.5,
+  "setup_estimate_s": 900,
+  "comment": "the G.1b census ran on RTX 6000 Ada cards; the projection is g5_audit_hosts.host_xc_projection"
+ },
+ "caps": {
+  "max_gpu_hours": 4.0,
+  "authority": "this run's cap, above the projection at the sensitivity ratio; the budget it counts against is the note that launches it"
+ }
+}
