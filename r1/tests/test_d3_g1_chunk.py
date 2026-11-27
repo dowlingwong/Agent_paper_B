@@ -246,6 +246,9 @@ def test_replicate_chunk_writes_the_same_layout(tmp_path):
     assert camp["campaign_kind"] == "replicate"
     assert camp["record_name"] == f"a__FIXR3__{NODE}__s6201__r0"
     assert (first / "ledger.jsonl").is_file() and (first / "runs.jsonl").is_file()
+    assert (first / "events.jsonl").is_file()
+    ledger = [json.loads(line) for line in (first / "ledger.jsonl").read_text().splitlines()]
+    assert ledger and all("replicates" in row["extra"]["control"] for row in ledger)
     assert (first / "snapshots" / "w5.json").is_file()
     assert (first / "snapshots" / "final.json").is_file()
     assert not (first / "snapshots" / "w20.json").exists()

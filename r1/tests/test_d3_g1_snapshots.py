@@ -360,6 +360,14 @@ def test_replicate_final_is_separate_from_w20_and_carries_the_last_keep(tmp_path
     assert _load(tmp_path, "w20.json")["incumbent_config"] == pre
 
 
+def test_w_zero_final_refuses_a_non_cap_end(tmp_path):
+    rec = SnapshotRecorder(out_dir=tmp_path / "campaign", stage="a", arm="EGATE", node=NODE,
+                           repetition=0, instance_id="x")
+    with pytest.raises(SnapshotStop):
+        rec.write_final_from_state(w_final=0, ended_on="worker_runs", incumbent_config={"x": "y"},
+                                   state={"steps": 0}, last_kept_trial_index=None, llm_calls=0)
+
+
 def test_replicate_final_requires_the_recorded_w(tmp_path):
     rec = SnapshotRecorder(out_dir=tmp_path / "campaign", stage="a", arm="EGATE", node=NODE,
                            repetition=0, instance_id="x")

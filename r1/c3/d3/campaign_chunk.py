@@ -193,6 +193,8 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
         return _run_replicate_chunk(spec, out, replicate_factory, manifest=manifest, observed=observed)
     if factory is None:
         raise ChunkStop("the harness-arm chunk needs a campaign factory")
+    if spec.arm in ("FIXR3", "EGATE"):
+        raise ChunkStop(f"{spec.arm} runs through the replicate branch, not the harness factory")
     if manifest is None:
         raise ChunkStop("a chunk needs the locked campaign manifest (campaign_manifest.json)")
     if observed is None:
@@ -331,6 +333,8 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
         recorder = SnapshotRecorder(out_dir=cdir, stage=spec.stage, arm=spec.arm, node=spec.node,
                                     repetition=spec.repetition, instance_id=inst)
         unit = factory(spec, seed, cdir, recorder)
+        if str(getattr(unit.engine, "arm", "")) != spec.arm:
+            raise ChunkStop(f"the replicate engine is {getattr(unit.engine, 'arm', None)!r}, not {spec.arm!r}")
         summary = run_replicate_campaign(
             instance_id=inst, repetition=spec.repetition, unit=unit, recorder=recorder,
             stage=spec.stage, node=spec.node, W=spec.W, llm_cap=spec.llm_cap,
@@ -343,15 +347,14 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
             "worker_runs": summary["worker_runs"], "llm_calls": summary["llm_calls"],
             "ended_on": summary["ended_on"], "snapshots": summary["snapshots"],
             "final_sha256": summary["final_sha256"], "snapshot_schema": SNAPSHOT_SCHEMA,
-            "steps": len(summary["steps"]),
             "zero_variance_cases": sum(int(s.get("zero_variance_cases") or 0) for s in summary["steps"]),
         }
         record["record_name"] = f"{spec.stage}__{spec.arm}__{inst}__r{spec.repetition}"
         record["campaign_id"] = inst
         (cdir / "ledger.jsonl").write_text(
-            "".join(json.dumps({"instance_id": inst, "step": s["step"], "decision": s["decision"],
-                                "replicates": s["replicates"], "detail": s["detail"]},
-                               sort_keys=True) + "\n" for s in summary["steps"]), encoding="utf-8")
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in summary["trials"]), encoding="utf-8")
+        (cdir / "events.jsonl").write_text(
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in summary["events"]), encoding="utf-8")
         (cdir / "runs.jsonl").write_text(
             "".join(json.dumps({"instance_id": inst, "record": a}, sort_keys=True) + "\n"
                     for a in summary["attempts"]), encoding="utf-8")

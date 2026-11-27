@@ -138,3 +138,52 @@ def test_replicate_binds_the_declared_budget(tmp_path):
     with pytest.raises(ReplicateStop):
         run_replicate_campaign(instance_id=INSTANCE, repetition=0, unit=_unit(Fixr3Engine(6201)),
                                recorder=rec, W=19)
+
+
+def test_engine_runs_charged_must_match_the_counter(tmp_path):
+    from types import SimpleNamespace
+
+    class Liar:
+        arm = "FIXR3"
+        version = "liar/v1"
+        instance_seed = 6201
+        steps = 0
+        incumbent = None
+        seeds = (6201, 6202, 6203)
+        zero_variance_cases = 0
+
+        def step(self, sha, run, counter):
+            run(role="candidate", config_sha256=sha, seed=6201, j=0)
+            counter.charge(kind="trial", role="candidate", seed=6201, config_sha256=sha,
+                           success=True, j=0, metric=0.5)
+            return SimpleNamespace(decision="kept", runs_charged=3, replicates=[],
+                                   display_metric=0.5, detail={})
+
+    rec = SnapshotRecorder(out_dir=tmp_path / "campaign", stage="a", arm="FIXR3", node=NODE,
+                           repetition=0, instance_id=INSTANCE)
+    unit = _unit(Liar())
+    with pytest.raises(ReplicateStop):
+        run_replicate_campaign(instance_id=INSTANCE, repetition=0, unit=unit, recorder=rec)
+
+
+def test_worker_failure_class_and_process_counts_are_recorded(tmp_path):
+    class Oom(RuntimeError):
+        failure_class = "oom"
+        card_other_processes = (1, 1)
+        host_other_processes = (3, 3)
+
+    cdir = tmp_path / "campaign"
+    rec = SnapshotRecorder(out_dir=cdir, stage="a", arm="FIXR3", node=NODE,
+                           repetition=0, instance_id=INSTANCE)
+    unit = _unit(Fixr3Engine(6201))
+
+    def oom(proposal, config, seed, j, budget_index):
+        raise Oom("CUDA out of memory")
+
+    unit.run_trial = oom
+    summary = run_replicate_campaign(instance_id=INSTANCE, repetition=0, unit=unit,
+                                     recorder=rec, stage="a", node=NODE)
+    attempt = summary["attempts"][0]
+    assert attempt["failure_class"] == "oom"
+    assert attempt["card_other_processes"] == [1, 1]
+    assert attempt["host_other_processes"] == [3, 3]

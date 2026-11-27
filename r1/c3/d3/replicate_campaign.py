@@ -47,6 +47,7 @@ class RunAttempt:
     metric: float | None
     seconds: float
     cause: str | None = None
+    failure_class: str = "runtime_error"
     card_other_processes: tuple[int, int] | None = None
     host_other_processes: tuple[int, int] | None = None
 
@@ -55,6 +56,9 @@ class RunAttempt:
             "step": self.step, "role": self.role, "j": self.j, "seed": self.seed,
             "config_sha256": self.config_sha256, "success": self.success,
             "metric": self.metric, "seconds": self.seconds, "cause": self.cause,
+            "failure_class": self.failure_class,
+            "card_other_processes": list(self.card_other_processes) if self.card_other_processes else None,
+            "host_other_processes": list(self.host_other_processes) if self.host_other_processes else None,
         }
 
 
@@ -148,6 +152,8 @@ def run_replicate_campaign(*, instance_id: str, repetition: int, unit: Replicate
     }
     attempts: list[RunAttempt] = []
     steps: list[dict[str, Any]] = []
+    trials: list[dict[str, Any]] = []
+    events: list[dict[str, Any]] = []
     last_kept: int | None = None
     step_index = 0
     restore_next = False
@@ -162,9 +168,16 @@ def run_replicate_campaign(*, instance_id: str, repetition: int, unit: Replicate
         proposal_calls += 1
         proposal = unit.propose(step_index, dict(incumbent_config),
                                 int(budget_holder["value"].llm_calls))
+        if proposal is not None:
+            events.append({"event_type": "proposal_created",
+                           "payload": {"instance_id": instance_id, "step_index": step_index,
+                                       "llm_calls": int(budget_holder["value"].llm_calls)}})
         if proposal is None:
             if int(budget_holder["value"].llm_calls) >= llm_cap:
-                ended_on = "llm_call_cap"
+                ended_on = table_ended_on(
+                    worker_runs=counter.used, llm_calls=int(budget_holder["value"].llm_calls),
+                    arm=arm, unfundable=False,
+                )
                 break
             raise ReplicateStop("the manager returned no proposal before the LLM-call cap")
         validated = unit.validate(proposal)
@@ -204,14 +217,26 @@ def run_replicate_campaign(*, instance_id: str, repetition: int, unit: Replicate
                 proposal_obj, config = None, dict(incumbent_config)
             budget_holder["value"] = budget_holder["value"].consume_worker_run(0.0)
             try:
-                ok, metric, seconds = unit.run_trial(proposal_obj, config, int(seed), int(j),
-                                                     counter.used + 1)
+                report = unit.run_trial(proposal_obj, config, int(seed), int(j), counter.used + 1)
+                if not isinstance(report, tuple) or len(report) not in (3, 4):
+                    raise ReplicateStop("run_trial must return (success, metric, seconds[, detail])")
+                ok, metric, seconds = report[:3]
+                detail = dict(report[3]) if len(report) == 4 and report[3] else {}
                 attempt = RunAttempt(step_index, role, int(j), int(seed), config_sha256,
                                      bool(ok), None if metric is None else float(metric),
-                                     float(seconds or 0.0))
+                                     float(seconds or 0.0),
+                                     failure_class=str(detail.get("failure_class", "runtime_error")),
+                                     card_other_processes=detail.get("card_other_processes"),
+                                     host_other_processes=detail.get("host_other_processes"))
+            except ReplicateStop:
+                raise
             except Exception as exc:  # noqa: BLE001 - a worker failure is a failed RunOutcome
+                cause = f"{type(exc).__name__}: {exc}"[:300]
                 attempt = RunAttempt(step_index, role, int(j), int(seed), config_sha256,
-                                     False, None, 0.0, cause=f"{type(exc).__name__}: {exc}"[:300])
+                                     False, None, 0.0, cause=cause,
+                                     failure_class=str(getattr(exc, "failure_class", "runtime_error")),
+                                     card_other_processes=getattr(exc, "card_other_processes", None),
+                                     host_other_processes=getattr(exc, "host_other_processes", None))
             attempts.append(attempt)
             recorder.set_pending(**_pending(attempts, step_index,
                                             maximize=bool(getattr(unit.engine, "maximize", True))))
@@ -219,10 +244,15 @@ def run_replicate_campaign(*, instance_id: str, repetition: int, unit: Replicate
                 return RunOutcome(False)
             return RunOutcome(True, attempt.metric, attempt.seconds)
 
+        before_runs = counter.used
+        prev_zero = int(getattr(unit.engine, "zero_variance_cases", 0))
         try:
             result = unit.engine.step(candidate_sha, run_one, counter)
         except UnfundableStep:
-            ended_on = "no_fundable_candidate"
+            ended_on = table_ended_on(
+                worker_runs=counter.used, llm_calls=int(budget_holder["value"].llm_calls),
+                arm=arm, unfundable=True,
+            )
             break
 
         budget = budget_holder["value"]
@@ -231,18 +261,48 @@ def run_replicate_campaign(*, instance_id: str, repetition: int, unit: Replicate
                 f"charged-run parity failure after step {step_index}: counter {counter.used}, "
                 f"budget {budget.worker_runs}"
             )
+        charged_this_step = counter.used - before_runs
+        if int(result.runs_charged) != charged_this_step:
+            raise ReplicateStop(
+                f"step {step_index}: the engine reports {result.runs_charged} charged runs, the counter "
+                f"gained {charged_this_step}"
+            )
+        new_runs = counter.runs[before_runs:]
+        expected = {(r.role, r.j, r.seed, r.success) for r in new_runs if not (r.role == "candidate" and r.j == 0)}
+        actual = {(e.get("role"), e.get("j"), e.get("seed"), e.get("success"))
+                  for e in result.replicates if e.get("charged") is True}
+        if expected != actual:
+            raise ReplicateStop(
+                f"step {step_index}: extra.control.replicates does not match the charged runs: "
+                f"counter {sorted(expected)}, entries {sorted(actual)}"
+            )
+        zero_this_step = int(getattr(unit.engine, "zero_variance_cases", 0)) - prev_zero
+        if zero_this_step < 0:
+            raise ReplicateStop("the engine's zero_variance_cases counter decreased")
         kept = result.decision == "kept"
         if kept:
             incumbent_config = dict(candidate_config)
             last_kept = step_index
         restore_next = not kept
+        trial_id = f"{instance_id}__t{step_index}"
         steps.append({
-            "step": step_index, "trial_id": f"{instance_id}__t{step_index}",
+            "step": step_index, "trial_id": trial_id,
             "decision": result.decision, "runs_charged": int(result.runs_charged),
             "replicates": list(result.replicates), "display_metric": result.display_metric,
             "detail": dict(result.detail or {}),
-            "zero_variance_cases": int(getattr(unit.engine, "zero_variance_cases", 0)),
+            "zero_variance_cases": zero_this_step,
         })
+        trials.append({
+            "instance_id": instance_id, "budget_index": step_index, "trial_id": trial_id,
+            "worker_mode": "ran", "decision": result.decision,
+            "llm_calls": int(budget.llm_calls),
+            "last_kept_trial_index": last_kept,
+            "extra": {"control": {"replicates": list(result.replicates),
+                                  "zero_variance_cases": zero_this_step}},
+        })
+        events.append({"event_type": "control_decision",
+                       "payload": {"instance_id": instance_id, "step_index": step_index,
+                                   "decision": result.decision, "llm_calls": 0}})
         step_index += 1
 
     if proposal_calls != int(budget_holder["value"].llm_calls):
@@ -272,7 +332,8 @@ def run_replicate_campaign(*, instance_id: str, repetition: int, unit: Replicate
         "campaign_id": instance_id, "stage": stage, "arm": arm, "node": node,
         "repetition": int(repetition), "worker_runs": counter.used,
         "llm_calls": int(budget_holder["value"].llm_calls), "proposal_calls": proposal_calls,
-        "ended_on": ended_on, "steps": steps, "attempts": [a.as_dict() for a in attempts],
+        "ended_on": ended_on, "steps": steps, "trials": trials, "events": events,
+        "attempts": [a.as_dict() for a in attempts],
         "snapshots": recorder.snapshot_hashes(), "final_sha256": final_sha,
         "incumbent_config_sha256": config_sha256(incumbent_config),
     }

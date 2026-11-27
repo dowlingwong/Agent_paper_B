@@ -547,6 +547,8 @@ class SnapshotRecorder:
             raise SnapshotParityStop(
                 f"final w_final={w_final} differs from the recorder's charged count {self.count}"
             )
+        if int(w_final) == 0 and ended_on not in ("llm_call_cap", "error"):
+            raise SnapshotStop(f"a campaign with w_final = 0 can only end llm_call_cap, not {ended_on!r}")
         if state is None:
             raise SnapshotStop("write_final_from_state needs the engine/counter projection")
         if w_final == 0:

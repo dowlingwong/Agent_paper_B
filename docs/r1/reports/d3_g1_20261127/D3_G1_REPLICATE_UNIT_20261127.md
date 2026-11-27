@@ -50,11 +50,11 @@ R3 review (`docs/r1/reviews/D3_G1_G6_REV6C_REVIEW_R3_20261127.md`).
 
 ## Tests run
 
-- New and changed modules: **31 passed** (`test_d3_g1_snapshots.py` 17, `test_d3_g1_chunk.py` 9,
-  `test_d3_g1_replicate.py` 5) at the branch tip, Python 3.11.13, pytest 9.2.0, `AR_HARNESS_ROOT` at the pinned
+- New and changed modules: **34 passed** (`test_d3_g1_snapshots.py` 19, `test_d3_g1_chunk.py` 9,
+  `test_d3_g1_replicate.py` 8) at the branch tip, Python 3.11.13, pytest 9.2.0, `AR_HARNESS_ROOT` at the pinned
   harness checkout.
 - The related delivered modules (`test_d3_fixr3.py`, `test_d3_egate.py`, `test_d3_g8_accounting.py`) pass too:
-  **106 passed** together.
+  **109 passed** together.
 - Full `r1/tests` with `--continue-on-collection-errors`: see the report on `coord/compute` for the final counts
   and the identical failing-id comparison against the base.
 
@@ -62,12 +62,23 @@ R3 review (`docs/r1/reviews/D3_G1_G6_REV6C_REVIEW_R3_20261127.md`).
 
 | File | sha256 |
 |---|---|
-| `r1/c3/d3/snapshots.py` | `acf501d4aefcc4ee6eb4e1c105ea3bf01bf0d39039fcc36f2ca3f9c614986b84` |
-| `r1/c3/d3/campaign_chunk.py` | `6e34e6716f4d9decbaebad5405654341ec014d786430bd6f8d5956fc034576a6` |
-| `r1/c3/d3/replicate_campaign.py` | `2410176707722a262600aa080cfd15c9013088693e241151b6827003fa46b1a6` |
-| `r1/tests/test_d3_g1_snapshots.py` | `26e2a6fffc680c6cddf75fb9111b2b1f27b557d9930b41f98c56eb77ced11ab2` |
-| `r1/tests/test_d3_g1_chunk.py` | `caa4f7e9222a34e0ca82da034adb71d2bbc7cf919b1f7de4f2a10ec2b972203d` |
-| `r1/tests/test_d3_g1_replicate.py` | `de93e50f2abecfc832e2fdc72905bbfdb76d03f7db2d67d415f5fc0c0e46982f` |
+| `r1/c3/d3/snapshots.py` | `0347b02f3f343356976f8ddfa6d5484f797adf2726425233cf454835ada8f750` |
+| `r1/c3/d3/campaign_chunk.py` | `8b84000cfd42918fa315f6d9bb9471086be6aa57dcd5693548bed1bf291b3c69` |
+| `r1/c3/d3/replicate_campaign.py` | `7606cfebdc842ddb0d69b2e31166f81916422ac7d2792de8c6911c2ade1c72e7` |
+| `r1/tests/test_d3_g1_snapshots.py` | `c2be8fffafdaf9d6d6b639aca1903445c46617f756c05432dc3e7c8fb1c81047` |
+| `r1/tests/test_d3_g1_chunk.py` | `873c78cc4f18aad34b3f18f3950b4ca53e619d76b43fff7ba6517d6f642012b5` |
+| `r1/tests/test_d3_g1_replicate.py` | `db517fe2cdf972051fc33d05789abeaa8c243125e7d1ff4b33613ca0e3e3ee2d` |
+
+## Review round 1 corrections
+
+The fresh tier-E review of `fb101386` (`CHANGES REQUIRED`) found: a missing `runs_charged`/entry parity check (B1);
+no G8-compatible `extra.control.replicates`/events in the ledger (M1); cumulative `zero_variance_cases`
+overcount (M2); `RunAttempt` lacking a classifiable failure class and card/host counts (M3); plus minors. This
+revision adds: the step charge/entry parity assertions; G8 trial rows and `events.jsonl`; per-step
+`zero_variance_cases`; `RunAttempt.failure_class` and card/host counts (the adapter may return a 4th detail
+element or raise an exception carrying them); `table_ended_on` for the unfundable and empty-stream ends; the
+`engine.arm == spec.arm` and harness-vs-replicate refusals; and the `w_final = 0` end restriction. The review
+branch is `compute-d3-g1-replicate-review-20261127` @ `cb987e2e`.
 
 ## What is still outside this unit
 
