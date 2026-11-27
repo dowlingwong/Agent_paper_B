@@ -1,0 +1,67 @@
+{
+ "attempts": {
+  "kev-0.8b/attempt-1": {
+   "charged_gpu_hours": 0.0092,
+   "cluster_id": null,
+   "launch": "direct",
+   "receipt_gpu_hours": 0.0092,
+   "remote_wallclock_s": null
+  },
+  "kev-0.8b/attempt-2": {
+   "charged_gpu_hours": 0.0688,
+   "cluster_id": null,
+   "launch": "direct",
+   "receipt_gpu_hours": 0.0688,
+   "remote_wallclock_s": null
+  },
+  "kev-0.8b/attempt-3": {
+   "charged_gpu_hours": 0.0596,
+   "cluster_id": null,
+   "launch": "direct",
+   "receipt_gpu_hours": 0.0596,
+   "remote_wallclock_s": null
+  },
+  "kev-0.8b/attempt-4": {
+   "charged_gpu_hours": 0.1231,
+   "cluster_id": null,
+   "launch": "direct",
+   "receipt_gpu_hours": 0.1231,
+   "remote_wallclock_s": null
+  },
+  "kev-4b/attempt-1": {
+   "charged_gpu_hours": 0.632,
+   "cluster_id": null,
+   "launch": "direct",
+   "receipt_gpu_hours": 0.632,
+   "remote_wallclock_s": null
+  },
+  "qwen3.5-0.8b-base/attempt-1": {
+   "charged_gpu_hours": 0.1588,
+   "cluster_id": null,
+   "launch": "direct",
+   "receipt_gpu_hours": 0.1588,
+   "remote_wallclock_s": null
+  },
+  "qwen3.5-0.8b-base/attempt-2": {
+   "charged_gpu_hours": 0.4511,
+   "cluster_id": null,
+   "launch": "direct",
+   "receipt_gpu_hours": 0.4511,
+   "remote_wallclock_s": null
+  },
+  "qwen3.5-4b-base/attempt-1": {
+   "charged_gpu_hours": 0.6577,
+   "cluster_id": null,
+   "launch": "direct",
+   "receipt_gpu_hours": 0.6577,
+   "remote_wallclock_s": null
+  }
+ },
+ "label": "ENGINEERING_ONLY",
+ "rule": "P4-PROBECAP A; review round 2, M1: written once by probe-record; probe_charges applies it",
+ "run_id": "trackp-p4-probe-20261125-a",
+ "schema": "trackp_p4_probe_charges/1",
+ "supplement": 0,
+ "t1": null,
+ "t1_gpu_hours": null
+}
