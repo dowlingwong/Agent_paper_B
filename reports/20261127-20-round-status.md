@@ -1,8 +1,8 @@
 # Round status — 27 Nov 2026, 10:20–11:40 UTC
 
-`origin/main` moved `2d88fe1b` → `840ad01d` (revision 4 step (5) repeat: G1 terminal repair PASS;
-full step-5 review **NOT ACCEPTED** on the runner→audit→table integration; the screening note
-signed). `origin/coord/compute` before this report: `b4b33527`. No evidence campaign, no GPU job, no
+`origin/main` moved `2d88fe1b` → `840ad01d` → `cd9af2af` (revision 4 step (5) repeat: G1 terminal
+repair PASS; full step-5 review **NOT ACCEPTED** on the runner→audit→table integration; the
+screening note signed; the D.3 G1 launchers merged with reviews R1–R4). `origin/coord/compute` before this report: `b4b33527`. No evidence campaign, no GPU job, no
 label/evaluation read this round.
 
 ## 1. STOP — screening evidence run (`compute/20261127-22`)
@@ -29,8 +29,8 @@ passed; the scene is kept; no retry, no patch.
 
 | Task | Result | Branch / tip | Review |
 |---|---|---|---|
-| `compute/20261126-02` (+ `cluster/20261126-02`) — D.3 G1 launchers: one chunk argv, HTCondor and direct SSH, job-side hardware probe | **ACCEPTED** | `compute-d3-launchers-20261127` @ `ead7375aed06518045384176e72e66ae974a9936` | `compute-d3-launchers-review-20261127` @ `acc43a3a29e0bfc8bb07bd2881af6c1a9d4a6d53` (R4; R1/R2/R3 history) |
-| `compute/20261127-23` — D.3 runner→audit→table integration: G7 summary from production records, per-keep G6 audits, table assembly | **delivered, review pending** | `compute-d3-integration-20261127` @ `1bd7f3d6d724a9d2653fd06807e639a5ef4f4129` | review in progress |
+| `compute/20261126-02` (+ `cluster/20261126-02`) — D.3 G1 launchers: one chunk argv, HTCondor and direct SSH, job-side hardware probe | **ACCEPTED, merged `cd9af2af`** | `compute-d3-launchers-20261127` @ `ead7375aed06518045384176e72e66ae974a9936` | `compute-d3-launchers-review-20261127` @ `acc43a3a29e0bfc8bb07bd2881af6c1a9d4a6d53` (R4; R1/R2/R3 history) |
+| `compute/20261127-23` — D.3 runner→audit→table integration: G7 summary from production records, per-keep G6 audits, table assembly | **ACCEPTED** | `compute-d3-integration-20261127` @ `39df5b9256ce69fad96659ab8217d452bd0211bd` (reviewed code `d8cfd7d0`) | `compute-d3-integration-review-20261127` @ `dc76484d8b09565930da9ba335f53c69c4e5e81f` (R2) |
 | `compute/20261127-19` — Ada P.4 probe record review (task 21) | **done, merged** | `compute-p4-ada-probe-20261127` @ `4e51adef`; review `60958144` | merged `ebc28ec0` |
 
 ### Launcher unit (`compute/20261126-02`)
@@ -57,12 +57,13 @@ passed; the scene is kept; no retry, no patch.
   writes `Y_keep.jsonl` + six-key `g7_rows.jsonl`. A new `assemble.py` builds the G7 table directly
   from production output. G7 and `d3_analysis.py` are byte-identical to the reviewed source.
 - **Tests:** seven step-(5) cases through production G1 summary/G6 audit/G7 `build_row`; a full
-  882-row table assembled, written, reloaded and `D3.analyse`d. Focused: 156 passed + 18 subtests.
-  Full suite at the tip: 117 failed / 4,984 passed / 163 skipped / 3 errors; the failures are the
-  known `test_d3_gate_output`/`test_d3_hpo_runner` environment failures (base comparison with the
-  reviewer's run is pending).
+  882-row table written to the production disk layout, assembled by `assemble.build`, reloaded and
+  `D3.analyse`d. Focused: 157 passed + 18 subtests. Full suite at the code tip `d8cfd7d0`:
+  **114 failed / 4,988 passed / 163 skipped / 3 errors**, 117 ids; base `840ad01d`: 115 / 4,984 /
+  163 / 3, 118 ids — the tip's ids are a strict subset (one base-only TASL GPU-lease timing test),
+  **no new failure id**. R2 **ACCEPTED** (remaining minors only).
 - **Unit record:** `docs/r1/reports/d3_integration_20261127/D3_RUNNER_AUDIT_TABLE_20261127.md`
-  sha256 `b98634ece1828b2641aee43d0b2e9ba638e5148f35f1465a5db72d924dd39161`.
+  sha256 `28a724e7cdc00cf713017976d771f74d852e68cbd8a6bdf05ac36cdf4b4f426c`.
 - **Named placeholders for review:** `infra_attempts = 1` (G7 requires ≥ 1; no retry counter in G1)
   and `proposer_gpu_seconds = 0.0` (the proposer server's card time is not measured per campaign).
 
@@ -98,10 +99,12 @@ checks while repeating them across the full design only for G7's exact coverage 
    `assemble` and `summarise` with the note's spec and report the per-node verdicts and summary sha256.
 2. After Forest Cover seals, rerun the houseprice check with a new capture directory; then the P11
    TASL-2 items once the G.5 note is published.
-3. Coordinator/author decision on the screening STOP (probe realpath vs command name); then a new
+3. Coordinator/author decision on the screening STOP (probe realpath vs command name; the
+   coordinator's 12:01 state says the re-issue is with the author, A recommended); then a new
    `SMEAS_EVIDENCE_<stamp>` run. Do not retry the stopped scene.
-4. Coordinator merges the launcher unit (`ead7375a`, review `acc43a3a`) and, after its review, the
-   integration unit (`1bd7f3d6`); then the local worker repeats revision 4 step (5).
+4. Coordinator merges the integration unit (`39df5b92`; reviewed code `d8cfd7d0`, review
+   `dc76484d`); then the local worker repeats revision 4 step (5). The launchers are already merged
+   (`cd9af2af`).
 5. Watch `condor_status` for a runnable L40S/A100; do not edit the request.
 
 **Task ids this report covers:** `compute/20261126-02`, `compute/20261127-22`, `-23`; `-19` was
