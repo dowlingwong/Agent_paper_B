@@ -3486,14 +3486,14 @@ def test_host_free_assemble_records_each_arms_card_and_admits_mixed_models(tmp_p
 def ada_stage_world(tmp_path, monkeypatch, f2):
     """stage_world for the Ada class: a stand-in checkout with the Ada host config filled by the fill hook (work root
     and lease directory in tmp), a spec admitting both classes, and a direct stage of it (descriptors, p4_direct.py)."""
-    from r1.tests.test_trackp_p4_direct import _ada_values
+    from r1.tests.test_trackp_p4_direct import _ada_template, _ada_values
     repo = tmp_path / "repo"
     (repo / "r1/scripts/configs").mkdir(parents=True)
     f2(repo)
     sft = json.loads((ROOT / L.SFT_CONFIG).read_text())
     sft["tables"][L.TABLE_PIN]["sha256"] = {"proposals.jsonl": _sha(b"P\n"), "configs.json": _sha(b"C\n")}
     (repo / L.SFT_CONFIG).write_text(json.dumps(sft))
-    shutil.copy2(ROOT / L.ADA_HOST_CONFIG, repo / L.ADA_HOST_CONFIG)
+    (repo / L.ADA_HOST_CONFIG).write_text(json.dumps(_ada_template(), indent=1) + "\n")
     values = tmp_path / "ada_fill.json"
     values.write_text(json.dumps(_ada_values(str(tmp_path / "work"), str(tmp_path / "locks"))))
     ada_sha = FH.fill(values, repo / L.ADA_HOST_CONFIG, host_class=ADA)["sha256"]
