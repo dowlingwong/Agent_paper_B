@@ -42,22 +42,40 @@ cross-segment keys and divide the accumulated loss sum by the effective target c
 
 Use a single empty GPU and a fixed memory cap. Recommend an 18 GiB cap on an RTX 4090,
 pending a free card, driver/backend identity, reproducible baseline and signed smoke limits.
-Apply a fixed allocator ceiling and monitor device process memory, including non-allocator
-use. Record both peak allocated/reserved bytes and sampled process peak. The launch note
-must fix the kernel, model and cap enforcement policy. Charge every attempt even if OOM,
+Define the cap as maximum memory reserved by the process's PyTorch caching allocator.
+Set the ceiling before creating the model. Pair all cells under that exact cap. An
+operator sensor records host-side process memory including allocations outside PyTorch.
+Report the sensor peak as sampled process memory. Charge every attempt even if OOM,
 and record the first cap/refusal event. Never substitute a larger card or change precision
 mid-comparison. Use the same reference evaluator for all cells with context 512 and exactly
 the same validation tokens, masks and scoring denominator.
 
 ## Code and acceptance
 
-`paperc.eint_batches` provides the shared loss-target stream, exact effective-update slicing,
-padding, packing, reset positions and boolean attention mask. The training driver will feed
-its loss sum into the optimizer and log planned and observed targets per update. Before any
+`paperc.eint_batches` verifies the pinned source, streams documents, and provides the shared
+loss-target stream and mask. `paperc.eint_census` binds a six-layer, width-256 decoder with
+tied embeddings, four attention heads, math SDPA, BF16 autocast and AdamW (3e-4).
+It divides accumulated loss by the effective target count and logs observed targets per update.
+Before any
 GPU run, independently verify the mask and per-document loss equality between packed and
 unpacked layouts with deterministic weights, then verify backend, memory counters, lease
 and signed cap in a smoke. Seal attempt identity, ordered token digests, metrics, per-update
 tokens, peak memory, wall/GPU seconds, throughput, exits and checksums.
+
+After a launch card and signed authorization, stage one empty visible GPU and invoke the
+reviewed module once per authorized cell and seed, in a new output directory.
+
+```sh
+PYTHONPATH=paperC/src python -m paperc.eint_census --paper "$PAPER" --data "$DATA" \
+  --spec "$SIGNED_SPEC" --cell "$CELL" --seed "$SEED" --out "$OUT"
+```
+
+The spec binds the phase, exact cell/seed pairs, GPU model, allocator cap bytes, number of
+updates and number of fixed evaluation targets. The published note at
+`docs/r1/authorizations/paperc_eint_census_20261127.md` binds `task`, `approved`,
+`paper_commit`, `spec_sha256` and the independent review digest. The probe readiness
+record must verify baseline repeatability and headroom before proposing further sequential
+work. The common 512-token evaluator measures short-context quality after training.
 
 Read feasibility first. If the four cells complete on matched seeds, report paired
 `Y(A+B) - Y(A) - Y(B) + Y(base)` with (Y) equal to negative held-out cross-entropy.

@@ -3,6 +3,7 @@ import torch
 from torch.nn import functional as F
 
 from paperc import eint_batches as E
+from paperc import eint_census as census
 
 
 def test_update_targets_are_identical_at_both_contexts():
@@ -33,3 +34,23 @@ def test_packing_preserves_positions_masks_and_reference_attention():
                                reduction="sum")
 
     torch.testing.assert_close(loss(packed), loss(plain))
+
+
+def test_complete_cell_receipts_require_matched_inputs():
+    common = {"seed": 61005, "status": "complete", "target_sha256": "targets", "trained_tokens": 16,
+              "validation_tokens": 4, "allocator_cap_bytes": 100, "paper_commit": "commit",
+              "gpu_model": "GPU", "data_manifest_sha256": "data"}
+    rows = [{**common, "cell": cell, "validation_loss": loss}
+            for cell, loss in zip(census.CELLS, (4, 3.5, 3, 2))]
+    assert census.interaction(rows)[61005]["quality_interaction"] == .5
+    rows[-1]["status"] = "out_of_memory"
+    assert census.interaction(rows)[61005]["quality_interaction"] is None
+    rows[-1].update(status="complete", target_sha256="another")
+    with pytest.raises(ValueError, match="unmatched"):
+        census.interaction(rows)
+
+
+def test_modified_manifest_is_refused_before_opening_tokenizer(tmp_path):
+    (tmp_path / "data_manifest.json").write_text("{}")
+    with pytest.raises(ValueError, match="manifest differs"):
+        next(E.documents(tmp_path, split="validation", seed=61005))
