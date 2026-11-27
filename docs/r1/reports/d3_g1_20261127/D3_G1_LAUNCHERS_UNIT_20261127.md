@@ -53,7 +53,7 @@ AR_HARNESS_ROOT=<harness9bb> python -m pytest -q \
 
 Focused new tests: **14 passed**; chunk + snapshot focus: 44 passed. The full `r1/tests` suite was
 run on base and tip by the independent review; the failure-id lists were identical (114 failed /
-4,985 passed on base, 114 / 4,996 on tip, zero new ids at that review's tip).
+4,985 passed on base, 114 / 5,003 on tip at the accepted R3 tip; the same 117 failure/error ids, zero new).
 
 ## What this unit does not do
 
@@ -89,7 +89,15 @@ them:
 - **R2-M1 (GPU 0 always sampled):** the probe derives the card index from the `gpu<index>.lock`
   lease (HTCondor's container has one visible card, index 0); a test runs `nvidia-smi -i 3`.
 - **R2-M2 (default 46,000 MiB exceeds an L40S):** `hardware.required_memory_mib` is now required
-  in the launch record, with no magic default; the probe refuses without it.
+  in the launch record, with no magic default; the probe refuses without it.  The low-level
+  `probe()` helper also has no default.
+
+The third review (`0b4f7490`, reviewed tip `3cfaa6fe`) is **ACCEPTED** with minors only:
+the low-level default (now removed), a per-UUID lease falling back to index 0 (only
+`gpu<index>.lock` is parsed), an exact SSH host comparison that refuses an alias/FQDN difference
+(the launch host must equal the probe hostname), and two test-coverage notes.  The probe's
+`hardware.required_memory_mib` guard, actual-host record, lease-index derivation and zero new
+failure ids were verified.
 
 ## Decided alone
 

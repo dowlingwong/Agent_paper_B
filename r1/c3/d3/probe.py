@@ -60,7 +60,7 @@ def gpu_index_from_lease(lease_path: str | None) -> int:
     return int(match.group(1)) if match else 0
 
 
-def probe(*, gpu_index: int = 0, required_memory_mib: int = 46000,
+def probe(*, gpu_index: int = 0, required_memory_mib: int,
           proposer_model: str = "gemma4_31b", host: str | None = None,
           lease: bool = True, lease_path: str | None = None, lease_kind: str = "ssh",
           request: Mapping[str, Any] | None = None, scope: str | None = None,
