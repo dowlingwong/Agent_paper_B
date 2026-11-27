@@ -54,11 +54,11 @@ labels_read: none
 design_sha256: bbc98b87d2170ad89ff17a92303ffb440583b74b035d2690a6a2ababeb8d8ec8
 seed_block: 3301-3420
 harness_commit: 6adf3859de66c4814fcf376eed59880fbd8eeaf7
-code_commit: ac35746d41d07cd496486caafe436f7f09f8724a
+code_commit: a7c2f8fb7b90b3237e61672c6b48112365dcdb24
 code_review: docs/r1/reviews/SCREEN_MEASURE_DEEPTHOUGHT2_REVIEW_20261128.md
 predeclaration: docs/r1/authorizations/SCREEN_MEASURE_PREDECLARATION_20261127.md sha256 a380dbf122f17705f29ae0d056a8eafeebe67f2718a6fca09616994c09362585
 sha256_screen_design: 3443c044cc8a779a75f46561667dfba744f71e81233f503ca81051c9541791b5
-sha256_screen_measure: d0abc48d906272cff07d299554c148305773e9cd1683716f5bb1e599c62b4fb9
+sha256_screen_measure: ae2d1688824ddbeb2b2c5a2e346822000aa3245730b531b0372d6c288ccabf11
 sha256_screen_analysis: a54753e1b9cba5cf5605f83d7e53a97d98246aded14b4c97aecb9edc1a2ed089
 sha256_screen_seeds: dff8252b46101b695c9a938d722c11f3c68f56fb3c388859350a03e5112f2c4e
 sha256_screen_power: 8775c7ffd6e4722a8752aa90b63fde1e91f48db44c3b5652a927c85e078fd5dd
@@ -73,7 +73,7 @@ projection: historical engineering estimate 6.3–11.1 CPU-hours (results/r1/eng
 decision: any decision node SHARED returns to the author for the seventh D.3a arm; otherwise R1-THEORY-RHO (2) is final and D.3 step (8) proceeds on rev 4 (R1-D3-STEP8-HOLD)
 P1: PASS - published PLAN on 15fe05b0d0a08ae5c37eb582eb0c3f04d67e0b2a records R1-SCREEN-MEASURE and R1-SCREEN-DEEPTHOUGHT2 (published at 0bb81e26); the strict launch reads both rows from current origin/main.
 P2: PASS - the staged pre-declaration is byte-identical to the reviewed draft at the path and sha256 in predeclaration; initial re-check ACCEPTED in docs/r1/reviews/SCREEN_MEASURE_PREDECL_REVIEW_20261123.md (sha256 637c0a5ed684e3fa9602f2afc078b5194165a6cb70c6b899b5371f9f7b9f3909); later cache and deadline edits accepted in docs/r1/reviews/SCREEN_MEASURE_DATACACHE_REVIEW_20261126.md (sha256 9861bba401d52b2428403580461f80ad8b7cc244166eb9fb2cbdf7124ca5092f). Publication with the signature is required before launch.
-P3: REQUIRED AT LAUNCH - exact-code acceptance in docs/r1/reviews/SCREEN_MEASURE_DEEPTHOUGHT2_REVIEW_20261128.md for ac35746d41d07cd496486caafe436f7f09f8724a. The strict launch checks that published review, the six code hashes and the imported code bytes.
+P3: REQUIRED AT LAUNCH - exact-code acceptance in docs/r1/reviews/SCREEN_MEASURE_DEEPTHOUGHT2_REVIEW_20261128.md for a7c2f8fb7b90b3237e61672c6b48112365dcdb24. The strict launch checks that published review, the six code hashes and the imported code bytes.
 P4: PASS - rebuilt cache at /work/dwong/screen_fix_20261127/data_cache_20261127T134927Z; its MANIFEST.json matches docs/r1/reports/screen_cache_rebuild_20261127/captures/cache_MANIFEST.json (sha256 1987cc004aba9ead9705788d98cf05720855c5c0977be5c8eb3404f375382c21). All six OpenML caches were verified as fixed points under the pinned loader and the four pilot ARFF pins passed. Seed 999 smoke wrote 168/168, failed_runs 0, STOP null, edits verified on all eight nodes; manifest docs/r1/reports/screen_cache_rebuild_20261127/captures/manifest.json (sha256 3c6dd543314aa58b0e5dad266c18769f92c881befe8af9dc17e64f955f44d580), worker runtime docs/r1/reports/screen_cache_rebuild_20261127/captures/worker_runtime.jsonl (sha256 4633b06b663d0f8cd30d7ffea2238e8e75dec1169d613a27f086ff7a32180141), and record docs/r1/reports/screen_cache_rebuild_20261127/SCREEN_CACHE_REBUILD_20261127.md (sha256 800bf884ca2e60234fcd26644655145ebb03b7dfd676257c15263e182fcce8b1). All 168 runtime receipts matched the evidence interpreter and package identity. Independent review docs/r1/reviews/SCREEN_CACHE_REBUILD_REVIEW_20261127.md (sha256 01353a65d3e61f1e5f36aac03b2249aeb06ba9f0b1dfe68ebaa779aa49ea4398), ACCEPTED. The 37 identity flags are identical to the first smoke and the published reading below still applies.
 P5: PASS - recorded environment basis B6 (a) docs/r1/reports/e1_replay_20261117/pins.json (sha256 72aff78d92eed58af0e3563e2207cf1ea1981bcd07f99fd4eb1d6b4350fb78f7); P4 smoke reports clean harness 6adf3859 and the pinned numerical library versions. Strict launch checks the environment basis, harness equivalence against a3fedbbd, and worker-runtime probe B4 (a).
 P6: PASS - seeds 3301–3420 passed the static namespace check; the reviewed all-refs scan is results/r1/engineering/screen_measure_20261123/seed_scan.json (sha256 fb8357a6c0af63a2708057f3181c318f63c9d1f56c0dbee913ab4343d6d43ef5), with supplementary scans in the P2 review. The block is reserved for this measurement under R1-SCREEN-MEASURE-CHOICES (6) and checked again at launch.
@@ -109,7 +109,7 @@ and scratch directories.
 (
   set -eu
   test "$(hostname -s)" = deepthought2
-  CODE=ac35746d41d07cd496486caafe436f7f09f8724a
+  CODE=a7c2f8fb7b90b3237e61672c6b48112365dcdb24
   DEPLOY=/work/dwong/screen_measure_20261127/paper_c12136d6
   CACHE=/work/dwong/screen_fix_20261127/data_cache_20261127T134927Z
   BATCH=/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw
@@ -117,12 +117,16 @@ and scratch directories.
   CHECKOUT="/work/dwong/screen_measure_20261127/paper_dt2_$STAMP"
   OUT="results/r1/screen_measure/SMEAS_EVIDENCE_$STAMP"
   SCRATCH="/tmp/r1_smeas_EVIDENCE_$STAMP"
-  test ! -e "$CHECKOUT" && test ! -e "$SCRATCH" && test -f "$CACHE/MANIFEST.json"
+  test ! -e "$CHECKOUT"
+  test ! -e "$SCRATCH"
+  test -f "$CACHE/MANIFEST.json"
   git -C "$DEPLOY" fetch origin refs/heads/main:refs/remotes/origin/main
   git -C "$DEPLOY" merge-base --is-ancestor "$CODE" origin/main
   git -C "$DEPLOY" worktree add --detach "$CHECKOUT" "$CODE"
   cd "$CHECKOUT"
-  test ! -e "$OUT" && test -z "$(git status --porcelain)"
+  test ! -e "$OUT"
+  STATUS=$(git status --porcelain)
+  test -z "$STATUS"
   export AR_HARNESS_ROOT="$BATCH/autoresearch_harness"
   export PATH="$AR_HARNESS_ROOT/.venv/bin:$PATH"
   export PYTHONDONTWRITEBYTECODE=1 CUDA_VISIBLE_DEVICES=
