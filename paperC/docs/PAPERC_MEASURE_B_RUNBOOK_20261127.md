@@ -37,7 +37,16 @@ under R1-PAPERC-HARNESS-PIN-SET. On deepthought stage the clean paper and harnes
 checkouts, the reviewed proposer backend and environment, and an isolated output root.
 Use up to 16 CPU workers while keeping at least 10 of 40 CPUs free. Verify the
 proposer identity and thinking setting before any new calls. Run the baseline
-and candidate sequence in separate node copies at the same campaign seed.
+and candidate sequence in separate node copies at the same campaign seed. The harness
+allows up to 40 raw proposal indices, with the separate 20-worker and 80-call guards.
+Use append-only summary memory and bind the pick's endpoint and transport configuration
+in the spec. Each command covers one declared node/seed root.
+
+```sh
+PYTHONPATH=paperC/src python -m paperc.guarded_first_accept --paper "$PAPER" \
+  --spec "$SIGNED_SPEC" --node "$NODE" --seed "$SEED" --out "$OUT" --scratch "$SCRATCH"
+```
+
 Refuse a non-finite start metric, a first ledger comparison against a different
 incumbent, a kept tie, or inconsistent charging. Preserve the scene and report a STOP.
 
@@ -49,7 +58,9 @@ rows and the summary. Route both measurement reports to the coordinator for R1-P
 Propose one decision covering the proposer, run and call budgets, seed extension and launch
 conditions. Review the exact launch driver and synthetic replay first. The authorized note
 needs the launch commit and review, exact seed registry and run spec hashes, proposer revision
-and runtime identity, resource limits and sealed output location.
+and runtime identity, resource limits and sealed output location. Publish it at
+`docs/r1/authorizations/paperc_measure_b_20261127.md` and bind the note hash under
+`R1-PAPERC-MEASURE-B-LAUNCH` in PLAN §10.
 
 ```text
 task: local/20261127-19b
@@ -57,5 +68,7 @@ approved: false
 paper_commit: TODO
 spec_sha256: TODO
 proposer: TODO
+review_path: TODO
+review_sha256: TODO
 signed_by: TODO
 ```
