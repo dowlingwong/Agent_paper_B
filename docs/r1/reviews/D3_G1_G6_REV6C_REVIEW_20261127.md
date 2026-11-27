@@ -172,7 +172,7 @@ campaign directory contains `campaign.json`, `ledger.jsonl`, `runs.jsonl`, `snap
 and `SHA256SUMS`, and the chunk-level records are written by `campaign_chunk.py`. The delivered
 `run_chunk` imports `run_real_campaign` (`r1/c3/d3/campaign_chunk.py:178`), requires the harness kwargs
 `controller`, `compute_budget`, `snapshot_hook` (`:157-162`) and calls `run_real_campaign(**kwargs)` at
-`:191`; it writes only `campaign.json` and the SHA tree (`:204-205`). The `CampaignFactory` contract
+`:191`; per campaign it writes only `campaign.json` and the SHA tree (`:204-205`). The `CampaignFactory` contract
 (`:149-154`) is explicitly a `run_real_campaign` kwargs factory. A replicate chunk therefore needs an
 unstated branch in `run_chunk` plus a trial/ledger/runs writer (the harness writes those inside
 `run_real_campaign`). Condition 3's "same record layout" is satisfiable only after that new code is
@@ -285,8 +285,9 @@ block (G1 unit report §3.1). FIXR3 and EGATE use no KG verify: their engines ta
 seeds 6201-6218 and 6500+10i+j, and the replicate loop does not call `run_real_campaign` or
 `run_trial_at_seed`. The design's statement at 6c:147-149 is correct as to the arms. Its "until the
 author's row" clause is now stale: R1-D3-VERIFY-SEED (option A) is on `origin/main` `8b01ef6a`, and
-R1-D3-PREDECL-R4 signs revision 4. The design's "their unit reviews ... are still required" (6c:150-152)
-remains true; the signature prerequisite is now satisfied.
+R1-D3-PREDECL-R4 is the author's signature row for revision 4 (the document's freeze/publication still
+follows its steps (3) and (5)). The design's "their unit reviews ... are still required" (6c:150-152)
+remains true.
 
 **Are the cited sha256 values correct?**
 Yes, all seven in 6c §9:
@@ -309,8 +310,8 @@ questions, and the interface between the design and the delivered code.
 **Out of scope / not decided here.** The scientific arm set, W=20, cap 80, seeds, K=10, Y_final and the
 FIXR3/EGATE rules (I found no change); the accepted 5b/6b text except where 6c relies on it; the level-2
 verify-seed decision (resolved by R1-D3-VERIFY-SEED after the design was written; not re-litigated here);
-the pre-declaration signature (signed by R1-D3-PREDECL-R4 on `8b01ef6a`) and the A1/A2/LADDER
-constants file; the tier-E review of the engines/accounting/snapshot core themselves; any campaign,
+the pre-declaration signature row (R1-D3-PREDECL-R4 on `8b01ef6a`; the document's freeze/publication is
+separate) and the A1/A2/LADDER constants file; the tier-E review of the engines/accounting/snapshot core themselves; any campaign,
 audit, label, evaluation, sealed read, GPU job or smoke. I did not modify `main`, `coord/*`, the reviewed
 branch, the engine branch or the snapshot branch.
 
@@ -327,6 +328,6 @@ branch, the engine branch or the snapshot branch.
 - Base: `origin/main` @ `5c901d19` (this review branch is based on it; the reviewed branch is not merged).
 - Verdict: **CHANGES REQUIRED** (four BLOCKING, five MAJOR, seven MINOR).
 
-**Review file sha256:** `ccdc2330606939e9b5a13db92580afa26424d05dc7b7ca1515ebf59134b390af` — the sha256 of the review text above this line. The sha256 of the committed file (this line included) is reported in the commit message and in the reviewer's report.
+**Review file sha256:** `62d4aaae410920d5b4d8e70ffa71d4e522cb997b5de7493f2cf1f352a05453a1` — the sha256 of the review text above this line. The sha256 of the committed file (this line included) is reported in the commit message and in the reviewer's report.
 
 *Prepared by a fresh independent reviewer; no part of the reviewed work was authored by this session.*
