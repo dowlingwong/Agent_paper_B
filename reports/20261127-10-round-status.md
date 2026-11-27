@@ -1,4 +1,4 @@
-# Round status — P11 host run, D.3 revision 6c, Ada venv; expansion and houseprice still running
+# Round status — P11 host run, D.3 revision 6c, G1 core, Ada venv; expansion running, houseprice waiter timed out
 
 **Round start:** `origin/coord/compute` `0cdaeb0a`; `origin/main` `5c901d19` (later `8b01ef6a`, then
 `29099c4b`). **Time:** 27 Nov 2026, 01:19–01:55 UTC. No evidence campaign, no G.5 label, no sealed read.
@@ -46,7 +46,7 @@ review rather than change the accepted captures.
 ## Queue / next round
 
 1. Expansion node completions → seals → `assemble`/`summarise`; report per-node determinism.
-2. G1 core review verdict (`51cf07f7`); then the G1 code unit from revision 6c (replicate driver, recorder API,
+2. Merge the accepted G1 core (`44075323`); then the G1 code unit from revision 6c (replicate driver, recorder API,
    chunk branch, integration test).
 3. Houseprice CPU-set run when the 0-3/4-7 leases are free.
 4. P.4 probe (`compute/20261126-07`) now has a venv; it needs its own task/note, the `trackp_ada_v1.json` host
