@@ -1,0 +1,2 @@
+{"event": "start", "gpu_index": 0, "gpu_uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be", "job": "trackp phase2 gpu smoke", "other_processes": {"count": 0, "memory_mib": 0}, "pid": 1598107, "trackx_marker": "absent: /home/zli538/r1_locks/trackx_evidence.active", "utc": "2026-11-27T18:34:21Z"}
+{"event": "end", "gpu_index": 0, "gpu_uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be", "job": "trackp phase2 gpu smoke", "other_processes": {"count": 0, "memory_mib": 0}, "pid": 1598107, "utc": "2026-11-27T18:35:39Z"}
