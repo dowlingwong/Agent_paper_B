@@ -523,6 +523,13 @@ def test_ada_venv_uses_the_same_entry_under_the_lease_and_seals_as_venv(tmp_path
         assert SW.check_first_record(first_record, spec, record_over["spec_sha256"], sealed_root)
     bad = {**freeze, "status": "causal_conv1d_only"}
     assert not L.launch_runtime_verified(record, {"host_class": ADA, "venv": venv, "env3_freeze": bad}, spec)
+    record.update(status="interrupted", refusal="STOP: native launcher interrupted")
+    (job / L.DIRECT_LAUNCH_FILE).write_text(json.dumps(record))
+    interrupted = L.seal(job, spec, "kev-0.8b", tmp_path / "interrupted")
+    assert interrupted["identity_verified"] is False
+    assert interrupted["stop"] == "STOP: native launcher interrupted"
+    assert interrupted["stop_class"] == "infrastructure"
+    assert interrupted["charge_basis"].startswith("incomplete launcher record")
 
 
 def test_ada_venv_requires_exact_lock_and_cuda_uuid(monkeypatch):

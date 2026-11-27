@@ -7,6 +7,8 @@ set -u
 set -o pipefail
 umask 077
 PY=${P4_VENV_PYTHON:-/opt/r1/envs/trackp/bin/python}
+RUNTIME=container
+[ -z "${P4_VENV_PYTHON:-}" ] || RUNTIME=venv
 _precreate() { for f in job_record.json SHA256SUMS; do [ -s "$f" ] || : > "$f"; done; [ -s out.tar ] || tar -cf out.tar --files-from /dev/null 2>/dev/null || : > out.tar; }
 STOP() { echo "STOP: $*" >&2; _precreate; exit 2; }
 exec > >(tee -a p4_run.log) 2>&1
@@ -15,9 +17,9 @@ _precreate
 [ -x "$PY" ] || STOP "env3 python missing: $PY"
 [ -f "$1" ] || STOP "probe spec missing: $1"
 export GIT_TERMINAL_PROMPT=0 PYTHONDONTWRITEBYTECODE=1
-echo "P4 probe container job start $(date -u +%FT%TZ) host=$(hostname) arm=$2 host_class=$3 uid=$(id -u)"
+echo "P4 probe $RUNTIME job start $(date -u +%FT%TZ) host=$(hostname) arm=$2 host_class=$3 uid=$(id -u)"
 "$PY" -B "$(dirname "$0")/p4_lib.py" probe "$1" --arm "$2" --host-class "$3"
 RC=$?
 _precreate
-echo "P4 probe container job end $(date -u +%FT%TZ) rc=$RC"
+echo "P4 probe $RUNTIME job end $(date -u +%FT%TZ) rc=$RC"
 exit "$RC"

@@ -2319,8 +2319,9 @@ def _read_record(path: Path):
     return rec if isinstance(rec, dict) else None
 
 
-LOG_HEADER = {"probe": "P4 probe container job start", "p4": "P4 container job start"}   # p4_probe.sh, p4_job.sh
-CLEAN_END = re.compile(r"^P4 (?:probe )?container job end \S+ rc=0\s*$", re.M)   # the wrappers' last line on rc 0
+LOG_HEADER = {"probe": ("P4 probe container job start", "P4 probe venv job start"),
+              "p4": ("P4 container job start", "P4 venv job start")}
+CLEAN_END = re.compile(r"^P4 (?:probe )?(?:container|venv) job end \S+ rc=0\s*$", re.M)
 
 
 def logged_host_class(src: Path) -> str | None:
@@ -2329,7 +2330,7 @@ def logged_host_class(src: Path) -> str | None:
     if not log.is_file():
         return None
     for line in log.read_bytes().decode("utf-8", "replace").splitlines():
-        if line.startswith((LOG_HEADER["probe"], LOG_HEADER["p4"])):
+        if line.startswith(LOG_HEADER["probe"] + LOG_HEADER["p4"]):
             m = re.search(r"\shost_class=(\S+)", line)
             return m.group(1) if m else None
     return None
@@ -2492,6 +2493,9 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
     outcome = {"stop": (record or {}).get("stop", no_record),
                "stop_class": (record or {}).get("stop_class", "infrastructure"), **{
                    k: (record or {}).get(k) for k in ("card_processes_start", "card_processes_end")}}
+    if unfinished_venv_launch(launch):
+        outcome.update(stop=(launch.get("refusal") or "STOP: the native launcher did not finish"),
+                       stop_class="infrastructure")
     if launch is not None:                  # R1-CARD-SHARE (3), (4): the launcher's host-side counts of the card
         direct.update(other_processes_start=launch.get("other_processes_start"),
                       other_processes_end=launch.get("other_processes_end"), card_shared=launch.get("card_shared"))
@@ -2603,14 +2607,20 @@ def _utc_epoch(text) -> float | None:
         return None
 
 
+def unfinished_venv_launch(launch: dict | None) -> bool:
+    return bool(launch and launch.get("runtime") == "venv" and launch.get("status") != "finished")
+
+
 def direct_charge(launch: dict, record_hours: float | None, walltime_h: float, now: float) -> tuple:
     """(charged GPU-hours, basis, receipt fields) of a direct attempt (``seal``; R1-HOST-FREE (5), P4-CAP A,
     P4-PROBECAP A): one card, so GPU-hours = the launcher's ``wall_clock_s`` / 3600 (the lease span), or the record's
     ``gpu_hours`` if larger. An incomplete launcher record (no end, wall clock or exit code: the launcher was killed)
-    charges the largest of launch start to ``now`` (the seal), ``walltime_h`` and the record's hours; a record without
+    and an unfinished native launch use the largest of launch start to ``now`` (the seal), ``walltime_h`` and the
+    record's hours. A record without
     a readable ``started_utc`` cannot be bounded and is a STOP."""
     wall = launch.get("wall_clock_s")
-    complete = isinstance(wall, (int, float)) and not isinstance(wall, bool) and 0 <= wall <= 30 * 86400 and \
+    complete = not unfinished_venv_launch(launch) and \
+        isinstance(wall, (int, float)) and not isinstance(wall, bool) and 0 <= wall <= 30 * 86400 and \
         isinstance(launch.get("exit_code"), int) and not isinstance(launch.get("exit_code"), bool) and \
         _utc_epoch(launch.get("ended_utc")) is not None
     fields = {"direct_launch_sha256": None, "launcher_status": launch.get("status"),

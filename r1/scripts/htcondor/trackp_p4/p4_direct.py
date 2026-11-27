@@ -348,6 +348,8 @@ class Launch(object):
         start = r.get("_lease_t")
         r["wall_clock_s"] = round(t_end - start, 3) if start is not None else 0.0
         r["wall_clock_basis"] = "the GPU lease span (one card)" if start is not None else "no lease taken"
+        if r["runtime"] == "venv" and status == "interrupted":
+            r["wall_clock_basis"] = "launcher span; native descendants can retain the GPU lease"
         r.pop("_lease_t", None)
         self._save()
 
