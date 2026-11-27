@@ -64,6 +64,8 @@ import math
 import subprocess
 import time
 from dataclasses import dataclass, field
+from importlib.metadata import PackageNotFoundError, version
+from itertools import count
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
@@ -74,17 +76,24 @@ from r1.c3 import d3_analysis as D3
 # ---------------------------------------------------------------------------------------------------------------------
 # Constants (pre-declaration §5.8, §4.1, §13 item 26)
 # ---------------------------------------------------------------------------------------------------------------------
-HARNESS_PIN = "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2"   # §2 "Harness" (the sweep-2 pin)
+HARNESS_PIN = "9bb416805175149eb87b71f28d77530572aa4bce"   # D.3 launch pin (§2, R1-D3-VERIFY-SEED)
 W = D3.W
 HPO_PROPOSAL_CAP = D3.HPO_PROPOSAL_CAP                      # PROPOSED (§13 item 26): 80 draws (RS) or asks (SMAC3)
 RS_REPETITION_STRIDE = 1_000_000                            # §4.1: PCG64 seed = instance seed + 1,000,000 x rep
 SMAC_N_INITIAL = 5                                          # PROPOSED: 5 initial configurations incl. the default
 SMAC_FACADE = "HyperparameterOptimizationFacade"            # PROPOSED (§5.8)
-# OPEN (§14, §5.8 "Version: <TODO>"): the SMAC3 version and its environment are not pinned yet; smac is not
-# installed in the local environment.  The driver below is written against the SMAC3 2.x ask/tell API with
-# ConfigSpace >= 1.0 and refuses any other major version until the pin is made.
-SMAC_VERSION_REQUIRED = "<TODO: SMAC3 2.x version and environment, pinned before review of the run>"
-SMAC_MAJOR_SUPPORTED = 2
+SMAC_VERSION_REQUIRED = "2.4.0"
+# Resolved SMAC3 runtime (including transitive dependencies) from the real-backend synthetic check.
+SMAC_PINS = {
+    "click": "8.5.1", "cloudpickle": "3.1.3", "configspace": "1.2.2", "dask": "2026.11.0",
+    "dask-jobqueue": "0.9.0", "distributed": "2026.11.0", "emcee": "3.1.6", "fsspec": "2026.9.0",
+    "jinja2": "3.1.6", "joblib": "1.6.0", "locket": "1.0.0", "markupsafe": "3.0.4",
+    "more-itertools": "11.2.1", "msgpack": "1.2.4", "numpy": "2.4.4", "packaging": "26.4",
+    "partd": "1.4.2", "psutil": "7.2.2", "pynisher": "1.0.10", "pyparsing": "3.3.3",
+    "pyyaml": "6.0.4", "regex": "2026.11.25", "scikit-learn": "1.6.1", "scipy": "1.18.1",
+    "smac": SMAC_VERSION_REQUIRED, "sortedcontainers": "2.4.0", "tblib": "3.2.2", "threadpoolctl": "3.8.0",
+    "toolz": "1.2.0", "tornado": "6.6.1", "typing-extensions": "4.16.0", "zict": "3.0.0",
+}
 # PROPOSED: the metrics of the seven nodes (val_score accuracy, val_auc) lie in [0, 1]; cost = -metric lies in
 # [-1, 0], so the worst cost a run can have is 0.0 and a failed run is told to SMAC3 as that cost.
 WORST_COST = 0.0
@@ -145,7 +154,7 @@ class HpoRefError(ValueError):
 
 
 class SmacUnavailable(RuntimeError):
-    """SMAC3 (or ConfigSpace) is not installed or not of the supported major version; the SMAC3 arm cannot run."""
+    """The exact SMAC3 implementation or its pinned numerical stack is unavailable."""
 
 
 class InfrastructureFailure(RuntimeError):
@@ -548,19 +557,19 @@ def _run_rs_attempt(space, start, instance_seed, repetition, evaluator, hasher, 
 # (c) SMAC3
 # ---------------------------------------------------------------------------------------------------------------------
 def require_smac():
-    """Import SMAC3 and ConfigSpace, or refuse with a clear message (the SMAC3 arm cannot run without them)."""
+    """Check installed distribution metadata before using the real ask/tell backend."""
+    try:
+        installed = {name: version(name) for name in SMAC_PINS}
+    except PackageNotFoundError as exc:
+        raise SmacUnavailable(f"SMAC3 is not installed with its pinned numerical environment: {exc}") from exc
+    wrong = {name: (installed[name], pin) for name, pin in SMAC_PINS.items() if installed[name] != pin}
+    if wrong:
+        raise SmacUnavailable(f"SMAC3 distribution versions differ from the reviewed pins: {wrong}")
     try:
         import ConfigSpace  # noqa: F401
         import smac
     except ImportError as exc:
-        raise SmacUnavailable(
-            "SMAC3 is not installed: the SMAC3 reference arm (R1-D3-HPO-REF) cannot run. Install the pinned SMAC3 "
-            f"version ({SMAC_VERSION_REQUIRED}) with ConfigSpace >= 1.0 in the run environment; RS does not need "
-            "it.") from exc
-    major = str(getattr(smac, "__version__", "0")).split(".")[0]
-    if major != str(SMAC_MAJOR_SUPPORTED):
-        raise SmacUnavailable(f"SMAC3 major version {major} is not supported by this driver "
-                              f"(written for {SMAC_MAJOR_SUPPORTED}.x; {SMAC_VERSION_REQUIRED})")
+        raise SmacUnavailable(f"SMAC3 cannot import from its pinned numerical environment: {exc}") from exc
     return smac
 
 
@@ -604,21 +613,23 @@ def build_configspace(space: NodeSpace, start: Mapping[str, Any], seed: int):
 
 
 class Smac3Backend:
-    """The SMAC3 2.x ask/tell loop (PROPOSED settings, §5.8).  Untested locally (SMAC3 not installed); the driver's
-    control flow is tested with a stand-in backend of the same three methods."""
+    """The pinned SMAC3 §5.8 ask/tell loop in an exclusive, per-attempt directory."""
 
-    def __init__(self, space: NodeSpace, start: Mapping[str, Any], seed: int, n_trials: int = W):
+    def __init__(self, space: NodeSpace, start: Mapping[str, Any], seed: int, *, output_directory: Path):
         require_smac()
         from smac import HyperparameterOptimizationFacade, Scenario
         from smac.runhistory.dataclasses import TrialValue
         from smac.runhistory.enumerations import StatusType
         self._space, self._TrialValue, self._Status = space, TrialValue, StatusType
         cs = build_configspace(space, start, seed)
-        scenario = Scenario(cs, deterministic=True, n_trials=n_trials, seed=seed, crash_cost=WORST_COST)
+        output_directory = Path(output_directory)
+        output_directory.mkdir(exist_ok=False)
+        scenario = Scenario(cs, deterministic=True, n_trials=W, seed=seed, crash_cost=WORST_COST,
+                            output_directory=output_directory)
         initial = HyperparameterOptimizationFacade.get_initial_design(
             scenario, n_configs=SMAC_N_INITIAL - 1, additional_configs=[cs.get_default_configuration()])
         self._smac = HyperparameterOptimizationFacade(scenario, target_function=lambda config, seed=0: 0.0,
-                                                      initial_design=initial, overwrite=True, logging_level=40)
+                                                      initial_design=initial, overwrite=False, logging_level=40)
         self._pending = None
 
     def _values(self, config) -> dict:
@@ -632,6 +643,8 @@ class Smac3Backend:
         return self._values(self._pending.config)
 
     def tell(self, cost: float, crashed: bool) -> None:
+        if self._pending is None:
+            raise HpoRefError("SMAC3: tell without a pending ask")
         status = self._Status.CRASHED if crashed else self._Status.SUCCESS
         self._smac.tell(self._pending, self._TrialValue(cost=float(cost), status=status))
         self._pending = None
@@ -673,6 +686,8 @@ def _run_smac_attempt(space, start, instance_seed, repetition, evaluator, hasher
                     raise HpoRefError("SMAC3 named an incumbent that was never evaluated")
                 c._record_keep(run, inc_cfg, None)   # SMAC3's own incumbent; no keep rule of ours
         c._snapshot()
+    if inc is None:
+        raise HpoRefError("SMAC3 completed W evaluations without naming an incumbent")
     c.ended_on = hpo_ended_on(arm="SMAC3", worker_runs=c.worker_runs, proposals=c.proposals)
     c.wall_seconds = max(clock() - t_wall, 0.0)
     return c
@@ -701,10 +716,19 @@ def run_rs(space: NodeSpace, start: Mapping[str, Any], instance_seed: int, repet
 
 
 def run_smac3(space: NodeSpace, start: Mapping[str, Any], instance_seed: int, repetition: int, evaluator: Evaluator,
-              *, hasher=default_config_sha256, clock=time.perf_counter, backend_factory=None) -> Campaign:
+              *, hasher=default_config_sha256, clock=time.perf_counter, backend_factory=None,
+              output_root: Path | None = None) -> Campaign:
     if backend_factory is None:
-        require_smac()          # refuse before any run when SMAC3 is missing
-        backend_factory = Smac3Backend
+        require_smac()
+        if output_root is None:
+            raise HpoRefError("SMAC3 needs a fresh output root for its attempts")
+        output_root = Path(output_root)
+        output_root.mkdir(parents=True, exist_ok=False)
+        attempts = count(1)
+
+        def backend_factory(space, start, seed):
+            return Smac3Backend(space, start, seed, output_directory=output_root / f"attempt-{next(attempts):03d}")
+
     return run_attempts(lambda: _run_smac_attempt(space, start, instance_seed, repetition, evaluator, hasher, clock,
                                                   backend_factory))
 

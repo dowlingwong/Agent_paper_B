@@ -410,7 +410,7 @@ version if complete and reviewed when that version is assembled, and never delay
   instance seed, so SMAC3 ends only at W runs (its asks never reach the cap of 80, and `proposal_cap` is refused for
   SMAC3);
   the final incumbent is SMAC3's incumbent after 20 evaluations (a failed run is charged and reported to SMAC3 as the
-  worst cost). Version: `<TODO: SMAC3 version and its environment, pinned by the HPO-REF unit>`.
+  worst cost). Version: `smac==2.4.0` with the exact installed distribution versions in `r1/c3/d3_hpo_ref.py::SMAC_PINS` (including `ConfigSpace==1.2.2` and `scikit-learn==1.6.1`).
 - **Seeds:** §4.1 "HPO-REF sampler seeds".
 - **Configuration space per node** (from the harness node configs `configs/nodes/<node>.yaml` at the D.3 harness
   pin `a3fedbbd…`, unchanged at harness `HEAD` `897d83c`; these are exactly the keys and bounds the

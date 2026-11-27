@@ -262,11 +262,17 @@ class RsTest(unittest.TestCase):
 
 class SmacTest(unittest.TestCase):
     def test_refuses_without_smac(self):
-        with mock.patch.dict(sys.modules, {"smac": None}):
-            with self.assertRaisesRegex(H.SmacUnavailable, "SMAC3 is not installed"):
+        with mock.patch.dict(sys.modules, {"smac": None}), mock.patch.object(H, "version", H.SMAC_PINS.__getitem__):
+            with self.assertRaisesRegex(H.SmacUnavailable, "cannot import from its pinned"):
                 H.require_smac()
-            with self.assertRaisesRegex(H.SmacUnavailable, "TODO"):
+            with self.assertRaisesRegex(H.SmacUnavailable, "cannot import from its pinned"):
                 H.run_smac3(synthetic_space("openml_sonar"), start_of("openml_sonar"), 6201, 0, Evaluator())
+
+    def test_refuses_other_installed_smac_version(self):
+        wrong = H.SMAC_PINS | {"smac": "2.4.1"}
+        with mock.patch.object(H, "version", wrong.__getitem__):
+            with self.assertRaisesRegex(H.SmacUnavailable, "distribution versions differ.*2.4.1"):
+                H.require_smac()
 
     def test_every_ask_evaluated_and_charged_until_w(self):
         s = synthetic_space("openml_climate")
