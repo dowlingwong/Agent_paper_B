@@ -134,4 +134,6 @@ is the self-hash of `smoke.json` (`3e69073a…`), and the audit record's is `b71
   amendment or a re-scope is needed before the G7/analysis sub-item can pass.
 - The engineering result says the G1 adapter, all seven arms, the replicate budget end, the G1 snapshots/final and
   the G6 terminal/w/keep audit all run; it does not say anything about the campaign outcome.
-- `compute/20261127-29` (Ada P5 records) is next in the compute queue; `compute/20261127-28` (E-INT census) follows.
+- `compute/20261127-29` (Ada P5 records) was attempted: Ada cards 0 and 2 are empty, but the Track P `gpu_lease`
+  helper checks all GPUs and refused because another user holds cards 1/3-7; no GPU work started. Needs a reviewed
+  per-card lease route. `compute/20261127-28` (E-INT census) needs its signed spec, staged data and smoke.
