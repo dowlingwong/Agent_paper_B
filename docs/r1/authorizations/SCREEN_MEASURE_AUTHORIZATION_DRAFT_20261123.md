@@ -65,7 +65,7 @@ code_commit: <40-hex reviewed code commit>
 code_review: <docs/r1/reviews/SCREEN_MEASURE_REVIEW_<date>.md, with Code-Commit and Verdict: ACCEPTED>
 predeclaration: <docs/r1/authorizations/SCREEN_MEASURE_PREDECLARATION_<YYYYMMDD>.md> sha256 <sha256 of the published file>
 sha256_screen_design: 3443c044cc8a779a75f46561667dfba744f71e81233f503ca81051c9541791b5
-sha256_screen_measure: 9907689f891a12cb18f93e1efd8f4806059c7f3e6b6ea39185e591fc62751edf
+sha256_screen_measure: 5c04aeeef13afebc6dd2839737691b16b76e4485f546e9789380d6d4a575bd38
 sha256_screen_analysis: a54753e1b9cba5cf5605f83d7e53a97d98246aded14b4c97aecb9edc1a2ed089
 sha256_screen_seeds: dff8252b46101b695c9a938d722c11f3c68f56fb3c388859350a03e5112f2c4e
 sha256_screen_power: 8775c7ffd6e4722a8752aa90b63fde1e91f48db44c3b5652a927c85e078fd5dd
