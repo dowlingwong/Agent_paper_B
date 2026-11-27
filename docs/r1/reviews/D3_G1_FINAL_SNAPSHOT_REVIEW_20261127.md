@@ -5,16 +5,20 @@ base `c4250f7ea26a97e0f3c7b475613287864110a14c`. Harness `9bb416805175149eb87b71
 **Reviewer:** a fresh independent tier-E reviewer, 27 Nov 2026. Synthetic/read-only checks only; no real campaign,
 audit, label read or GPU job was run.
 
-**Verdict: ACCEPTED WITH MINOR.** Both blocking findings of the revision-4 step-(5) review
+**Verdict: ACCEPTED.** Both blocking findings of the revision-4 step-(5) review
 (`docs/r1/reviews/D3_PREDECL_R4_STEP5_REVIEW_20261127.md`) are fixed on the harness and replicate routes. The four
-conditions of `compute/20261127-04` are preserved. No code change is required. The minor findings are documentation
-and evidence wording/variance (F1, F2, F5); F3 and F4 are informational.
+conditions of `compute/20261127-04` are preserved. No code change is required. The minor findings were documentation
+and evidence wording/variance (F1, F2, F5) and were addressed in the `2d014725`/`ff244366` re-checks; F3 remains
+informational and F4 is documented.
 
 **Branch note.** The assigned tip is `292cde97`. At review time the remote branch
 `origin/compute-d3-g1-final-20261127` had advanced one doc-only commit to
 `72cbd96f2060f6225e150e90f6e25ba981e6c454` ("full-suite failure id list"); `git diff 292cde97..72cbd96f` touches
 only `docs/r1/reports/d3_g1_20261127/FULL_SUITE_FAILURE_IDS_20261127.txt`. The code bytes at both commits are
-identical, so this review applies to both. The review branch was created from `292cde97` as instructed.
+identical, so this review applies to both. The review branch was created from `292cde97` as instructed. The task
+branch later advanced through doc-only `2d014725` (review minors) and `ff244366` (F2 sorting/hash wording); §§11–12
+re-check those. The code hashes are unchanged from the reviewed docstring version (`5241dcc0…`, `4131ffcc…`,
+`c57926a4…`).
 
 ## 1. Diff and scope
 
@@ -228,14 +232,14 @@ F3/F4 are informational.
 
 ## 10. Verdict
 
-**ACCEPTED WITH MINOR.** The harness route now records the live terminal incumbent, including a keep on the final
-trial, and the replicate route's at-W record is canonicalised to the post-decision final while preserving the
-pre-decision record. Both blocking findings are resolved; G6 audits one Y(20), G7 and the pinned analysis see
-`Y(20) = final`, and the four conditions of `compute/20261127-04` hold. F1 and F2 should be corrected in the unit
-report/evidence, and F5 recorded as observed full-suite variance; no code change is required.
+**ACCEPTED.** The harness route now records the live terminal incumbent, including a keep on the final trial, and
+the replicate route's at-W record is canonicalised to the post-decision final while preserving the pre-decision
+record. Both blocking findings are resolved; G6 audits one Y(20), G7 and the pinned analysis see `Y(20) = final`,
+and the four conditions of `compute/20261127-04` hold. F1, F2, F4 and F5 were addressed in the two re-checks; F3
+remains informational. No code change is required.
 
 No D.3 evidence job was run for this review. The pre-declaration can proceed to the local worker's step (5)
-repetition subject to the coordinator's disposition of F1/F2.
+repetition.
 
 ## 11. Minor findings re-check (task tip `2d014725`)
 
@@ -255,8 +259,26 @@ eight D.3 modules. The adapter failure-id file is byte-identical to base `c4250f
 | F4 | **RESOLVED (documented)** | The report now records that `ended_on="error"` skips at-W canonicalisation and that this is fail-closed; this matches the code. |
 | F5 | **RESOLVED IN SUBSTANCE; wording still loose** | The report now gives the serial 117 failed / 4,982 passed run and my independent 114 failed / 4,985 passed rerun, says no new id appears, and no longer claims an identical 120-id set. My rerun's 117 ids are a strict subset of the base 120, and the three non-reproducing base failures are named. Remaining nit: “the 120 sorted … ids at the tip are a subset of the 120 at the base” is non-strict (the serial sets are equal) and “sorted” is false under F2; “the two extra passes over the base are the new tests” applies to the serial run, not to my +5 rerun. |
 
-**Re-check verdict: the verdict stays ACCEPTED WITH MINOR, not ACCEPTED.** The code behaviour and both blocking
-fixes remain correct, and F1/F4 are cleanly resolved. The F2 fix is substantively right but its file-sha and
-“sorted” claims are still wrong; F5 is substantively right but retains loose wording. These are evidence/documentation
-only and need no code change. If the coordinator accepts `9b0350c2…` as the intended id-list hash and corrects the
-F2 wording, the verdict can be raised to ACCEPTED.
+**Re-check verdict at `2d014725`: the verdict stayed ACCEPTED WITH MINOR.** The code behaviour and both blocking
+fixes remained correct, and F1/F4 were cleanly resolved. The F2 fix was substantively right but its file-sha and
+“sorted” claims were still wrong; F5 was substantively right but retained loose wording. These were
+evidence/documentation only and needed no code change. §12 supersedes this after the F2 correction at `ff244366`.
+
+## 12. F2 re-check (task tip `ff244366`)
+
+Re-checked `ff244366b7168a210a302b37deda5438f83c9e6e`, parent `2d014725`. The only changes from `2d014725` are the
+two doc files; the code hashes are unchanged from the reviewed docstring version:
+`r1/c3/d3/snapshots.py` `5241dcc0…`, `r1/c3/d3/campaign_chunk.py` `4131ffcc…`, test `c57926a4…`.
+
+- `FULL_SUITE_FAILURE_IDS_FINAL_20261127.txt` is now `LC_ALL=C` sorted: 120 ids, `body == sorted(body)`, first
+  `test_b1_real_worker_run_is_seed_deterministic`, last `test_the_tables_diffs_enter_the_proposal`.
+- Its file sha256 is `811be7a90113d4c76025d0a6246da51ec1a958fd3c753b750011114584a073a3`, matching the report.
+- The newline-joined **sorted** id-list sha256 (with trailing newline) is
+  `03339eb10919c3772e705195d5dc37cdee44a38d76ebaa5be1acd10f74d02977`, matching both the file header and the report.
+  The 120-id set equals the base 120.
+- The report now cites the file sha and the id-list sha separately, calls the tip set the **same set** as the base's
+  120, and describes my 117-id rerun as a strict subset of that base set. That wording matches the artifacts and the
+  two suite runs.
+
+**F2 is RESOLVED.** F1, F2 and F4 are resolved; F5 remains resolved in substance (the §11 “two extra passes”
+wording nit is cosmetic and does not affect the result); F3 remains informational. **Final verdict: ACCEPTED.**
