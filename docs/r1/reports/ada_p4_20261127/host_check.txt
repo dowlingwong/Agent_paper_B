@@ -1,0 +1,13 @@
+UTC=2026-11-27T03:06:44Z
+HOST=ucrtasl
+USER=zli538 uid=1008 gid=1101 groups=1101(zli538),27(sudo),1202(explore),1205(wam4agent)
+DRIVER=545.23.08
+GPU0=0,GPU-9be33fd1-8eeb-497d-772a-87362d6720be,NVIDIA RTX 6000 Ada Generation,8.9,49140 MiB,48427 MiB free
+GPU2=2,GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154,NVIDIA RTX 6000 Ada Generation,8.9,49140 MiB,48427 MiB free
+APPTAINER=absent
+SINGULARITY=absent
+PODMAN=absent
+DOCKER=/usr/bin/docker version 28.3.3
+DOCKER_INFO=permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock
+DATA1=/dev/sda1 7.0T 4.6T 2.1T 69% /data1
+VENV=/data1/zli538/paperb_p4_20261127/venv (5.8 GB; Python 3.12.10; torch 2.6.0+cu124; freeze 121/121)

@@ -1,0 +1,19 @@
+# captured 2026-11-27T03:20:09Z
+slot1@c03-001-167.gridka.de Unclaimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_1@c03-001-167.gridka.de Claimed 8 2 NVIDIA A100-PCIE-40GB undefined error
+slot1_2@c03-001-167.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_5@c03-001-167.gridka.de Claimed 8 2 NVIDIA A100-PCIE-40GB undefined error
+slot1_8@c03-001-167.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_12@c03-001-167.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1@c03-001-175.gridka.de Unclaimed 8 5 NVIDIA A100-PCIE-40GB false false
+slot1_1@c03-001-175.gridka.de Claimed 8 2 NVIDIA A100-PCIE-40GB false false
+slot1_5@c03-001-175.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB false false
+slot1@c03-001-179.gridka.de Unclaimed 8 0 NVIDIA A100-PCIE-40GB undefined error
+slot1_1@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_2@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_3@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_4@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_7@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_8@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_9@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_12@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
