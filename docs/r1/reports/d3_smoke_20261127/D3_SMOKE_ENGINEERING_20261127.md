@@ -106,7 +106,7 @@ they fail at collection on both base and tip in this venv.
 
 ## 6. Captures and hashes
 
-Capture tree: `docs/r1/reports/d3_smoke_20261127/captures/` (152 files; top-level `SHA256SUMS` sha256 `d849792bbb0f0d7754fa2d29a3933a58a2947e637bb8223519ab515d2c422c7b`). The full run
+Capture tree: `docs/r1/reports/d3_smoke_20261127/captures/` (152 files; top-level `SHA256SUMS` sha256 `172b2e65f3dbadad61b5775f970ec50326a1e0c75c50b584bc3805eedfdd9435`). The full run
 trees stay on TASL-2 under `/home/dowling/r1_tracks/work/d3smoke_20261127/run-d/`.
 
 | Object | sha256 |
