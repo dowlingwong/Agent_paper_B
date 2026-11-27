@@ -14,6 +14,7 @@ import math
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import types
@@ -787,25 +788,38 @@ class SmokeModeTest(unittest.TestCase):
         tmp = Path(tempfile.mkdtemp(prefix="smeas_smoke_"))
         self.addCleanup(shutil.rmtree, tmp, True)
         fake_e1 = types.SimpleNamespace(HARNESS=Path("/nonexistent/harness"), library_versions=lambda: {"fake": "1"})
+        runtime = {"worker_python": "/batch/venv/bin/python3", "worker_prefix": "/batch/venv",
+                   "worker_versions": {"scikit-learn": "1.8.0"}, "package_list_sha256": "a" * 64}
+
         good = {"utc": "t", "cpus": 40, "load1": 2.0, "our_workers": 0, "free_for_others": 38.0, "ok": True}
         with mock.patch.object(r1.noise, "e1_noise_floor", fake_e1, create=True), \
                 mock.patch.object(r1.harness, "harness_commit",
                                   return_value={"commit": sm.HARNESS_COMMIT, "branch": "x", "dirty": False}), \
                 mock.patch.object(sm, "check_edit_sets", return_value={n: "equal" for n in sd.T0_NODES}), \
+                mock.patch("r1.c3.audit.evidence_environment", return_value=runtime) as checked, \
                 mock.patch.object(sm, "_run_with_runtime", _fake_smoke_run), \
                 mock.patch.object(sm, "read_data_cache", return_value={"tree_sha256": "d" * 64, "nodes": {}}), \
-                mock.patch.object(sm, "cotenancy", return_value=good):
+                mock.patch.object(sm, "cotenancy", return_value=good), \
+                mock.patch.object(sm, "execute", wraps=sm.execute) as execute:
             with self.assertRaisesRegex(SystemExit, "--data-cache is required"):
                 sm.main(["run", "--engineering-smoke", "--out", str(tmp / "smoke"), "--tmp", str(tmp / "scratch"),
                          "--workers", "2"])
             rc = sm.main(["run", "--engineering-smoke", "--out", str(tmp / "smoke"), "--tmp", str(tmp / "scratch"),
                           "--workers", "2", "--data-cache", str(tmp / "cache")])
+            checked.assert_called_once_with(sm.REPO)
+            self.assertEqual(execute.call_args.args[2].keywords["runtime_expected"], runtime)
+            checked.side_effect = ValueError("runtime mismatch")
+            with self.assertRaisesRegex(SystemExit, "engineering smoke requires the evidence runtime"):
+                sm.main(["run", "--engineering-smoke", "--out", str(tmp / "bad"), "--tmp", str(tmp / "scratch"),
+                         "--workers", "2", "--data-cache", str(tmp / "cache")])
+            self.assertFalse((tmp / "bad").exists())
         self.assertEqual(rc, 0)
         m = _manifest(tmp / "smoke")
         self.assertEqual((m["label"], m["seeds"], m["planned_runs"], m["written_runs"], m["stop"]),
                          ("ENGINEERING_ONLY", [999], 168, 168, None))
         self.assertNotIn("seeds_smoke", m)
         self.assertEqual(m["data_cache"]["tree_sha256"], "d" * 64)
+        self.assertEqual(m["worker_runtime_expected"], runtime)
         self.assertEqual(m["identity_flags"], [{"node": "openml_climate", "config": "c35", "identical_to": "c3",
                                                 "seed": 999, "metric": _fake_smoke_run(
                                                     {"node": "openml_climate", "config": "c3", "condition": "seed",
@@ -1098,9 +1112,7 @@ class LineageDataCacheTest(unittest.TestCase):
 
 
 class BuildDataCacheTest(unittest.TestCase):
-    """``data-cache`` with the harness replaced by a fake: one no-edit trial per OpenML node, sequentially, into an
-    empty cache; the manifest it writes is what ``read_data_cache`` accepts; an existing output or a failed trial
-    refuses."""
+    """Build and verify each node's cache in order, then publish the manifest."""
 
     def test_build_then_read(self):
         import gzip
@@ -1110,7 +1122,7 @@ class BuildDataCacheTest(unittest.TestCase):
         for n in ("openml_climate", "openml_sonar"):
             (harness / "nodes" / n).mkdir(parents=True)
             (harness / "nodes" / n / "dataset.json").write_text("{}")
-        order, fail = [], {"on": None}
+        order, mutate = [], set()
 
         def prepare(node, work):
             d = work / node
@@ -1118,34 +1130,84 @@ class BuildDataCacheTest(unittest.TestCase):
             (d / "data_cache" / ".gitkeep").write_text("")
             return d
 
-        class Worker:
-            def __init__(self, node_root, artifact_dir, timeout_seconds):
-                self.root = node_root
+        def load(node_dir, *, offline):
+            node, cache = node_dir.name, node_dir / "data_cache"
+            download = cache / "openml" / "openml.org" / "data" / "v1" / "download" / "52350"
+            order.append((node, offline))
+            if offline:
+                self.assertTrue((download / f"{node}.arff.gz").is_file())
+                if node in mutate:
+                    (download / "unexpected.json").write_text("{}")
+                return
+            self.assertEqual(list(cache.iterdir()), [])
+            download.mkdir(parents=True)
+            (download / f"{node}.arff.gz").write_bytes(gzip.compress(b"@relation " + node.encode(), mtime=0))
 
-            def run_trial_at_seed(self, proposal, spec, i, train_seed, split_seed):
-                assert (train_seed, split_seed) == (sm.SMOKE_SEED, sm.SMOKE_SEED)
-                assert [p.name for p in (self.root / "data_cache").iterdir()] == []        # emptied first
-                node = self.root.name
-                order.append(node)
-                dl = self.root / "data_cache" / "openml" / "download"
-                dl.mkdir(parents=True)
-                (dl / f"{node}.arff.gz").write_bytes(gzip.compress(b"@relation " + node.encode(), mtime=0))
-                ok = fail["on"] != node
-                return types.SimpleNamespace(success=ok, failure_message=None if ok else "exit code 1")
         e1 = types.SimpleNamespace(HARNESS=harness, library_versions=lambda: {"scikit-learn": "1.8.0"},
-                                   load_registered_node=lambda n, repo_root=None: None, _prepare_node=prepare,
-                                   LocalWorker=Worker, _noedit=lambda s: None)
+                                   _prepare_node=prepare)
         hc = {"commit": sm.HARNESS_COMMIT, "branch": "x", "dirty": False}
         with mock.patch.object(r1.noise, "e1_noise_floor", e1, create=True), \
-                mock.patch.object(r1.harness, "harness_commit", return_value=hc):
+                mock.patch.object(r1.harness, "harness_commit", return_value=hc), \
+                mock.patch.object(sm, "_load_openml_cache", load):
             got = sm.build_data_cache(DESIGN, root / "cache", str(root))
-            self.assertEqual((got["nodes"], order), (["openml_climate", "openml_sonar"], ["openml_climate", "openml_sonar"]))
+            self.assertEqual(got["nodes"], ["openml_climate", "openml_sonar"])
+            self.assertEqual(order, [(n, offline) for n in got["nodes"] for offline in (False, True)])
             self.assertEqual(sm.read_data_cache(root / "cache", got["nodes"])["tree_sha256"], got["tree_sha256"])
             with self.assertRaisesRegex(sm.RunStop, "exists"):
                 sm.build_data_cache(DESIGN, root / "cache", str(root))
-            fail["on"] = "openml_sonar"
-            with self.assertRaisesRegex(sm.RunStop, "cache-building trial failed"):
+            mutate.add("openml_sonar")
+            with self.assertRaisesRegex(sm.RunStop, "openml_sonar: the offline load changed"):
                 sm.build_data_cache(DESIGN, root / "cache2", str(root))
+            self.assertFalse((root / "cache2" / sm.DATA_CACHE_MANIFEST).exists())
+
+    @unittest.skipUnless(importlib.util.find_spec("sklearn") and importlib.util.find_spec("pandas"),
+                         "requires the OpenML loader")
+    def test_offline_loader_uses_url_path(self):
+        import gzip
+
+        with tempfile.TemporaryDirectory(prefix="smeas_openml_") as tmp:
+            node = Path(tmp)
+            (node / "benchmark.py").write_text(
+                "from sklearn.datasets import fetch_openml\n"
+                "def _load_frame():\n"
+                "    return fetch_openml(data_id=15, data_home='data_cache', as_frame=True, parser='auto')\n"
+            )
+            cache = node / "data_cache"
+            openml = cache / "openml" / "openml.org"
+            arff = b"@relation synthetic\n@attribute x numeric\n@attribute y {a,b}\n@data\n0,a\n1,b\n"
+            description = {"status": "active", "format": "ARFF", "description": "synthetic regression fixture",
+                           "url": "https://openml.org/data/v1/download/52350/example.arff",
+                           "md5_checksum": hashlib.md5(arff).hexdigest()}
+            features = [{"name": name, "index": str(i), "data_type": dtype, "is_target": target,
+                         "is_ignore": "false", "is_row_identifier": "false", "number_of_missing_values": "0"}
+                        for i, (name, dtype, target) in enumerate([("x", "numeric", "false"), ("y", "nominal", "true")])]
+            metadata = {"data/15.gz": {"data_set_description": description},
+                        "data/features/15.gz": {"data_features": {"feature": features}},
+                        "data/qualities/15.gz": {"data_qualities": {"quality": [
+                            {"name": "NumberOfInstances", "value": "2"}]}}}
+            for rel, value in metadata.items():
+                p = openml / "api" / "v1" / "json" / rel
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_bytes(gzip.compress(json.dumps(value).encode()))
+            download = openml / "data" / "v1" / "download"
+            download.mkdir(parents=True)
+            legacy = download / "52350.gz"
+            legacy.write_bytes(gzip.compress(arff))
+            before = sm.cache_tree(cache)
+            fake_seeds = types.SimpleNamespace(seed_environment=lambda *_: dict(os.environ))
+            path = os.pathsep.join((str(Path(sys.executable).parent), os.environ["PATH"]))
+            with mock.patch.dict("sys.modules", {"autoresearch.worker.seeds": fake_seeds}), \
+                    mock.patch.dict(os.environ, PATH=path):
+                with self.assertRaisesRegex(sm.RunStop, "unexpected OpenML download: .*52350/example.arff"):
+                    sm._load_openml_cache(node, offline=True)
+                self.assertEqual(sm.cache_tree(cache), before)
+
+                actual = download / "52350" / "example.arff.gz"
+                actual.parent.mkdir(exist_ok=True)
+                legacy.rename(actual)
+                before = sm.cache_tree(cache)
+                sm._load_openml_cache(node, offline=True)
+                self.assertEqual(sm.cache_tree(cache), before)
 
 
 def _cache_stop_run(job, tmp):

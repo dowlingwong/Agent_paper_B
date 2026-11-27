@@ -47,7 +47,7 @@ The OpenML nodes read their dataset through ``fetch_openml(data_home=<node>/data
 (only placeholders) and ``_prepare_node``'s fallback, the pilot cache under the harness's ignored ``experiments/``, is
 absent from a fresh harness worktree, so every run of the smoke downloaded its dataset from openml.org (16 at a time) and
 the data were pinned by nothing. ``data-cache --out DIR`` now builds the caches once, one node at a time, through the
-harness worker itself (a no-edit trial at seed 999 in a node copy with an empty cache; ENGINEERING_ONLY, nothing kept but
+pinned node's loader with the worker's python3 (then repeats the load offline to verify the cache; nothing kept but
 the cache), checks the downloaded ARFF's (identified by content) decompressed sha256 against the pilot cache's where the pilot had the node
 (``PILOT_ARFF_SHA256``), and writes ``DIR/MANIFEST.json`` (per file the stored and decompressed sha256, per node and in
 total a tree sha256). ``run --engineering-smoke`` and ``run --evidence`` require ``--data-cache DIR``: the manifest must
@@ -67,6 +67,7 @@ import os
 import platform
 import re
 import shutil
+import subprocess
 import tempfile
 import time
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
@@ -212,9 +213,7 @@ def _content_sha(path: Path) -> str:
 
 
 def is_arff(data: bytes) -> bool:
-    """ARFF by content (local/20261127-05): the first line that is neither blank nor a ``%`` comment starts with
-    ``@relation`` (case-insensitive). scikit-learn 1.8.0 stores the download as ``…/data/v1/download/<file id>.gz``, so
-    the name says nothing; the JSON description, feature and quality files are not ARFF."""
+    """Identify ARFF by its first nonblank, non-comment line. OpenML download paths depend on the dataset URL."""
     for raw in data[:65536].splitlines():
         line = raw.strip()
         if not line or line.startswith(b"%"):
@@ -285,9 +284,36 @@ def read_data_cache(root: Path, nodes: list[str]) -> dict:
     return {"tree_sha256": tree_sha256(trees), "nodes": trees}
 
 
+def _load_openml_cache(node_dir: Path, *, offline: bool) -> None:
+    """Use the pinned benchmark loader in a fresh worker interpreter. The verification load may only use its cache."""
+    from autoresearch.worker.seeds import seed_environment
+
+    code = """
+import sys
+
+from sklearn.datasets import _openml
+
+def refuse_download(request):
+    raise RuntimeError("unexpected OpenML download: " + request.full_url)
+
+if sys.argv[1] == "offline":
+    _openml.urlopen = refuse_download
+
+from benchmark import _load_frame
+
+_load_frame()
+"""
+    try:
+        subprocess.run(["python3", "-B", "-c", code, "offline" if offline else "online"], cwd=node_dir,
+                       env=seed_environment(SMOKE_SEED, SMOKE_SEED), capture_output=True, text=True, check=True)
+    except (OSError, subprocess.CalledProcessError) as exc:
+        mode = "offline verification" if offline else "build"
+        detail = (exc.stderr or str(exc)).strip() if isinstance(exc, subprocess.CalledProcessError) else str(exc)
+        raise RunStop(f"STOP: {node_dir.name}: OpenML cache {mode} failed: {detail[-FAILURE_LOG_TAIL:]}") from None
+
+
 def build_data_cache(design: dict, out: Path, tmp: str) -> dict:
-    """``data-cache``: one no-edit harness trial per OpenML node at seed 999, one node at a time, in a node copy with an
-    empty cache; the cache it downloads is kept under ``out/<node>/data_cache``. ENGINEERING_ONLY; no metric kept."""
+    """Build each node's cache with its pinned loader and check that a second, offline load leaves it intact."""
     from r1.harness import harness_commit
     from r1.noise import e1_noise_floor as e1
     out = Path(out)
@@ -302,21 +328,21 @@ def build_data_cache(design: dict, out: Path, tmp: str) -> dict:
            "libraries": e1.library_versions(), "host": platform.node(),
            "created_utc": datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"), "nodes": {}}
     for node in nodes:
-        spec = e1.load_registered_node(node, repo_root=e1.HARNESS)
         work = Path(tempfile.mkdtemp(prefix=f"smeas_cache_{node}_", dir=tmp))
         try:
             node_dir = e1._prepare_node(node, work)
             shutil.rmtree(node_dir / "data_cache", ignore_errors=True)
             (node_dir / "data_cache").mkdir()
-            worker = e1.LocalWorker(node_root=node_dir, artifact_dir=work / "art", timeout_seconds=600)
-            res = worker.run_trial_at_seed(e1._noedit(spec), spec, 1, train_seed=SMOKE_SEED, split_seed=SMOKE_SEED)
-            if not res.success:
-                raise RunStop(f"STOP: {node}: the cache-building trial failed ({res.failure_message})")
-            shutil.copytree(node_dir / "data_cache", out / node / "data_cache", symlinks=True)
+            cache = node_dir / "data_cache"
+            _load_openml_cache(node_dir, offline=False)
+            files = cache_tree(cache)
+            check_pilot(node, files)
+            _load_openml_cache(node_dir, offline=True)
+            if cache_tree(cache) != files:
+                raise RunStop(f"STOP: {node}: the offline load changed the OpenML cache")
+            shutil.copytree(cache, out / node / "data_cache")
         finally:
             shutil.rmtree(work, ignore_errors=True)
-        files = cache_tree(out / node / "data_cache")
-        check_pilot(node, files)
         man["nodes"][node] = {"files": files, "tree_sha256": tree_sha256(files)}
     man["tree_sha256"] = tree_sha256({n: v["tree_sha256"] for n, v in man["nodes"].items()})
     (out / DATA_CACHE_MANIFEST).write_text(json.dumps(man, indent=1, sort_keys=True) + "\n")
@@ -753,13 +779,21 @@ def main(argv=None) -> int:
         manifest["libraries"] = e1.library_versions()
         manifest["edit_sets"] = check_edit_sets(design, args.tmp)
         if args.evidence:
-            runtime_expected = {k: pre["environment"][k] for k in
-                                ("worker_python", "worker_prefix", "worker_versions", "package_list_sha256")}
+            environment = pre["environment"]
             jobs = plan(design)
         else:
+            from r1.c3.audit import evidence_environment
+            try:
+                environment = evidence_environment(Path(args.paper_root).resolve())
+            except ValueError as exc:
+                raise SystemExit(f"STOP: engineering smoke requires the evidence runtime: {exc}") from None
             jobs = plan(design, seeds=(SMOKE_SEED,))
             manifest["note"] = "Engineering smoke at seed 999: every configuration runs, edits applied and verified; " \
                                "never a result."
+        runtime_expected = {k: environment[k] for k in
+                            ("worker_python", "worker_prefix", "worker_versions", "package_list_sha256")}
+        if args.engineering_smoke:
+            manifest["worker_runtime_expected"] = runtime_expected
         run_fn = functools.partial(_run_with_runtime, runtime_expected=runtime_expected,
                                    data_cache=str(Path(args.data_cache).resolve()), data_trees=dcache["nodes"])
     manifest["seeds"] = sorted({j["seed"] for j in jobs})      # review N6: the seeds actually planned (smoke: 999)
