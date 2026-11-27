@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from r1.c3.d3.launch import (
-    LaunchStop, chunk_argv, read_json, shell_join, utc_now, validate_launch, write_json,
+    LaunchStop, check_pin, chunk_argv, read_json, shell_join, utc_now, validate_launch, write_json,
 )
 
 DEFAULT_SCOPE = ("systemd-run --user --scope -p Delegate=yes -p MemoryMax=16G "
@@ -57,6 +57,7 @@ def render_remote_script(launch: Mapping[str, Any], *,
         "if [ ! -e \"$lease\" ]; then echo 'STOP: the declared lease does not exist' >&2; exit 3; fi",
         "exec 9>\"$lease\"",
         "flock -n 9 || { echo 'STOP: the card lease is held by another job' >&2; exit 4; }",
+        f"if [ -e {shell_join([str(out_dir)])} ]; then echo 'STOP: the chunk output exists' >&2; exit 5; fi",
         f"exec {scope} {shell_join(argv)}",
         "",
     ]
@@ -88,6 +89,8 @@ def launch(launch_path: str | Path, out_dir: str | Path, *, manifest_path: str |
     observed_path = observed_path or observed_pin.get("path")
     if not manifest_path or not observed_path:
         raise LaunchStop("the launch record must name its manifest and observed files")
+    check_pin(manifest_path, manifest, "manifest")
+    check_pin(observed_path, observed_pin, "observed")
     host = host or str(launch_record.get("host") or "")
     if not host:
         raise LaunchStop("an SSH launch needs a host")

@@ -16,8 +16,8 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
 from r1.c3.d3.launch import (
-    D3_IMAGE, D3_REQUEST, LaunchStop, check_request, chunk_argv, read_json, sha256_file,
-    shell_join, utc_now, validate_launch, write_json,
+    D3_IMAGE, D3_REQUEST, LaunchStop, check_pin, check_request, chunk_argv, read_json,
+    sha256_file, shell_join, utc_now, validate_launch, write_json,
 )
 
 SUBMIT_NAME = "d3_chunk.sub"
@@ -122,6 +122,8 @@ def submit(launch_path: str | Path, out_dir: str | Path, *, submit_dir: str | Pa
     observed_path = observed_path or observed.get("path")
     if not manifest_path or not observed_path:
         raise LaunchStop("the launch record must name its manifest and observed files")
+    check_pin(manifest_path, manifest, "manifest")
+    check_pin(observed_path, observed, "observed")
     out = Path(out_dir)
     if out.exists():
         raise LaunchStop(f"refusing an existing chunk directory {out}")

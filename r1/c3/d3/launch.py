@@ -108,6 +108,16 @@ def validate_launch(record: Mapping[str, Any]) -> dict[str, Any]:
     return dict(record)
 
 
+def check_pin(path: str | Path, pin: Mapping[str, Any], what: str) -> str:
+    """Hash a launch input and refuse a mismatch with its recorded pin."""
+    if not isinstance(pin, Mapping) or not pin.get("sha256"):
+        raise LaunchStop(f"{what} has no sha256 pin")
+    got = sha256_file(path)
+    if got != str(pin["sha256"]):
+        raise LaunchStop(f"{what} sha256 mismatch: {got} != {pin['sha256']}")
+    return got
+
+
 def check_request(request: Mapping[str, Any]) -> dict[str, Any]:
     """Refuse any scheduler request other than the reviewed one (no request edited for a slot)."""
     got = dict(request or {})
