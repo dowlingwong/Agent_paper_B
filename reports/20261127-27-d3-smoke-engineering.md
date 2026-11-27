@@ -87,7 +87,15 @@ signed text).
   reference-identical attempts, the procedure needs three. See `20261127-15-houseprice-cpuset-stop.md`.
 - **D.3 HTCondor preflight:** still no batch GPU (pool advertises none); request unchanged.
 - **G.5 P11 / campaigns:** unchanged; TASL-7 card free, TASL-2 CPU sets now 0-3/4-7/16-31 free.
-- **Next queue:** `compute/20261127-29` (Ada P5 records) is next; `compute/20261127-28` (E-INT census) after it.
+- **`compute/20261127-29` (Ada P5): attempted after the D.3 smoke; blocked before any GPU work.** Ada card 0 and
+  card 2 are empty (5 MiB used, 48,427 MiB free), but the Track P `gpu_lease` helper in `r1/c3/train/run.py` checks
+  compute processes on **all** GPUs and refused because another user holds cards 1/3-7:
+  `TrackPStop: another compute process holds the GPU: [...]` (pids 3952132, 3878351-3878353, 3878386-3878388;
+  count and memory only). No training, smoke or E0 started; the pre-check log is
+  `/data1/zli538/paperb_p4_20261127/p5_smoke_20261127/smoke.log`. Needs a reviewed per-card lease route (or a
+  host-owner statement) before P5 can run.
+- **`compute/20261127-28` (E-INT census):** ready only after a signed census spec/authorization, the staged
+  ClimbMix data/tokenizer and the smoke; not started. It yields to Paper B.
 
 ## 7. Decided alone
 
