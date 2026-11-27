@@ -1,5 +1,7 @@
 # Paper C (working name) — when does autoresearch reduce to a contextual bandit?
 
+> **Binding rows (27 Nov 2026, R1-PAPERC-ROWS-CONFIRMED).** The 18 R1-PAPERC rows of 15/19/22 Nov are in force. G3 of 22 Nov supersedes the older addendum §A.4 wording. The node-value stakes floor is met by either criterion: median retained increment ≥ 0.5 σ_d, or decision regret ≥ 0.1 σ_d. Each experiment's eligibility check follows.
+
 > **Draft for author review, 26 Nov 2026.** The proposed research framing is for review before runbook drafting. The dated decisions in `docs/r1/PLAN.md` §10 govern execution.
 > The R1-PAPERC rows are on `paperc-esyn-scaling-20261122`. Consolidation and an author decision on
 > `R1-PAPERC-CORE` precede adoption of the revised primary contrast. The selected E-INT census is recorded

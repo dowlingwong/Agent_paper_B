@@ -1,0 +1,1008 @@
+{
+  "$defs": {
+    "Action": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "execute",
+            "skip",
+            "keep",
+            "discard",
+            "verify",
+            "no_verify",
+            "reaudit",
+            "no_reaudit",
+            "select"
+          ]
+        },
+        "forced": {
+          "type": "boolean"
+        },
+        "rule": {
+          "type": "string"
+        },
+        "selected": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "action",
+        "forced",
+        "rule"
+      ],
+      "type": "object"
+    },
+    "Candidate": {
+      "additionalProperties": false,
+      "properties": {
+        "hash": {
+          "type": "string"
+        },
+        "obs": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "recorded": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "hash",
+        "obs",
+        "recorded"
+      ],
+      "type": "object"
+    },
+    "EnvContext": {
+      "additionalProperties": false,
+      "properties": {
+        "W": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "constants": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "default": {},
+          "type": "object"
+        },
+        "edit_schema": {
+          "type": "string"
+        },
+        "llm_cap": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "manager_gguf_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "memory_mode": {
+          "type": "string"
+        },
+        "proposer_model": {
+          "type": "string"
+        },
+        "run_budget": {
+          "type": "string"
+        },
+        "skip_display": {
+          "type": "string"
+        },
+        "thinking": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "W",
+        "edit_schema",
+        "llm_cap",
+        "manager_gguf_sha256",
+        "memory_mode",
+        "proposer_model",
+        "run_budget",
+        "skip_display",
+        "thinking"
+      ],
+      "type": "object"
+    },
+    "EpisodeEnd": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "terminated",
+            "truncated"
+          ]
+        },
+        "reason": {
+          "enum": [
+            "W",
+            "llm_cap",
+            "policy_stop",
+            "infrastructure",
+            "protocol_stop",
+            "parse",
+            "host"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "Forecast": {
+      "additionalProperties": false,
+      "properties": {
+        "g": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "m_hat": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mu": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pi": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sigma": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tau": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "v_star": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "m_hat",
+        "mu",
+        "pi",
+        "sigma",
+        "tau",
+        "v_star"
+      ],
+      "type": "object"
+    },
+    "ForkDesign": {
+      "additionalProperties": false,
+      "properties": {
+        "channel_arms": {
+          "type": "boolean"
+        },
+        "near_threshold": {
+          "type": "boolean"
+        },
+        "oversample": {
+          "type": "boolean"
+        },
+        "p_select": {
+          "exclusiveMinimum": 0,
+          "maximum": 1,
+          "type": "number"
+        },
+        "q_oversample": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "q_uniform": {
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "replicate": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "selection_rule": {
+          "enum": [
+            "uniform",
+            "oversample",
+            "both"
+          ]
+        },
+        "uniform": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "channel_arms",
+        "near_threshold",
+        "oversample",
+        "p_select",
+        "q_oversample",
+        "q_uniform",
+        "replicate",
+        "selection_rule",
+        "uniform"
+      ],
+      "type": "object"
+    },
+    "Identity": {
+      "additionalProperties": false,
+      "properties": {
+        "branch_path": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "campaign_id": {
+          "type": "string"
+        },
+        "epoch": {
+          "enum": [
+            "E1",
+            "E2",
+            "verify",
+            "reaudit",
+            "final"
+          ]
+        },
+        "fork_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "instance_id": {
+          "type": "string"
+        },
+        "node": {
+          "type": "string"
+        },
+        "root_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "step_index": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "suite": {
+          "type": "string"
+        },
+        "tier": {
+          "enum": [
+            "E-SYN",
+            "E-T0",
+            "E-INT",
+            "E-HELD",
+            "E-SIM"
+          ]
+        }
+      },
+      "required": [
+        "campaign_id",
+        "epoch",
+        "instance_id",
+        "node",
+        "step_index",
+        "suite",
+        "tier"
+      ],
+      "type": "object"
+    },
+    "Outcome": {
+      "additionalProperties": false,
+      "properties": {
+        "calls_consumed": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "delta_hat": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "divergent": {
+          "default": false,
+          "type": "boolean"
+        },
+        "failure_category": {
+          "anyOf": [
+            {
+              "enum": [
+                "syntax_error",
+                "runtime_error",
+                "metric_missing",
+                "invalid_edit_scope",
+                "invalid_config",
+                "proposal_precondition_failed"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "immediate_measured": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kept": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "next_incumbent_hash": {
+          "type": "string"
+        },
+        "runs_consumed": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "wall_time_s": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "calls_consumed",
+        "next_incumbent_hash",
+        "runs_consumed"
+      ],
+      "type": "object"
+    },
+    "PolicyInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "action_prob": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "behaviour_action": {
+          "anyOf": [
+            {
+              "enum": [
+                "execute",
+                "skip",
+                "keep",
+                "discard",
+                "verify",
+                "no_verify",
+                "reaudit",
+                "no_reaudit",
+                "select"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "behaviour_component": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "behaviour_prob": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "continuation_policy_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "eps": {
+          "default": 0.0,
+          "exclusiveMaximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "eps_seed": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "policy": {
+          "type": "string"
+        },
+        "policy_sha": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "action_prob",
+        "policy",
+        "policy_sha"
+      ],
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "cache_prompt": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "controller_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "gpu": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "harness_commit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "host": {
+          "type": "string"
+        },
+        "label": {
+          "enum": [
+            "ENGINEERING_ONLY",
+            "PILOT",
+            "EVIDENCE",
+            "FIXTURE"
+          ]
+        },
+        "llama_build": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "paper_commit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "phase": {
+          "type": "string"
+        },
+        "prior_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "cache_prompt",
+        "gpu",
+        "harness_commit",
+        "host",
+        "label",
+        "llama_build",
+        "paper_commit",
+        "phase"
+      ],
+      "type": "object"
+    },
+    "Seeds": {
+      "additionalProperties": false,
+      "properties": {
+        "audit_seed_block": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 2,
+          "minItems": 2,
+          "type": "array"
+        },
+        "instance_seed": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "manager_rep": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "worker_seed": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "audit_seed_block",
+        "instance_seed",
+        "manager_rep",
+        "worker_seed"
+      ],
+      "type": "object"
+    },
+    "State": {
+      "additionalProperties": false,
+      "properties": {
+        "calls_left": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "calls_used": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "candidate_delta_hat": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidate_divergent": {
+          "type": "boolean"
+        },
+        "candidate_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "candidate_invalid": {
+          "type": "boolean"
+        },
+        "candidate_obs": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "candidates": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Candidate"
+          },
+          "type": "array"
+        },
+        "duplicate": {
+          "type": "boolean"
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "forecasts": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Forecast"
+          },
+          "default": {},
+          "type": "object"
+        },
+        "history_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "incumbent_hash": {
+          "type": "string"
+        },
+        "incumbent_obs": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "incumbent_recorded": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "keeps_so_far": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "key_seen": {
+          "type": "boolean"
+        },
+        "noise_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "noop": {
+          "type": "boolean"
+        },
+        "prior_skips": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "proposal_hash": {
+          "type": "string"
+        },
+        "proposal_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rule_forced": {
+          "type": "boolean"
+        },
+        "runs_left": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "runs_used": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "sigma_node": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "slots_left": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "calls_left",
+        "calls_used",
+        "candidate_delta_hat",
+        "candidate_divergent",
+        "candidate_hash",
+        "candidate_invalid",
+        "candidate_obs",
+        "duplicate",
+        "eligible",
+        "history_ref",
+        "incumbent_hash",
+        "incumbent_obs",
+        "incumbent_recorded",
+        "keeps_so_far",
+        "key_seen",
+        "noise_source",
+        "noop",
+        "prior_skips",
+        "proposal_hash",
+        "proposal_ref",
+        "rule_forced",
+        "runs_left",
+        "runs_used",
+        "sigma_node",
+        "slots_left"
+      ],
+      "type": "object"
+    },
+    "Terminal": {
+      "additionalProperties": false,
+      "properties": {
+        "audit_seeds": {
+          "items": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "y_start": {
+          "type": "number"
+        },
+        "y_terminal": {
+          "type": "number"
+        },
+        "y_terminal_per_seed": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "audit_seeds",
+        "y_start",
+        "y_terminal",
+        "y_terminal_per_seed"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "urn:paperc:spt_transition:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Field shapes only. Row and campaign rules (and integer vs float, NaN) are enforced by paperc.schema.validate / check_campaign, which are authoritative. Amended 16 Nov 2026 (build runbook P3, B17): optional state.candidates on final rows.",
+  "properties": {
+    "action": {
+      "$ref": "#/$defs/Action"
+    },
+    "env": {
+      "$ref": "#/$defs/EnvContext"
+    },
+    "episode_end": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EpisodeEnd"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "fork": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ForkDesign"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "identity": {
+      "$ref": "#/$defs/Identity"
+    },
+    "outcome": {
+      "$ref": "#/$defs/Outcome"
+    },
+    "policy": {
+      "$ref": "#/$defs/PolicyInfo"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "schema": {
+      "const": "spt_transition/v1"
+    },
+    "seeds": {
+      "$ref": "#/$defs/Seeds"
+    },
+    "state": {
+      "$ref": "#/$defs/State"
+    },
+    "terminal": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Terminal"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "action",
+    "env",
+    "identity",
+    "outcome",
+    "policy",
+    "provenance",
+    "schema",
+    "seeds",
+    "state"
+  ],
+  "title": "SPT transition record (spt_transition/v1)",
+  "type": "object"
+}
