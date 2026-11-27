@@ -171,13 +171,28 @@ def _validate_kwargs(kwargs: Mapping[str, Any]) -> None:
         raise ChunkStop(f"campaign factory did not return run_real_campaign kwargs; missing {missing}")
 
 
-def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory, *,
+def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = None, *,
               manifest: Mapping[str, Any] | None = None,
-              observed: Mapping[str, Any] | None = None) -> dict[str, Any]:
-    """Run one chunk and write its records.  The output directory must be absent."""
+              observed: Mapping[str, Any] | None = None,
+              replicate_factory: "ReplicateFactory | None" = None) -> dict[str, Any]:
+    """Run one chunk and write its records.  The output directory must be absent.
+
+    ``replicate_factory`` selects the FIXR3/EGATE branch (design revision 6c); the
+    harness-arm branch keeps its original ``factory`` contract unchanged.
+    """
     out = Path(out_dir)
     if out.exists():
         raise ChunkStop(f"refusing an existing chunk directory {out}")
+    if replicate_factory is not None:
+        if factory is not None:
+            raise ChunkStop("pass either factory or replicate_factory, not both")
+        if manifest is None:
+            raise ChunkStop("a chunk needs the locked campaign manifest (campaign_manifest.json)")
+        if observed is None:
+            raise ChunkStop("a chunk needs the observed hardware record (revision 6b)")
+        return _run_replicate_chunk(spec, out, replicate_factory, manifest=manifest, observed=observed)
+    if factory is None:
+        raise ChunkStop("the harness-arm chunk needs a campaign factory")
     if manifest is None:
         raise ChunkStop("a chunk needs the locked campaign manifest (campaign_manifest.json)")
     if observed is None:
@@ -211,6 +226,7 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory, *,
         final_sha = recorder.write_final(w_final=w_final, ended_on=ended_on)
         record = {
             "schema": CAMPAIGN_SCHEMA,
+            "campaign_kind": "harness",
             "stage": spec.stage, "arm": spec.arm, "node": spec.node,
             "repetition": spec.repetition, "instance_id": inst, "instance_seed": seed,
             "worker_runs": w_final, "llm_calls": getattr(recorder._last_budget, "llm_calls", None),
@@ -248,7 +264,7 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory, *,
         "schema": CHUNK_SCHEMA, "created_utc": utc_now(),
         "stage": spec.stage, "arm": spec.arm, "node": spec.node,
         "repetition": spec.repetition, "launcher": spec.launcher, "host": spec.host,
-        "W": spec.W, "llm_cap": spec.llm_cap,
+        "campaign_kind": "harness", "W": spec.W, "llm_cap": spec.llm_cap,
         "campaign_manifest_sha256": sha256_json(dict(manifest)),
         "campaign_model_source": dict(spec.campaign_model_source),
         "hardware": dict(observed),
@@ -277,6 +293,112 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory, *,
     summary = {
         "schema": SUMMARY_SCHEMA, "stage": spec.stage, "arm": spec.arm, "node": spec.node,
         "repetition": spec.repetition, "campaigns": len(campaigns),
+        "worker_runs": sum(c["worker_runs"] for c in campaigns),
+        "llm_calls": sum(int(c["llm_calls"] or 0) for c in campaigns),
+        "ended_on": {k: sum(1 for c in campaigns if c["ended_on"] == k)
+                     for k in sorted({c["ended_on"] for c in campaigns})},
+        "campaigns_detail": campaigns,
+    }
+    _write_json(out / "summary.json", summary)
+    sha256sums(out)
+    return summary
+
+
+# ---------------------------------------------------------------------------
+# Replicate-arm branch (design revision 6c): FIXR3 and EGATE
+# ---------------------------------------------------------------------------
+
+ReplicateFactory = Callable[[ChunkSpec, int, Path, SnapshotRecorder], Any]
+"""``(spec, seed, campaign_dir, recorder) -> ReplicateUnit`` (the adapter's engine/manager/worker)."""
+
+
+def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, *,
+                         manifest: Mapping[str, Any], observed: Mapping[str, Any]) -> dict[str, Any]:
+    from r1.c3.d3.replicate_campaign import run_replicate_campaign
+
+    if spec.arm not in ("FIXR3", "EGATE"):
+        raise ChunkStop(f"the replicate branch needs FIXR3 or EGATE, not {spec.arm!r}")
+    check_hardware(spec, observed, manifest)
+    if "campaign_model_source_sha256" not in manifest:
+        raise ChunkStop("the campaign manifest must carry campaign_model_source_sha256")
+    if str(manifest["campaign_model_source_sha256"]) != sha256_json(dict(spec.campaign_model_source)):
+        raise ChunkStop("the campaign manifest's model source does not match this launch")
+    out.mkdir(parents=True)
+    campaigns: list[dict[str, Any]] = []
+    for seed in spec.instance_seeds:
+        inst = spec.instance_id(seed)
+        cdir = out / "campaigns" / inst
+        recorder = SnapshotRecorder(out_dir=cdir, stage=spec.stage, arm=spec.arm, node=spec.node,
+                                    repetition=spec.repetition, instance_id=inst)
+        unit = factory(spec, seed, cdir, recorder)
+        summary = run_replicate_campaign(
+            instance_id=inst, repetition=spec.repetition, unit=unit, recorder=recorder,
+            stage=spec.stage, node=spec.node, W=spec.W, llm_cap=spec.llm_cap,
+        )
+        record = {
+            "schema": CAMPAIGN_SCHEMA,
+            "campaign_kind": "replicate",
+            "stage": spec.stage, "arm": spec.arm, "node": spec.node,
+            "repetition": spec.repetition, "instance_id": inst, "instance_seed": seed,
+            "worker_runs": summary["worker_runs"], "llm_calls": summary["llm_calls"],
+            "ended_on": summary["ended_on"], "snapshots": summary["snapshots"],
+            "final_sha256": summary["final_sha256"], "snapshot_schema": SNAPSHOT_SCHEMA,
+            "steps": len(summary["steps"]),
+            "zero_variance_cases": sum(int(s.get("zero_variance_cases") or 0) for s in summary["steps"]),
+        }
+        record["record_name"] = f"{spec.stage}__{spec.arm}__{inst}__r{spec.repetition}"
+        record["campaign_id"] = inst
+        (cdir / "ledger.jsonl").write_text(
+            "".join(json.dumps({"instance_id": inst, "step": s["step"], "decision": s["decision"],
+                                "replicates": s["replicates"], "detail": s["detail"]},
+                               sort_keys=True) + "\n" for s in summary["steps"]), encoding="utf-8")
+        (cdir / "runs.jsonl").write_text(
+            "".join(json.dumps({"instance_id": inst, "record": a}, sort_keys=True) + "\n"
+                    for a in summary["attempts"]), encoding="utf-8")
+        _write_json(cdir / "summary.json", {
+            "schema": "r1_d3_campaign_summary/v1", "campaign_id": inst,
+            "record_name": record["record_name"], "instance_seed": seed,
+            "campaign_kind": "replicate", "worker_runs": summary["worker_runs"],
+            "llm_calls": summary["llm_calls"], "ended_on": summary["ended_on"],
+            "snapshots": summary["snapshots"], "final_sha256": summary["final_sha256"],
+            "zero_variance_cases": record["zero_variance_cases"],
+        })
+        _write_json(cdir / "campaign.json", record)
+        sha256sums(cdir)
+        campaigns.append(record)
+
+    chunk = {
+        "schema": CHUNK_SCHEMA, "created_utc": utc_now(),
+        "stage": spec.stage, "arm": spec.arm, "node": spec.node,
+        "repetition": spec.repetition, "launcher": spec.launcher, "host": spec.host,
+        "campaign_kind": "replicate", "W": spec.W, "llm_cap": spec.llm_cap,
+        "campaign_manifest_sha256": sha256_json(dict(manifest)),
+        "campaign_model_source": dict(spec.campaign_model_source),
+        "hardware": dict(observed), "hardware_claim": dict(spec.hardware),
+        "campaign_model": manifest.get("campaign_model"),
+        "host_class": observed.get("host_class"), "lease_path": observed.get("lease_path"),
+        "chunk_start_utc": observed.get("chunk_start_utc"), "chunk_end_utc": utc_now(),
+        "gpu_model": observed.get("model"), "gpu_uuid": observed.get("gpu_uuid"),
+        "driver": observed.get("driver"), "driver_version": observed.get("driver"),
+        "memory_total": observed.get("memory_total"), "memory_total_mib": observed.get("memory_total"),
+        "memory_free": observed.get("memory_free"), "memory_free_mib_at_start": observed.get("memory_free"),
+        "memory_check": observed.get("memory_check"),
+        "other_processes_start": observed.get("other_processes_start"),
+        "other_processes_end": observed.get("other_processes_end"),
+        "proposer_expected": manifest.get("proposer_model"),
+        "proposer_observed": observed.get("proposer_model"), "proposer_check": "pass",
+        "request": observed.get("request"), "scope": observed.get("scope"),
+        "environment_freeze": observed.get("environment_freeze"),
+        "model_check": "pass",
+        "status": "stopped" if any(c["ended_on"] in ("stop", "error") for c in campaigns) else "complete",
+        "notes": dict(spec.notes),
+        "instances": [spec.instance_id(s) for s in spec.instance_seeds],
+    }
+    _write_json(out / "chunk.json", chunk)
+    summary = {
+        "schema": SUMMARY_SCHEMA, "stage": spec.stage, "arm": spec.arm, "node": spec.node,
+        "repetition": spec.repetition, "campaigns": len(campaigns),
+        "campaign_kind": "replicate",
         "worker_runs": sum(c["worker_runs"] for c in campaigns),
         "llm_calls": sum(int(c["llm_calls"] or 0) for c in campaigns),
         "ended_on": {k: sum(1 for c in campaigns if c["ended_on"] == k)

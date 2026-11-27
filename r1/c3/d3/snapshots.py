@@ -151,11 +151,15 @@ def controller_state_sha256(controller: Any) -> str:
     return sha256_json(controller_state(controller))
 
 
-def _files_config(contents: Mapping[str, bytes | None]) -> dict[str, Any]:
+def _files_config(contents: Mapping[str, bytes | str | None]) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for rel, data in sorted(contents.items()):
         if data is None:
             out[rel] = None
+        elif isinstance(data, str):
+            # The replicate-arm API passes config *contents* as text, exactly as the
+            # snapshot payload stores them (bytes are still accepted from the harness).
+            out[rel] = data
         else:
             try:
                 out[rel] = data.decode("utf-8")
@@ -269,6 +273,7 @@ class _TrialState:
     llm_calls: int | None
     controller_calls_at_e1: int = 0
     pending_action: str | None = None
+    step_index: int | None = None
 
 
 @dataclass
@@ -294,6 +299,7 @@ class SnapshotRecorder:
     _controller_state_at_hook: str = ""
     _written: dict[int, str] = field(default_factory=dict)
     _final_written: bool = False
+    _pending: dict[str, Any] | None = None
 
     # ---- harness hook -----------------------------------------------------
     def __call__(self, ctx: SnapshotContext) -> None:
@@ -358,6 +364,68 @@ class SnapshotRecorder:
         if w in SNAPSHOT_WS:
             self._write_snapshot(w, run_kind=run_kind, where=where)
 
+    # ---- replicate-arm callbacks -----------------------------------------
+    def begin_step(self, *, trial_id: str, incumbent_config: Mapping[str, Any],
+                   start_config: Mapping[str, Any] | None, state: Any,
+                   last_kept_trial_index: int | None, llm_calls: int,
+                   step_index: int, pending_action: str | None = None) -> None:
+        """Record the step-start state that the replicate arm's E2 decision will see.
+
+        ``incumbent_config`` and ``start_config`` are **config contents** dicts (not a
+        configuration sha); the recorder computes the sha exactly as the harness path does.
+        ``state`` is G1's documented ordered projection of the engine and counter; it is
+        hashed with the same canonical JSON rule as every other controller state.
+        """
+        if self._final_written:
+            raise SnapshotStop("begin_step after the final snapshot")
+        if state is None:
+            raise SnapshotStop("begin_step needs the engine/counter projection")
+        if start_config is not None:
+            self.start_config = _files_config(dict(start_config))
+        elif self.start_config is None:
+            self.start_config = _files_config(dict(incumbent_config))
+        contents = _files_config(dict(incumbent_config))
+        self._trial = _TrialState(
+            trial_id=str(trial_id),
+            incumbent_config=contents,
+            config_sha256=config_sha256(contents),
+            controller_state_sha256=sha256_json(state),
+            last_kept_trial_index=None if last_kept_trial_index is None else int(last_kept_trial_index),
+            llm_calls=int(llm_calls),
+            step_index=int(step_index),
+            pending_action=pending_action,
+        )
+        self._pending = None
+
+    def set_pending(self, *, step: int, j: int, candidate_metrics: list[float],
+                    incumbent_metrics: list[float], diffs: list[float]) -> None:
+        """Record the metrics seen so far inside a multi-run replicate step.
+
+        The snapshot written at an exact ``w`` inside the step carries this object, so the
+        in-step decision state is replayable without re-running the charged runs.
+        """
+        self._pending = {"step": int(step), "j": int(j),
+                         "candidate_metrics": _jsonable(candidate_metrics),
+                         "incumbent_metrics": _jsonable(incumbent_metrics),
+                         "diffs": _jsonable(diffs)}
+
+    def on_charge(self, run: Any) -> None:
+        """The single per-charge hook of a replicate campaign (``ChargedRunCounter``).
+
+        The counter has already appended ``run``; this callback must observe exactly the
+        next charge.  It writes an exact-``w`` snapshot before the next worker call.
+        """
+        w = int(getattr(run, "w"))
+        if w != self.count + 1:
+            raise SnapshotParityStop(
+                f"charged-run parity failure at charge {w}: recorder counted {self.count}; "
+                "a block charge or an untracked run would make the snapshot invalid"
+            )
+        self.count = w
+        if w in SNAPSHOT_WS:
+            self._write_snapshot(w, run_kind=str(getattr(run, "kind", "replicate")),
+                                 where=f"charge {w}")
+
     # ---- parity -----------------------------------------------------------
     def check_parity(self, budget_runs: int | None, *, where: str) -> None:
         if budget_runs is None:
@@ -412,9 +480,12 @@ class SnapshotRecorder:
             "controller_state_sha256": trial.controller_state_sha256,
             "pending_action": trial.pending_action,
             "trial_id": trial.trial_id,
+            "step_index": getattr(trial, "step_index", None),
             "run_kind": run_kind,
             "timestamp_utc": utc_now(),
         }
+        if self._pending is not None:
+            payload["pending"] = self._pending
         if final:
             payload["final"] = True
             payload["ended_on"] = ended_on
@@ -449,6 +520,69 @@ class SnapshotRecorder:
             payload["alias_sha256"] = self._written[20]
         else:
             payload = self._payload(w=w_final, final=True, ended_on=ended_on, run_kind="final")
+        digest = _atomic_write_json(path, payload)
+        self._final_written = True
+        return digest
+
+    def write_final_from_state(self, *, w_final: int, ended_on: str,
+                               incumbent_config: Mapping[str, Any], state: Any,
+                               last_kept_trial_index: int | None, llm_calls: int,
+                               trial_id: str | None = None,
+                               step_index: int | None = None,
+                               pending: Mapping[str, Any] | None = None) -> str:
+        """Write the replicate arm's post-decision ``final.json``.
+
+        Unlike the harness route, the replicate exact-``w`` snapshot is the pre-decision
+        state inside the last step, so ``final.json`` is a separate record: it carries the
+        **config contents** of the campaign's last kept trial (``start_config`` when no
+        trial was kept) and the post-decision projection.  It is never an alias of
+        ``w20.json``.
+        """
+        if ended_on not in ENDED_ON:
+            raise SnapshotStop(f"unknown ended_on {ended_on!r}")
+        path = Path(self.out_dir) / "snapshots" / "final.json"
+        if path.exists() or self._final_written:
+            raise SnapshotStop(f"refusing to overwrite {path}")
+        if int(w_final) != self.count:
+            raise SnapshotParityStop(
+                f"final w_final={w_final} differs from the recorder's charged count {self.count}"
+            )
+        if state is None:
+            raise SnapshotStop("write_final_from_state needs the engine/counter projection")
+        if w_final == 0:
+            contents = dict(incumbent_config or self.start_config or {})
+        else:
+            if not incumbent_config:
+                raise SnapshotStop("a kept campaign must pass its final config contents")
+            contents = dict(incumbent_config)
+        payload: dict[str, Any] = {
+            "schema": SNAPSHOT_SCHEMA,
+            "stage": self.stage,
+            "arm": self.arm,
+            "node": self.node,
+            "repetition": int(self.repetition),
+            "instance_id": self.instance_id,
+            "w": int(w_final),
+            "w_actual": int(w_final),
+            "incumbent_config": _files_config(contents),
+            "start_config": self.start_config or {},
+            "last_kept_trial_index": None if last_kept_trial_index is None else int(last_kept_trial_index),
+            "worker_runs": int(w_final),
+            "llm_calls": int(llm_calls),
+            "llm_calls_basis": "budget_observed_at_run",
+            "ended": True,
+            "config_sha256": config_sha256(_files_config(contents)),
+            "controller_state_sha256": sha256_json(state),
+            "pending_action": None,
+            "trial_id": trial_id,
+            "step_index": step_index,
+            "run_kind": "final",
+            "timestamp_utc": utc_now(),
+            "final": True,
+            "ended_on": ended_on,
+        }
+        if pending is not None:
+            payload["pending"] = _jsonable(pending)
         digest = _atomic_write_json(path, payload)
         self._final_written = True
         return digest
