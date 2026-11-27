@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 06:55 CET, `main` at `66cc33f2`
+# State — 27 Nov 2026, 07:10 CET, `main` at `91cfd48a`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -20,9 +20,9 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 |---|---|---|---|
 | 1 | `compute/20261126-10`: expansion G.1b | §2 2B | **running**: ETTh1 finished 00:34Z (460/460, determinism true, no STOP) and is sealed; MetaMaze, Forest Cover, Titanic in train. Next: seals, then `assemble` and `summarise` |
 | 1b | `compute/20261127-05` with `-08`: G.5 P11 host tests | §2 2B | TASL-7 part done (C7, C10 short, C11 server side; ACCEPTED), merging; C2, C4, C5, C6, C9, C14, C15 pre-run, C11 chunk side still to run (TASL-2 needs the 0-7 leases) |
-| 1c | `compute/20261127-18`: Ada host-config fill ACCEPTED (`95ba1f2a`), merge under test; then the P.4 probe | §4 | probe after the merge |
+| 1c | `compute/20261127-19`: Ada P.4 probe | §4 | **ready** (host config on `main` `91cfd48a`) |
 | 1c2 | `compute/20261127-12`: D.3 HTCondor preflight | §2 2A | **no match**: L40S and TOpAS A100 `Start = false`; keep watching (record merging) |
-| done | G1 adapter (`ac01717e`) and G6 audit (`0716ed8d`), both ACCEPTED; merge under test | §2 2A | then HPO-REF (local) and the per-arm smoke once rev 4 freezes |
+| done | G1 adapter (`ac01717e`) and G6 audit (`0716ed8d`), merged `91cfd48a` | §2 2A | HPO-REF resumes (`local/20261127-15`); per-arm smoke once rev 4 freezes |
 | 1d | `compute/20261127-16`: G1 core merged with the verify-seed checker; next the 6c replicate driver, then the G1 adapter at harness `9bb41680` (`verify_seed_base=20000`), then G6 | §2 2A | ready after `-12`/`-13` |
 | 2 | `compute/20261127-15` (= `-01`): houseprice CPU-set check | §2 2B | driver timed out waiting for 0-3/4-7 (helper guard, nothing ran); rerun after MetaMaze and Forest Cover seal |
 | 2b | `compute/20261126-11`: survey redaction | §4 | delivered `f60a2225`, **incomplete** (truncated `ps` user column in `Ada.txt` l.49–62); fix in `compute/20261127-02` item 2, then merge |
