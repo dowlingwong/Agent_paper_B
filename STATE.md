@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 12:45 CET, `main` at `9de7eb57`
+# State — 27 Nov 2026, 13:00 CET, `main` at `e92f3c73`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -21,8 +21,9 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | 1 | `compute/20261126-10`: expansion G.1b | §2 2B | **running**: ETTh1 sealed (00:34Z), MetaMaze sealed (06:36Z, 460/460); Forest Cover 279/460, Titanic 236/460 (08:53Z); no STOP. Then `assemble`, `summarise` |
 | 1b | `compute/20261127-05` with `-08`: G.5 P11 host tests | §2 2B | TASL-7 part done (C7, C10 short, C11 server side; ACCEPTED), merging; C2, C4, C5, C6, C9, C14, C15 pre-run, C11 chunk side still to run (TASL-2 needs the 0-7 leases) |
 | 1a | `compute/20261127-20`: G1 final-snapshot fix **ACCEPTED** (`ff244366`, review `d5acf3ab`; G6/G7/analysis unchanged) | §2 2A | merged `2d88fe1b` |
-| 1a2 | `compute/20261127-23`: D.3 integration **ACCEPTED**, merge under test; launchers merged `cd9af2af` | §2 2A | integration review next |
+| done | `compute/20261127-23`: D.3 integration merged `e92f3c73`; launchers merged `cd9af2af` | §2 2A | integration review next |
 | 1b0 | `compute/20261127-22`: screening evidence run | §2 2A | **STOP** at the first worker-runtime probe (`python` vs `python3`, same interpreter; 0 runs); re-issue signed (R1-SCREEN-MEASURE-REISSUE, `96eb63da`); note prepared by `local/20261127-21`, then publication and a new launch |
+| 1c2 | `compute/20261127-24`: P.4 4B re-probe with checkpointing | §4 | ready |
 | 1c | `compute/20261127-19`: Ada P.4 probe: **0.8B bases PASS; 4B bases OOM at micro-batch 8 (STOP, author)**; record reviewed and merged `ebc28ec0`; 4B choice with the author | §4 | **ready** (host config on `main` `91cfd48a`) |
 | 1c2 | `compute/20261127-12`: D.3 HTCondor preflight | §2 2A | **no match**: L40S and TOpAS A100 `Start = false`; keep watching (record merging) |
 | done | G1 adapter (`ac01717e`) and G6 audit (`0716ed8d`), merged `91cfd48a` | §2 2A | HPO-REF resumes (`local/20261127-15`); per-arm smoke once rev 4 freezes |

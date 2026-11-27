@@ -1,4 +1,4 @@
-# Waiting on the author — 27 Nov 2026, 11:20 CET (`main` `9de7eb57`). Signed 27 Nov in this session: screening note + P4-4B A (published `c76e1b49`); T5 correction published (`7cb5621d`); Paper C rows confirmed and merged (`1b566d78`).
+# Waiting on the author — 27 Nov 2026, 11:20 CET (`main` `e92f3c73`). Signed 27 Nov in this session: screening note + P4-4B A (published `c76e1b49`); T5 correction published (`7cb5621d`); Paper C rows confirmed and merged (`1b566d78`).
 
 Answered on 26 Nov: D1 (rows (f)(g), TIMEOUT A, the three additions) → published `95249de3`. D2 (this tmux session
 coordinates; Codex does not push `main`; `canon/README.md` rule 1 stands, so no row is needed) → recorded. D3 (P.4 on Ada:
