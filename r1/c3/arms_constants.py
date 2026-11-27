@@ -380,6 +380,8 @@ def _fit_cmd(a) -> dict:
         if src == "sweep2" and table_sha != SWEEP2_PROPOSALS_SHA256:
             _refuse(f"sweep2: the table is not the pinned sweep-2 table {SWEEP2_PROPOSALS_SHA256[:12]}… "
                     "(D.3 draft §5.0)")
+        if src == "g5" and t1 is not None and t1.needs_tail_binding:
+            t1 = B.bind_g5_tail_laws(t1, tables[src], receipt)
         sources[src] = (rows, labels)
         configs = Path(tables[src]) / "configs.json"          # recorded for D.3 §5.0's table pin; not read further
         meta[src] = {"receipt_sha256": receipts[src],

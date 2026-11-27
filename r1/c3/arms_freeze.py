@@ -615,11 +615,20 @@ def parse_record(text: str) -> dict:
 
 
 def _prereg_block(repo: Path) -> dict:
-    from r1.c3.release import _final_block
+    from r1.c3 import release
+
     data = (repo / PREREG_PATH).read_bytes()
     if _sha(data) != PREREG_SHA256:
         raise ArmsFreezeError("the preregistration is not the frozen one")
-    return dict(line.split(": ", 1) for line in _final_block(data.decode()))
+    block = dict(line.split(": ", 1) for line in release._final_block(data.decode()))
+    if _sha_file(repo / release.BUILDER_PATH) != block["gate_input_builder_sha256"]:
+        try:
+            active = release.prereg_frozen(root=repo)
+        except release.ReleaseStop as exc:
+            raise ArmsFreezeError(str(exc)) from exc
+        block["gate_input_builder_sha256"] = active["builder_sha256"]
+        block["g5_tail_amendment_sha256"] = active["sha256"]
+    return block
 
 
 def _pin(obj, what: str, path: str | None = None, sha: str | None = None) -> None:
@@ -993,6 +1002,11 @@ def check_record(record: dict, *, repo=None, plan_text: str | None = None, artef
         raise ArmsFreezeError(f"schema must be {RECORD_SCHEMA}")
     pre = _prereg_block(repo)
     _pin(record["preregistration"], "preregistration", PREREG_PATH, PREREG_SHA256)
+    if "g5_tail_amendment_sha256" in pre:
+        from r1.c3.release import G5_TAILS_AMENDMENT_PATH
+
+        _pin(record.get("g5_tail_amendment"), "g5_tail_amendment", G5_TAILS_AMENDMENT_PATH,
+             pre["g5_tail_amendment_sha256"])
     gate_sha, builder_sha = _sha_file(repo / "r1/c3/gate.py"), _sha_file(repo / "r1/c3/gate_input_builder.py")
     if pre["gate_sha256"] != gate_sha or pre["gate_input_builder_sha256"] != builder_sha:
         raise ArmsFreezeError("the checkout's gate or builder is not the one the preregistration binds")
@@ -1200,6 +1214,8 @@ def _train_cmd(a) -> dict:
             require_feat_one(identity, sealed_sha256=receipt["inputs"]["proposals_sha256"], arms_sha256=table_sha)
         elif table_sha != receipt["inputs"]["proposals_sha256"]:
             raise ArmsFreezeError(f"{src}: the table is not the one the receipt released")
+        if src == "g5" and t1 is not None and t1.needs_tail_binding:
+            t1 = B.bind_g5_tail_laws(t1, tables_dirs[src], receipt)
         tables[src] = rows
         trows[src] = training_rows(src, rows, labels, assign=assign, t1=t1)
         inputs[src] = {"table_proposals_sha256": table_sha, "receipt_sha256": receipts[src],

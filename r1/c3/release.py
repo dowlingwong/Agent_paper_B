@@ -70,6 +70,18 @@ CHECKS_PATH = "r1/c3/release_checks.py"
 BUILDER_PATH = "r1/c3/gate_input_builder.py"
 GATE_PATH = "r1/c3/gate.py"
 SPLIT_PATH = "r1/c3/splits/c3_p3_split_v1.json"
+G5_TAILS_AMENDMENT_PATH = "docs/r1/authorizations/C3_SWEEP2_G5_TAILS_AMENDMENT_20261127.md"
+G5_TAILS_AMENDMENT_ROW = "R1-G5-TAILS-PREREG-AMEND"
+G5_TAILS_CODE_PINS = {
+    "gate_sha256": GATE_PATH,
+    "gate_input_builder_sha256": BUILDER_PATH,
+    "labels_sha256": "r1/c3/labels.py",
+    "arms_freeze_sha256": "r1/c3/arms_freeze.py",
+    "arms_constants_sha256": "r1/c3/arms_constants.py",
+    "sft_data_sha256": "r1/c3/train/sft_data.py",
+    "fold_analysis_sha256": "r1/c3/fold_analysis.py",
+    "release_sha256": RELEASE_PATH,
+}
 STAGES = ("traindev", "test")
 TIERS = ("T0", "T1")
 SOURCES = {"sweep1": "T0", "sweep2": "T0", "g5": "T1"}
@@ -282,6 +294,53 @@ def _final_block(text: str) -> list[str]:
     return lines[a + 1:b]
 
 
+def _g5_tails_prereg(base_sha: str, original_builder: str, root=None) -> dict:
+    """Resolve an exact author-approved amendment before accepting a replacement builder."""
+    rows = [decision for key, decision in author_rows(_committed("docs/r1/PLAN.md", root).decode())
+            if key == G5_TAILS_AMENDMENT_ROW]
+    pattern = (rf"Use the reviewed G\.5 tail-law amendment `{re.escape(G5_TAILS_AMENDMENT_PATH)}` "
+               rf"sha256 `({_HEX})` with implementation commit `({_COMMIT})`\.")
+    match = re.fullmatch(pattern, rows[0]) if len(rows) == 1 else None
+    if match is None:
+        raise ReleaseStop("STOP: the committed gate-input builder is not the one the preregistration froze; "
+                          "an exact signed G.5 tail-law amendment is required")
+    digest, commit = match.groups()
+    raw = _committed(G5_TAILS_AMENDMENT_PATH, root)
+    if _sha(raw) != digest:
+        raise ReleaseStop("STOP: the G.5 tail-law amendment differs from the signed digest")
+    fields = {}
+    for line in _final_block(raw.decode("utf-8")):
+        key, separator, value = line.partition(": ")
+        if not separator or key in fields:
+            raise ReleaseStop("STOP: malformed or duplicate G.5 tail-law amendment key")
+        fields[key] = value
+    required = {"frozen", "base_preregistration_sha256", "original_gate_input_builder_sha256",
+                "signed_by", "frozen_utc", *G5_TAILS_CODE_PINS}
+    if set(fields) != required or fields["frozen"] != "true" or \
+            fields["base_preregistration_sha256"] != base_sha or \
+            fields["original_gate_input_builder_sha256"] != original_builder or \
+            not fields["signed_by"] or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z",
+                                                        fields["frozen_utc"]):
+        raise ReleaseStop("STOP: the G.5 tail-law amendment lacks its frozen bindings")
+    try:
+        published = "refs/remotes/origin/main"
+        published_plan = _git("show", f"{published}:docs/r1/PLAN.md", root=root).decode("utf-8")
+        published_rows = [decision for key, decision in author_rows(published_plan)
+                          if key == G5_TAILS_AMENDMENT_ROW]
+        if published_rows != rows or _git("show", f"{published}:{G5_TAILS_AMENDMENT_PATH}", root=root) != raw:
+            raise ReleaseStop("STOP: the G.5 tail-law amendment and decision must match published main")
+        _git("merge-base", "--is-ancestor", commit, "HEAD", root=root)
+        _git("merge-base", "--is-ancestor", commit, published, root=root)
+        for key, path in G5_TAILS_CODE_PINS.items():
+            if fields[key] != _sha(_committed(path, root)) or fields[key] != _sha(
+                    _git("show", f"{commit}:{path}", root=root)):
+                raise ReleaseStop(f"STOP: the G.5 tail-law amendment does not bind {path}")
+    except _GIT_ERRORS as exc:
+        raise ReleaseStop("STOP: the G.5 tail-law implementation is not the reviewed published commit") from exc
+    return {"sha256": digest, "base_sha256": base_sha, "legacy_builder_sha256": original_builder,
+            "builder_sha256": fields["gate_input_builder_sha256"], "gate_sha256": fields["gate_sha256"]}
+
+
 def prereg_frozen(root=None) -> dict:
     """The committed preregistration, refused unless its final fenced block says it is frozen with the pinned split
     file, PRE-STAGE A and the committed builder and gate sha256s (each key exactly once)."""
@@ -310,13 +369,14 @@ def prereg_frozen(root=None) -> dict:
         raise ReleaseStop("STOP: the preregistration is not frozen (frozen: true); no label is released before")
     if block["split_file"] != f"{SPLIT_PATH} sha256 {p3_split.P3_SPLIT_SHA256}":
         raise ReleaseStop(f"STOP: split_file must read exactly '{SPLIT_PATH} sha256 {p3_split.P3_SPLIT_SHA256}'")
-    if block["gate_input_builder_sha256"] != builder:
-        raise ReleaseStop("STOP: the committed gate-input builder is not the one the preregistration froze")
     if block["gate_sha256"] != gate:
         raise ReleaseStop("STOP: the committed gate is not the one the preregistration binds")
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?Z", block["frozen_utc"]):
         raise ReleaseStop("STOP: the preregistration has no frozen_utc (YYYY-MM-DDTHH:MM[:SS]Z)")
-    return {"sha256": _sha(data), "builder_sha256": builder, "gate_sha256": gate}
+    base_sha = _sha(data)
+    if block["gate_input_builder_sha256"] != builder:
+        return _g5_tails_prereg(base_sha, block["gate_input_builder_sha256"], root)
+    return {"sha256": base_sha, "builder_sha256": builder, "gate_sha256": gate}
 
 
 def release_row(tier: str, stage: str, *, writing: bool = False, root=None) -> dict:
@@ -337,6 +397,9 @@ def release_row(tier: str, stage: str, *, writing: bool = False, root=None) -> d
     if not m:
         raise ReleaseStop(f"STOP: {rid} does not have the exact release text (§8 draft)")
     pre = prereg_frozen(root)
+    if (tier, stage) == ("T0", "traindev") and not writing and m.group("prereg") == pre.get("base_sha256"):
+        # Existing receipts identify the original published release and stay byte-verifiable.
+        pre = {**pre, "sha256": pre["base_sha256"], "builder_sha256": pre["legacy_builder_sha256"]}
     if m.group("prereg") != pre["sha256"]:
         raise ReleaseStop(f"STOP: {rid} cites another preregistration sha256")
     if m.group("split") != p3_split.P3_SPLIT_SHA256:
@@ -598,6 +661,44 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
 
 
 # --------------------------------------------------------------------------------------------- readers
+
+def g5_tail_laws(table_dir, receipt: dict) -> dict[str, tuple[str, float | None]]:
+    """Read only the G.5 build metadata bound by a verified release receipt."""
+    from r1.c3.labels import STUDENT_T_SCALE, check_tail_law
+
+    path = Path(table_dir) / "build.json"
+    refuse_sealed(path)
+    if path.is_symlink() or path.resolve().parent != Path(table_dir).resolve():
+        raise ReleaseStop("STOP: the G.5 build metadata path is redirected")
+    if receipt.get("source") != "g5" or receipt.get("stage") not in STAGES:
+        raise ReleaseStop("STOP: a G.5 release receipt is required for tail-law metadata")
+    expected = ((receipt.get("integrity") or {}).get("completion") or {}).get("build_sha256")
+    if not re.fullmatch(_HEX, str(expected)):
+        raise ReleaseStop("STOP: the G.5 receipt lacks its build metadata SHA")
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise ReleaseStop("STOP: the G.5 build metadata is unavailable") from exc
+    if _sha(raw) != expected:
+        raise ReleaseStop("STOP: the G.5 build metadata differs from the receipt")
+    try:
+        build = json.loads(raw)
+        if build["source"] != "g5" or build["schema"] not in ("g5_t1_table/1", "g5_t1_table/2") or \
+                build["proposals_sha256"] != receipt["inputs"]["proposals_sha256"]:
+            raise ValueError("G.5 build metadata does not identify the receipted table")
+        laws = {}
+        for node, entry in build["nodes"].items():
+            tails, nu = entry.get("tails", "gaussian"), entry.get("nu")
+            check_tail_law(tails, nu)
+            if tails == "student_t" and entry.get("t_scale") != STUDENT_T_SCALE:
+                raise ValueError(f"{node}: the Student-t build does not record sd matching")
+            if tails == "gaussian" and {"nu", "t_scale"} & entry.keys():
+                raise ValueError(f"{node}: Student-t fields on a Gaussian build entry")
+            laws[node] = (tails, nu)
+    except (TypeError, ValueError, KeyError, AttributeError) as exc:
+        raise ReleaseStop(f"STOP: invalid G.5 tail-law build metadata ({exc})") from exc
+    return laws
+
 
 def open_partition(part_dir, *, expect_source: str, expect_stage: str,
                    receipt_sha256: str | None = None) -> tuple[dict, dict]:

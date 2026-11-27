@@ -60,14 +60,14 @@ partial and divergent counts, unsupplied T1 nodes); it holds no utility or label
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 
 from r1.c3 import gate as G
 from r1.c3 import p3_split
 from r1.c3.arms import RulesPrior, is_duplicate, is_noop
-from r1.c3.labels import INERT, N_BINS, label_tail_options, soft_label
+from r1.c3.labels import G5_GAUSSIAN_NODES, G5_STUDENT_T_NU, INERT, N_BINS, label_tail_options, soft_label
 from r1.c3.offline_eval import CAMPAIGN_RUNS, G_PRIMARY, decisions
 
 BUILDER_VERSION = "2"
@@ -112,6 +112,21 @@ class Tier1:
     d3_k6: bool = False              # the R1-BX-D3 row exists: K = 6
     # Verified from the completion or addendum, never inferred from a label row.
     tail_laws: dict[str, tuple[str, float | None]] = field(default_factory=dict)
+
+    @property
+    def needs_tail_binding(self) -> bool:
+        return bool(self.suites.keys() - (G5_STUDENT_T_NU.keys() | G5_GAUSSIAN_NODES))
+
+
+def bind_g5_tail_laws(t1: Tier1, table_dir, receipt: dict) -> Tier1:
+    """Bind the frozen node context to already verified G.5 build metadata."""
+    from r1.c3.release import g5_tail_laws
+
+    laws = g5_tail_laws(table_dir, receipt)
+    missing = t1.suites.keys() - laws.keys()
+    if missing:
+        raise BuilderError(f"the G.5 build has no tail law for frozen nodes {sorted(missing)}")
+    return replace(t1, tail_laws={node: laws[node] for node in t1.suites})
 
 
 def _finite(x) -> bool:

@@ -551,3 +551,79 @@ def test_cited_files_must_be_published_and_modules_not_shadowed(paper, data, mon
     monkeypatch.setattr(dataset, "__file__", str(Path(dataset.__file__).parent / "dataset" / "__init__.py"))
     with pytest.raises(R.ReleaseStop, match="shadowed"):
         _release("test", data)
+
+
+def test_tail_amendment_preserves_historical_receipts_and_binds_future_test(paper, data, monkeypatch):
+    from r1.c3 import arms_freeze as AF
+
+    legacy_row = (R.ROWS[("T0", "traindev")], paper.row("T0", "traindev"))
+    paper.plan([legacy_row])
+    _release("traindev", data)
+    partition = data[2] / "sweep2" / "traindev"
+    legacy = R.open_partition(partition, expect_source="sweep2", expect_stage="traindev")
+
+    for path in R.G5_TAILS_CODE_PINS.values():
+        if not (paper.root / path).exists():
+            paper.write(path, "# synthetic implementation dependency\n")
+    paper.write(R.BUILDER_PATH, (paper.root / R.BUILDER_PATH).read_text() + "# synthetic tail-law builder\n")
+    implementation = paper.commit("synthetic tail-law implementation")
+    paper.publish()
+    with pytest.raises(R.ReleaseStop, match="exact signed G.5 tail-law amendment"):
+        R.prereg_frozen()
+
+    fields = {"frozen": "true", "base_preregistration_sha256": paper.prereg_sha,
+              "original_gate_input_builder_sha256": paper.builder_sha,
+              **{key: _sha((paper.root / path).read_bytes()) for key, path in R.G5_TAILS_CODE_PINS.items()},
+              "signed_by": "synthetic", "frozen_utc": "2026-11-27T00:00:00Z"}
+    amendment = "# Synthetic amendment\n\n```\n" + "".join(f"{k}: {v}\n" for k, v in fields.items()) + "```\n"
+    amendment_sha = _sha(amendment.encode())
+    paper.write(R.G5_TAILS_AMENDMENT_PATH, amendment)
+    decision = (f"Use the reviewed G.5 tail-law amendment `{R.G5_TAILS_AMENDMENT_PATH}` "
+                f"sha256 `{amendment_sha}` with implementation commit `{implementation}`.")
+    test_row = (R.ROWS[("T0", "test")], paper.row("T0", "test", prereg=amendment_sha, commit=implementation))
+    rows = [legacy_row, test_row, (R.G5_TAILS_AMENDMENT_ROW, decision)]
+    paper.plan(rows, publish=False)
+    with pytest.raises(R.ReleaseStop, match="must match published main"):
+        R.prereg_frozen()
+    paper.publish()
+
+    assert R.open_partition(partition, expect_source="sweep2", expect_stage="traindev") == legacy
+    with pytest.raises(R.ReleaseStop, match="cites another preregistration sha256"):
+        R.release_row("T0", "traindev", writing=True)
+    assert R.release_row("T0", "test")["prereg_sha256"] == amendment_sha
+    assert R.release_row("T0", "test")["builder_sha256"] == fields["gate_input_builder_sha256"]
+    monkeypatch.setattr(AF, "PREREG_SHA256", paper.prereg_sha)
+    block = AF._prereg_block(paper.root)
+    assert block["g5_tail_amendment_sha256"] == amendment_sha
+    assert block["gate_input_builder_sha256"] == fields["gate_input_builder_sha256"]
+
+    paper.write("r1/c3/labels.py", "# another implementation\n")
+    paper.commit("synthetic code change after approval")
+    with pytest.raises(R.ReleaseStop, match="does not bind r1/c3/labels.py"):
+        R.prereg_frozen()
+
+
+def test_g5_tail_laws_come_from_the_receipted_build(tmp_path):
+    node = "autoresearch_fixedtokens"
+    table_sha = "a" * 64
+    build = {"source": "g5", "schema": "g5_t1_table/2", "proposals_sha256": table_sha,
+             "nodes": {node: {"tails": "student_t", "nu": 7, "t_scale": "sd_matched"},
+                       "mlab_imdb": {}}}
+    raw = json.dumps(build).encode()
+    path = tmp_path / "build.json"
+    path.write_bytes(raw)
+    receipt = {"source": "g5", "stage": "traindev", "inputs": {"proposals_sha256": table_sha},
+               "integrity": {"completion": {"build_sha256": _sha(raw)}}}
+    assert R.g5_tail_laws(tmp_path, receipt) == {node: ("student_t", 7), "mlab_imdb": ("gaussian", None)}
+    t1 = B.Tier1(suites={node: "autoresearch"}, modes=("history",))
+    assert B.bind_g5_tail_laws(t1, tmp_path, receipt).tail_laws == {node: ("student_t", 7)}
+    assert t1.tail_laws == {}
+
+    tampered = copy.deepcopy(build)
+    tampered["nodes"][node]["t_scale"] = "fixed_scale"
+    path.write_text(json.dumps(tampered))
+    with pytest.raises(R.ReleaseStop, match="differs from the receipt"):
+        R.g5_tail_laws(tmp_path, receipt)
+    receipt["integrity"]["completion"]["build_sha256"] = _sha(path.read_bytes())
+    with pytest.raises(R.ReleaseStop, match="does not record sd matching"):
+        R.g5_tail_laws(tmp_path, receipt)

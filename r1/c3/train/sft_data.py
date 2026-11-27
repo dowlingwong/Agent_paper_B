@@ -404,12 +404,13 @@ class G5LabelSource:
     ``loader`` replaces ``load_traindev`` in tests only."""
 
     def __init__(self, release_root: Path | str, *, receipt_sha256: str, table_rows: Sequence[dict], t1,
-                 table_sha256: str, loader=None) -> None:
+                 table_sha256: str, table_dir: Path | str | None = None, loader=None) -> None:
         if not (isinstance(table_sha256, str) and len(table_sha256) == 64
                 and all(c in "0123456789abcdef" for c in table_sha256)):
             raise SFTDataError("G5LabelSource needs the sha256 of the G.5 table the rows come from")
         self.release_root, self.receipt_sha256 = release_root, receipt_sha256
         self.table_rows, self.t1, self.table_sha256 = list(table_rows), t1, table_sha256
+        self.table_dir = table_dir
         self.loader = loader
         self._records: list[dict] | None = None
         self._prov: dict | None = None
@@ -422,6 +423,11 @@ class G5LabelSource:
         if inputs.get("proposals_sha256") != self.table_sha256:
             raise SFTDataError("the G.5 table is not the one its train/dev partition was released from")
         try:
+            if self.t1 is not None:
+                if self.table_dir is not None:
+                    self.t1 = AF.B.bind_g5_tail_laws(self.t1, self.table_dir, receipt)
+                elif self.loader is None and self.t1.needs_tail_binding:
+                    raise SFTDataError("noninitial T1 nodes require the receipted G.5 build metadata")
             trows = AF.training_rows("g5", self.table_rows, labels, t1=self.t1)
         except AF.ArmsFreezeError as exc:
             raise SFTDataError(str(exc)) from exc
