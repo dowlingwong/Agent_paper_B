@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 04:00 CET, `main` at `6aee0eb3`
+# State — 27 Nov 2026, 04:15 CET, `main` at the G1/checker merge
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -22,7 +22,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | 1b | `compute/20261127-05` with `-08`: G.5 P11 host tests | §2 2B | TASL-7 part done (C7, C10 short, C11 server side; ACCEPTED), merging; C2, C4, C5, C6, C9, C14, C15 pre-run, C11 chunk side still to run (TASL-2 needs the 0-7 leases) |
 | 1c | `compute/20261127-13`: Ada probe preparation as `zli538` (author, 27 Nov) — host-config fill unit, then probe | §4 | ready; venv ACCEPTED (`a1d0cf74`) |
 | 1c2 | `compute/20261127-12`: D.3 single-GPU HTCondor preflight (L40S or TOpAS A100), ENGINEERING | §2 2A | ready |
-| 1d | `compute/20261127-16`: G1 core **ACCEPTED** (merge under test with the verify-seed checker); next the 6c replicate driver, then the G1 adapter at harness `9bb41680` (`verify_seed_base=20000`), then G6 | §2 2A | ready after `-12`/`-13` |
+| 1d | `compute/20261127-16`: G1 core merged with the verify-seed checker; next the 6c replicate driver, then the G1 adapter at harness `9bb41680` (`verify_seed_base=20000`), then G6 | §2 2A | ready after `-12`/`-13` |
 | 2 | `compute/20261127-15` (= `-01`): houseprice CPU-set check | §2 2B | driver timed out waiting for 0-3/4-7 (helper guard, nothing ran); rerun after MetaMaze and Forest Cover seal |
 | 2b | `compute/20261126-11`: survey redaction | §4 | delivered `f60a2225`, **incomplete** (truncated `ps` user column in `Ada.txt` l.49–62); fix in `compute/20261127-02` item 2, then merge |
 | 2c | `compute/20261127-03`: copy review's verdict case (G.5 B3); P11 evidence table | §2 2B | ready, after the launch |
@@ -50,7 +50,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | 8 | `local/20261126-07`: rows (g) inventory and the G.5 card monitor | §2 2B | ready |
 | done | `local/20261126-04`: S9 sheet | §2 2B | `016742b1`; to the author with P10/P11 |
 | 10 | `local/20261126-05`: item 1 controllers merged `29099c4b` (FIXR3/EGATE as decision engines only); item 2 test-only and item 4 D.3c memo merged; item 3 HPO reference **STOP** (re-check NOT ACCEPTED: needs G1/G6 interfaces, SMAC pin and per-attempt output dirs; resumes after G1/G6); item 5 Paper C last | §2 2A, 2C, 3A | in progress |
-| 11 | `local/20261127-07` harness verify-seed unit **done** (harness `9bb41680`, checker `e44d966f`, ACCEPTED; checker merge under test); `local/20261127-08` revision 4 to frozen (after G2 and the harness unit); `local/20261126-06` unit 2 audit hosts **STOP** (re-check NOT ACCEPTED: launcher refuses shared cards against R1-CARD-SHARE; addendum binding to be designed; Ada as a G.5 audit host is a new host for a table, an author item later) — parked | §2 2A, 2B | ready in that order |
+| 11 | `local/20261127-07` harness verify-seed unit **done** (harness `9bb41680`, checker `e44d966f`, ACCEPTED; checker merged); `local/20261127-08` revision 4 to frozen (after G2 and the harness unit); `local/20261126-06` unit 2 audit hosts **STOP** (re-check NOT ACCEPTED: launcher refuses shared cards against R1-CARD-SHARE; addendum binding to be designed; Ada as a G.5 audit host is a new host for a table, an author item later) — parked | §2 2A, 2B | ready in that order |
 | done | `local/20261126-13`: hygiene inventory (`2005d0b0`: 72 worktrees proposed to retire, 14 keep, 6 active; 29 untracked dirs) | §2 0 | merged `bd406db9`; retirements are the author's |
 | 2a | `local/20261127-09`: G.5 sd-matched assembly path, then re-render (R1-G5-TAILS-CONSUMERS (2)); consumers unit after | §2 2B | **current, first** |
 | (old) | `local/20261127-01`: G.5 Student-t path | §2 2B | superseded by `-09`; was STOP: re-check NOT ACCEPTED pending the author's scope (gate oracle and A2 fit) and scale (sd matching) decision (`AUTHOR.md`). Branch `mac-g5-student-t-20261127` @ `b9bc00fc` kept |
@@ -63,7 +63,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 |---|---|---|---|
 | 1 | `writer/20261126-01` with `-02`: restructure | §2 1, §3 | **delivered** `6138b54f` (re-check ACCEPT WITH MINOR, minors applied; main text about 8.85 pages). The author told the writer in its pane: title option 1, trim to eight pages. **Merge after that trim**, with `writer/20261126-03` |
 | done | `writer/20261127-01`: sources and 27 Nov rows | §3 | merged `03a352d9` (figures dropped where PDFs were unreachable) |
-| done | `writer/20261127-02`: Codex's manuscript edits adopted where they fit (`e3af70a4`, review accepted) | §3 | merge under test |
+| done | `writer/20261127-02`: Codex's manuscript edits adopted where they fit (`e3af70a4`, review accepted) | §3 | merged |
 | done | `writer/20261126-03`: revised outline and claim-to-table sheet | §2 1, §3 | **delivered** (`a9a9f6bb`, review ACCEPT WITH MINOR, corrected). Merges with or after item 1; §6 passed to local (`local/20261126-16`); §5 items go to the author as one sheet |
 | — | result tables | §3 item 4 | blocked: released results; none exist |
 
