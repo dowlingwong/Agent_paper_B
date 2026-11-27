@@ -62,10 +62,17 @@ author in `AUTHOR.md`. Close resolved entries with the PLAN reference. Continue 
 Each round, at least hourly: (1) fetch; if `COORDINATOR` on `coord/coordinator` does not name you, stop; (2) read
 new reports on `coord/local`, `coord/compute`, `coord/writer` and new branches; (3) verify each
 delivered unit (above) and merge what R1-AUTONOMY (3) allows; (4) record coordinator rows where (4) applies; (5) write
-the next task files and update `STATE.md` and `AUTHOR.md`. Send one Chinese digest per day with completed work,
+the next task files and update `STATE.md` and `AUTHOR.md` following the
+[runbook dispatch procedure](../../../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md#7-dispatch-and-run-the-queues).
+Send one Chinese digest per day with completed work,
 results, next steps and the combined list of author decisions. Request a Level 2 decision immediately when it
 blocks the critical path. Follow existing incident and resource notice rules. A round with nothing new ends in
 one line.
+
+On the first dispatch pass, reconcile the next-phase runbook with the signed PLAN, current `main` and open cards.
+Keep existing task IDs, give each unassigned deliverable one owner and acceptance check, and publish the ordered
+queues. After each report, unblock or reorder its dependants and continue ready Level 1 work in the same round.
+Record blocked Level 2 decisions in `AUTHOR.md` and continue work on independent items.
 
 ## When you start cold
 

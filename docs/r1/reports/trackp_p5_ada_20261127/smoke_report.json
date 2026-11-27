@@ -1,0 +1,82 @@
+{
+ "capability": [
+  8,
+  9
+ ],
+ "causal_conv1d": "1.7.0",
+ "checks": {
+  "bf16_matmul": {
+   "ms": 214.998884126544,
+   "pass": true,
+   "rel_err_vs_fp32": 0.0028721054550260305
+  },
+  "deltanet_forward_bfloat16": {
+   "argmax_agreement_vs_ref": 0.995110034942627,
+   "calibration": "torch path, bf16",
+   "calibration_vs_ref": 0.3166346549987793,
+   "fast_s": 0.2506382782012224,
+   "fast_vs_ref": 0.271634578704834,
+   "finite": true,
+   "pass": true,
+   "peak_mib": 2095.94189453125,
+   "tol": 0.6332693099975586,
+   "torch_path_s": 0.26931981462985277
+  },
+  "deltanet_forward_float32": {
+   "argmax_agreement_vs_ref": 1.0,
+   "calibration": "torch path, TF32",
+   "calibration_vs_ref": 0.020127296447753906,
+   "fast_s": 0.21834641881287098,
+   "fast_vs_ref": 0.02801513671875,
+   "finite": true,
+   "pass": true,
+   "peak_mib": 3345.16748046875,
+   "tol": 0.04025459289550781,
+   "torch_path_s": 0.3174203699454665
+  }
+ },
+ "cuda_runtime": "12.4",
+ "device": "NVIDIA RTX 6000 Ada Generation",
+ "fla": "0.5.2",
+ "kernels_bound": {
+  "causal_conv1d_fn": "causal_conv1d.causal_conv1d_interface.causal_conv1d_fn",
+  "causal_conv1d_update": "causal_conv1d.causal_conv1d_interface.causal_conv1d_update",
+  "torch_chunk_gated_delta_rule": "fla.ops.gated_delta_rule.chunk.chunk_gated_delta_rule",
+  "torch_recurrent_gated_delta_rule": "fla.ops.gated_delta_rule.fused_recurrent.fused_recurrent_gated_delta_rule"
+ },
+ "lease": [
+  {
+   "event": "start",
+   "gpu_index": 0,
+   "gpu_uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be",
+   "job": "trackp phase2 gpu smoke",
+   "other_processes": {
+    "count": 0,
+    "memory_mib": 0
+   },
+   "pid": 1598107,
+   "trackx_marker": "absent: /home/zli538/r1_locks/trackx_evidence.active",
+   "utc": "2026-11-27T18:34:21Z"
+  },
+  {
+   "event": "end",
+   "gpu_index": 0,
+   "gpu_uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be",
+   "job": "trackp phase2 gpu smoke",
+   "other_processes": {
+    "count": 0,
+    "memory_mib": 0
+   },
+   "pid": 1598107,
+   "utc": "2026-11-27T18:35:39Z"
+  }
+ ],
+ "pass": true,
+ "reference": {
+  "logit_abs_max": 30.748411178588867,
+  "what": "fp32 CPU forward, torch path"
+ },
+ "seq_len": 409,
+ "torch": "2.6.0+cu124",
+ "transformers": "5.19.0"
+}

@@ -1,0 +1,192 @@
+{
+ "comment": "Track P P.4 phase 1 on Ada (SSH alias experiment_zhixu; 8 x NVIDIA RTX 6000 Ada Generation 48 GB, sm_89), started directly over SSH under a GPU lease (p4_direct.py; R1-HOST-FREE), image v2.2 (R1-TRACKP-IMAGE-V22-B, 24 Nov 2026: gpu sha256:49dd9900\u2026, cpu sha256:a3b3a074\u2026, tag 20261124-v2.2-667bb9c2; docs/r1/reports/trackp_v22_20261123/V22_BUILD_20261124.md; causal_conv1d built for TORCH_CUDA_ARCH_LIST 8.0;8.9;9.0). The same bases, revisions, LoRA, lr grid, pins and SFT settings as trackp_htcondor_v2.json; only the GPU record, the lease and the direct-launch host values differ. The compute agent fills every TODO_VERIFY_ON_HOST value from its survey of Ada with r1/scripts/htcondor/trackp_p4/p4_fill_host_config.py --host-class ada_rtx6000 (paths inside the job, the GPU record, the container runtime, the work root, the lease directory, the hostname); --check-config lists them and real runs refuse a config that still holds one. AI-assisted (Claude); ENGINEERING_ONLY config. | P5 E0-equivalence copy: final budget set to the TASL-7 reference (max 2,000, patience 5); all other values unchanged.",
+ "host": "Ada RTX 6000 (direct launch, image v2.2)",
+ "image": {
+  "gpu": "sha256:49dd9900e0bbb004fe1f45573583cf0cffeb9fe3d98f0ef6d3aa16fb4fe75949",
+  "cpu": "sha256:a3b3a07424743b84c99101ae61b610f9bd4b6ffe1f2f48c0f6d099fbb84d46b8",
+  "tag": "20261124-v2.2-667bb9c2"
+ },
+ "work_dir": ".",
+ "models_dir": "models",
+ "runs_dir": "out",
+ "hf_home": "hf",
+ "gpu": {
+  "name": "NVIDIA RTX 6000 Ada Generation",
+  "compute_capability": "8.9",
+  "lock_path": "gpu0.lock",
+  "dtype": "bfloat16",
+  "gradient_checkpointing": true,
+  "comment": "R1-HOST-FREE: the GPU model is recorded per job, not fixed; this class's jobs run on one RTX 6000 Ada card each, leased by p4_direct.py and visible to the job by UUID"
+ },
+ "bases": {
+  "kev-0.8b": {
+   "family": "kev",
+   "adapter_repo": "jaredpalmer/kev-0.8b",
+   "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+   "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+   "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+   "local_path": "models/qwen3.5-0.8b-base",
+   "lr": 2e-05,
+   "adapter_local_path": "models/kev-0.8b"
+  },
+  "kev-4b": {
+   "family": "kev",
+   "adapter_repo": "jaredpalmer/kev-4b",
+   "adapter_revision": "591dcb5bd6d05eb0b5131ea6608f93f10243335c",
+   "base_repo": "Qwen/Qwen3.5-4B-Base",
+   "base_revision": "1001bb4d826a52d1f399e183466143f4da7b741b",
+   "local_path": "models/qwen3.5-4b-base",
+   "lr": 2e-05,
+   "adapter_local_path": "models/kev-4b"
+  },
+  "qwen3.5-0.8b-base": {
+   "family": "qwen_control",
+   "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+   "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+   "local_path": "models/qwen3.5-0.8b-base",
+   "lr": 0.0001
+  },
+  "qwen3.5-4b-base": {
+   "family": "qwen_control",
+   "base_repo": "Qwen/Qwen3.5-4B-Base",
+   "base_revision": "1001bb4d826a52d1f399e183466143f4da7b741b",
+   "local_path": "models/qwen3.5-4b-base",
+   "lr": 0.0001
+  },
+  "laya": {
+   "family": "laya",
+   "base_repo": "convaiinnovations/laya-typed-decisions",
+   "base_revision": "e929ae5cf69bc34259cd2f95c9e91145b818b1f0",
+   "local_path": "models/laya",
+   "lr": 2e-05
+  },
+  "startlux-0.8b": {
+   "family": "startlux",
+   "base_repo": "startlux-models/StartLux-Decision-v1.1-0.8B-Instant",
+   "base_revision": "6496ae641cc71b149ce9dad69bd97f2a44e7bf11",
+   "local_path": "models/startlux-0.8b",
+   "lr": 0.0001,
+   "licence": "CC-BY-NC-4.0 (research use only)"
+  },
+  "startlux-2b": {
+   "family": "startlux",
+   "base_repo": "startlux-models/StartLux-Decision-v1.1-2B-Instant",
+   "base_revision": "f1e6cd147dda82c9ffa3e8e725d5c1f175566fb1",
+   "local_path": "models/startlux-2b",
+   "lr": 0.0001,
+   "licence": "CC-BY-NC-4.0 (research use only)"
+  },
+  "startlux-4b": {
+   "family": "startlux",
+   "base_repo": "startlux-models/StartLux-Decision-v1.1-4B-Instant",
+   "base_revision": "416088f77cfce09633906a3675c7cd2e5dabcf10",
+   "local_path": "models/startlux-4b",
+   "lr": 0.0001,
+   "licence": "CC-BY-NC-4.0 (research use only)"
+  }
+ },
+ "code_pins": {
+  "kev": "jaredpalmer/kev@2074cc44256200bb37540103fa4572901faa10f3",
+  "laya": "NandhaKishorM/laya@a478221bcad24d1a9c47b361c79328ebd2b100c6",
+  "startlux_decide": "StartLuxLabs/StartLux-Decision@a99977d9332decc9fb27a2488b4a83b533b6cd5f"
+ },
+ "lora": {
+  "r": 16,
+  "alpha": 32,
+  "dropout": 0.05
+ },
+ "head_lr": 0.001,
+ "lr_grid": [
+  1e-05,
+  3e-05,
+  0.0001
+ ],
+ "lr_grid_comment": "R1-LR-GRID (author, 26 Oct): one adapter-lr grid for every family, chosen by val RPS; replaces the per-base lr of spec \u00a74 for P.3a onwards (the per-base 'lr' values are the P.0/P.4 engineering runs' lr and stay for spike/toy only). New heads keep head_lr 1e-3.",
+ "token_lr": 0.0001,
+ "token_lr_comment": "R1-TOKEN-INIT (author, 26 Oct: 'train those rows in fp32 at a lower lr'): the bin-token family's new token rows, fp32, lr 1e-4 (10x below new heads; value chosen by the Track P agent, author to confirm).",
+ "venv": {
+  "path": "/opt/r1/envs/trackp",
+  "python": "3.12.15",
+  "torch": "2.6.0+cu124",
+  "transformers": "5.19.0",
+  "peft": "0.21.2",
+  "flash_linear_attention": "0.5.2",
+  "causal_conv1d": "1.7.0 built from the pinned sdist for sm_89, wheel sha256 8f676dbd2d42588d4fa85aabcb2da8f1bd9bf46dbdeea7b51c7dddf01e4e3e6f, R1-TRACKP-IMAGE-V22-B; imports on the Ada venv",
+  "torch_pin": "torch==2.6.0+cu124 (R1-ENV-PIN, author 26 Oct: kept on driver 535 via CUDA minor-version compatibility)",
+  "comment": "image v2 env3 = the committed trackp-gpu freeze (R1-HTC-QTORCH / R1-QTORCH-AMEND); check_environment verifies torch and the code pins at run time"
+ },
+ "code_pins_comment": "R1-ENV-PIN: Kev code pinned at the exact commit used in P.0 (2074cc4), 23 commits after the kev-1.0 tag; its diff to the tag is recorded in docs/r1/reports/trackp_phase2_20261026/kev_diff_vs_kev-1.0.*",
+ "sft": {
+  "micro_batch": 8,
+  "comment": "P4-MB A (R1-TRACKP-P4-DECISIONS, 21 Nov 2026): micro-batch 8, effective batch 16 in two accumulation steps, as the SFT default; the class's own SFT fit and timing probe confirms the fit on a 48 GB card with gradient checkpointing off; an OOM is a STOP"
+ },
+ "spike": {
+  "toy_examples": 100,
+  "seq_len": 1024,
+  "batch_size": 8,
+  "steps": 13,
+  "seed": 0,
+  "comment": "13 steps x batch 8 = one pass over the 100 toy examples (P.0 '100-example toy SFT'; was 10 = 80 examples, STOP 3 review)"
+ },
+ "toy_batch": {
+  "examples": 64,
+  "steps": 50,
+  "seed": 0
+ },
+ "e0": {
+  "protocol": "trackp_e0/v2",
+  "batch_size": 8,
+  "seed": 0,
+  "screen": {
+   "max_steps": 2000,
+   "eval_every": 100,
+   "patience": 5
+  },
+  "final": {
+   "max_steps": 2000,
+   "eval_every": 100,
+   "patience": 5
+  },
+  "comment": "R1-E0-PROTOCOL + R1-E0-BUDGET (author, 26 Oct): lr screen on lr_grid (<= 2,000 steps, chosen by val RPS), then one run at the selected lr (cap 6,000, eval every 100, patience 10); E0 metrics from that run; the hard-label and native runs reuse the selected lr with the final budget. Screen patience 5 is the Track P agent's (eval every 100 confirmed, R1-TRACKP-CHOICES). Head fit: full-batch L-BFGS on CPU, descriptive (R1-E0-HEADFIT)."
+ },
+ "e3": {
+  "steps": 300,
+  "seeds": [
+   0,
+   1,
+   2
+  ]
+ },
+ "kev_temperature": {
+  "training": 1.0,
+  "post_hoc": "temperature scaling on dev, the same procedure for every model (R1-TEMPERATURE)"
+ },
+ "jev": {
+  "base_url": "https://api.typesafe.ai",
+  "model": "jev-1.14.0",
+  "repeats": 3,
+  "comment": "R1-JEV-RUNG / R1-EDGES-10 (author, 26 Oct): jev-1.14.0; 10 yes/no questions (one per finite bin edge). Verify with the key that the name exists before Phase 7; the client refuses a different returned version."
+ },
+ "rb_demos": {
+  "base_url": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "max_analysis_tokens": 256,
+  "n_examples": 500
+ },
+ "lease": "direct_gpu_lease",
+ "lease_comment": "The card is leased outside the job by p4_direct.py (an exclusive flock on <direct.lock_dir>/gpu<N>.lock, the same lock the host's other jobs take) and only that card is visible in the container: trackp.py passes an empty Track X schedule to its in-job GPU lease (no origin/main STATUS.md is read inside the job) and skips its foreign-compute-process check, because the card may be shared by design (R1-CARD-SHARE (1): the launcher checked its free memory and records the other processes at start and end); the in-job flock at gpu.lock_path applies.",
+ "direct": {
+  "ssh_alias": "ada_server",
+  "hostname": "ucrtasl",
+  "container_runtime": "venv",
+  "work_root": "/data1/zli538/paperb_p4_20261127/jobs",
+  "lock_dir": "/data1/zli538/r1_locks",
+  "shm_size": "16g",
+  "min_free_mib": "46000",
+  "venv": {
+   "python": "/data1/zli538/paperb_p4_20261127/venv/bin/python",
+   "version": "3.12.10"
+  },
+  "comment": "The fill selects apptainer, docker, or venv. The reviewed Ada venv uses Python 3.12.10 and the env3 package lock. Image v2.2 uses Python 3.12.15. See docs/r1/reports/trackp_p4_20261127/ADA_P4_VENV_20261127.md. The launcher leases one GPU and checks available memory. The shm_size field applies to docker."
+ }
+}

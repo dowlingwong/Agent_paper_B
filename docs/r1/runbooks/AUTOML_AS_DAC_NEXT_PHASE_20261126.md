@@ -39,20 +39,21 @@ Sources are the [current B plan](../../../canon/PAPER_B_PLAN.md), [A3 review](..
 
 ## 2. Work order and ownership
 
-The coordinator issues one task per deliverable. The design agent supplies the claim, comparator, estimand and
-acceptance check. The writer handles manuscript changes. Local and compute implement their assigned units and
-a fresh reviewer checks each unit at its required tier. Compute operates the live hosts in
-[COMPUTE.md](../../../canon/COMPUTE.md).
+The coordinator reconciles this work order with PLAN and issues one task card per deliverable. The design
+agent supplies the claim, comparator, estimand and acceptance check. The writer handles manuscript changes.
+Local and Compute implement their assigned units and a fresh reviewer checks each at its required tier.
+Compute operates the live hosts in [COMPUTE.md](../../../canon/COMPUTE.md) and inherits the open cluster
+and experiment cards under R1-AGENT-COMPUTE.
 
 | Order | Task and owner | Depends on | Done when |
 |---|---|---|---|
 | 0 | **Repository hygiene**, design + coordinator + each checkout owner | Branch inventory on the published base | Current paths resolve. Each proposed retirement has an exact tip, owner and recovery route. Retained refs are accounted for. See [hygiene audit](../reports/REPO_HYGIENE_AUDIT_20261126.md). |
 | 1 | **Paper B manuscript correction**, writer + design | R1-ALIGN-OUTCOME, R1-D3B-UNCONDITIONAL, R1-D3-DECOMP and R1-D3-ORDER | Both draft builds show the same D.3a/b design and separate the offline gate verdict from the campaign outcome. Revised outline and claim-to-table sheet reviewed. |
-| 2A | **T0 screening smoke and D.3**, local + compute | Repeat the screening smoke after the reviewed cache fix merges. Close the remaining D.3 rev 4 freeze prerequisites and the runner and audit checks. | The complete D.3a/b arm list and accounting pass on the pinned harness. One matched GPU layout works in smoke. The designated audit computes the paired terminal outcome from fresh seeds. |
-| 2B | **T1 labels and A5 readiness**, compute + local | Review the sd-matched G.5 assembly, complete the per-node checks and publish the note. Advance the Ada Track P probe in parallel. | Eligible G.5 label tables and receipts follow the signed release sequence. Passing expansion nodes join by addendum under S9. |
+| 2A | **T0 screening smoke and D.3**, local + compute | Complete the signed screening measurement and the remaining runner and audit checks. Follow R1-D3-STEP8-HOLD. | The complete D.3a/b arm list and accounting pass on the pinned harness. One matched GPU layout works in smoke. The designated audit computes the paired terminal outcome from fresh seeds. |
+| 2B | **T1 labels and A5 readiness**, compute + local | Review the sd-matched G.5 assembly, complete the per-node checks and publish the note. Advance the Ada Track P probe in parallel. | Eligible G.5 label tables and receipts follow the signed release sequence. Passing expansion nodes join by addendum under S9. Houseprice uses TASL-2 after the signed three-attempt check passes. |
 | 2C | **D.3c descriptive transfer**, compute + design | G.5 completion, frozen arms, own pre-declaration and authorization, code-diff sidecar smoke | New disjoint instances of CIFAR-10, Fashion-MNIST and MinAtar Breakout use the approved D.3c arms. Report cost and paired outcomes with descriptive scope. |
 | 3A | **Paper C E-SYN and CPU census**, local worker + design | Consolidate Paper C work and the existing PLAN rows, then apply R1-PAPERC-MEASURE-FIRST | An exact or certified oracle checks each synthetic channel. CPU report measures retention stakes and decision relevance before fixing the real-node design. |
-| 3B | **Paper C fixed-memory census**, design + experiment | One approved development task, cap, pin, and a host lease that fits Paper B's schedule | Reproducible baseline, measured headroom and evidence about whether the first edit changes follow-up feasibility or quality. See §5. |
+| 3B | **Paper C fixed-memory census**, design + compute | One approved development task, cap, pin, and a host lease that fits Paper B's schedule | Reproducible baseline, measured headroom and evidence about whether the first edit changes follow-up feasibility or quality. See §5. |
 | 4 | **Paper C core decision and new trajectories**, design + coordinator + author | CPU census and, where available, development results from E-INT | Approve R1-PAPERC-CORE with eligible nodes/actions, frozen comparators, practical margin, supported interventions, audit, budget/power statement and test split. Then collect evidence under the signed runbooks. |
 
 Run the manuscript correction, CPU runner work and resource checks in parallel. The compute agent advances the
@@ -64,6 +65,7 @@ tracks departures in the existing queue.
 Advance by reviewed prerequisites under R1-STEP-ORDER. Complete the G.5 labels for the eligible set, publish the
 train/dev release, freeze the trained and calibrated arms and then read the gate once. Include optional evidence
 when it is complete and reviewed at the submission decision. Venue dates govern submission scheduling.
+Apply the constraints in the signed notes. Record which dependency blocks a step and who owns the next action.
 
 ## 3. Paper B manuscript and results
 
@@ -101,9 +103,9 @@ Build both drafts there. Put the manuscript branch, commit and build results on 
 
 | Work | Route and existing limits | Verification and handoff |
 |---|---|---|
-| D.3a/b Paper B | Seven T0 nodes × 18 fresh instances per node, same start/instance pairing across arms, 20 charged worker runs and 80 manager calls, ten fresh audit seeds. deepthought for the CPU audit within its 16-worker / 10-free-CPU rule. Proposer GPU from the declared layout. | Compute reports the job/event accounting, SHA and schema. Verify that rule skips count the manager call and consume zero worker runs. Report D.3a's projection against the 140 GPU-hour threshold. |
-| G.5 Paper B | TASL pair under reviewed per-node routing, projected 216.9 GPU-h against 425 GPU-h in the current plan. TASL-2 excludes CPUs 8–11. TASL-7's eligible audit chunks follow the cross-host checks. | Experiment reports correct pin and lease, per-node completions and any failures. The houseprice procedure stops that node on the affected host. Test and evaluation partitions follow the release notes. |
-| P.4 Paper B | Run the probe on one RTX 6000 Ada through the direct launcher. The existing H200 queue request is independent of this route. The phase-1 reporting threshold includes the probe charge. | Compute confirms the approved launch account, finishes the reviewed Ada host configuration, verifies the environment and lease, and delivers timing, peak GPU memory and charges for the phase-1 note. |
+| D.3a/b Paper B | Seven T0 nodes × 18 fresh instances per node, same start/instance pairing across arms, 20 charged worker runs and 80 manager calls, ten fresh audit seeds. deepthought for the CPU audit within its 16-worker / 10-free-CPU rule. Proposer GPU from the declared layout. | Compute reports the job/event accounting, SHA and schema. Verify that rule skips count the manager call and consume zero worker runs. Charge repeat training. Report D.3a usage against the 140 GPU-hour projection under R1-NO-TIMEOUT. |
+| G.5 Paper B | TASL pair under reviewed per-node routing, projected 216.9 GPU-h against 425 GPU-h in the current plan. TASL-2 excludes CPUs 8–11. TASL-7's eligible audit chunks follow the cross-host checks. | Compute reports the correct pin and lease, per-node completions and any failures. The houseprice procedure stops that node on the affected host. Test and evaluation partitions follow the release notes. |
+| P.4 Paper B | Run the probe on one RTX 6000 Ada through the direct launcher. The existing H200 queue request is independent of this route. The phase-1 reporting threshold includes the probe charge. | Compute confirms the approved launch account, finishes the reviewed Ada host configuration, verifies the environment and lease, and delivers timing, peak GPU memory and charges for the phase-1 note. Local implements launcher changes. Run subsequent work under the published authorization. |
 | Paper C E-SYN and E-T0 | Desk/CPU work with pinned harness and separate seed registry. R1-PAPERC-MEASURE-FIRST specifies new audits of retained/final configurations on four nodes and a guarded first-accept check on digits and tabular. | Report decision relevance, immediate stakes and expected paired precision first. Compare E1 and E2 separately. E1 only enters the proposed core where its declared threshold produces decision-relevant variation. |
 | Paper C E-INT | One declared 24 GB or 48 GB GPU with an explicit VRAM cap on that host. Candidate route is a spare TASL lease or Ada once the owner confirms availability and the author accepts the layout. | Record device model, free/allowed memory, software and lease, exact token accounting, throughput and loss. Use one GPU model and identical conditions across the four cells. |
 
@@ -120,6 +122,9 @@ Report the job ID and match or failure reason, GPU model and driver, image diges
 read and hash checks. Record partial coverage explicitly if an image or input is still unverified. Keep the
 per-arm smoke behind its own G1/G6, constants and runner checks. The
 [compute card](../../../canon/COMPUTE.md) records inventory and observed occupancy separately.
+
+Apply R1-HOST-FREE to placement decisions and the published authorization to signed runs. Use the live task
+queue for host availability and launch dependencies.
 
 ## 5. Fixed-memory, variable-length sequence census
 
@@ -176,3 +181,40 @@ measured policies.
 **Proposed record for the author-approved census selection.** Add the fixed-memory, variable-length sequence
 training benchmark as Paper C's chosen E-INT development census. Keep E-INT descriptive until the census and
 the core decision establish further scope. Bind the workload, host, time cap and seed block in the census note.
+
+## 7. Dispatch and run the queues
+
+The coordinator uses §2 of this runbook as the work order and the signed PLAN and notes as execution authority.
+Workers take their next assignment from [the live queue](https://github.com/dowlingwong/Agent_paper_B/blob/coord/coordinator/STATE.md)
+and use the runbook section referenced by their task card for context.
+
+### Coordinator dispatch
+
+1. Fetch and verify the current `COORDINATOR` holder. Reconcile this runbook with published `main`, signed PLAN,
+   open cards and worker reports. Link completed work and retain the IDs of existing cards. Put any change to
+   claims, evidence rules or signed conditions in `AUTHOR.md` for a decision.
+2. For each unassigned deliverable, write one card under `tasks/<role>/` on `coord/coordinator`. Give it one owner,
+   a runbook section or PLAN row, dependencies and their owners, base SHA, inputs, scope, review and acceptance
+   checks, and the expected report. Issue a superseding card when an active card changes.
+3. In `STATE.md`, keep one ordered queue each for Compute, Local and Writer. Record the current task, the next
+   runnable items, and the owner and prerequisite for each blocked item. Put design handoffs in the existing
+   design/writer workflow. After each delivery, check which dependent cards can become ready and update the order.
+
+### Worker cycle
+
+1. Fetch the queue and your reports. Resume active work first, then take the first ready card in your role's queue.
+   Use your assigned worktree and a task branch for deliverables. If the work is running elsewhere, check the
+   recorded job ID before submitting again.
+2. Deliver the result or STOP through `coord/<role>`. Fetch the queue again immediately and take the next ready
+   card. Continue independent cards while a dependency is blocked. Record the blocker and its owner.
+3. When there is no runnable work, check again every 30 minutes. The launcher waits 30 minutes after each
+   completed worker round before starting the next one. Verify a scheduled check in each worker's tmux pane.
+   Review the runtime message if a timer was unavailable or a client exited with an error.
+
+### Coordinator visibility in Claude Code
+
+Attach to the active `paperb-coordinator` tmux session and enter `/remote-control Paper B Coordinator` at the
+Claude prompt. Accept the one-time setup if prompted. Verify `/rc active` and that **Paper B Coordinator** opens
+the current conversation in **Claude App → Code** or [claude.ai/code](https://claude.ai/code) under the same account.
+Leave the Mac and the coordinator session running. After a restart, resume the holder's session and verify both
+Remote Control and the recurring coordinator job. [Claude Code Remote Control](https://code.claude.com/docs/en/remote-control)
