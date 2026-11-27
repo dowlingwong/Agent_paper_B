@@ -142,6 +142,8 @@ def direct_host_values(spec: dict, host_class: str, *, preview: bool = False, re
                    lib._placeholder(v))
     if open_ and not preview:
         raise lib.Stop(f"STOP: {rel} direct.{open_} not filled (p4_fill_host_config.py --host-class {host_class})")
+    if vals["container_runtime"] == "venv":
+        vals["venv"] = lib.ada_venv_config(block)
     return {"values": vals, "host_config": {"path": rel, "sha256": sha}}
 
 

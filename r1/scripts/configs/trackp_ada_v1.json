@@ -183,6 +183,10 @@
   "lock_dir": "TODO_VERIFY_ON_HOST",
   "shm_size": "TODO_VERIFY_ON_HOST",
   "min_free_mib": "TODO_VERIFY_ON_HOST",
-  "comment": "The direct launch's host values (p4_render_jdl.render_direct copies them into each stage descriptor; p4_direct.py uses them on the host): container_runtime apptainer or docker (digest-pinned image only), work_root for the fresh job directories, lock_dir for the GPU lease files gpu<N>.lock, hostname as `hostname` prints it, shm_size for docker, min_free_mib the free memory (MiB) a job needs on its card: the launcher checks free memory, not an empty card, and shares a card when it must (R1-CARD-SHARE (1))."
+  "venv": {
+   "python": "/data1/zli538/paperb_p4_20261127/venv/bin/python",
+   "version": "3.12.10"
+  },
+  "comment": "The fill selects apptainer, docker, or venv. The reviewed Ada venv uses Python 3.12.10 and the env3 package lock. Image v2.2 uses Python 3.12.15. See docs/r1/reports/trackp_p4_20261127/ADA_P4_VENV_20261127.md. The launcher leases one GPU and checks available memory. The shm_size field applies to docker."
  }
 }
