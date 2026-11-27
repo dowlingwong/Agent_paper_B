@@ -1702,6 +1702,12 @@ preregistration, the gate code and every signed note are unchanged.
 |---|---|
 | R1-CODEX-RECORDED-SIGNATURES | **Rows that Codex records from the author's Codex chat are published by the coordinator without a further confirmation in the coordinator's session** (author, 27 Nov 2026: "以后 Codex 记录的签字直接发布"). (1) Codex records the author's words verbatim in the row and works on its own branch; it does not push `main` (D2, `canon/README.md` rule 1). (2) Before publishing, the coordinator checks the content as for any author row: the quoted words answer an item the coordinator put to the author, or are a decision the author can make; a signed document differs from its reviewed candidate only in its signature lines; hashes match; PLAN gains additions only; the D8 guard passes. A mismatch is not published and goes back to the author. (3) The author may withdraw this by one sentence. |
 
+### 27 November 2026 (f) — D.3: step (8) waits for the screening result (author)
+
+| ID | Decision |
+|---|---|
+| R1-D3-STEP8-HOLD | **Step (8) of the frozen D.3 pre-declaration revision 4 waits for the screening measurement's result** (author, 27 Nov 2026: "同意：(8) 等 screening"; the coordinator's item in `AUTHOR.md` on `coord/coordinator` @ `6bda21b2`). The coordinator froze revision 4 (`main` `9cd5863c`, sha256 `e091b1b5…`) before the screening result that R1-SCREEN-MEASURE and R1-SCREEN-MEASURE-SIGNATURE place before the D.3 binding freeze; no D.3 campaign had started and step (8) had not been done. (1) No field of the frozen document changes. (2) Step (8), which writes its sha256 into the D.3a authorization note and every outcome-table header, and every D.3 campaign wait for the screening evidence result. (3) If no decision node returns SHARED, R1-THEORY-RHO (2) is final and step (8) proceeds on revision 4. If a node returns SHARED, the seventh D.3a arm goes to the author; if it is added, a revision 5 supersedes revision 4 (review, signature, freeze), and revision 4 stays as the record. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
