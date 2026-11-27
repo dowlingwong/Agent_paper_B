@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 15:25 CET, `main` at `523ccfbc`
+# State — 27 Nov 2026, 15:40 CET, `main` at `d669b0bf`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -40,6 +40,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | — | `compute/20261126-07`: P.4 probe on Ada | §2 2B, §4 | blocked: the Ada venv (`compute/20261127-06`) (the missing-runs STOP fix and the H200 fill are merged); the direct launcher and Ada host config are on `main` `bd406db9`. Earlier: a torch environment on Ada (the survey: a venv from the P.4 lock without sudo, or a container runtime from the host owner); the route goes to the author if a venv is not acceptable |
 | done | `compute/20261127-14`: screening smoke **PASS** (168/168, no STOP) | §2 2A | merged `98c571d2`; note completion `local/20261127-12`, then the author signs |
 | done | `compute/20261127-17`: G2 constants artifact (sha256 `4f5f686b…`, re-fit byte-identical, review ACCEPTED) | §2 2A | merged `98c571d2`; revision 4 fill `local/20261127-13` |
+| 1d2 | `compute/20261127-28`: E-INT census on a second Ada card (R1-PAPERC-EINT-CENSUS, `d669b0bf`); smoke first; yields to Paper B | §2 3B | ready after `-27` has its card |
 | 1d1 | `compute/20261127-27`: D.3 per-arm ENGINEERING smoke on Ada (direct SSH launcher; all prerequisites on `main`) | §2 2A | **ready** |
 
 ## Local (Claude on the Mac)
