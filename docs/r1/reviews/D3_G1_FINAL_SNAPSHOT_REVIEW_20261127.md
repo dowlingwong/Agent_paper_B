@@ -236,3 +236,27 @@ report/evidence, and F5 recorded as observed full-suite variance; no code change
 
 No D.3 evidence job was run for this review. The pre-declaration can proceed to the local worker's step (5)
 repetition subject to the coordinator's disposition of F1/F2.
+
+## 11. Minor findings re-check (task tip `2d014725`)
+
+Re-checked `2d0147253dd5f4a649ca2e8ec37ad1c21a324a22`. The code diff from the reviewed `292cde97` is the docstring
+only: `r1/c3/d3/snapshots.py` has 4 removed / 4 added lines inside `_write_final_payload`; `campaign_chunk.py` and
+`test_d3_g1_snapshots.py` are byte-identical. The new `snapshots.py` sha256 is
+`5241dcc079f606582a8e9233886a51d93b656aef3362571b4898c9ab748819a2`, matching the report. Focused tests at
+`2d014725`: **36 passed** for the three recorder/chunk/replicate modules and **161 passed, 18 subtests** for the
+eight D.3 modules. The adapter failure-id file is byte-identical to base `c4250f7e`
+(`aedf99f598b2c5b35ebdc74a19529513971622c1227f85e7a0925982131e32ef`, 111 ids).
+
+| Finding | Status | Re-check evidence |
+|---|---|---|
+| F1 | **RESOLVED** | The report and the `_write_final_payload` docstring now say the pre-decision payload is unchanged “apart from the two provenance fields `pre_decision` and `superseded_by`”. This matches the measured writer behaviour (original/pre/canonical sha256 `409941f6…` / `587dbd7a…` / `74674876…`). No byte-for-byte claim remains. |
+| F2 | **PARTIALLY RESOLVED — one claim is still wrong** | The restored `FULL_SUITE_FAILURE_IDS_20261127.txt` is exactly the base bytes `aedf99f5…` (111 ids). The new `FULL_SUITE_FAILURE_IDS_FINAL_20261127.txt` has 120 ids and its id set equals the base 120, so the list content is correct. However, the file header states only the id-list hash, not its own file sha; its own file sha256 is `a07721cbe70eeb2ba2535a3eae18d9d68c16b94f6c4bc3fb539b7486fe6bbc36`, not the stated `9b0350c2…`. The stated `9b0350c2…` is the hash of the newline-joined ids **in file order with a trailing newline**; the sorted id list hashes to `03339eb10919c3772e705195d5dc37cdee44a38d76ebaa5be1acd10f74d02977`, and the file order is not sorted (e.g. `test_c3_sweep_dryrun…` precedes `test_c3_sweep2_audit…`). The report calls `9b0350c2…` the file's sha256 and the 120 ids “sorted”; both statements are inaccurate. The 120-id set itself is correct. |
+| F3 | **INFO, unchanged** | Canonical `w20.json` carries the post-decision controller hash; the exact-w E1 state remains in `w20_pre.json`. No action required; replay should read `w20_pre.json`. |
+| F4 | **RESOLVED (documented)** | The report now records that `ended_on="error"` skips at-W canonicalisation and that this is fail-closed; this matches the code. |
+| F5 | **RESOLVED IN SUBSTANCE; wording still loose** | The report now gives the serial 117 failed / 4,982 passed run and my independent 114 failed / 4,985 passed rerun, says no new id appears, and no longer claims an identical 120-id set. My rerun's 117 ids are a strict subset of the base 120, and the three non-reproducing base failures are named. Remaining nit: “the 120 sorted … ids at the tip are a subset of the 120 at the base” is non-strict (the serial sets are equal) and “sorted” is false under F2; “the two extra passes over the base are the new tests” applies to the serial run, not to my +5 rerun. |
+
+**Re-check verdict: the verdict stays ACCEPTED WITH MINOR, not ACCEPTED.** The code behaviour and both blocking
+fixes remain correct, and F1/F4 are cleanly resolved. The F2 fix is substantively right but its file-sha and
+“sorted” claims are still wrong; F5 is substantively right but retains loose wording. These are evidence/documentation
+only and need no code change. If the coordinator accepts `9b0350c2…` as the intended id-list hash and corrects the
+F2 wording, the verdict can be raised to ACCEPTED.
