@@ -16,9 +16,10 @@ import sys
 import tarfile
 from pathlib import Path
 
+import numpy as np
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT =Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "sweep2" / "t1_tasl"))
 sys.path.insert(0, str(ROOT))
 import g5_tasl as S  # noqa: E402
@@ -221,6 +222,9 @@ def world(tmp_path, monkeypatch):
     for fam, c in (("G5-7", "7"), ("G5-AR", "8")):
         s["harness_families"][fam].update(g5_commit=c * 40, harness_dir=str(tmp_path / f"h{c}"))
     S.node_entry(s, NODE)["node_spec_sha256"] = hashlib.sha256(NODE_YAML["maximize"]).hexdigest()
+    for n in s["nodes"]:               # P10 declared before labels (R1-G5-TAILS); a test sets student_t where needed
+        if n["node"] != S.AR:
+            n["tails"] = "gaussian"
     repo = tmp_path / "repo"           # the committed REL-T1-G1B copy the row cites, with its run's copies (D6 A)
     fields = g1b_copy(repo, "docs/r1/reports/g5_rel_t1_g1b_x/seven", G.SUMMARY_SCHEMA, "g1b-tasl-20261121-b", [NODE])
     rel = fields["copy"]
@@ -729,6 +733,141 @@ def test_assembly_refusals(world):
         return row | {"g1b_summaries": {NODE: {"path": world["rel"], "sha256": "0" * 64}}}
     stop("differs from the sha256 the row cites", A.assemble, world["sp"], "traindev", table, ev, lock=wrong_copy,
          git=node_git())
+
+
+# =============================================================================================== tail law (R1-G5-TAILS)
+# The Gaussian assembly bytes of this world (tails gaussian), produced by the code on main before the Student-t unit
+# (6684e840; build.json without its spec sha256, sealed-run path and attempt paths, which name the tmp directory).
+GAUSSIAN_BYTES = {"proposals.jsonl": "2161d35b951a3243474f43aabb42ddf4e0ac0d0759043c21a2dc7fd8b799aa20",
+                  "label_block.jsonl": "10eff6c15c2dce15d9478d4124d2c75b60fd5f02fb298ee37a8ab737cacdb07b",
+                  "evaluation_block.jsonl": "1b095ba59b80ce9c4037e574ce850042f27a580ea8af4eb9dece3feaa95c1527",
+                  "build_normalized": "1a69112dfc5e8af7e3cda96698b5b10be104d7dcc17469a51db6c170b151a6be"}
+
+
+def _assembled_digest(table, ev):
+    out = {n: hashlib.sha256((d / n).read_bytes()).hexdigest() for d, n in (
+        (table, "proposals.jsonl"), (ev, "label_block.jsonl"), (ev, "evaluation_block.jsonl"))}
+    b = json.loads((table / "build.json").read_text())
+    b.pop("spec_sha256"), b.pop("sealed_run")
+    for v in b["nodes"].values():
+        v.pop("attempts")
+    out["build_normalized"] = hashlib.sha256(json.dumps(b, sort_keys=True).encode()).hexdigest()
+    return out
+
+
+def _set_tails(world, node, **fields):
+    """Declare a node's tail law in the spec before the run (records bind the spec's sha256)."""
+    s = world["spec"]
+    n = S.node_entry(s, node)
+    n.pop(S.TAILS_NU, None)
+    n.update(fields)
+    world["sp"].write_text(json.dumps(s))
+    rec = json.loads(world["srv"].read_text())
+    world["srv"].write_text(json.dumps(rec | {"spec_sha256": G.L._sha_file(world["sp"])}))
+
+
+def _assemble_both(world):
+    s = world["spec"]
+    table, ev, _ = assemble_world(world, Engine(s, divergent_label={"S12_6"}, divergent_eval={"S13_7"}))
+    A.assemble(world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"), git=node_git())
+    A.assemble(world["sp"], "test", table, ev, lock=lock_for(world, "traindev", "test"), git=node_git())
+    return table, ev
+
+
+def test_tails_gaussian_assembly_is_byte_identical_to_main(world):
+    """A gaussian node's table, label block, evaluation block and build.json are the bytes the pre-unit code wrote."""
+    table, ev = _assemble_both(world)
+    assert _assembled_digest(table, ev) == GAUSSIAN_BYTES
+    labels = [json.loads(x) for x in (ev / "label_block.jsonl").read_text().splitlines()]
+    assert not any({"tails", "nu"} & set(lab.get("soft_parameters") or {}) for lab in labels)
+    assert not {"tails", "nu", "t_scale"} & set(json.loads((table / "build.json").read_text())["nodes"][NODE])
+
+
+def test_tails_student_t_assembly_records_the_law(world):
+    """A student_t node (ν = 5): its audit label rows carry tails and nu in soft_parameters and its build.json entry
+    tails, nu and t_scale; every value (Δ_label, se_label, E5, the table, the evaluation block) is the Gaussian
+    world's; the soft label from those parameters is the Student-t of ``labels.soft_label``."""
+    from r1.c3 import labels as LB
+    from r1.c3.train import sft_data
+    _set_tails(world, NODE, tails="student_t", tails_nu=5)
+    table, ev = _assemble_both(world)
+    got = _assembled_digest(table, ev)
+    assert got["proposals.jsonl"] == GAUSSIAN_BYTES["proposals.jsonl"]
+    assert got["evaluation_block.jsonl"] == GAUSSIAN_BYTES["evaluation_block.jsonl"]
+    assert got["label_block.jsonl"] != GAUSSIAN_BYTES["label_block.jsonl"]
+    build = json.loads((table / "build.json").read_text())
+    assert (build["nodes"][NODE]["tails"], build["nodes"][NODE]["nu"]) == ("student_t", 5.0)
+    assert build["nodes"][NODE]["t_scale"] == A.STUDENT_T_SCALE == LB.STUDENT_T_SCALE
+    labels = [json.loads(x) for x in (ev / "label_block.jsonl").read_text().splitlines()]
+    audit = [lab for lab in labels if lab["label_kind"] == "audit"]
+    assert audit and all(lab["soft_parameters"]["tails"] == "student_t" and lab["soft_parameters"]["nu"] == 5.0
+                         for lab in audit)
+    assert not any("tails" in (lab.get("soft_parameters") or {}) for lab in labels if lab["label_kind"] != "audit")
+    stripped = []                                       # without the two fields, the rows are the Gaussian rows
+    for lab in labels:
+        sp = dict(lab.get("soft_parameters") or {}) if lab.get("soft_parameters") is not None else None
+        if sp:
+            sp.pop("tails", None), sp.pop("nu", None)
+        stripped.append({**lab, **({"soft_parameters": sp} if "soft_parameters" in lab else {})})
+    raw = "".join(json.dumps(x, sort_keys=True, allow_nan=False) + "\n" for x in stripped).encode()
+    assert raw == (ev / "label_block.jsonl").read_bytes().replace(b', "nu": 5.0', b"").replace(
+        b', "tails": "student_t"', b"")
+    assert hashlib.sha256(raw).hexdigest() == GAUSSIAN_BYTES["label_block.jsonl"]
+    lab = audit[0]["soft_parameters"]
+    p = LB.soft_label(lab["delta_label"], None, lab["sigma_node"], sigma_mode="pooled_node", k_label=lab["k_label"],
+                      tails=lab["tails"], nu=lab["nu"])
+    from scipy.stats import t as student_t
+    zs = 1 / math.sqrt(lab["k_label"])
+    scale = LB.student_t_scale(zs, lab["nu"])
+    assert scale == pytest.approx(zs * math.sqrt(3 / 5), rel=1e-15)
+    assert student_t.std(lab["nu"], scale=scale) == pytest.approx(zs, rel=1e-15)
+    ref = np.diff(student_t.cdf(LB.EDGES, 5, loc=lab["delta_label"] / lab["sigma_node"],
+                                scale=zs * math.sqrt(3 / 5)))
+    assert np.allclose(p[1:], ref / ref.sum(), atol=1e-14, rtol=0)
+    gaussian = LB.soft_label(lab["delta_label"], None, lab["sigma_node"], k_label=lab["k_label"])
+    assert not np.allclose(p, gaussian, atol=1e-14, rtol=0)
+    # The generic T0 reader keeps its schema. The dedicated G5LabelSource carries the T1 fields.
+    assert set(lab) - sft_data.SOFT_PARAMETER_KEYS == {"tails", "nu"}
+
+
+def test_tail_law_is_declared_before_labels(world):
+    s = world["spec"]
+    assert A.tail_law(s, NODE) == {"tails": "gaussian"}
+    n = S.node_entry(s, NODE)
+    for fields, match in (({"tails": "PENDING: P10"}, "not declared"), ({"tails": "laplace"}, "not declared"),
+                          ({"tails": "student_t"}, "finite number > 2"),
+                          ({"tails": "student_t", S.TAILS_NU: 2}, "finite number > 2"),
+                          ({"tails": "student_t", S.TAILS_NU: True}, "finite number > 2"),
+                          ({"tails": "gaussian", S.TAILS_NU: 5}, "refused where tails is gaussian")):
+        m = copy.deepcopy(s)
+        S.node_entry(m, NODE).pop(S.TAILS_NU, None)
+        S.node_entry(m, NODE).update(fields)
+        stop(match, A.tail_law, m, NODE)
+    assert n["tails"] == "gaussian"
+    m = copy.deepcopy(s)
+    S.node_entry(m, NODE).update(tails="student_t", tails_nu=5)
+    assert A.tail_law(m, NODE) == {"tails": "student_t", "nu": 5.0}
+    assert S.options(s)["G5-ARPEND"] == "A"            # autoresearch: from the completion record
+    stop("needs its completion record for its tails", A.tail_law, s, S.AR)
+    assert A.tail_law(s, S.AR, ar_record=lambda: {"tails": "gaussian"}) == {"tails": "gaussian"}
+    assert A.tail_law(s, S.AR, ar_record=lambda: {"tails": "student_t", "tails_nu": 5.0}) == \
+        {"tails": "student_t", "nu": 5.0}
+    stop("finite number > 2", A.tail_law, s, S.AR, ar_record=lambda: {"tails": "student_t"})
+    stop("not declared", A.tail_law, s, S.AR, ar_record=lambda: {"tails": None})
+
+
+def test_tail_law_refused_before_any_sealed_read(world):
+    """An undeclared node STOPs the assembly before any sealed content is opened (E5: declared before labels)."""
+    s = world["spec"]
+    table, ev, _ = assemble_world(world, Engine(s))
+    m = copy.deepcopy(s)
+    S.node_entry(m, NODE)["tails"] = "PENDING: P10"
+    world["sp"].write_text(json.dumps(m))
+    before = SE.sealed_run(s) / SE.ACCESS_LOG
+    log = before.read_text() if before.is_file() else ""
+    with pytest.raises(J.Stop, match="not declared"):
+        A.assemble(world["sp"], "traindev", table, ev, lock=lock_for(world, "traindev"), git=node_git())
+    assert (before.read_text() if before.is_file() else "") == log and not table.exists()
 
 
 def test_autoresearch_summary_bound_to_the_completion_record(world):

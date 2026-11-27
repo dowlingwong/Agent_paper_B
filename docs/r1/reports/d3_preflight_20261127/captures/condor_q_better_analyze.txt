@@ -1,0 +1,58 @@
+
+
+-- Schedd: deepthought.etp.kit.edu : <129.13.101.137:9618?...
+The Requirements expression for job 760148.000 is
+
+    ((TARGET.GPUs_DeviceName is "NVIDIA L40S")) && (TARGET.Arch == "X86_64") &&
+    TARGET.HasContainer && TARGET.HasDockerURL &&
+    (TARGET.Disk >= RequestDisk) && (TARGET.Memory >= RequestMemory) &&
+    (TARGET.Cpus >= RequestCpus) && (TARGET.GPUs >= RequestGPUs) &&
+    (TARGET.HasFileTransfer)
+
+    [0]    : TARGET.GPUs_DeviceName is "NVIDIA L40S"
+    [1]    : TARGET.Arch == "X86_64"
+    [2]    : [0] && [1]
+    [3]    : TARGET.HasContainer
+    [4]    : [2] && [3]
+    [5]    : TARGET.HasDockerURL
+    [6]    : [4] && [5]
+    [7]    : TARGET.Disk >= RequestDisk
+    [8]    : [6] && [7]
+    [9]    : TARGET.Memory >= RequestMemory
+    [10]   : [8] && [9]
+    [11]   : TARGET.Cpus >= RequestCpus
+    [12]   : [10] && [11]
+    [13]   : TARGET.GPUs >= RequestGPUs
+    [14]   : [12] && [13]
+    [15]   : TARGET.HasFileTransfer
+    [16]   : [14] && [15]
+
+Job 760148.000 defines the following attributes:
+
+    RequestCpus = 8
+    RequestDisk = 150000000 (kb)
+    RequestGPUs = 1
+    RequestMemory = 131100 (mb)
+
+The Requirements expression for job 760148.000 reduces to these conditions:
+
+        Slots
+Step   Matched  Condition
+----- --------- ---------
+[0]           1  TARGET.GPUs_DeviceName is "NVIDIA L40S"
+
+
+760148.000:  Run analysis summary ignoring user priority.  Of 22 slots on 22 machines,
+     21 slots are rejected by your job's requirements
+      1 slots reject your job because of their own requirements
+      0 slots match and are willing to run your job
+
+WARNING:  Be advised:
+   Job did not match any machines' constraints
+   To see why, pick a machine that you think should match and add
+     -reverse -machine <name>
+   to your query.
+
+No successful match recorded.
+Last failed match: Fri Nov 27 04:08:22 2026 from etprain.etp.kit.edu
+Reason for last match failure: no match found

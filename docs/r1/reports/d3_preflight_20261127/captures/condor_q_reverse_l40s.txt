@@ -1,0 +1,59 @@
+
+
+-- Schedd: deepthought.etp.kit.edu : <129.13.101.137:9618?...
+
+-- Slot: slot1@deepthought2.etp.kit.edu : Analyzing matches for 1 Jobs in 1 autoclusters
+
+The Requirements expression for this slot is
+
+    Start &&
+    (WithinResourceLimits)
+
+  START is
+    false
+
+  WithinResourceLimits is
+    (ifThenElse(TARGET._cp_orig_RequestCpus isnt undefined,TARGET.RequestCpus <= MY.Cpus,MY.ConsumptionCpus <= MY.Cpus) &&
+      ifThenElse(TARGET._cp_orig_RequestDisk isnt undefined,TARGET.RequestDisk <= MY.Disk,MY.ConsumptionDisk <= MY.Disk) &&
+      ifThenElse(TARGET._cp_orig_RequestGPUs isnt undefined,TARGET.RequestGPUs <= MY.GPUs,MY.ConsumptionGPUs <= MY.GPUs) &&
+      ifThenElse(TARGET._cp_orig_RequestMemory isnt undefined,TARGET.RequestMemory <= MY.Memory,MY.ConsumptionMemory <= MY.Memory))
+
+    [0]    : Start
+    [1]    : ifThenElse(TARGET._cp_orig_RequestCpus isnt undefined,TARGET.RequestCpus <= MY.Cpus,MY.ConsumptionCpus <= MY.Cpus)
+    [2]    : ifThenElse(TARGET._cp_orig_RequestDisk isnt undefined,TARGET.RequestDisk <= MY.Disk,MY.ConsumptionDisk <= MY.Disk)
+    [3]    : [1] && [2]
+    [4]    : ifThenElse(TARGET._cp_orig_RequestGPUs isnt undefined,TARGET.RequestGPUs <= MY.GPUs,MY.ConsumptionGPUs <= MY.GPUs)
+    [5]    : [3] && [4]
+    [6]    : ifThenElse(TARGET._cp_orig_RequestMemory isnt undefined,TARGET.RequestMemory <= MY.Memory,MY.ConsumptionMemory <= MY.Memory)
+    [7]    : [5] && [6]
+    [8]    : [0] && [7]
+
+This slot defines the following attributes:
+
+    ConsumptionCpus = quantize(target.RequestCpus,{ 1 })
+    ConsumptionDisk = quantize(target.RequestDisk,{ 1024 })
+    ConsumptionGPUs = ifthenelse(target.RequestGPUs =?= undefined,0,target.RequestGPUs)
+    ConsumptionMemory = quantize(target.RequestMemory,{ 128 })
+    Cpus = 32
+    Disk = 875321082
+    GPUs = 1
+    Memory = 514535
+
+Job 760148.0 has the following attributes:
+
+    TARGET.RequestCpus = 8
+    TARGET.RequestDisk = 150000000
+    TARGET.RequestGPUs = 1
+    TARGET.RequestMemory = 131100
+
+The Requirements expression for this slot reduces to these conditions:
+
+       Clusters
+Step   Matched  Condition
+----- --------- ---------
+[0]       never  Start
+
+slot1@deepthought2.etp.kit.edu: Run analysis summary of 1 jobs.
+    0 (0.00 %) match both slot and job requirements.
+    0 match the requirements of this slot.
+    1 have job requirements that match this slot.

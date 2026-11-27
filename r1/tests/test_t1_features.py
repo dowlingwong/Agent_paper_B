@@ -67,31 +67,42 @@ def test_schema_is_featurizer_v3_and_codes_are_appended():
     assert set(F.NO_T1_SOURCE) <= set(F.FEATURES_V3) and set(F.RAW_STATE_FIELDS) <= set(F.FEATURES_V3)
     assert not set(F.T1_NODE_CODES.values()) & set(T0F.NODE_CODES.values())
     assert min(F.T1_NODE_CODES.values()) == max(T0F.NODE_CODES.values()) + 1 == F.FIRST_T1_CODE
-    assert sorted(F.T1_NODE_CODES.values()) == list(range(11, 19))
+    assert sorted(F.T1_NODE_CODES.values()) == list(range(11, 23))         # the eight, then the four joiners (S9)
+    assert [F.T1_NODE_CODES[n] for n in F.SIGNED_NOTE_NODES] == list(range(11, 19))   # unchanged for the eight
     assert {F.tier_of_code(c) for c in T0F.NODE_CODES.values()} == {"T0"}
     assert {F.tier_of_code(c) for c in F.T1_NODE_CODES.values()} == {"T1"}
 
 
 def test_t1_nodes_are_the_g5_spec_nodes_and_the_split_files_t1_nodes():
     spec = json.loads((A.HERE / "g5_tasl_spec.json").read_text())
-    assert [n["node"] for n in spec["nodes"]] == list(F.T1_NODE_INFO)
+    assert [n["node"] for n in spec["nodes"]] == list(F.SIGNED_NOTE_NODES) == list(F.T1_NODE_INFO)[:8]
     split = json.loads((A.HERE.parents[1] / spec["instances"]["split_file"]["path"]).read_text())
-    assert sorted(split["t1"]["nodes"]) == sorted(F.T1_NODE_INFO)
+    assert sorted(split["t1"]["nodes"]) == sorted(F.SIGNED_NOTE_NODES)          # the signed note keeps v1
+    split2 = json.loads((A.HERE.parents[1] / "r1/c3/splits/c3_p3_split_v2.json").read_text())
+    assert sorted(split2["t1"]["nodes"]) == sorted(F.T1_NODE_INFO)              # v2: the eight and the joiners
     assert not set(F.T1_NODE_INFO) & set(gate.T0_NODES)
 
 
 # =============================================================================================== suite mapping
 def test_suite_mapping_to_gate_suites():
     assert set(F.SUITE_NAMES.values()) == set(gate.SUITES)
-    assert set(F.SUITE_NAMES) == {v["suite"] for v in F.T1_NODE_INFO.values()}
+    assert set(F.SUITE_NAMES) | set(F.EXTRA_TASK_SUITES) == {v["suite"] for v in F.T1_NODE_INFO.values()}
+    assert not set(F.SUITE_NAMES) & set(F.EXTRA_TASK_SUITES)
     assert F.gate_suite("mlagentbench") == "MLAgentBench" and F.gate_suite("mlgym") == "MLGym"
     assert F.gate_suite("autoresearch") == "autoresearch"
     with pytest.raises(F.FeatureError, match="no gate suite"):
         F.gate_suite("MLAgentBench")                     # gate names are not node-spec names
-    got = F.tier1_suites({n: v["suite"] for n, v in F.T1_NODE_INFO.items()})
+    got = F.tier1_suites({n: F.T1_NODE_INFO[n]["suite"] for n in F.SIGNED_NOTE_NODES})
     assert got == {"mlab_cifar10": "MLAgentBench", "mlab_imdb": "MLAgentBench", "mlab_ogbn_arxiv": "MLAgentBench",
                    "mlgym_cifar10": "MLGym", "mlgym_fmnist": "MLGym", "mlgym_breakout_minatar": "MLGym",
                    "mlgym_houseprice": "MLGym", "autoresearch_fixedtokens": "autoresearch"}
+    # R1-G5-S9 (2): the MLGym joiners map to MLGym; the 1GC nodes have no gate suite (fail closed)
+    assert F.tier1_suites({"mlgym_titanic": "mlgym", "mlgym_metamaze": "mlgym"}) == \
+        {"mlgym_titanic": "MLGym", "mlgym_metamaze": "MLGym"}
+    for n in ("gc7rc_etth1", "gc7rc_forestcover"):
+        with pytest.raises(F.FeatureError, match="extra tasks"):
+            F.tier1_suites({n: "1gc7rc"})
+        assert F.check_node(n, "1gc7rc") == F.T1_NODE_CODES[n]       # featurized when labelled (extra-task report)
     with pytest.raises(F.FeatureError, match="declares"):
         F.tier1_suites({"mlab_imdb": "mlgym"})
     with pytest.raises(F.FeatureError, match="not a declared T1 node"):

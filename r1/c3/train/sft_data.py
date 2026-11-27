@@ -51,7 +51,10 @@ Pieces
 
 * **Splits** (spec §3.6; R1-MAIN-PROPOSER (e)): by instance, never by trial. **Evidence builds use the signed P3 split
   file** (PRE-SPLIT A of the sweep-2 analysis preregistration): split config ``split_file`` = {path, sha256} of
-  ``r1/c3/splits/c3_p3_split_v1.json``. Its train/dev/test (dev = ``val``) is the assignment, and its instances (of
+  ``r1/c3/splits/c3_p3_split_v1.json``, or its version 2 ``c3_p3_split_v2.json`` (R1-G5-S9 (1): v1 plus the expansion
+  nodes, every v1 entry byte-identical), the only one that holds a joining node's instances. A row of an extra-task
+  node (``p3_split.T1_EXTRA_TASKS``, the 1GC nodes) is refused in every build (R1-G5-S9 (2), R1-1GC-FALLBACK: never
+  supplied to the arms). Its train/dev/test (dev = ``val``) is the assignment, and its instances (of
   the table's nodes) are the universe. Salt and counts beside it are refused, as are another file, an instance
   outside it and a universe that is not a subset of it. **Real labels are refused without it**, both when a data
   directory is built and when it is loaded (§6 of the preregistration narrows R1-TRACKP-SFT-DEV to P3 train and dev).
@@ -404,25 +407,34 @@ class G5LabelSource:
     ``loader`` replaces ``load_traindev`` in tests only."""
 
     def __init__(self, release_root: Path | str, *, receipt_sha256: str, table_rows: Sequence[dict], t1,
-                 table_sha256: str, loader=None) -> None:
+                 table_sha256: str, table_dir: Path | str | None = None, loader=None) -> None:
         if not (isinstance(table_sha256, str) and len(table_sha256) == 64
                 and all(c in "0123456789abcdef" for c in table_sha256)):
             raise SFTDataError("G5LabelSource needs the sha256 of the G.5 table the rows come from")
         self.release_root, self.receipt_sha256 = release_root, receipt_sha256
         self.table_rows, self.t1, self.table_sha256 = list(table_rows), t1, table_sha256
+        self.table_dir = table_dir
         self.loader = loader
         self._records: list[dict] | None = None
         self._prov: dict | None = None
 
     def _load(self) -> None:
-        from r1.c3 import arms_freeze as AF
+        from r1.c3 import arms_freeze as AF, release
         loader = self.loader or AF.load_traindev
         labels, receipt = loader(self.release_root, "g5", self.receipt_sha256)
         inputs = receipt.get("inputs") or {}
         if inputs.get("proposals_sha256") != self.table_sha256:
             raise SFTDataError("the G.5 table is not the one its train/dev partition was released from")
         try:
-            trows = AF.training_rows("g5", self.table_rows, labels, t1=self.t1)
+            if self.t1 is not None:
+                if self.table_dir is not None:
+                    self.t1 = AF.B.bind_g5_tail_laws(self.t1, self.table_dir, receipt)
+                elif self.loader is None and self.t1.needs_tail_binding:
+                    raise SFTDataError("noninitial T1 nodes require the receipted G.5 build metadata")
+            rows = release.g5_consumer_rows(receipt, self.table_rows)
+            labels = release.g5_consumer_rows(receipt, labels)
+            assign = release._row_assignment(receipt) if "split_sha256" in receipt else None
+            trows = AF.training_rows("g5", rows, labels, assign=assign, t1=self.t1)
         except AF.ArmsFreezeError as exc:
             raise SFTDataError(str(exc)) from exc
         by_pid = {lab["proposal_id"]: lab for lab in labels}
@@ -436,9 +448,10 @@ class G5LabelSource:
                 lab = by_pid[r["proposal_id"]]
                 k = int(lab["soft_parameters"]["k_label"])
                 partial += k < len(lab["seeds"])
+                tails = {"tails": r["tails"], "nu": r["nu"]} if "tails" in r else {}
                 records.append({"proposal_id": r["proposal_id"], "node": r["node"], "label_kind": kind,
                                 "delta_label": float(lab["delta_label"]), "k_label": k,
-                                "sigma_node": float(lab["soft_parameters"]["sigma_node"])})
+                                "sigma_node": float(lab["soft_parameters"]["sigma_node"]), **tails})
             elif kind == "divergent":
                 divergent += 1
         self._records = records
@@ -498,8 +511,9 @@ def soft_target(record: Mapping, table_row: Mapping) -> np.ndarray:
         raise SFTDataError(f"{record['proposal_id']}: audit label on an inert table row")
     if float(record["sigma_node"]) != float(table_row["sigma_node"]):
         raise SFTDataError(f"{record['proposal_id']}: label sigma_node differs from the table's")
+    tails = {key: record[key] for key in ("tails", "nu") if key in record}
     return LB.soft_label(record["delta_label"], None, float(table_row["sigma_node"]), inert=False,
-                         sigma_mode=SIGMA_MODE, k_label=int(record["k_label"]))
+                         sigma_mode=SIGMA_MODE, k_label=int(record["k_label"]), **tails)
 
 
 # ---------------------------------------------------------------------------------------------- prompts
@@ -579,10 +593,32 @@ P3_SPLIT_KEYS = frozenset({"salt", "test_instances_per_node", "val_instances_per
 
 SIGNED_SPLIT_FILE = {"path": "r1/c3/splits/c3_p3_split_v1.json",
                      "sha256": "b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569"}
+# R1-G5-S9 (1): version 2 (v1 plus the expansion nodes, every v1 entry byte-identical); p3_split.SPLIT_FILES[2]
+SIGNED_SPLIT_FILE_V2 = {"path": "r1/c3/splits/c3_p3_split_v2.json",
+                        "sha256": "4dd46796e50ec188b5f89ebc8f4c04e6ab60a5056f124538936dd1bb5d6ae53a"}
+SIGNED_SPLIT_FILES = (SIGNED_SPLIT_FILE, SIGNED_SPLIT_FILE_V2)
 
 
 def _signed_split(cfg: Mapping | None) -> bool:
-    return bool(cfg) and dict(cfg.get("split_file") or {}) == SIGNED_SPLIT_FILE
+    if not cfg or cfg.get("split_file") not in SIGNED_SPLIT_FILES:
+        return False
+    if cfg["split_file"] == SIGNED_SPLIT_FILE_V2:
+        from r1.c3.release import ReleaseStop, split_v2_amendment
+
+        try:
+            split_v2_amendment()
+        except ReleaseStop as exc:
+            raise SFTDataError(str(exc)) from exc
+    return True
+
+
+def refuse_extra_tasks(nodes: Iterable[str]) -> None:
+    """R1-G5-S9 (2), R1-1GC-FALLBACK: an extra-task node (the 1GC nodes) is never supplied to the arms (fail closed)."""
+    from r1.c3 import p3_split
+    bad = sorted(set(nodes) & set(p3_split.T1_EXTRA_TASKS))
+    if bad:
+        raise SFTDataError(f"{bad}: extra tasks (R1-1GC-FALLBACK) are labelled by G.5 but never supplied to the arms "
+                           "(R1-G5-S9 (2))")
 
 
 def _split_file_assignment(instances: set, cfg: Mapping, universe=None) -> dict[str, str]:
@@ -593,7 +629,7 @@ def _split_file_assignment(instances: set, cfg: Mapping, universe=None) -> dict[
     sf = cfg["split_file"]
     if not isinstance(sf, Mapping) or set(sf) != {"path", "sha256"}:
         raise SFTDataError("split_file must be {path, sha256}")
-    if sf["sha256"] != p3_split.P3_SPLIT_SHA256:
+    if dict(sf) not in SIGNED_SPLIT_FILES or sf["sha256"] not in p3_split.VERSION_OF_SHA:
         raise SFTDataError(f"split_file sha256 {sf['sha256']} is not the signed P3 split file")
     try:
         assign = p3_split.assignment(p3_split.load(REPO / sf["path"], sha256=sf["sha256"]))
@@ -617,11 +653,16 @@ def _split_file_assignment(instances: set, cfg: Mapping, universe=None) -> dict[
             for i in sorted(pool)}
 
 
-def p3_universe(nodes: Iterable[str]) -> list[str]:
-    """The P3 split file's instances of the given nodes (the universe of a P3 build of a table holding them)."""
+def p3_universe(nodes: Iterable[str], split_file: Mapping | None = None) -> list[str]:
+    """The P3 split file's instances of the given nodes (the universe of a P3 build of a table holding them);
+    ``split_file`` ({path, sha256}, one of ``SIGNED_SPLIT_FILES``) names the file, v1 by default."""
     from r1.c3 import p3_split
     nodes = set(nodes)
-    return sorted(i for i, v in p3_split.assignment(p3_split.load()).items() if v["node"] in nodes)
+    try:
+        split = p3_split.load_pinned(dict(split_file)) if split_file is not None else p3_split.load()
+    except (p3_split.SplitError, TypeError, ValueError) as exc:
+        raise SFTDataError(f"split_file is not a signed P3 split file ({exc})") from exc
+    return sorted(i for i, v in p3_split.assignment(split).items() if v["node"] in nodes)
 
 
 def assign_splits(instances: Iterable[str], cfg: Mapping | None = None,
@@ -703,9 +744,10 @@ def build_sft_data(table_rows: Sequence[dict], label_source: LabelSource, prompt
                            f"decides {DECIDED_DUPLICATE_POLICY!r} for real labels")
     if real and not _signed_split(split_cfg):
         raise SFTDataError("real labels are built only on the signed P3 split file (PRE-SPLIT A; split_file "
-                           f"{SIGNED_SPLIT_FILE})")
+                           f"one of {list(SIGNED_SPLIT_FILES)})")
+    refuse_extra_tasks(r["node"] for r in table_rows)
     if "split_file" in split_cfg and universe is None:   # the P3 file's instances of the table's nodes
-        universe = p3_universe({r["node"] for r in table_rows})
+        universe = p3_universe({r["node"] for r in table_rows}, split_cfg["split_file"])
     by_id = {r["proposal_id"]: r for r in table_rows}
     if len(by_id) != len(table_rows):
         raise SFTDataError("duplicate proposal id in the table")
@@ -832,6 +874,7 @@ def _t1_forms(by_id: Mapping, prompts: Mapping[str, tuple]) -> dict | None:
     row is present (then the build is exactly the T0 build)."""
     from r1.c3 import p3_split                      # the T1 node names; serialize_t1 is imported only for T1 rows
     t1_nodes = frozenset(p3_split.T1_NODES)
+    refuse_extra_tasks(by_id[pid]["node"] for pid in prompts)
     diffs, present = set(), False
     for pid, (p, _) in prompts.items():
         meta = getattr(p, "meta", None) or {}        # T0 callers may pass prompt objects without meta (unchanged)

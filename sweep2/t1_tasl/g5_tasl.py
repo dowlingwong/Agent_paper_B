@@ -166,6 +166,8 @@ OPTIONS = {"G5-W": ["A", "B"], "G5-TEMP": ["A", "B"], "G5-MEM": ["A", "B", "C"],
            "G5-DIV": ["A", "B", "C"], "G5-TASL-GPUH": ["A", "B"], "G5-SLOT": ["A", "B"], "G5-ARPEND": ["A", "B"]}
 AR_PENDING = "PENDING: G5-ARPEND A (from the completion record docs/r1/reports/*/G5_AR_PREREQUISITES_YYYYMMDD.md)"
 AR_FILL_B = "TODO: G5-ARPEND B (filled at signature)"
+TAILS = ("gaussian", "student_t")       # P10 (E5); = r1.c3.labels.TAIL_LAWS (a test checks they are equal)
+TAILS_NU = "tails_nu"                    # R1-G5-TAILS: the Student-t degrees of freedom, beside a node's tails
 RUN_COPY_KEYS = ("assembly_copy", "assembly_sha256", "runs_copy", "runs_sha256")   # D6 A (R1-T1-FEAT-DECISIONS)
 T1_SIGMA_NODE = "t0_definition"          # = g5_noise.T1_SIGMA_NODE (D6-σ B; a test checks they are equal)
 AR_PENDING_ITEMS = ["host_check", "noise_floor_copy", "environment", "tails"]   # §2.13: the spec's PENDING markers,
@@ -222,6 +224,8 @@ ROW_ID = re.compile(r"^R1-[A-Z0-9][A-Z0-9-]*[A-Z0-9]$")
 CITED = re.compile(r"^(\S+) sha256 ([0-9a-f]{64})$")
 VERDICT_ACCEPTED = re.compile(r"^Verdict: ACCEPTED\s*$", re.M)
 PLACEHOLDER = re.compile(r"<[^>]*>")
+NU_TEXT = re.compile(r"[0-9]+(?:\.[0-9]*)?(?:[eE][+-]?[0-9]+)?")
+NU_SAID = re.compile(r"(?<![\w-])(?:nu|\u03bd)\s*=\s*((?:[^\s,;)\]}`|]|,(?=[0-9]))*)")
 # The T1 table readings of part 3b-2 (g5_assemble), signed in the note's t1_table_readings line (review M2); the
 # assembly refuses a note whose line differs, and without a signed note it allows only "refuse".
 TABLE_READINGS = {
@@ -278,6 +282,42 @@ def _set(spec: dict, path: tuple, value) -> None:
 def _ph(value) -> bool:
     """A placeholder: a string starting with TODO / PENDING / ... (``g1b_lib``), or None."""
     return value is None or L._placeholder(value)
+
+
+def _nu_ok(nu) -> bool:
+    return not isinstance(nu, bool) and isinstance(nu, (int, float)) and math.isfinite(nu) and nu > 2
+
+
+def _parse_nu(token: str) -> float | None:
+    if NU_TEXT.fullmatch(token) is None:
+        return None
+    value = float(token)
+    return value if _nu_ok(value) else None
+
+
+def check_tails_nu(n: dict, *, allow: bool = False) -> None:
+    """R1-G5-TAILS: ``tails_nu`` (the Student-t degrees of freedom) is required where ``tails`` is ``student_t``, a
+    finite real number > 2 (the label's sd is then finite, ``r1.c3.labels.STUDENT_T_SCALE``; a draft may leave it a
+    placeholder), and refused where ``tails`` is ``gaussian`` or not yet declared (PENDING)."""
+    tails, where = n.get("tails"), f"{n.get('node')}.{TAILS_NU}"
+    if tails == "student_t":
+        if TAILS_NU not in n:
+            raise Stop(f"STOP: {where} is required where tails is student_t (R1-G5-TAILS)")
+        nu = n[TAILS_NU]
+        if not _nu_ok(nu) and not (allow and isinstance(nu, str) and _ph(nu)):
+            raise Stop(f"STOP: {where} must be a finite number > 2 (R1-G5-TAILS)")
+    elif TAILS_NU in n:
+        raise Stop(f"STOP: {where} is refused where tails is not student_t (R1-G5-TAILS)")
+
+
+def tails_text(n: dict) -> str:
+    """A node's declared tail law as the note's ``tails`` line renders it: ``gaussian`` (unchanged), or
+    ``student_t (nu = 5)``."""
+    if n.get("tails") != "student_t":
+        return str(n["tails"])
+    nu = n.get(TAILS_NU)
+    display = str(nu).removesuffix(".0") if _nu_ok(nu) else str(nu)
+    return f"student_t (nu = {display})"
 
 
 def _rel_ok(rel) -> bool:
@@ -1066,13 +1106,17 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
         if n["node"] == AR and o["G5-ARPEND"] == "A":
             if n.get("env") != AR_PENDING or n.get("tails") != AR_PENDING:
                 raise Stop("STOP: under G5-ARPEND A autoresearch's env and tails are the PENDING marker (§2.13)")
+            if TAILS_NU in n:
+                raise Stop(f"STOP: under G5-ARPEND A autoresearch's {TAILS_NU} comes from the completion record, not "
+                           f"the spec (§2.13)")
             continue
         if n.get("env") != r["env"]:
             raise Stop(f"STOP: {n['node']}.env must be its G.1b environment {r['env']}")
         if n["env"] not in envs or n["env"] not in (w.get("env_python") or {}):
             raise Stop(f"STOP: {n['node']} needs {n['env']} in envs and worker.env_python")
-        if n.get("tails") not in ("gaussian", "student_t") and not (allow and _ph(n.get("tails"))):
+        if n.get("tails") not in TAILS and not (allow and _ph(n.get("tails"))):
             raise Stop(f"STOP: {n['node']}.tails must be gaussian or student_t (P10)")
+        check_tails_nu(n, allow=allow)
     for name, py in (w.get("env_python") or {}).items():
         G._abs(py, f"worker.env_python.{name}")
     tasl2_cpus = _check_tasl2_cpus(spec)                                  # R1-TASL2-CPU
@@ -1337,7 +1381,7 @@ def note_lines(spec: dict, *, k: int = 10, k_row: str | None = None, freeze: str
         "noise_floor": f"{seven}; {ar_nf}; joined by node (g1b_tasl_join.py floor-by-node; the split file's eight "
                        f"T1 nodes)",
         "tails": ", ".join(f"{n['node']} " + ("from the completion record (G5-ARPEND A)"
-                                              if n["node"] == AR and a_mode else str(n["tails"])) for n in nodes),
+                                              if n["node"] == AR and a_mode else tails_text(n)) for n in nodes),
         "job_layout": f"per node in sequence (G5-SLOT A as amended by {TWO_CARDS_ROW}), wave 1 (instances 1-4) "
                       f"campaigns then audits, wave 2 (instances 5-12) campaigns then audits; audits in chunks with "
                       f"declared deadlines; campaign waves on TASL-2's one worker slot with the server on TASL-7; a "
@@ -2327,14 +2371,27 @@ def check_ar_record(spec: dict, spec_path: Path, *, read_main, list_main=list_ma
     if f.get("d21_verdict") != d21:
         raise Stop(f"STOP 15: d21_verdict must be the copy's verdict ({d21})")
     # P10
-    if f.get("tails") not in ("gaussian", "student_t"):
+    if f.get("tails") not in TAILS:
         raise Stop("STOP 15: tails must be gaussian or student_t (P10)")
+    nu = None                                      # R1-G5-TAILS: tails_nu beside a student_t declaration only
+    if f["tails"] == "student_t":
+        nu = _parse_nu(f.get(TAILS_NU, ""))
+        if nu is None:
+            raise Stop(f"STOP 15: {TAILS_NU} must be a finite number > 2 where tails is student_t (R1-G5-TAILS)")
+    elif TAILS_NU in f:
+        raise Stop(f"STOP 15: {TAILS_NU} is refused where tails is gaussian (R1-G5-TAILS)")
     decl_path, _ = _cited(f, "tails_declaration", read_main)
     other = {"gaussian": "student_t", "student_t": "gaussian"}[f["tails"]]
     lines = [ln for ln in read_main(decl_path).decode("utf-8", "replace").splitlines() if AR in ln]
     word = lambda w, ln: re.search(rf"(?<![A-Za-z0-9_-]){w}(?![A-Za-z0-9_-])", ln)  # noqa: E731
     if not lines or not all(word(f["tails"], ln) and not word(other, ln) for ln in lines):
         raise Stop(f"STOP 15: the tails declaration {decl_path} must name {AR} with {f['tails']} (P10)")
+    if nu is not None:                             # the declaration states the same nu on every line naming AR
+        said = [[_parse_nu(m.group(1)) for m in NU_SAID.finditer(ln)] for ln in lines]
+        if not all(v and all(x == nu for x in v) for v in said):
+            display = str(nu).removesuffix(".0")
+            raise Stop(f"STOP 15: the tails declaration {decl_path} must state nu = {display} for {AR} on each line "
+                       f"naming it (R1-G5-TAILS)")
     # P9: the environment
     m = ENV_LINE.fullmatch(f.get("environment", ""))
     if not m:
@@ -2358,6 +2415,7 @@ def check_ar_record(spec: dict, spec_path: Path, *, read_main, list_main=list_ma
         plan_row(env_row, read_main, terms=(env["name"], "G.5"))
     return {"record": rel, "sha256": rec_sha, "review": review, "host_check": host, "noise_floor": floor,
             "qualifies_D21": floor["qualifies_D21"][AR], "scope": floor["scope"][AR], "tails": f["tails"],
+            **({TAILS_NU: nu} if nu is not None else {}),
             "environment": {"name": env["name"], "freeze": env["freeze"], "sha256": env["sha"],
                             "python": env["python"], "interpreter": env["interp"], "row": env_row}}
 

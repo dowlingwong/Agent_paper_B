@@ -60,14 +60,14 @@ partial and divergent counts, unsupplied T1 nodes); it holds no utility or label
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 import numpy as np
 
 from r1.c3 import gate as G
 from r1.c3 import p3_split
 from r1.c3.arms import RulesPrior, is_duplicate, is_noop
-from r1.c3.labels import INERT, N_BINS, soft_label
+from r1.c3.labels import G5_GAUSSIAN_NODES, G5_STUDENT_T_NU, INERT, N_BINS, label_tail_options, soft_label
 from r1.c3.offline_eval import CAMPAIGN_RUNS, G_PRIMARY, decisions
 
 BUILDER_VERSION = "2"
@@ -98,6 +98,8 @@ class Source:
     rows: list                       # table rows (proposals.jsonl)
     labels: list = field(default_factory=list)        # label-block rows (label_block.jsonl format)
     evaluations: list = field(default_factory=list)   # evaluation-block rows (evaluation_block.jsonl format)
+    split_sha256: str | None = None                   # G.5 release receipt's exact split binding
+    tail_laws: dict[str, tuple[str, float | None]] = field(default_factory=dict)  # receipted G.5 build
 
     @property
     def gate(self) -> bool:
@@ -110,6 +112,20 @@ class Tier1:
     suites: dict                     # {node: suite}, suite in gate.SUITES: the frozen T1 node set
     modes: tuple                     # the declared memory mode(s) under G5-MEM
     d3_k6: bool = False              # the R1-BX-D3 row exists: K = 6
+    # Verified from the completion or addendum, never inferred from a label row.
+    tail_laws: dict[str, tuple[str, float | None]] = field(default_factory=dict)
+
+    @property
+    def needs_tail_binding(self) -> bool:
+        return bool(self.suites.keys() - (G5_STUDENT_T_NU.keys() | G5_GAUSSIAN_NODES))
+
+
+def bind_g5_tail_laws(t1: Tier1, table_dir, receipt: dict) -> Tier1:
+    """Bind the frozen node context to already verified G.5 build metadata."""
+    from r1.c3.release import g5_tail_laws
+
+    laws = g5_tail_laws(table_dir, receipt)
+    return replace(t1, tail_laws={node: laws[node] for node in t1.suites if node in laws})
 
 
 def _finite(x) -> bool:
@@ -150,6 +166,14 @@ def _instance(row: dict, assign: dict) -> tuple[str, str]:
     return inst, assign[inst]["split"]
 
 
+def _tail_options(lab: dict, tier: str, t1: Tier1 | None = None) -> dict:
+    expected = t1.tail_laws.get(lab.get("node")) if tier == "T1" and t1 is not None else None
+    try:
+        return label_tail_options(lab, tier=tier, expected=expected)
+    except ValueError as exc:
+        raise BuilderError(f"{lab['proposal_id']}: {exc}") from exc
+
+
 def _label_ok(lab: dict, row: dict, label_seeds: tuple) -> str:
     """Validate a label row against its table row; returns its kind (rule_noop, audit, divergent)."""
     kind = lab.get("label_kind")
@@ -160,6 +184,7 @@ def _label_ok(lab: dict, row: dict, label_seeds: tuple) -> str:
     if is_noop(row):
         if kind != "rule_noop":
             raise BuilderError(f"{row['proposal_id']}: a no-op needs a rule_noop label row")
+        _tail_options(lab, _tier_of(row["node"]))
         return kind
     if kind not in ("audit", "divergent"):
         raise BuilderError(f"{row['proposal_id']}: label kind {kind!r} is not audit/divergent")
@@ -174,6 +199,8 @@ def _label_ok(lab: dict, row: dict, label_seeds: tuple) -> str:
             raise BuilderError(f"{row['proposal_id']}: label value missing or inconsistent")
         if sp.get("sigma_node") != row["sigma_node"]:
             raise BuilderError(f"{row['proposal_id']}: soft-label sigma_node differs from the table's")
+    else:
+        _tail_options(lab, _tier_of(row["node"]))
     return kind
 
 
@@ -211,6 +238,8 @@ def _check_sources(sources: list[Source], need_sweep1: bool) -> None:
 
 def _source_row_ok(src: Source, row: dict) -> None:
     tier = GATE_SOURCES.get(src.name) or KEY_SOURCES[src.name]
+    if row["node"] in p3_split.T1_EXTRA_TASKS:
+        raise BuilderError(f"{row['node']}: a 1GC extra task is never supplied to the gate (R1-G5-S9)")
     if _tier_of(row["node"]) != tier:
         raise BuilderError(f"{src.name}: row {row['proposal_id']} of node {row['node']} is not a {tier} node")
 
@@ -222,6 +251,15 @@ def _prepare(sources: list[Source], assign: dict, t1: Tier1 | None) -> tuple[lis
     out = []
     for src in sources:
         tier = GATE_SOURCES.get(src.name) or KEY_SOURCES[src.name]
+        context = t1
+        if src.tail_laws:
+            if src.name != "g5" or t1 is None:
+                raise BuilderError("the receipted G.5 tail laws require a frozen T1 context")
+            if any(law != src.tail_laws[node] for node, law in t1.tail_laws.items() if node in src.tail_laws):
+                raise BuilderError("the frozen context and G.5 receipt give different tail laws")
+            if any(row["node"] not in src.tail_laws for row in src.rows):
+                raise BuilderError("the G.5 receipt lacks a tail law for a source node")
+            context = replace(t1, tail_laws=src.tail_laws)
         labels, evals = {}, {}
         for lab in src.labels:
             if lab["proposal_id"] in labels:
@@ -280,7 +318,8 @@ def _prepare(sources: list[Source], assign: dict, t1: Tier1 | None) -> tuple[lis
                 soft = None
                 if kind == "audit":
                     k = lab["soft_parameters"]["k_label"]
-                    soft = soft_label(lab["delta_label"], None, row["sigma_node"], sigma_mode="pooled_node", k_label=k)
+                    soft = soft_label(lab["delta_label"], None, row["sigma_node"], sigma_mode="pooled_node",
+                                      k_label=k, **_tail_options(lab, tier, context))
                     r["label_partial"] = k < len(label_seeds)
                 r.update(label_kind=kind, delta_true=dt, status=status, soft=soft)
                 used.add(pid)
@@ -345,6 +384,17 @@ def _inert():
     return p
 
 
+def _source_assignment(sources: list[Source], split_path=None) -> dict:
+    pin_sha = next((s.split_sha256 for s in sources if s.name == "g5" and s.split_sha256), None)
+    try:
+        if split_path is not None:
+            return p3_split.assignment(p3_split.load(split_path, sha256=pin_sha))
+        split = p3_split.load_pinned(p3_split.pin_of_sha(pin_sha)) if pin_sha else p3_split.load()
+        return p3_split.assignment(split)
+    except p3_split.SplitError as exc:
+        raise BuilderError(str(exc)) from exc
+
+
 def build(sources: list[Source], predictions: dict, noise: dict, *, t0_nodes, t1: Tier1 | None = None,
           population: str = "primary", g_units: float = G_PRIMARY, modes=None, split_path=None) -> tuple[dict, dict]:
     """The v3.1 gate input and its report. ``t0_nodes``: the declared T0 node set (required). ``noise``: {node:
@@ -358,7 +408,13 @@ def build(sources: list[Source], predictions: dict, noise: dict, *, t0_nodes, t1
     if len(set(t0_nodes)) != len(t0_nodes) or not set(t0_nodes) <= set(G.T0_NODES):
         raise BuilderError(f"t0_nodes must be distinct members of {G.T0_NODES}")
     _check_sources(sources, need_sweep1=bool(t0_nodes))
-    assign = p3_split.assignment(p3_split.load(split_path) if split_path else p3_split.load())
+    if t1 is not None:
+        for node, suite in t1.suites.items():
+            if node in p3_split.T1_EXTRA_TASKS:
+                raise BuilderError(f"{node}: a 1GC extra task is never supplied to the gate (R1-G5-S9)")
+            if node in p3_split.T1_EXPANSION_MLGYM and suite != "MLGym":
+                raise BuilderError(f"{node}: the expansion node is supplied as MLGym (R1-G5-S9)")
+    assign = _source_assignment(sources, split_path)
     prepared, keys, key_sources = _prepare(sources, assign, t1)
     seen_traindev = keys["train"] | keys["dev"]
     by_node = {}
@@ -505,7 +561,7 @@ def runs(sources, predictions, noise, *, primary_t0, t1=None, split_path=None) -
 def primary_dev_population(sources: list[Source], *, split_path=None) -> set:
     """PRE-DUP A for selection (PRE-SELECT): the proposal ids of dev proposals of the gate sources whose repeat key
     does not occur on any train instance of any source supplied."""
-    assign = p3_split.assignment(p3_split.load(split_path) if split_path else p3_split.load())
+    assign = _source_assignment(sources, split_path)
     _check_sources(sources, need_sweep1=any(_tier_of(r["node"]) == "T0" for s in sources for r in s.rows))
     train_keys = set()
     dev = []

@@ -1,0 +1,17 @@
+
+
+-- Schedd: deepthought.etp.kit.edu : <129.13.101.137:9618?... @ 11/27/26 04:08:46
+ ID        OWNER            SUBMITTED     RUN_TIME ST PRI SIZE    CMD
+759624.0   dwong          11/13 23:52   0+00:00:00 I  0       0.0 probe.sh P6
+759625.0   dwong          11/13 23:52   0+00:00:00 I  0       0.0 probe.sh P7
+760065.0   dwong          11/25 12:56   0+00:00:00 I  0       0.0 versions.sh
+760142.0   dwong          11/26 19:27   0+08:22:50 R  0    4634.0 lucid_torch_job.sh hk mae_repaired --loss fixed --placeholder sentinel --seed 9000 --micro-batch 8 --data-kind lucid_v1 --data staged/data/lucid_v1/hk_lucid_v1.h5 --memory-fraction 0.9
+760143.0   dwong          11/26 19:48   0+08:18:51 R  0   15558.0 lucid_torch_job.sh hk sparse_mae --queries all --embed linear --decoder legacy --seed 9000 --micro-batch 8 --data-kind lucid_v1 --data staged/data/lucid_v1/hk_lucid_v1.h5 --memory-fraction 0.9
+760145.0   dwong          11/26 19:48   0+08:00:20 R  0   15548.0 lucid_torch_job.sh hk sparse_mae --queries all --embed linear --decoder legacy --patch-size 1232 --seed 9000 --micro-batch 8 --data-kind lucid_v1 --data staged/data/lucid_v1/hk_lucid_v1.h5 --memory-fraction 0.9
+760147.0   dwong          11/27 00:48   0+03:18:59 R  0   15559.0 lucid_torch_job.sh hk sparse_mae --queries all --embed linear --decoder legacy --mask random --seed 9000 --micro-batch 8 --data-kind lucid_v1 --data staged/data/lucid_v1/hk_lucid_v1.h5 --memory-fraction 0.9
+760148.0   dwong          11/27 04:07   0+00:00:00 I  0       0.0 preflight.sh 760148.0
+
+Total for query: 8 jobs; 0 completed, 0 removed, 4 idle, 4 running, 0 held, 0 suspended 
+Total for dwong: 8 jobs; 0 completed, 0 removed, 4 idle, 4 running, 0 held, 0 suspended 
+Total for all users: 14 jobs; 0 completed, 0 removed, 4 idle, 10 running, 0 held, 0 suspended
+

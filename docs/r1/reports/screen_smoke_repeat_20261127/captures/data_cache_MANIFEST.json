@@ -1,0 +1,166 @@
+{
+ "created_utc": "20261127T031150Z",
+ "harness_commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+ "host": "deepthought",
+ "label": "ENGINEERING_ONLY",
+ "libraries": {
+  "numpy": "2.4.4",
+  "pandas": "3.0.3",
+  "scikit-learn": "1.8.0",
+  "scipy": "1.17.1"
+ },
+ "nodes": {
+  "openml_breast_w": {
+   "files": {
+    "openml/openml.org/api/v1/json/data/15.gz": {
+     "arff": false,
+     "content_sha256": "27baffae3b11d330604b06a9c975f31cf9e6e417a4640dcf1941729945dc5620",
+     "sha256": "e7c051de258d2cb7e8666693f9de6c9dca84ec62707824bf27fd0c0f1372d706"
+    },
+    "openml/openml.org/api/v1/json/data/features/15.gz": {
+     "arff": false,
+     "content_sha256": "04b559a6f048f73cdb13204c5f67caca1ed3495afd1827e7563d39c1370e2bd5",
+     "sha256": "eba531d6434b2ff04387424495f5c237549e768eac983599a91c35a7cf68dbda"
+    },
+    "openml/openml.org/api/v1/json/data/qualities/15.gz": {
+     "arff": false,
+     "content_sha256": "c9a9ea977cc8bff5e0db7be1a678019e2f9cbab634fb71c63c5d72d97d3ae6cb",
+     "sha256": "e7d5f04c6eb7f54ab04f2479fa4404cdfdd37262daf4de7bd5afaf512979315f"
+    },
+    "openml/openml.org/data/v1/download/52350.gz": {
+     "arff": true,
+     "content_sha256": "cb44e7f62f4a962881147264e5f985eacc13256712e7a4b9d1731ced05f3ee9b",
+     "sha256": "36a2d26d306496b7c49702ff8b0706f0c9b25a60c34834e8dbed5570a247a7eb"
+    }
+   },
+   "tree_sha256": "107d25c6578b42a04479f61dbdd3b02295b8f79ddb2a41d58096233017f3cee2"
+  },
+  "openml_climate": {
+   "files": {
+    "openml/openml.org/api/v1/json/data/1467.gz": {
+     "arff": false,
+     "content_sha256": "3d16cec725aa1aa5bfe377335e8846123c42f0a6b1891b69605cae5b73dafab7",
+     "sha256": "46cc74bba80b7c053952bd5dc5ace65cf5474ba2df34b202c042a2e3a7c01b53"
+    },
+    "openml/openml.org/api/v1/json/data/features/1467.gz": {
+     "arff": false,
+     "content_sha256": "a3a43d7319a4e2c91206c599055b370fb07e16d5ade381b8d4cc7448b20de73a",
+     "sha256": "d579548f31528ad35f57e69d1c15662d7051a0bf31445d37d9dd10f725a46750"
+    },
+    "openml/openml.org/api/v1/json/data/qualities/1467.gz": {
+     "arff": false,
+     "content_sha256": "f5c53571fde762f53fea6f7ebbfd319b88c84f06b5d95ac45f74c1b21e3a59f1",
+     "sha256": "4a2ac759d23ae587c217654d8fdfe30b5a6f11d7724fe053868bc47ede574681"
+    },
+    "openml/openml.org/data/v1/download/1586232.gz": {
+     "arff": true,
+     "content_sha256": "5ef9a18e944c31014ac559c9256f95013641c2a20c6bd7a9a1d6167f3a1fab5a",
+     "sha256": "546d28eee560aa22dedae290e8b06956e30a9719ab1fcff34749da79df78b021"
+    }
+   },
+   "tree_sha256": "b2cd70218549f3793bc3b2d9c99ce9f0ec0c31d5f09b97fab7821d234f9d40e0"
+  },
+  "openml_credit_approval": {
+   "files": {
+    "openml/openml.org/api/v1/json/data/29.gz": {
+     "arff": false,
+     "content_sha256": "3799658e93833bfd4ad33525c6438212af9d482021e5fe093424a1defd027638",
+     "sha256": "bfdced611ec48610df48cc9ffee6425c883adda6d00562c0195de6123fcdeb7c"
+    },
+    "openml/openml.org/api/v1/json/data/features/29.gz": {
+     "arff": false,
+     "content_sha256": "4af9b723f27a8285291c9fd7382cd4ac884e22d9dea2607d8a0735ef2bfa9d89",
+     "sha256": "77b21a4bf47f9b76d9704e4b787c62e0ed5198d64848362f7f7759f585e6e130"
+    },
+    "openml/openml.org/api/v1/json/data/qualities/29.gz": {
+     "arff": false,
+     "content_sha256": "5e909b2db7bbc88779779b6f670f45e2312fd92130aa7d7eb489d31365f0a5d9",
+     "sha256": "96f7578a32f6de2359a649a2fc3c9495c6e8ef61a8283d696faabb774bc83978"
+    },
+    "openml/openml.org/data/v1/download/29.gz": {
+     "arff": true,
+     "content_sha256": "ae8e5eadb70e187885ddc6defb7f3e4afa726aa472ac63ebf5e387f0a8467891",
+     "sha256": "b21f01872e3db3d90f775be77e431ccd3bfd96555ad09bcea49fcd558bb4fc4a"
+    }
+   },
+   "tree_sha256": "f4f37a56983b6f9fefb5f6230d2950976fbde6109d8a5ec0e71970c8dca7f75b"
+  },
+  "openml_ionosphere": {
+   "files": {
+    "openml/openml.org/api/v1/json/data/59.gz": {
+     "arff": false,
+     "content_sha256": "2ba2e1a42907b8cfaf4a13004732e403253966042ded1d261ca0b2e889647930",
+     "sha256": "bd384ddfd8d9d301341400df6e7f13ac940ff871bda18e6607aaefd30bec8024"
+    },
+    "openml/openml.org/api/v1/json/data/features/59.gz": {
+     "arff": false,
+     "content_sha256": "172d522d52cc15da9909f74f4e9ab79a21f7a2397cb1a3c6a1b0bf3113e827ad",
+     "sha256": "8d24a954cfac45c1a4c4754be6876e536c04ce682e36f81f03258e25da55ba1e"
+    },
+    "openml/openml.org/api/v1/json/data/qualities/59.gz": {
+     "arff": false,
+     "content_sha256": "909be03ae520a4d01f4b417d16aaf3b88de8f8a07d3165128bfb3d113054c8fd",
+     "sha256": "ff9dd402eae0d792d026df9f88aca28f918522bc4bc852875d9d912d4804a180"
+    },
+    "openml/openml.org/data/v1/download/59.gz": {
+     "arff": true,
+     "content_sha256": "bcbf8c656fe9a44a87df76003b9b2b6b36bfc52c01f0e316014cebbce9ccb701",
+     "sha256": "40b4580d51a1815c9d1bea32cc579d523ea98af8c80a06a345e192729359644e"
+    }
+   },
+   "tree_sha256": "1cbc9c573f50660aed19312bf60e828eb71796d13d5a287054ca7c9095f53784"
+  },
+  "openml_sonar": {
+   "files": {
+    "openml/openml.org/api/v1/json/data/40.gz": {
+     "arff": false,
+     "content_sha256": "1a86fb96e6c26d23edbcb83c12c0dfb0497d6c682d39402e0849eb9b492b352d",
+     "sha256": "b7041db4821b1b41d966826b5dab7990d9d2af42dd345a9714a6668e161a62e1"
+    },
+    "openml/openml.org/api/v1/json/data/features/40.gz": {
+     "arff": false,
+     "content_sha256": "9357e4331a80b8195c6e01cb0f4aad4d02453a781842c68246b3980bacd7ccf9",
+     "sha256": "93ae68c526a96cc3c1aa3b789e720a19abb03d7742907c2a7c0000c43d348c1d"
+    },
+    "openml/openml.org/api/v1/json/data/qualities/40.gz": {
+     "arff": false,
+     "content_sha256": "dbfff614501f3aeab4d2bf17532e11f36b53cbda8054618833fea3eb20c30b7f",
+     "sha256": "92e90798f8fcb9b9504972eef489f3302c257b2be8a06e37c77e783c0c250f42"
+    },
+    "openml/openml.org/data/v1/download/40.gz": {
+     "arff": true,
+     "content_sha256": "bfd26fdabb55f092db0ad81642bd171b511b1cd48e3179a1c2262fb5dc87b944",
+     "sha256": "ac2f259b7e3260420864679f42b38b284439ee0ea4a14b564a529877fa3cbdc4"
+    }
+   },
+   "tree_sha256": "30fabf2aacbc6f777471b5d80cc8e3baab78e47dc20bf747efa34b4e24c16a68"
+  },
+  "openml_wdbc": {
+   "files": {
+    "openml/openml.org/api/v1/json/data/1510.gz": {
+     "arff": false,
+     "content_sha256": "3e067ea2204b675ccd0bf8f2cc7131d892169e6208c01bb2ae7d3143b71feb0a",
+     "sha256": "4d7187535597cec5795214146fc1274611dc621369bd7d549bb2a49ec28504c3"
+    },
+    "openml/openml.org/api/v1/json/data/features/1510.gz": {
+     "arff": false,
+     "content_sha256": "3343b281b5a1eda2400c8101d00fb8f8ed9824682a815c997e2299a7fabb0679",
+     "sha256": "360e4d5917095bd116224b2028e780e6db38daa5c4f8d2c3435ece10c3e0d50c"
+    },
+    "openml/openml.org/api/v1/json/data/qualities/1510.gz": {
+     "arff": false,
+     "content_sha256": "84e48df105174679c32b02ca6b023f94cb0b573543a231710d56c0c389005be0",
+     "sha256": "e76760596cc0832aceb79f4ce62e0003ff68f3368ac0b289c1a5862949d05066"
+    },
+    "openml/openml.org/data/v1/download/1592318.gz": {
+     "arff": true,
+     "content_sha256": "e850cb4cc32dacf29d3fa639d0029cb45582d4838a62322e7b3fbac1b8452f1d",
+     "sha256": "a125a5361a0e4920ef962332a1b5670e21d7b518a2b49b1bd2b96c102e3cdf09"
+    }
+   },
+   "tree_sha256": "2de5460a1f4c70c1490793d978ac5feccc5ce1be332c7c1673ad12d11bd52208"
+  }
+ },
+ "schema": "r1_screen_measure_data_cache/1",
+ "tree_sha256": "c0c2a3645f3fbcbeed6374e7f1a1b717421ec39985cb875bdc1e4a44f6a9781b"
+}

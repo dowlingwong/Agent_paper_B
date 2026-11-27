@@ -17,6 +17,7 @@ from r1.c3.d3.snapshots import (
     SnapshotStop,
     config_sha256,
     controller_state_sha256,
+    sha256_json,
     wrap,
 )
 from r1.harness import import_harness
@@ -283,3 +284,94 @@ def test_controller_repr_fallback_is_refused():
 
     with pytest.raises(SnapshotStop):
         controller_state_sha256(C())
+
+
+# ---------------------------------------------------------------------------
+# Replicate-arm recorder callbacks: begin_step / on_charge / write_final_from_state
+# ---------------------------------------------------------------------------
+
+def test_replicate_step_snapshots_carry_pending_and_step_state(tmp_path):
+    from r1.c3.accounting import ChargedRunCounter
+
+    rec = SnapshotRecorder(out_dir=tmp_path / "campaign", stage="a", arm="FIXR3", node=NODE,
+                           repetition=0, instance_id="x")
+    start = {"train.py": "LR = 0.001\n"}
+    incumbent = {"train.py": "LR = 0.002\n"}
+    state = {"arm": "FIXR3", "version": "d3_fixr3/v1", "steps": 2, "incumbent": "a" * 64}
+    rec.begin_step(trial_id="t2", incumbent_config=incumbent, start_config=start, state=state,
+                   last_kept_trial_index=3, llm_calls=7, step_index=2, pending_action="fixr3_step")
+    counter = ChargedRunCounter(W=20, on_charge=rec.on_charge)
+    for j in range(5):
+        rec.set_pending(step=2, j=j, candidate_metrics=[0.1] * (j + 1),
+                        incumbent_metrics=[0.2] * (j + 1), diffs=[-0.1] * (j + 1))
+        counter.charge(kind="trial" if j == 0 else "replicate", role="candidate", seed=6201 + j,
+                       config_sha256="b" * 64, success=True, j=j, metric=0.1)
+    snap = _load(tmp_path, "w5.json")
+    assert snap["w"] == snap["worker_runs"] == 5
+    assert snap["step_index"] == 2 and snap["trial_id"] == "t2"
+    assert snap["pending_action"] == "fixr3_step"
+    assert snap["last_kept_trial_index"] == 3 and snap["llm_calls"] == 7
+    assert snap["incumbent_config"] == incumbent
+    assert snap["config_sha256"] == config_sha256(incumbent)
+    assert snap["controller_state_sha256"] == sha256_json(state)
+    assert snap["pending"] == {"step": 2, "j": 4, "candidate_metrics": [0.1] * 5,
+                               "incumbent_metrics": [0.2] * 5, "diffs": [-0.1] * 5}
+    assert rec.count == 5 and counter.used == 5
+
+
+def test_replicate_on_charge_refuses_a_skipped_charge(tmp_path):
+    from r1.c3.accounting import ChargedRun
+
+    rec = SnapshotRecorder(out_dir=tmp_path / "campaign", stage="a", arm="EGATE", node=NODE,
+                           repetition=0, instance_id="x")
+    rec.begin_step(trial_id="t1", incumbent_config={"train.py": "x\n"}, start_config={"train.py": "x\n"},
+                   state={"arm": "EGATE"}, last_kept_trial_index=None, llm_calls=1, step_index=0)
+    with pytest.raises(SnapshotParityStop):
+        rec.on_charge(ChargedRun(w=2, kind="replicate", role="candidate", seed=6201,
+                                 config_sha256="c" * 64, success=True, j=1, metric=0.1))
+
+
+def test_replicate_final_is_separate_from_w20_and_carries_the_last_keep(tmp_path):
+    from r1.c3.accounting import ChargedRunCounter
+
+    rec = SnapshotRecorder(out_dir=tmp_path / "campaign", stage="a", arm="EGATE", node=NODE,
+                           repetition=0, instance_id="x")
+    start = {"train.py": "x = 1\n"}
+    pre = {"train.py": "x = 2\n"}
+    post = {"train.py": "x = 3\n"}
+    rec.begin_step(trial_id="t4", incumbent_config=pre, start_config=start, state={"steps": 4},
+                   last_kept_trial_index=3, llm_calls=9, step_index=4, pending_action="egate_pair")
+    counter = ChargedRunCounter(W=20, on_charge=rec.on_charge)
+    while counter.left:
+        counter.charge(kind="trial" if counter.used == 0 else "replicate", role="candidate",
+                       seed=6201, config_sha256="d" * 64, success=True,
+                       j=0 if counter.used == 0 else 1, metric=0.1)
+    digest = rec.write_final_from_state(w_final=20, ended_on="worker_runs", incumbent_config=post,
+                                        state={"steps": 5}, last_kept_trial_index=4, llm_calls=10,
+                                        trial_id="t4", step_index=4)
+    snap = _load(tmp_path, "final.json")
+    assert len(digest) == 64
+    assert snap["final"] is True and snap["ended_on"] == "worker_runs"
+    assert snap["incumbent_config"] == post
+    assert snap["config_sha256"] == config_sha256(post)
+    assert snap["last_kept_trial_index"] == 4
+    assert "alias_of" not in snap
+    assert snap["controller_state_sha256"] == sha256_json({"steps": 5})
+    assert _load(tmp_path, "w20.json")["incumbent_config"] == pre
+
+
+def test_w_zero_final_refuses_a_non_cap_end(tmp_path):
+    rec = SnapshotRecorder(out_dir=tmp_path / "campaign", stage="a", arm="EGATE", node=NODE,
+                           repetition=0, instance_id="x")
+    with pytest.raises(SnapshotStop):
+        rec.write_final_from_state(w_final=0, ended_on="worker_runs", incumbent_config={"x": "y"},
+                                   state={"steps": 0}, last_kept_trial_index=None, llm_calls=0)
+
+
+def test_replicate_final_requires_the_recorded_w(tmp_path):
+    rec = SnapshotRecorder(out_dir=tmp_path / "campaign", stage="a", arm="EGATE", node=NODE,
+                           repetition=0, instance_id="x")
+    rec.count = 3
+    with pytest.raises(SnapshotParityStop):
+        rec.write_final_from_state(w_final=20, ended_on="worker_runs", incumbent_config={"x": "y"},
+                                   state={"steps": 1}, last_kept_trial_index=None, llm_calls=1)
