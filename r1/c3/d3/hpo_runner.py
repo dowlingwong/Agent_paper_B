@@ -14,17 +14,22 @@ import json
 import math
 from pathlib import Path
 from platform import python_version
+import re
+import shlex
+import shutil
 import time
 
 import yaml
 
 from r1.c3 import analysis_guard, d3_analysis as D3, d3_hpo_ref as hpo, d3_outcome_table as outcome
+from r1.c3.accounting import classify_worker_failure
 from r1.c3.features import apply_edit
 from r1.c3.d3 import audit as g6
 from r1.c3.d3.adapter import prepare_node_dir
 from r1.c3.d3.campaign_chunk import sha256sums
 from r1.c3.d3.snapshots import config_sha256
 from r1.harness import harness_commit, import_harness
+from r1.noise.screen_measure import cache_tree, tree_sha256
 
 from autoresearch.manager.base import ManagerProposal
 from autoresearch.manager.hyperparam_edits import parse_train_constants
@@ -43,6 +48,34 @@ def _pinned_harness() -> Path:
 def _write(path: Path, value) -> None:
     with path.open("x", encoding="utf-8") as handle:
         handle.write(json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n")
+
+
+def _cache_stager(node: str, root, digest):
+    if not node.startswith("openml_"):
+        return None
+    if root is None or digest is None:
+        raise hpo.HpoRefError(f"{node}: the approved OpenML cache path and tree hash are required")
+    source = Path(root) / node / "data_cache"
+    analysis_guard.refuse_sealed(source)
+
+    def check(path):
+        if path.is_symlink():
+            raise hpo.HpoRefError(f"{node}: the OpenML cache is a symlink")
+        files = cache_tree(path)
+        if sum(f["arff"] for f in files.values()) != 1 or tree_sha256(files) != digest:
+            raise hpo.HpoRefError(f"{node}: the OpenML cache differs from the approved tree")
+
+    check(source)
+
+    def stage(node_dir):
+        target = node_dir / "data_cache"
+        if target.exists():
+            target.rename(node_dir.parent / "preexisting_data_cache")
+        shutil.copytree(source, target, symlinks=True)
+        check(target)
+        return lambda: check(target)
+
+    return stage
 
 
 def _start_config(node_dir: Path, spec, space: hpo.NodeSpace):
@@ -76,7 +109,24 @@ def _render(files: dict, sites: dict, start: dict, config: dict) -> dict:
     return rendered
 
 
-def _evaluator(node_dir: Path, attempt: Path, spec, renderer, worker_factory):
+def _trial_failed(result):
+    reason = result.failure_message or ""
+    category = (result.extra or {}).get("failure_category")
+    if reason in {"exit code -9", "exit code -15", "exit code 137", "exit code 143"}:
+        category = "host_kill"
+    elif re.fullmatch(r"run_command timed out after 600(?:\.0)?s", reason):
+        category = "budget_hit"
+    # The renderer emits complete YAML and integer max_depth. A runtime_error here cannot be one of
+    # the two proposal-induced exceptions admitted by revision 4 §10.
+    try:
+        disposition = classify_worker_failure(category, card_other_processes=(0, 0))
+    except ValueError as exc:
+        raise hpo.HpoRefError(f"unadmitted HPO-REF worker failure ({category or 'uncategorized'}): {reason}") from exc
+    if disposition == "infrastructure":
+        raise hpo.InfrastructureFailure(f"{category}: {reason}")
+
+
+def _evaluator(node_dir: Path, attempt: Path, spec, renderer, worker_factory, check_cache=None):
     worker = worker_factory(node_root=node_dir, artifact_dir=attempt / "worker", timeout_seconds=600)
     proposal = ManagerProposal(manager_mode="d3_hpo_ref", proposal_summary="HPO-REF trial",
                                proposal_rationale="Render the sampled configuration", target_files=spec.editable_paths,
@@ -89,17 +139,22 @@ def _evaluator(node_dir: Path, attempt: Path, spec, renderer, worker_factory):
             (node_dir / rel).write_text(source, encoding="utf-8")
         started = time.perf_counter()
         result = worker.run_trial_at_seed(proposal, spec, next(trial_index), train_seed=seed, split_seed=seed)
+        seconds = time.perf_counter() - started
+        if check_cache is not None:
+            check_cache()
         if result.changed_files or any((node_dir / rel).read_text(encoding="utf-8") != text
                                        for rel, text in files.items()):
             raise hpo.HpoRefError(f"{node}: worker changed the rendered configuration")
+        if not result.success:
+            _trial_failed(result)
         metric = (result.parsed_metrics or {}).get(spec.metric_name) if result.success else None
         ok = type(metric) in (int, float) and math.isfinite(metric) and 0.0 <= metric <= 1.0
-        return hpo.EvalResult(ok, metric if ok else None, time.perf_counter() - started)
+        return hpo.EvalResult(ok, metric if ok else None, seconds)
 
     return evaluate
 
 
-def _seal(c: hpo.Campaign, render, root: Path) -> Path:
+def _seal(c: hpo.Campaign, render, root: Path, *, worker_python, data_cache_sha256) -> Path:
     instance = D3.instance_id(c.node, c.instance_seed)
     campaign = root / "campaigns" / instance
     snapshots = campaign / "snapshots"
@@ -123,6 +178,8 @@ def _seal(c: hpo.Campaign, render, root: Path) -> Path:
     _write(campaign / "summary.json", hpo.campaign_summary(c))
     _write(campaign / "charged_runs.json", [asdict(run) for run in c.counter.runs])
     _write(campaign / "runtime.json", {"harness_commit": hpo.HARNESS_PIN, "python": python_version(),
+                                       "worker_python": str(worker_python) if worker_python else None,
+                                       "data_cache_sha256": data_cache_sha256,
                                        "smac_distributions": hpo.SMAC_PINS if c.arm == "SMAC3" else None})
     sha256sums(campaign)
     return campaign
@@ -130,6 +187,7 @@ def _seal(c: hpo.Campaign, render, root: Path) -> Path:
 
 def run_cpu_campaign(arm: str, node: str, seed: int, repetition: int, output_root: Path, *,
                      expected_start_sha256: str, data_cache_root: str | None = None,
+                     data_cache_sha256: str | None = None, worker_python: Path | None = None,
                      worker_factory=LocalWorker) -> Path:
     """Run one CPU reference campaign from the byte-identical G1 start, in a fresh attempt tree."""
     if arm not in hpo.ARMS or node not in D3.NODES or type(seed) is not int or seed not in D3.INSTANCE_SEEDS:
@@ -139,6 +197,17 @@ def run_cpu_campaign(arm: str, node: str, seed: int, repetition: int, output_roo
     root = _pinned_harness()
     space = hpo.load_node_space(node, harness_root=root)
     spec = load_registered_node(node, repo_root=root)
+    if worker_python is None and worker_factory is LocalWorker:
+        raise hpo.HpoRefError("the approved worker interpreter is required independently of the SMAC environment")
+    if worker_python is not None:
+        from dataclasses import replace
+
+        python = Path(worker_python)
+        analysis_guard.refuse_sealed(python)
+        if not python.is_absolute() or not python.is_file() or not spec.run_command.startswith("python3 "):
+            raise hpo.HpoRefError("invalid approved worker interpreter or unexpected harness command")
+        spec = replace(spec, run_command=shlex.quote(str(python)) + spec.run_command[len("python3"):])
+    stage_cache = _cache_stager(node, data_cache_root, data_cache_sha256)
     files, sites, start = _start_config(root / "nodes" / node, spec, space)
     if config_sha256(files) != expected_start_sha256:
         raise hpo.HpoRefError(f"{node}: rendered start differs from the matched G1 start hash")
@@ -160,9 +229,10 @@ def run_cpu_campaign(arm: str, node: str, seed: int, repetition: int, output_roo
         directory = output_root / f"attempt-{next(attempts):03d}"
         directory.mkdir()
         node_dir = prepare_node_dir(node, directory / "node", spec=spec, harness=root, data_cache_root=data_cache_root)
+        check_cache = stage_cache(node_dir) if stage_cache is not None else None
         if {rel: (node_dir / rel).read_text(encoding="utf-8") for rel in files} != files:
             raise hpo.HpoRefError(f"{node}: prepared worker files differ from the G1 start")
-        evaluate = _evaluator(node_dir, directory, spec, render, worker_factory)
+        evaluate = _evaluator(node_dir, directory, spec, render, worker_factory, check_cache)
         args = (space, start, seed, repetition, evaluate, digest, time.perf_counter)
 
         def backend(space, start, seed):
@@ -177,7 +247,7 @@ def run_cpu_campaign(arm: str, node: str, seed: int, repetition: int, output_roo
             raise
 
     campaign = hpo.run_attempts(attempt)
-    return _seal(campaign, render, output_root)
+    return _seal(campaign, render, output_root, worker_python=worker_python, data_cache_sha256=data_cache_sha256)
 
 
 def _verify_seal(root: Path) -> None:
@@ -197,7 +267,9 @@ def _verify_seal(root: Path) -> None:
 
 
 def audit_cpu_campaign(campaign_dir: Path, output_root: Path, *, sigma_node: float, scratch: Path,
-                       cache: g6.Cache, runner: g6.Runner | None = None) -> dict:
+                       cache: g6.Cache, runner: g6.Runner | None = None,
+                       data_cache_root: str | None = None, data_cache_sha256: str | None = None,
+                       expected_audit_worker: dict | None = None) -> dict:
     """Audit a sealed CPU campaign with G6 and produce the validated G7 outcome row."""
     campaign_dir, output_root, scratch = Path(campaign_dir), Path(output_root), Path(scratch)
     analysis_guard.refuse_sealed(campaign_dir, output_root, scratch)
@@ -237,8 +309,15 @@ def audit_cpu_campaign(campaign_dir: Path, output_root: Path, *, sigma_node: flo
         raise hpo.HpoRefError("HPO-REF requires the shared G6 audit cache")
     if runner is None:
         _pinned_harness()
+        worker_fields = {"worker_python", "worker_prefix", "worker_versions", "package_list_sha256"}
+        if not expected_audit_worker or worker_fields - expected_audit_worker.keys():
+            raise hpo.HpoRefError("the approved §7.2 audit worker environment is required")
+        runtime = json.loads((campaign_dir / "runtime.json").read_bytes())
+        if runtime["data_cache_sha256"] != data_cache_sha256:
+            raise hpo.HpoRefError("audit cache hash differs from the campaign's OpenML data cache hash")
+        stage_cache = _cache_stager(summary["node"], data_cache_root, data_cache_sha256)
         scratch.mkdir(parents=True, exist_ok=True)
-        runner = g6.harness_runner(scratch)
+        runner = g6.harness_runner(scratch, prepare_cache=stage_cache, expected_worker=expected_audit_worker)
     output_root.mkdir(parents=True, exist_ok=False)
     results = g6.audit_campaign(campaign_dir, output_root, sigma_node=sigma_node, runner=runner, cache=cache)
 
