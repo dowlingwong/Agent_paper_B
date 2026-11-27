@@ -12,10 +12,10 @@ fitted models, reports and readiness intervals from this phase establish enginee
 | Host and runtime | Admit only `ada_rtx6000` through the reviewed `zli538` venv route. The Ada probes measured fit for all four bases. One arm's job stays on a single leased RTX 6000 Ada. Apply the same thresholds and seed policy to each arm. |
 | P4 per-suite logging | Tick P4 as satisfied for phase 1 because T0 has one suite. Keep the per-suite logging prerequisite for the evidence phase. |
 | Prompt-replay harness | Bind the actual harness used by `sft-data`. The probe records a clean `897d83c8efa364ec2fdd37288241cc42e01d7274`. Confirm that pin for the real-label and synthetic builders and require the reviewed runner, stage and switch to enforce it before signing. |
-| Ada P5 | Require the staged Track P smoke with bound kernels and the E0 equivalence check on the admitted Ada runtime, with accepted reviews. Reconcile the result with the existing timing probes before citing them, and repeat the timing probe if the checked kernel path differs. |
+| Ada P5 | Require the staged Track P smoke with bound kernels and the E0 equivalence check on the admitted Ada runtime, with accepted reviews. Preserve the smoke/E0-before-timing dependency. Require a reviewed carry-forward that establishes the existing timings used the verified kernel and runtime, or repeat the timing probes after parity is established. |
 
-The authorization still needs a published P.3a E0/E4 disposition for each Kev base (P2), a reviewed
-harness-bound runner and exact launch pins (P3), the author's P4 tick, and the reviewed Ada P5 records.
+The authorization still needs a published P.3a E0/E4 disposition for each Kev base (P2), reviewed
+runner corrections and exact launch pins (P3), the author's P4 tick, and the reviewed Ada P5 records.
 The phase-1 switch expects a Markdown probe source with full SHA-256 values. The companion
 [Ada probe binding record](../reports/trackp_p4_probe_ada_20261127b/P4_ADA_PROBE_BINDING_20261127.md)
 supplies them from the accepted combined probe JSON. The actual stage is checked after publication
@@ -58,11 +58,11 @@ job_layout: one job per base under its GPU lease. Full clone with published main
 real_label_test_read: none (P4-PHASE1-TEST A)
 evaluation_seeds_read: none
 harness_commit: PENDING — proposed 897d83c8efa364ec2fdd37288241cc42e01d7274, with reviewed staging and enforcement required
-gpu_hours_cap: 40 (P4-CAP A and R1-NO-TIMEOUT (3), reporting threshold). R1-HOST-FREE (5) counts GPU-hours on any card. P4-PROBECAP A and P4-T1CHARGE A count every probe attempt and T1 once. probe_gpu_hours: 3.10. Projected training 20.57 GPU-h, combined 23.67 GPU-h, 29.855 slot-hours. slot_hours_cap: 64 (reporting threshold).
+gpu_hours_cap: 40 (P4-CAP A and R1-NO-TIMEOUT (3), reporting threshold). R1-HOST-FREE (5) counts GPU-hours on any card. P4-PROBECAP A and P4-T1CHARGE A count every probe attempt and T1 once. probe_gpu_hours: 3.10. Phase-1 jobs including startup project 20.57 GPU-h, combined with probes 23.67 GPU-h, and 29.855 slot-hours. slot_hours_cap: 64 (reporting threshold).
 probe_charge_files: trackp-p4-probe-20261125-a _wallclock.json sha256 9a1949a156a23a735a6aae45888c99abc1935b17c069526d7dd6d227b4bf595c, trackp-p4-probe-20261127-b _wallclock.json sha256 fa49096f90319db735d775e0bdb1be3baf6cbd882fa31583c3ae1049c18f0877
 P1: PASS — signed docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20261124.md with final verification PASS, bound to the receipt and partition above
 P2: PENDING — publish per-Kev E0 verdict and E4 hard-limit disposition, citing the P.3a attempt-1 records and ops-tasl-20261116 commit 2287e4926fe0895b0a55b3a6a61c9afadc701307. The Unit B summary docs/r1/reports/TRACKP_UNITB_TASL7_D2_RESULT_20261119.md sha256 cb2cdf3f107b8f5e6192f04faa511178e9a51c390df56014f15a83a493fea45d is on that branch.
-P3: PENDING — reviewed prompt-replay harness binding and exact launch spec. Existing runner review docs/r1/reviews/TRACKP_P4_RUNNER_REVIEW_20261122.md and Ada probe review docs/r1/reviews/P4_ADA_PROBE_REVIEW_20261127.md.
+P3: PENDING — reviewed prompt-replay harness binding, removal of the runner's internal stage deadlines under R1-NO-TIMEOUT, and exact launch spec. Existing runner review docs/r1/reviews/TRACKP_P4_RUNNER_REVIEW_20261122.md and Ada probe review docs/r1/reviews/P4_ADA_PROBE_REVIEW_20261127.md.
 P4: PENDING — author's single-suite logging tick for phase 1
 P5: PENDING — R1-QTORCH-AMEND per-class Ada smoke and E0. R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B describe the container reference. Ada's venv torch smoke and the per-base fit and timing probes are recorded separately.
 P6: PASS — R1-TRACKP-P4-DECISIONS (all eight phase-1 choices) and R1-P4-4B-CHECKPOINT
@@ -77,6 +77,11 @@ and CUDA matmul. The [first probe review](../reviews/P4_ADA_PROBE_REVIEW_2026112
 prompt-replay harness import and the manual staging used for that probe. The
 [4B re-check](../reviews/P4_4B_REPROBE_REVIEW_RECHECK_20261127.md) accepts the checkpointed fit
 and charge record. The referenced Ada checks still need the functional Track P smoke and E0.
+
+The direct launcher waits without a deadline. At the draft base, `p4_lib.py` still gives the
+Track P subprocesses, including grid and curve training, an 86,400 s deadline. Its
+synthetic-label evaluator has a 7,200 s deadline. A reviewed runner unit must apply
+R1-NO-TIMEOUT (1) to these stages before P3 can pass. Keep the helper guards covered by (4).
 
 The frozen job design keeps the identity, receipt, split and synthetic test guards. The launch check
 requires every P item to pass, the exact signed note on published main and a non-preview stage.
