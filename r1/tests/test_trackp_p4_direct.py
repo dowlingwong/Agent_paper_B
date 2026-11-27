@@ -42,6 +42,22 @@ def _res(rc=0, out="", err=""):
     return subprocess.CompletedProcess([], rc, out, err)
 
 
+def _ada_template() -> dict:
+    """The committed Ada config with its 26 fill values put back, for the fill-hook fixtures.
+
+    The committed file is filled after the Ada host-fill commit; the fill-hook tests need a template copy.
+    """
+    cfg = json.loads((ROOT / L.ADA_HOST_CONFIG).read_text())
+    keys = FH._paths(cfg)
+    for path in FH.expected(ADA):
+        *parent, leaf = keys[path]
+        node = cfg
+        for key in parent:
+            node = node[key]
+        node[leaf] = "TODO_VERIFY_ON_HOST"
+    return cfg
+
+
 def _ada_values(work_root: str, lock_dir: str, **over) -> dict:
     v = {p: FH.ADA_FIXED.get(p) for p in FH.expected(ADA)}
     v.update({"work_dir": ".", "gpu.lock_path": "gpu0.lock",
@@ -58,7 +74,7 @@ def ada_repo(tmp_path):
     """A stand-in checkout whose Ada host config is filled by the fill hook (work root and lease dir in tmp)."""
     repo = tmp_path / "repo"
     (repo / L.ADA_HOST_CONFIG).parent.mkdir(parents=True)
-    shutil.copy2(ROOT / L.ADA_HOST_CONFIG, repo / L.ADA_HOST_CONFIG)
+    (repo / L.ADA_HOST_CONFIG).write_text(json.dumps(_ada_template(), indent=1) + "\n")
     values = tmp_path / "ada_fill.json"
     values.write_text(json.dumps(_ada_values(str(tmp_path / "work"), str(tmp_path / "locks"))))
     out = FH.fill(values, repo / L.ADA_HOST_CONFIG, host_class=ADA)
@@ -212,7 +228,7 @@ def test_rows_g_card_processes_are_recorded_and_an_oom_beside_another_is_infrast
 
 
 # ============================================================================================ the direct stage
-def test_the_direct_descriptor_is_canonical_and_needs_a_filled_host_config(ada_repo):
+def test_the_direct_descriptor_is_canonical_and_needs_a_filled_host_config(ada_repo, tmp_path):
     repo, sha = ada_repo
     ps = _probe_spec(sha)
     text = RJ.render_direct(ps, "kev-0.8b", ADA, mode="probe", repo=repo)
@@ -229,9 +245,12 @@ def test_the_direct_descriptor_is_canonical_and_needs_a_filled_host_config(ada_r
     assert job["submit_marker"] == "P4_SUBMIT_STARTED_kev-4b.json"
     with pytest.raises(L.Stop, match="is not hosts.ada_rtx6000.host_config"):
         RJ.render_direct(_probe_spec("0" * 64), "kev-0.8b", ADA, mode="probe", repo=repo)
-    with pytest.raises(L.Stop, match="not filled"):          # the shipped (placeholder) config
-        RJ.render_direct(_probe_spec(_sha((ROOT / L.ADA_HOST_CONFIG).read_bytes())), "kev-0.8b", ADA,
-                         mode="probe", repo=ROOT)
+    tpl_repo = tmp_path / "template_repo"
+    (tpl_repo / L.ADA_HOST_CONFIG).parent.mkdir(parents=True)
+    (tpl_repo / L.ADA_HOST_CONFIG).write_text(json.dumps(_ada_template(), indent=1) + "\n")
+    with pytest.raises(L.Stop, match="not filled"):          # a placeholder config
+        RJ.render_direct(_probe_spec(_sha((tpl_repo / L.ADA_HOST_CONFIG).read_bytes())), "kev-0.8b", ADA,
+                         mode="probe", repo=tpl_repo)
     preview = json.loads(RJ.render_direct(_probe_spec("0" * 64), "kev-0.8b", ADA, mode="probe", preview=True,
                                           repo=ROOT))
     assert preview["preview"] is True                         # never launched (load_descriptor)
@@ -479,7 +498,7 @@ def test_ada_venv_uses_the_same_entry_under_the_lease_and_seals_as_venv(tmp_path
     repo = tmp_path / "repo"
     config = repo / L.ADA_HOST_CONFIG
     config.parent.mkdir(parents=True)
-    shutil.copy2(ROOT / L.ADA_HOST_CONFIG, config)
+    config.write_text(json.dumps(_ada_template(), indent=1) + "\n")
     values = tmp_path / "fill.json"
     values.write_text(json.dumps(_ada_values(str(tmp_path / "work"), str(tmp_path / "locks"),
                                             **{"direct.container_runtime": "venv", "direct.ssh_alias": "ada_server"})))
@@ -784,7 +803,8 @@ def test_fill_hook_h200_class_is_unchanged_and_ada_has_its_own_26_values(tmp_pat
     assert a["values"]["gpu.compute_capability"] == "8.9" and a["values"]["direct.ssh_alias"] == "experiment_zhixu"
     assert a["values"]["direct.container_runtime"].startswith("FILL")
     from r1.c3.train import run as R
-    assert set(R.placeholders(json.loads((ROOT / L.ADA_HOST_CONFIG).read_text()))) == FH.expected(ADA)
+    assert set(R.placeholders(_ada_template())) == set(FH.expected(ADA))
+    assert R.placeholders(json.loads((ROOT / L.ADA_HOST_CONFIG).read_text())) == []
     cfg = json.loads((ROOT / L.ADA_HOST_CONFIG).read_text())
     h200 = json.loads((ROOT / L.HOST_CONFIG).read_text())
     for key in ("bases", "code_pins", "lora", "lr_grid", "head_lr", "token_lr", "image", "e0", "spike"):
@@ -813,7 +833,7 @@ def test_fill_hook_h200_class_is_unchanged_and_ada_has_its_own_26_values(tmp_pat
 ])
 def test_fill_hook_ada_refusals(tmp_path, over, match):
     cfg = tmp_path / "ada.json"
-    shutil.copy2(ROOT / L.ADA_HOST_CONFIG, cfg)
+    cfg.write_text(json.dumps(_ada_template(), indent=1) + "\n")
     values = tmp_path / "v.json"
     values.write_text(json.dumps(_ada_values("/data1/dowling/r1_trackp_p4/jobs", "~/r1_locks", **over)))
     with pytest.raises(L.Stop, match=match):
@@ -828,7 +848,7 @@ def test_fill_hook_ada_fills_exactly_and_names_its_class(ada_repo, tmp_path):
     values = tmp_path / "v.json"
     values.write_text(json.dumps(_ada_values("/data1/dowling/x", "~/r1_locks")))
     cfg = tmp_path / "ada.json"
-    shutil.copy2(ROOT / L.ADA_HOST_CONFIG, cfg)
+    cfg.write_text(json.dumps(_ada_template(), indent=1) + "\n")
     with pytest.raises(L.Stop, match="not the input's class"):
         FH.fill(values, cfg, dry_run=True, host_class=H200)
     with pytest.raises(L.Stop, match="exactly the 26 known"):

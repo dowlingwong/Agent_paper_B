@@ -1,0 +1,22 @@
+# Ada host check for the P.4 host-config fill, 2026-11-27T05:22:09Z
+
+user=zli538 uid=1008
+hostname=ucrtasl
+python=Python 3.12.10
+uv=uv 0.7.8 path=/home/zli538/.local/bin/uv
+torch=2.6.0+cu124
+cuda=12.4
+cuda_available=True
+causal_conv1d=1.7.0
+driver=545.23.08
+0, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 5 MiB, 0 %
+1, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 33715 MiB, 100 %
+2, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 5 MiB, 0 %
+3, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 33703 MiB, 100 %
+4, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 33703 MiB, 100 %
+5, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 33703 MiB, 100 %
+6, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 5 MiB, 0 %
+7, NVIDIA RTX 6000 Ada Generation, 49140 MiB, 5 MiB, 0 %
+jobs_dir=700 /data1/zli538/paperb_p4_20261127/jobs
+lock_dir=700 /data1/zli538/r1_locks
+/dev/sda1       7.0T  4.6T  2.1T  69% /data1
