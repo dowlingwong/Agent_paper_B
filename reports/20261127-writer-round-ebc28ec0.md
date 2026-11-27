@@ -3,7 +3,7 @@
 Writer is idle. All five assigned cards are published at base
 `ebc28ec073e75adea472af96316d93cea78736fe`. The queue at
 `cf599e6851eb76ce724292cc3569c8176b46d375` has no new writer card. The result-table
-handoff is pending the authorised releases. No evidence placeholder was filled.
+handoff (§3 item 4, no task ID yet) is pending the authorised releases. No evidence placeholder was filled.
 
 | Task | Published task branch and tip | Recorded review | Merge |
 |---|---|---|---|
@@ -28,28 +28,33 @@ evidence fields.
 | `main_draft_gate_not_passed.pdf` | `latexmk -pdf` rc 0 | ends p. 8 | 44 | `ba8a47f830fb0246a0cbd0f2cd7b08215033171d529d6a6b76956340bc92d27e` |
 | `main_draft_gate_passed.pdf` | `latexmk -pdf` with `DraftGatePassed`, rc 0 | ends p. 8 | 43 | `36059705e89c2a7ba934db9bbcfc46db36902b0a8180467c0064fe4d08784b96` |
 
-Every rebuilt page matched its published counterpart in extracted text. Rendered page 8 in each
-draft and inspected the transition to references. Both final logs have zero undefined citations,
+Fresh rebuilds from the published source matched every published page in extracted text. Rendered
+page 8 in each draft and inspected the transition to references. Both final logs have zero undefined citations,
 undefined references or duplicate labels, and nine existing overfull boxes each. The `FinalPaper`
 guard refused the unset gate outcome as expected. `git diff --check` passed. The claim-to-table sheet
 SHA-256 is `23e9ca0b410c7db1ca46554b9cffbb59f5f6592feef061d56264176ccb6ce9c7`.
 
-Decided alone to verify from temporary copies of the assigned paper worktree. Its 15 modified paths
-match published main byte for byte. Temporary Git metadata handled fetch and this report because the
-shared metadata is read-only. There is no new manuscript unit or review in this round. No server job
+Decided alone to rebuild from a temporary archive of published main. The assigned worktree was
+checked in place. Its 15 modified paths match published main byte for byte. Temporary Git metadata
+handled fetch and this report because the shared metadata is read-only. There is no new manuscript unit or review in this round. No server job
 was submitted and no sealed partition was accessed.
 
 ## Next round
 
-- **D.3 evidence.** Full rev 4 step (5) review was NOT ACCEPTED. The binding-only diff was ACCEPTED.
-  Check `compute/20261127-20` for reviewed terminal snapshot fixes, then `local/20261127-16` for
-  the renewed review. The accepted screening note at `b2360a7a` still needs the author's signature,
-  publication and the measurement. Rev 4 freeze, per-arm smoke and stage authorisations precede
-  campaign launch. D.3b also requires frozen arms.
-- **TASL-2 expansion, last recorded 05:36 UTC.** Run `g1b-x-tasl-20261126-a` had ETTh1 sealed and
-  MetaMaze PID `106579`, Forest Cover `106573` and Titanic `106578` running. Check the seals and
-  determinism decisions under `compute/20261126-10`. Houseprice waiter `208315` timed out before
-  launch. Its retry and remaining TASL-2 P11 checks wait for CPU leases, including 0–3 and 4–7.
+- **D.3 evidence.** The prior full rev 4 step (5) review was NOT ACCEPTED. The binding-only diff was
+  ACCEPTED. Compute's terminal snapshot fix (`compute/20261127-20`, branch
+  `compute-d3-g1-final-20261127` @ `ff244366b7168a210a302b37deda5438f83c9e6e`) has an
+  ACCEPTED independent re-check at `d5acf3ab` and awaits the coordinator's merge. Compute reported
+  161 focused passes, 18 subtests and zero new full-suite failure IDs. Local repeats step (5) under
+  `local/20261127-16` after that merge. The accepted screening note at `b2360a7a` still needs the
+  author's signature, publication and the measurement. Rev 4 freeze, per-arm smoke and stage
+  authorisations precede campaign launch. D.3b also requires frozen arms.
+- **TASL-2 expansion, last recorded 08:53 UTC (`coord/compute` @ `b4b33527`).** In run
+  `g1b-x-tasl-20261126-a`, ETTh1 and MetaMaze are sealed. Forest Cover PID `106573` (279/460,
+  CPUs 4–7) and Titanic PID `106578` (236/460, CPUs 12–15) were running. Check both seals, then
+  assembly and the determinism decisions under `compute/20261126-10`. Houseprice waiter `208315`
+  timed out before launch. The houseprice retry and the remaining TASL-2 P11 checks need the 0–7
+  leases. Forest Cover is the remaining lease holder for that range.
 - **Gate and C1 evidence.** G.5 awaits the remaining host checks, final binding, accepted review
   and coordinator publication. The gate follows eligible-node labels, T1 train/dev release, reviewed
   target-consumer and preregistration bindings, trained and calibrated frozen arms, and the signed
