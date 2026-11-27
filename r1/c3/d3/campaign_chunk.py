@@ -136,6 +136,11 @@ def check_hardware(spec: ChunkSpec, observed: Mapping[str, Any], manifest: Mappi
     want_prop = str(manifest.get("proposer_model") or "")
     if not want_model or not want_prop:
         raise ChunkStop("the campaign manifest must name campaign_model and proposer_model")
+    # HTCondor chooses the worker, so its observed host is recorded and disclosed, not
+    # compared; SSH and direct target one named host and a mismatch is a placement refusal.
+    observed_host = str(observed.get("host") or "")
+    if spec.launcher != "htcondor" and observed_host and observed_host != spec.host:
+        raise ChunkStop(f"launcher/host mismatch: the launch says {spec.host!r}, the probe ran on {observed_host!r}")
     instance_model = str(manifest.get("instance_model") or want_model)
     if instance_model != want_model:
         raise ChunkStop(f"instance_model {instance_model!r} differs from campaign_model {want_model!r}")
@@ -454,7 +459,8 @@ def _sample_compute_apps(gpu_uuid: str | None = None) -> dict[str, Any]:
     from r1.c3.d3.launch import LaunchStop, parse_other_processes
 
     proc = subprocess.run(
-        ["nvidia-smi", "--query-compute-apps=gpu_uuid,pid,used_memory", "--format=csv,noheader"],
+        ["nvidia-smi", "--query-compute-apps=gpu_uuid,pid,used_memory",
+         "--format=csv,noheader,nounits"],
         capture_output=True, text=True,
     )
     if proc.returncode != 0:
@@ -484,6 +490,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--harness-root", default=None)
     ap.add_argument("--gpu-uuid", default=None,
                     help="sample this card's other compute processes after the chunk")
+    ap.add_argument("--no-end-sample", action="store_true",
+                    help="do not sample the card after the chunk (default: sample when the probe names a card)")
     args = ap.parse_args(argv)
 
     launch = validate_launch(read_json(args.launch))
@@ -500,8 +508,9 @@ def main(argv: list[str] | None = None) -> int:
             manifest, constants, harness=args.harness_root)
     else:
         kwargs["factory"] = make_campaign_factory(manifest, constants, harness=args.harness_root)
-    if args.gpu_uuid:
-        kwargs["end_sampler"] = lambda: _sample_compute_apps(args.gpu_uuid)
+    gpu_uuid = args.gpu_uuid or observed.get("gpu_uuid")
+    if gpu_uuid and not args.no_end_sample:
+        kwargs["end_sampler"] = lambda: _sample_compute_apps(str(gpu_uuid))
     summary = run_chunk(spec, Path(args.out), **kwargs)
     print(json.dumps({"out": str(Path(args.out)), "stage": summary["stage"], "arm": summary["arm"],
                       "node": summary["node"], "campaigns": summary["campaigns"],

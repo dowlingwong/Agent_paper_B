@@ -14,11 +14,12 @@ branch. The G1 chunk unit (`D3_G1_UNIT_20261127.md`) explicitly left the two lau
 
 | File | sha256 | Content |
 |---|---|---|
-| `r1/c3/d3/launch.py` | `c854de4849f579cc56877e180f46dc462e068b96267fbc6ebd126eb205055ff5` | The `r1_d3_launch/v1` record validation (delegating the signed W, LLM cap and 6201–6218 seeds to `ChunkSpec.from_launch`), the one chunk argv, the reviewed HTCondor request and its refusal on any edit, count/memory-only other-process parsing, the free-memory check and the lease probe. |
-| `r1/c3/d3/launch_htcondor.py` | `413f6c6a21a539afdcfb00bf25743179e1fa72763cb07ac823dfb8a498bc46fe` | `render_submit` / `submit`: one job per chunk, the same `python -m r1.c3.d3.campaign_chunk` argv, the exact reviewed request, a pinned repo tarball, `d3_chunk.sh` and a submit record. |
-| `r1/c3/d3/launch_ssh.py` | `a2e966d1262d218201d856aa1fc192e525e09dd5a0bea6d080003132d3f783f8` | `render_remote_script` / `launch`: stages `launch.json`/`manifest.json`/`observed.json`, takes the card's lease with `flock -n` for the whole chunk, runs the same argv in a delegated user scope, and refuses a failed observed memory/lease record. |
-| `r1/c3/d3/campaign_chunk.py` | `98c6c4788012aec2ced0e5269056df7183195ac1c6e65432b8b64be91e7e715a` | Adds the job entry `main` and an optional `end_sampler`; after the last campaign and before `chunk.json`, the launcher's end sample fills `other_processes_end` (count and memory only). The campaign, snapshot, audit and record logic is unchanged. |
-| `r1/tests/test_d3_launchers.py` | `38cbcb9798a4afc14bf7f8a647d03e2b7ac8c7956363e362f59d006fc00597b3` | 10 tests: signed-value refusals, argv parity, request immutability, tarball pin, count/memory-only record, memory and lease helpers, SSH refusals and dry-run fields, cluster-id parsing. |
+| `r1/c3/d3/launch.py` | `756e8793329c5ad165f2d7a26b75b37a0b36b7797e8dd138234258a8374bf702` | The `r1_d3_launch/v1` record validation (delegating the signed W, LLM cap and 6201–6218 seeds to `ChunkSpec.from_launch`), the one chunk argv, the reviewed HTCondor request and its refusal on any edit, count/memory-only other-process parsing (including `MiB` and `N/A`), the free-memory check and the lease probe. |
+| `r1/c3/d3/probe.py` | `79622c2e0d43545c6afc163fc2c3540c877266c7aace447063fd9f0ba2ac886f` | The job-side hardware probe that produces the `r1_d3_observed/v1` record at the start of a chunk: host, card model/UUID/driver, total/free memory, other compute processes (count and memory only), the proposer identity and the launcher's request/scope. HTCondor records the actual worker and its scheduler assignment; SSH records the leased host. |
+| `r1/c3/d3/launch_htcondor.py` | `5dae455fe8ef880ab47f3fcbc5d408f9db575916f08c9d5eb25c2df82bb37e3e` | `render_submit` / `submit`: one job per chunk, the same `python -m r1.c3.d3.campaign_chunk` argv, the exact reviewed request, a pinned repo tarball, `d3_chunk.sh` (which probes the assigned card and then runs the chunk) and a submit record. |
+| `r1/c3/d3/launch_ssh.py` | `ecd18402c7a112ada21fed825c00235fe5a779aa4df034da7e0919783a5037c6` | `render_remote_script` / `launch`: stages the launch/manifest, takes the card's lease with `flock -n` for the whole chunk, probes the card after the lease, and runs the same argv in a delegated user scope. |
+| `r1/c3/d3/campaign_chunk.py` | `2fc943ec355f08641239027a9b0b2360176916fac55326371ae000654505674d` | Adds the job entry `main`, a host-mismatch refusal (SSH/direct; HTCondor's chosen worker is recorded, not compared), and an automatic end sample for a probed card; after the last campaign and before `chunk.json`, `other_processes_end` is filled (count and memory only). The campaign, snapshot, audit and record logic is unchanged. |
+| `r1/tests/test_d3_launchers.py` | `6deaa8c93bfabff986e36c557c835017a1013e43073a08bd21083fa872c337fb` | 14 tests: signed-value refusals, argv parity, request immutability, tarball pin, count/memory-only parsing (including real `nvidia-smi` units), probe parsing, host-mismatch refusal, memory and lease helpers, SSH refusals and dry-run fields, HTCondor job-side probe, cluster-id parsing. |
 
 The chunk's existing `r1/tests/test_d3_g1_chunk.py` gains one test for `end_sampler`.
 
@@ -35,7 +36,10 @@ The chunk's existing `r1/tests/test_d3_g1_chunk.py` gains one test for `end_samp
 
 The model rule is checked twice: `requirements` names the campaign model when the launch record
 carries one, and `campaign_chunk.check_hardware` refuses a different observed model, proposer,
-lease or memory check before a campaign directory exists.
+host (SSH/direct), lease or memory check before a campaign directory exists. The observed record
+is produced by `probe.py` inside the job, not declared by the submit side: HTCondor's assignment
+is the reservation and is recorded with `lease: true`, `lease_path: null`, `lease_kind:
+htcondor`; SSH takes and holds the lock file.
 
 ## Tests
 
@@ -44,11 +48,12 @@ Run with Python 3.12.8, pytest 9.2.0, harness `9bb41680`:
 ```
 AR_HARNESS_ROOT=<harness9bb> python -m pytest -q \
   r1/tests/test_d3_launchers.py r1/tests/test_d3_g1_chunk.py r1/tests/test_d3_g1_snapshots.py
-40 passed
+44 passed
 ```
 
-Focused new tests: **10 passed**; chunk + snapshot focus: 40 passed. The full `r1/tests` suite is
-run with the independent review.
+Focused new tests: **14 passed**; chunk + snapshot focus: 44 passed. The full `r1/tests` suite was
+run on base and tip by the independent review; the failure-id lists were identical (114 failed /
+4,985 passed on base, 114 / 4,996 on tip, zero new ids at that review's tip).
 
 ## What this unit does not do
 
@@ -56,13 +61,29 @@ run with the independent review.
   campaign. The HTCondor path is exercised by rendering and a dry-run submit record only.
 - The G6 audit's `direct` launcher on deepthought is a separate G6 unit; this record covers the two
   G1 launchers only.
-- The exact repo tarball and the manifest/observed files are inputs to a future launch; this unit
-  pins and transfers them but does not create a campaign manifest or a real observed record.
+- The exact repo tarball is an input to a future launch; this unit pins and transfers it but does
+  not create a campaign manifest.
+
+## Reviewer findings and the fixes
+
+The first review (`compute-d3-launchers-review-20261127` @ `da23bd5e`) was **CHANGES REQUIRED**.
+This revision answers it:
+
+- **B1 (end sample never enabled):** the chunk entry now installs the end sampler whenever the
+  observed record names a card, so both launchers' unchanged argv produce the end record.
+- **B2 (real `nvidia-smi` units):** the parser accepts `MiB` and `N/A`, and the query uses
+  `nounits`; `N/A` is counted in `unknown_memory_count` rather than failing the chunk.
+- **M1 (observed record declared, not sampled):** `probe.py` samples the card inside the job;
+  HTCondor's wrapper and the SSH script both run it before the chunk.
+- **M2 (host mismatch):** `check_hardware` refuses an SSH/direct host mismatch; HTCondor's actual
+  worker is recorded and disclosed.
+- **M3 (HTCondor lease):** the probe records the scheduler assignment as `lease: true`,
+  `lease_path: null`, `lease_kind: htcondor`; the SSH path still holds the lock file.
 
 ## Decided alone
 
 To keep the launcher record additive to `r1_d3_launch/v1` and to require the pinned repo tarball
-rather than assume the image contains the paper code; to sample the card's other compute processes
-after the last campaign through an optional `end_sampler` so `chunk.json` still carries the end
-record it promises; to use `fcntl` for the local lease probe so the unit is testable on the Mac while
-the hosts keep `flock`.
+rather than assume the image contains the paper code; to put the hardware probe in the job (so the
+record describes the card actually used) and let the chunk sample the end state; to treat
+HTCondor's GPU assignment as the reservation and the SSH lock file as the lease; to use `fcntl`
+for the local lease probe so the unit is testable on the Mac while the hosts keep `flock`.

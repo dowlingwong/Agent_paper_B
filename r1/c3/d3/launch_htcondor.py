@@ -40,14 +40,19 @@ def _check_staging(launch: Mapping[str, Any]) -> Mapping[str, Any]:
     return staging
 
 
-def wrapper_script() -> str:
-    """The job-side wrapper; it adds only the staged repo to ``PYTHONPATH``."""
+def wrapper_script(*, probe: bool = True) -> str:
+    """The job-side wrapper: stage the repo, probe the assigned card, then run the chunk."""
+    probe_line = (
+        "python3 -m r1.c3.d3.probe --launch launch.json --manifest manifest.json "
+        "--out observed.json\n" if probe else ""
+    )
     return (
         "#!/bin/bash\n"
         "set -euo pipefail\n"
         "mkdir -p repo\n"
         "tar -xzf repo.tar -C repo\n"
         "export PYTHONPATH=\"$PWD/repo${PYTHONPATH:+:$PYTHONPATH}\"\n"
+        + probe_line +
         "exec python3 -m r1.c3.d3.campaign_chunk \"$@\"\n"
     )
 
@@ -89,7 +94,8 @@ def render_submit(launch: Mapping[str, Any], *, submit_dir: str | Path,
         "error = d3_chunk.err",
         "log = d3_chunk.log",
         "transfer_input_files = " + ",".join(
-            [WRAPPER_NAME, "launch.json", "manifest.json", "observed.json", "repo.tar"]),
+            [WRAPPER_NAME, "launch.json", "manifest.json", "repo.tar"]
+            + ([] if (launch.get("observed") or {}).get("probe") is True else ["observed.json"])),
         "transfer_output_files = out",
         "queue 1",
         "",
@@ -123,7 +129,9 @@ def submit(launch_path: str | Path, out_dir: str | Path, *, submit_dir: str | Pa
     if not manifest_path or not observed_path:
         raise LaunchStop("the launch record must name its manifest and observed files")
     check_pin(manifest_path, manifest, "manifest")
-    check_pin(observed_path, observed, "observed")
+    probe = observed.get("probe") is True
+    if not probe:
+        check_pin(observed_path, observed, "observed")
     out = Path(out_dir)
     if out.exists():
         raise LaunchStop(f"refusing an existing chunk directory {out}")
@@ -131,10 +139,11 @@ def submit(launch_path: str | Path, out_dir: str | Path, *, submit_dir: str | Pa
     submit_dir.mkdir(parents=True, exist_ok=True)
     # The job sees these at its own relative names; the launch record's pins stay intact.
     (submit_dir / "manifest.json").write_bytes(Path(manifest_path).read_bytes())
-    (submit_dir / "observed.json").write_bytes(Path(observed_path).read_bytes())
+    if not probe:
+        (submit_dir / "observed.json").write_bytes(Path(observed_path).read_bytes())
     launch_file = submit_dir / "launch.json"
     write_json(launch_file, launch)
-    (submit_dir / WRAPPER_NAME).write_text(wrapper_script(), encoding="utf-8")
+    (submit_dir / WRAPPER_NAME).write_text(wrapper_script(probe=probe), encoding="utf-8")
     staging = _check_staging(launch)
     repo = Path(str(staging["repo_tarball"]["path"]))
     (submit_dir / "repo.tar").write_bytes(repo.read_bytes())

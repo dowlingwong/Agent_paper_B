@@ -34,6 +34,7 @@ def render_remote_script(launch: Mapping[str, Any], *,
                          launch_text: str | None = None,
                          manifest_text: str | None = None,
                          observed_text: str | None = None,
+                         probe: bool = False,
                          out_dir: str = "out",
                          lease_path: str | None = None,
                          scope: str = DEFAULT_SCOPE,
@@ -58,6 +59,11 @@ def render_remote_script(launch: Mapping[str, Any], *,
         "exec 9>\"$lease\"",
         "flock -n 9 || { echo 'STOP: the card lease is held by another job' >&2; exit 4; }",
         f"if [ -e {shell_join([str(out_dir)])} ]; then echo 'STOP: the chunk output exists' >&2; exit 5; fi",
+    ]
+    if probe:
+        parts.append(f"python3 -m r1.c3.d3.probe --launch launch.json --manifest manifest.json "
+                     f"--out observed.json --lease-path \"$lease\"")
+    parts += [
         f"exec {scope} {shell_join(argv)}",
         "",
     ]
@@ -86,11 +92,13 @@ def launch(launch_path: str | Path, out_dir: str | Path, *, manifest_path: str |
     manifest = launch_record.get("manifest") or {}
     observed_pin = launch_record.get("observed") or {}
     manifest_path = manifest_path or manifest.get("path")
-    observed_path = observed_path or observed_pin.get("path")
-    if not manifest_path or not observed_path:
-        raise LaunchStop("the launch record must name its manifest and observed files")
+    probe = observed_pin.get("probe") is True
+    observed_path = observed_path or observed_pin.get("path") or "observed.json"
+    if not manifest_path:
+        raise LaunchStop("the launch record must name its manifest")
     check_pin(manifest_path, manifest, "manifest")
-    check_pin(observed_path, observed_pin, "observed")
+    if not probe:
+        check_pin(observed_path, observed_pin, "observed")
     host = host or str(launch_record.get("host") or "")
     if not host:
         raise LaunchStop("an SSH launch needs a host")
@@ -98,18 +106,19 @@ def launch(launch_path: str | Path, out_dir: str | Path, *, manifest_path: str |
     if not lease:
         raise LaunchStop("an SSH launch needs a lease path")
     launch_record["lease_path"] = lease
-    observed = read_json(observed_path)
-    check_observed(observed, lease_path=lease)
+    if not probe:
+        observed = read_json(observed_path)
+        check_observed(observed, lease_path=lease)
     out = Path(out_dir)
     if out.exists():
         raise LaunchStop(f"refusing an existing chunk directory {out}")
     write_json(out.parent / "launch.json", launch_record)
     remote_dir = str(launch_record.get("remote_dir") or out.parent)
     manifest_text = Path(manifest_path).read_text(encoding="utf-8")
-    observed_text = Path(observed_path).read_text(encoding="utf-8")
+    observed_text = None if probe else Path(observed_path).read_text(encoding="utf-8")
     script = render_remote_script(
         launch_record, launch_text=json.dumps(launch_record, indent=1, sort_keys=True) + "\n",
-        manifest_text=manifest_text, observed_text=observed_text, out_dir=str(out),
+        manifest_text=manifest_text, observed_text=observed_text, probe=probe, out_dir=str(out),
         lease_path=lease, scope=scope)
     record = {
         "schema": "r1_d3_launch_submit/v1",

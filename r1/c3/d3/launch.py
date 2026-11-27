@@ -90,10 +90,14 @@ def validate_launch(record: Mapping[str, Any]) -> dict[str, Any]:
         raise LaunchStop(f"unknown launch schema {record['schema']!r}; expected {LAUNCH_SCHEMA!r}")
     if record["launcher"] not in LAUNCHERS:
         raise LaunchStop(f"unknown launcher {record['launcher']!r}")
-    for key in ("manifest", "observed"):
-        pin = record.get(key)
-        if not isinstance(pin, Mapping) or not pin.get("path") or not pin.get("sha256"):
-            raise LaunchStop(f"launch record {key} must be {{path, sha256}}")
+    pin = record.get("manifest")
+    if not isinstance(pin, Mapping) or not pin.get("path") or not pin.get("sha256"):
+        raise LaunchStop("launch record manifest must be {path, sha256}")
+    observed = record.get("observed")
+    if not isinstance(observed, Mapping) or not observed.get("path"):
+        raise LaunchStop("launch record observed must be {path, sha256} or {path, probe: true}")
+    if observed.get("probe") is not True and not observed.get("sha256"):
+        raise LaunchStop("launch record observed must carry sha256 or probe: true")
     source = record.get("campaign_model_source")
     if not isinstance(source, Mapping) or not source.get("sha256"):
         raise LaunchStop("campaign_model_source must carry path and sha256")
@@ -153,6 +157,7 @@ def parse_other_processes(text: str, *, gpu_uuid: str | None = None) -> dict[str
     """
     count = 0
     total = 0
+    unknown = 0
     for line in str(text or "").splitlines():
         line = line.strip()
         if not line or line.lower().startswith("pid") or line.lower().startswith("gpu_uuid"):
@@ -162,12 +167,17 @@ def parse_other_processes(text: str, *, gpu_uuid: str | None = None) -> dict[str
             continue
         if gpu_uuid and len(parts) >= 3 and parts[0] != gpu_uuid:
             continue
+        value = parts[-1].replace("MiB", "").strip()
+        if value in ("", "N/A", "[N/A]", "Not Supported"):
+            count += 1
+            unknown += 1
+            continue
         try:
-            total += int(float(parts[-1]))
+            total += int(float(value))
         except ValueError as exc:
             raise LaunchStop(f"cannot read a compute-process memory value from {line!r}") from exc
         count += 1
-    return {"count": count, "used_memory_mib": total}
+    return {"count": count, "used_memory_mib": total, "unknown_memory_count": unknown}
 
 
 def memory_fit(required_mib: int, free_mib: int) -> str:
