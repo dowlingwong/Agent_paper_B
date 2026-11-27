@@ -1,4 +1,4 @@
-# R1-SCREEN-MEASURE on deepthought2 — third re-issue, draft for publication
+# R1-SCREEN-MEASURE on deepthought2 — third re-issue, published
 
 AI-assisted (Codex, local worker, 28 Nov 2026). The author signed the original note and adopted the companion
 pre-declaration on 27 Nov 2026 under R1-SCREEN-MEASURE-SIGNATURE. R1-SCREEN-MEASURE-CHOICES (1)–(9) fixes
@@ -13,7 +13,7 @@ The first co-tenancy STOP wrote 186 of 10,164 rows with zero failed runs, and R1
 classifies the stopped attempts as infrastructure losses. No rows from them enter this analysis.
 
 R1-SCREEN-DEEPTHOUGHT2 moves the full measurement to deepthought2, CPU only, at most 64 CPUs.
-This draft awaits the coordinator's publication after independent review. The companion
+The coordinator published this re-issue on 28 Nov 2026 under R1-SCREEN-DEEPTHOUGHT2, which pre-authorises publication of the reviewed note (review `docs/r1/reviews/SCREEN_MEASURE_DEEPTHOUGHT2_REVIEW_20261128.md`). The companion
 pre-declaration and the design, seeds, run budget, analysis and statistical STOP rules carry over.
 Compute confirms the deepthought retry ledger and that the prior attempt has ended before starting a
 fresh attempt.
@@ -45,7 +45,7 @@ and the analysis provenance and completeness checks, still apply.
 ## Key block
 
 ```
-approved: false
+approved: true
 label: EVIDENCE
 phase: r1_screen_measure
 start_ruling: R1-SCREEN-MEASURE
