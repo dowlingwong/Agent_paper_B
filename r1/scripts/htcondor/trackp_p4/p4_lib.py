@@ -174,6 +174,7 @@ ARMS = {                                        # P4-ARMS A: the Kev bases and b
 }
 CONTROLS = ("qwen3.5-0.8b-base", "qwen3.5-4b-base")
 FIRST_ARM = "kev-0.8b"                          # R1-TRACKP-P4-RUNNER-DECISIONS (3): the first, solo arm
+CHECKPOINT_ARMS = {"kev-4b": True, "qwen3.5-4b-base": True}
 LR_GRID = (1e-05, 3e-05, 0.0001)                # R1-LR-GRID
 SEEDS = (0, 1, 2)
 LC_POINTS = (250, 500)                          # P4-LC A
@@ -183,7 +184,8 @@ CAP_SLOT_HOURS = 64.0                           # 1.6 x the cap
 MAX_WALLTIME_S = 86400
 PLAN_ROWS = ("R1-T1-HOST-TASL", "R1-TRACKP-P4-DECISIONS", "R1-TRACKP-P4-RUNNER-DECISIONS", "R1-TRACKP-IMAGE-V21",
              "R1-TRACKP-IMAGE-V22", "R1-TRACKP-IMAGE-V22-B", "R1-TRACKP-V21-FREEZE", "R1-HTC-QTORCH",
-             "R1-S2-LABELS-TRAINDEV-RELEASE", "R1-TRACKP-SFT-DEV", "R1-SWEEP2-PREREG", "R1-HOST-FREE")
+             "R1-S2-LABELS-TRAINDEV-RELEASE", "R1-TRACKP-SFT-DEV", "R1-SWEEP2-PREREG", "R1-HOST-FREE",
+             "R1-P4-4B-CHECKPOINT")
 TRANSFER_INPUTS = ("p4_job.sh", "p4_lib.py", "p4_spec.json", "proposals.jsonl", "configs.json", "build.json",
                    "label_block.traindev.jsonl", "RECEIPT.json")
 TRANSFER_OUTPUTS = "out.tar,job_record.json,SHA256SUMS,p4_run.log"
@@ -209,6 +211,12 @@ FEAT_ONE_IDENTITY = {"path": "docs/r1/reports/arms_a3_20261123/feat_one_identity
 # --- probe mode (cluster test plan §4.2; P4-PROBE A, P4-PROBECAP A)
 PROBE_RUN_ID = re.compile(r"^trackp-p4-probe-\d{8}-[a-z]$")
 PROBE_SPEC_FILE = "p4_probe_spec.json"           # the committed template in this package
+ADA_REPROBE = {
+    "run_id": "trackp-p4-probe-20261127-b",
+    "prior_run_id": "trackp-p4-probe-20261125-a",
+    "prior_spec_sha256": "540bd9798017260ca391612351706189712221c269482a7d47385695160a50a2",
+    "prior_paper_commit": "91cfd48a67f8d62d4e20826976cbdbdbcfcaf505",
+}
 PROBE_RECORD_SCHEMA = "trackp_p4_probe_record/1"
 PROBE_TABLE_SCHEMA = "trackp_p4_h200_sft_probe/1"
 PROBE = {"steps": 50, "lr": 1e-05, "seed": 0, "sample_ms": 500, "walltime_s": 7200, "labels": "synthetic"}
@@ -398,6 +406,11 @@ def validate_spec(spec: dict, *, launch: bool = False) -> dict:
     for key, value in want.items():
         if proto.get(key) != value:
             raise Stop(f"STOP: protocol.{key} must be {value!r} (fixed)")
+    if launch or "gradient_checkpointing" in proto:
+        checkpointing = proto.get("gradient_checkpointing")
+        if not isinstance(checkpointing, dict) or set(checkpointing) != set(CHECKPOINT_ARMS) or \
+                any(v is not True for v in checkpointing.values()):
+            raise Stop(f"STOP: protocol.gradient_checkpointing must be {CHECKPOINT_ARMS} (R1-P4-4B-CHECKPOINT)")
     caps = spec.get("caps") or {}
     if caps.get("gpu_hours") != CAP_GPU_HOURS or caps.get("slot_hours") != CAP_SLOT_HOURS:
         raise Stop(f"STOP: caps must be {CAP_GPU_HOURS} GPU-h and {CAP_SLOT_HOURS} slot-hours (P4-CAP A)")
@@ -998,7 +1011,8 @@ def data_identity(data: Path) -> dict:
             "rows_sha256": manifest.get("rows_sha256"), "splits_sha256": manifest.get("splits_sha256")}
 
 
-def check_run_protocol(run_dir: Path, sft_cfg: dict, *, lr: float, seed: int, data_sha256: str | None = None) -> dict:
+def check_run_protocol(run_dir: Path, sft_cfg: dict, *, lr: float, seed: int, data_sha256: str | None = None,
+                       checkpointing: bool = False) -> dict:
     """The protocol a run actually used (its ``stage_s/sft_report.json``) is the fixed one: micro-batch 8 (P4-MB A)
     and every other Stage S key of the SFT config's ``train`` block (effective batch 16, loss, epochs, patience, the
     lr grid, ...), with the run's lr and seed; a difference is a protocol STOP."""
@@ -1014,12 +1028,18 @@ def check_run_protocol(run_dir: Path, sft_cfg: dict, *, lr: float, seed: int, da
         raise ProtocolStop(f"STOP: {Path(run_dir).name} records a protocol deviation: {rep['protocol_deviation']}")
     if data_sha256 is not None and rep.get("data_sha256") != data_sha256:
         raise ProtocolStop(f"STOP: {Path(run_dir).name} was trained on another data directory")
+    check_checkpointing(proto, checkpointing)
     return {k: proto.get(k) for k in want}
 
 
-def sft_dev_argv(arm: str, data: Path, lr: float, seed: int, run_dir: Path, extra=()) -> list:
+def check_checkpointing(protocol: dict, enabled: bool) -> None:
+    if protocol.get("gradient_checkpointing", False) is not enabled:
+        raise ProtocolStop(f"STOP: the Stage S run must have gradient_checkpointing={enabled} (R1-P4-4B-CHECKPOINT)")
+
+
+def sft_dev_argv(arm: str, data: Path, lr: float, seed: int, run_dir: Path, extra=(), *, checkpointing=False) -> list:
     return ["sft-dev", "--data", str(data), "--base", arm, "--lr", repr(float(lr)), "--seed", str(seed),
-            "--run-dir", str(run_dir), *extra]
+            "--run-dir", str(run_dir), *extra, *(("--p4-gradient-checkpointing",) if checkpointing else ())]
 
 
 def select_argv(runs, run_dir: Path) -> list:
@@ -1027,8 +1047,8 @@ def select_argv(runs, run_dir: Path) -> list:
 
 
 def sft_dev(clone: Path, job_dir: Path, arm: str, data: Path, lr: float, seed: int, run_dir: Path, sh=_sh,
-            extra=()) -> Path:
-    trackp(clone, job_dir, sft_dev_argv(arm, data, lr, seed, run_dir, extra), sh)
+            extra=(), *, checkpointing=False) -> Path:
+    trackp(clone, job_dir, sft_dev_argv(arm, data, lr, seed, run_dir, extra, checkpointing=checkpointing), sh)
     return run_dir
 
 
@@ -1055,8 +1075,10 @@ def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str
     if arm not in spec["arms"]:
         raise Stop(f"STOP: {arm} is not an arm of the spec")
     host = host_class_of(spec, host_class)
+    checkpointing = spec["protocol"]["gradient_checkpointing"].get(arm, False)
     record: dict = {"schema": RECORD_SCHEMA, "label": ENGINEERING_ONLY, "run_id": spec["run_id"], "arm": arm,
                     "phase": 1, "spec_sha256": _sha_file(spec_path), "paper_commit": spec["paper"]["commit"],
+                    "gradient_checkpointing": checkpointing,
                     "host_class": host_class, "launch": host["launch"],
                     "started_utc": _utc(started), "stop": None, "stop_class": None, "steps": [],
                     "projection": loaded["projection"]["per_arm"][arm],
@@ -1099,9 +1121,12 @@ def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str
         grid = []
         for lr in LR_GRID:
             for s in SEEDS:
-                grid.append(sft_dev(clone, job_dir, arm, data, lr, s, runs / run_name(lr, s), sh))
-                check_run_protocol(grid[-1], sft_cfg, lr=lr, seed=s, data_sha256=record["data"]["sft_data_sha256"])
-        record["protocol"] = check_run_protocol(grid[0], sft_cfg, lr=LR_GRID[0], seed=SEEDS[0])
+                grid.append(sft_dev(clone, job_dir, arm, data, lr, s, runs / run_name(lr, s), sh,
+                                    checkpointing=checkpointing))
+                check_run_protocol(grid[-1], sft_cfg, lr=lr, seed=s, data_sha256=record["data"]["sft_data_sha256"],
+                                   checkpointing=checkpointing)
+        record["protocol"] = check_run_protocol(grid[0], sft_cfg, lr=LR_GRID[0], seed=SEEDS[0],
+                                                checkpointing=checkpointing)
         record["steps"].append("grid")
         trackp(clone, job_dir, select_argv(grid, out / "select"), sh)
         select = json.loads(_read_utf8(out / "select" / "report.json"))
@@ -1116,10 +1141,12 @@ def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str
                 continue
             sub = out / "lc_data" / f"n{point}"
             P.lc_subset(data, point, sub)
-            lc_runs[str(point)] = [sft_dev(clone, job_dir, arm, sub, lr_sel, s, runs / run_name(lr_sel, s, point), sh)
+            lc_runs[str(point)] = [sft_dev(clone, job_dir, arm, sub, lr_sel, s, runs / run_name(lr_sel, s, point), sh,
+                                          checkpointing=checkpointing)
                                    for s in SEEDS]
             for s, d in zip(SEEDS, lc_runs[str(point)]):
-                check_run_protocol(d, sft_cfg, lr=lr_sel, seed=s, data_sha256=_sha_file(sub / "sft_data.json"))
+                check_run_protocol(d, sft_cfg, lr=lr_sel, seed=s, data_sha256=_sha_file(sub / "sft_data.json"),
+                                   checkpointing=checkpointing)
         record["learning_curve"] = {k: [p.name for p in v] for k, v in lc_runs.items()}
         record["steps"].append("learning_curve")
         boot = P.rps_skill_bootstrap(data, [runs / run_name(lr_sel, s) / "stage_s" for s in SEEDS])
@@ -1136,7 +1163,7 @@ def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str
         (out / "arm_pin.json").write_text(json.dumps(pin, indent=1, sort_keys=True) + "\n")
         record["arm_pin_sha256"] = _sha_file(out / "arm_pin.json")
         record["steps"].append("arm_pin")
-        record["test_path"] = test_path(clone, job_dir, arm, ins, sh)
+        record["test_path"] = test_path(clone, job_dir, arm, ins, sh, checkpointing=checkpointing)
         record["steps"].append("test_path")
     except Stop as exc:
         record["stop"], record["stop_class"] = str(exc), exc.stop_class
@@ -1156,11 +1183,11 @@ def _run_job(spec_path: Path, arm: str, job_dir: Path | None, *, host_class: str
     return record
 
 
-def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh) -> dict:
+def test_path(clone: Path, job_dir: Path, arm: str, ins: dict, sh=_sh, *, checkpointing=False) -> dict:
     """Step 10 (P4-PHASE1-TEST A): the evaluator's path on synthetic labels; the real-label test is never read."""
     syn = data_build(clone, job_dir, ins, sh, synthetic=True)
     run = sft_dev(clone, job_dir, arm, syn, LR_GRID[0], 0, job_dir / "out" / "test_path" / "run", sh,
-                  extra=("--steps", "2", "--eval-every", "1"))
+                  extra=("--steps", "2", "--eval-every", "1"), checkpointing=checkpointing)
     ledger = job_dir / "out" / "ledgers" / TABLE_PIN
     env = {**offline_env(job_dir), "PYTHONPATH": str(clone)}
     code = ("import json, sys\nfrom pathlib import Path\n"
@@ -1197,7 +1224,8 @@ def validate_probe_spec(spec: dict) -> dict:
     ``image.versions_sha256`` (T1), ``host_class`` (R1-HOST-FREE: the one admitted class the probe run measures; its
     estimate is per class) and that class's ``hosts.<class>.host_config.sha256`` (T3; the other classes' may stay
     placeholders). The arms and ``first_arm`` are those of the default
-    check (both controls, ``kev-0.8b`` first). The label fields, ``estimate.*`` and ``caps.probe_gpu_hours`` may stay
+    check (both controls, ``kev-0.8b`` first). The Ada re-probe uses a new run id and reuses that first-arm seal, with
+    execution limited to the two 4B arms. The label fields, ``estimate.*`` and ``caps.probe_gpu_hours`` may stay
     placeholders: the probe reads none of them. It does not require ``h200_sft_probe`` (F1)."""
     loaded = validate_spec(spec)
     run_id = loaded["run_id"]
@@ -1217,13 +1245,24 @@ def validate_probe_spec(spec: dict) -> dict:
         raise Stop(f"STOP: a probe spec names the one host class its run uses (host_class, one of the admitted "
                    f"{sorted(spec['hosts'])}): a probe run measures one class (R1-HOST-FREE; P4-PROBE A)")
     _pin(spec["hosts"][cls]["host_config"].get("sha256"), f"hosts.{cls}.host_config.sha256", allow=False)
-    return {"spec": spec, "run_id": run_id, "probe": dict(probe), "host_class": cls}
+    reprobe = run_id == ADA_REPROBE["run_id"]
+    if "ada_4b_reprobe" in spec and spec["ada_4b_reprobe"] != ADA_REPROBE:
+        raise Stop("STOP: the Ada 4B re-probe binding differs from R1-P4-4B-CHECKPOINT")
+    if cls == "ada_rtx6000" and run_id == ADA_REPROBE["prior_run_id"] and "ada_4b_reprobe" in spec:
+        raise Stop("STOP: the prior Ada run is sealed; use the new Ada 4B re-probe run id")
+    if reprobe and (cls != "ada_rtx6000" or spec.get("ada_4b_reprobe") != ADA_REPROBE
+                    or spec["protocol"].get("gradient_checkpointing") != CHECKPOINT_ARMS
+                    or not CHECKPOINT_ARMS.keys() <= set(spec["arms"])):
+        raise Stop("STOP: the Ada 4B re-probe requires the published binding and both checkpointed 4B arms on Ada")
+    return {"spec": spec, "run_id": run_id, "probe": dict(probe), "host_class": cls,
+            "probe_arms": tuple(CHECKPOINT_ARMS) if reprobe else tuple(spec["arms"])}
 
 
 def check_probe_template(spec: dict, template: dict) -> None:
-    """A filled probe spec differs from the committed template (``p4_probe_spec.json``) only in ``PROBE_FILLED``,
-    which the template holds as placeholders."""
+    """Check the filled fields and the exact alternate run id bound by the committed probe template."""
     a, b = json.loads(json.dumps(spec)), json.loads(json.dumps(template))
+    if a["run_id"] == ADA_REPROBE["run_id"] and b.get("ada_4b_reprobe") == ADA_REPROBE:
+        a["run_id"] = b["run_id"]
     for path in PROBE_FILLED:
         if not _placeholder(_at(template, path)):
             raise Stop(f"STOP: the committed probe template must hold a placeholder at {'.'.join(path)}")
@@ -1342,12 +1381,13 @@ def probe_code_binding(spec: dict, clone: Path, lib_file: Path | None = None) ->
     return {"p4_lib_sha256": _sha_file(lib_file), "template_sha256": _sha_file(template)}
 
 
-def probe_run_summary(run_dir: Path, data: dict, sft_cfg: dict, probe: dict, wall: dict) -> dict:
+def probe_run_summary(run_dir: Path, data: dict, sft_cfg: dict, probe: dict, wall: dict, *, checkpointing=False) -> dict:
     """The probe run's protocol and timings from its ``stage_s`` (cluster test plan §4.4); S10's refusals: another
     micro-batch or effective batch, a protocol deviation other than ``{"max_steps": 50}``, another data directory."""
     stage_s = Path(run_dir) / "stage_s"
     rep = json.loads(_read_utf8(stage_s / "sft_report.json"))
     proto = rep.get("protocol") or {}
+    check_checkpointing(proto, checkpointing)
     if proto.get("micro_batch") != MICRO_BATCH or proto.get("effective_batch") != 16:
         raise ProtocolStop(f"STOP: the probe ran micro-batch {proto.get('micro_batch')} / effective batch "
                            f"{proto.get('effective_batch')}, not 8 / 16 (P4-MB A)")
@@ -1369,7 +1409,7 @@ def probe_run_summary(run_dir: Path, data: dict, sft_cfg: dict, probe: dict, wal
     return {"lr": rep.get("lr"), "seed": rep.get("seed"), "n_train": rep.get("n_train"), "n_val": rep.get("n_val"),
             "protocol": {k: proto.get(k) for k in ("micro_batch", "effective_batch", "max_epochs", "patience",
                                                    "eval_every_frac", "loss")},
-            "max_tokens": int(sft_cfg["prompt"]["max_tokens"]), "gradient_checkpointing": "off (SFT path)",
+            "max_tokens": int(sft_cfg["prompt"]["max_tokens"]), "gradient_checkpointing": checkpointing,
             "protocol_deviation": rep.get("protocol_deviation"), "steps_per_epoch": rep.get("steps_per_epoch"),
             "total_steps": rep.get("total_steps"), "stopped_at": stopped,
             "early_stopped": train.get("early_stopped"),
@@ -1397,15 +1437,17 @@ def _run_probe(spec_path: Path, spec: dict, loaded: dict, arm: str, job_dir: Pat
                environ, lib_file) -> dict:
     started = started or time.time()
     job_dir = Path(job_dir or Path.cwd()).resolve()
-    if arm not in spec["arms"]:
+    if arm not in loaded["probe_arms"]:
         raise Stop(f"STOP: {arm} is not an arm of the probe spec")
     probe = loaded["probe"]
     cls = loaded["host_class"]
+    checkpointing = spec["protocol"].get("gradient_checkpointing", {}).get(arm, False)
     record: dict = {"schema": PROBE_RECORD_SCHEMA, "label": ENGINEERING_ONLY, "mode": "probe", "run_id": spec["run_id"],
                     "arm": arm, "phase": 1, "spec_sha256": _sha_file(spec_path), "paper_commit": spec["paper"]["commit"],
+                    "gradient_checkpointing": checkpointing,
                     "host_class": cls, "launch": HOST_CLASSES[cls]["launch"],
                     "started_utc": _utc(started), "stop": None, "stop_class": None, "steps": [], "probe": probe,
-                    "output_use": "ENGINEERING_ONLY H200 SFT fit and timing probe (P4-PROBE A): synthetic labels, at "
+                    "output_use": "ENGINEERING_ONLY SFT fit and timing probe (P4-PROBE A): synthetic labels, at "
                                   "most 50 steps, one base; nothing kept as an arm; no label file, receipt or freeze "
                                   "record read; its GPU-hours count against P4-CAP (P4-PROBECAP A)"}
     out = job_dir / "out"
@@ -1418,6 +1460,8 @@ def _run_probe(spec_path: Path, spec: dict, loaded: dict, arm: str, job_dir: Pat
         record["gpu"] = gpu_identity(sh)                 # unscoped, as the P.4 job runs it (F3; T7)
         record["lease"] = lease_binding(record["gpu"], environ)
         record["card_processes_start"] = card_processes(sh, record["gpu"].get("uuid"))   # R1-CARD-SHARE (4)
+        if spec["run_id"] == ADA_REPROBE["run_id"] and record["card_processes_start"].get("count") != 0:
+            raise Stop("STOP: the Ada 4B re-probe requires an empty card (R1-P4-4B-CHECKPOINT)")
         record["host"] = host_identity()
         record["visible_devices"] = visible_devices(record["gpu"], environ)
         record["condor"] = condor_ad(environ)
@@ -1455,7 +1499,7 @@ def _run_probe(spec_path: Path, spec: dict, loaded: dict, arm: str, job_dir: Pat
         t_start, failure = time.time(), None
         try:
             sft_dev(clone, job_dir, arm, data, probe["lr"], probe["seed"], run_dir, sh,
-                    extra=("--steps", str(probe["steps"])))
+                    extra=("--steps", str(probe["steps"])), checkpointing=checkpointing)
         except Stop as exc:
             failure = str(exc)
             raise
@@ -1469,7 +1513,7 @@ def _run_probe(spec_path: Path, spec: dict, loaded: dict, arm: str, job_dir: Pat
         if not record["memory"]["samples"]:
             raise Stop("STOP: the probe has no device-memory sample (S10)")
         record["run"] = probe_run_summary(run_dir, record["data"], json.loads(_read_utf8(clone / SFT_CONFIG)), probe,
-                                          record["wall"])
+                                          record["wall"], checkpointing=checkpointing)
         record["steps"].append("probe")
     except Stop as exc:
         record["stop"], record["stop_class"] = str(exc), exc.stop_class
@@ -1479,6 +1523,10 @@ def _run_probe(spec_path: Path, spec: dict, loaded: dict, arm: str, job_dir: Pat
     if (record.get("gpu") or {}).get("uuid"):            # R1-CARD-SHARE (4), then (3)
         record["card_processes_end"] = card_processes(sh, record["gpu"]["uuid"])
     shared_card_loss(record)
+    if spec["run_id"] == ADA_REPROBE["run_id"] and record.get("card_processes_end", {}).get("count") != 0 \
+            and record["stop_class"] in (None, "arm"):
+        record.update(stop="STOP: the Ada 4B re-probe could not verify an empty card at exit",
+                      stop_class="infrastructure")
     finished = time.time()
     record["finished_utc"] = _utc(finished)
     record["gpu_hours"] = round((finished - started) / 3600, 4)
@@ -1494,14 +1542,16 @@ def _run_probe(spec_path: Path, spec: dict, loaded: dict, arm: str, job_dir: Pat
 
 
 def check_first_probe_record(path: Path | None, spec: dict, spec_sha256: str, sealed_root: Path = SEALED_ROOT) -> dict:
-    """S10 / §4.1: a probe of another base is staged only after the first arm's probe record is sealed and STOP-free
-    (same probe spec)."""
+    """Bind the first arm's sealed STOP-free record, from the original Ada spec for the 4B re-probe."""
     first = spec["first_arm"]
     if path is None:
         raise Stop(f"STOP: probe {first} alone first; another base needs --first-record (its sealed, STOP-free probe "
                    "record)")
     path = Path(path).resolve()
-    arm_root = (Path(sealed_root) / spec["run_id"] / first).resolve()
+    reprobe = spec["run_id"] == ADA_REPROBE["run_id"]
+    run_id = ADA_REPROBE["prior_run_id"] if reprobe else spec["run_id"]
+    expected_sha = ADA_REPROBE["prior_spec_sha256"] if reprobe else spec_sha256
+    arm_root = (Path(sealed_root) / run_id / first).resolve()
     if path.parent.parent != arm_root or path.name != "job_record.json" or \
             not (path.parent / "SEAL_RECEIPT.json").is_file():
         raise Stop(f"STOP: --first-record must be {arm_root}/attempt-N/job_record.json with its SEAL_RECEIPT.json")
@@ -1509,12 +1559,16 @@ def check_first_probe_record(path: Path | None, spec: dict, spec_sha256: str, se
         raise Stop("STOP: the first arm's sealed probe outputs do not verify against SHA256SUMS")
     record = json.loads(_read_utf8(path))
     receipt = json.loads(_read_utf8(path.parent / "SEAL_RECEIPT.json"))
-    checks = {"schema": record.get("schema") == PROBE_RECORD_SCHEMA, "run_id": record.get("run_id") == spec["run_id"],
-              "arm": record.get("arm") == first, "spec_sha256": record.get("spec_sha256") == spec_sha256,
+    checks = {"schema": record.get("schema") == PROBE_RECORD_SCHEMA, "run_id": record.get("run_id") == run_id,
+              "arm": record.get("arm") == first, "spec_sha256": record.get("spec_sha256") == expected_sha,
               "receipt": receipt.get("job_record_sha256") == _sha_file(path),
               "identity_verified": receipt.get("identity_verified") is True,
               "host_class": record.get("host_class") == spec.get("host_class"),     # one probe run, one class
               "stop": record.get("stop") is None and record.get("steps", [])[-1:] == ["probe"]}
+    if reprobe:
+        checks["published_prior_commit"] = record.get("paper_commit") == ADA_REPROBE["prior_paper_commit"]
+        checks["first_seal"] = receipt.get("stop") is None and bool(re.fullmatch(r"attempt-[1-9][0-9]*",
+                                                                                path.parent.name))
     failed = sorted(k for k, ok in checks.items() if not ok)
     if failed:
         raise Stop(f"STOP: the first arm's probe record is not sealed and STOP-free: {failed}")
@@ -2176,6 +2230,7 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
     loaded = validate_probe_spec(probe_spec)
     validate_spec(p4_spec)
     cls = loaded["host_class"]
+    reprobe = probe_spec["run_id"] == ADA_REPROBE["run_id"]
     same = ("env3", "sft_config", "split_file", "table", "layout", "arms", "first_arm", "protocol")
     differ = [k for k in same if probe_spec.get(k) != p4_spec.get(k)]
     differ += [f"image.{k}" for k in ("digest", "row") if probe_spec["image"].get(k) != p4_spec["image"].get(k)]
@@ -2188,9 +2243,13 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
         differ.append(f"hosts.{cls}")
     if differ:
         raise Stop(f"STOP: the probe spec and the P.4 spec differ in {differ}: the probe does not measure these jobs")
-    run_root = (Path(sealed_root) / probe_spec["run_id"]).resolve()
     jobs, keys, extras = {}, {}, {}
     for d in map(Path, sealed):
+        arm = d.parent.name
+        carried = reprobe and arm not in CHECKPOINT_ARMS
+        run_id = ADA_REPROBE["prior_run_id"] if carried else probe_spec["run_id"]
+        spec_sha = ADA_REPROBE["prior_spec_sha256"] if carried else probe_spec_sha256
+        run_root = (Path(sealed_root) / run_id).resolve()
         if d.resolve().parent.parent != run_root or not re.fullmatch(r"attempt-[1-9][0-9]*", d.name):
             raise Stop(f"STOP: {d} is not a sealed probe attempt under {run_root}/<arm>/attempt-N")
         if subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=d, capture_output=True).returncode != 0:
@@ -2198,20 +2257,33 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
         rec = json.loads(_read_utf8(d / "job_record.json"))
         receipt = json.loads(_read_utf8(d / "SEAL_RECEIPT.json"))
         if receipt.get("job_record_sha256") != _sha_file(d / "job_record.json") or rec.get("stop") or \
-                rec.get("schema") != PROBE_RECORD_SCHEMA or rec.get("spec_sha256") != probe_spec_sha256 or \
-                rec.get("run_id") != probe_spec["run_id"] or receipt.get("identity_verified") is not True or \
+                rec.get("schema") != PROBE_RECORD_SCHEMA or rec.get("spec_sha256") != spec_sha or \
+                rec.get("run_id") != run_id or rec.get("arm") != arm or receipt.get("identity_verified") is not True or \
                 rec.get("steps", [])[-1:] != ["probe"] or rec.get("host_class") != cls:
             raise Stop(f"STOP: {d} is not a sealed, verified, STOP-free probe attempt of this probe spec (on {cls})")
-        arm = rec["arm"]
+        if reprobe:
+            commit = ADA_REPROBE["prior_paper_commit"] if carried else probe_spec["paper"]["commit"]
+            if rec.get("paper_commit") != commit or receipt.get("stop") or card_was_shared(rec, receipt):
+                raise Stop(f"STOP: {d} does not attest the bound commit and empty Ada card")
+            counts = (receipt.get("other_processes_start"), receipt.get("other_processes_end"),
+                      rec.get("card_processes_start"), rec.get("card_processes_end"))
+            if not carried and any((c or {}).get("count") != 0 for c in counts):
+                raise Stop(f"STOP: {d} lacks a complete empty-card observation")
+            effective = (rec.get("run") or {}).get("gradient_checkpointing")
+            verified = (effective == "off (SFT path)" if carried else
+                        (effective is True and rec.get("gradient_checkpointing") is True))
+            if not verified:
+                raise Stop(f"STOP: {d} does not attest the required checkpointing setting for {arm}")
         if arm in jobs:
             raise Stop(f"STOP: two probe attempts given for {arm}")
-        order = submission_order(d.parent, Path(sealed_root) / probe_spec["run_id"] / SUBMISSION_LEDGER)
+        order = submission_order(d.parent, Path(sealed_root) / run_id / SUBMISSION_LEDGER)
         if order["first"] != d.name:
             raise Stop(f"STOP: {d.name} is not the first STOP-free probe attempt of {arm} by submission order "
                        f"({order['first']}, by {order['basis']}): the record uses that one, never one chosen by result")
         extras[arm] = order["extra"]
         jobs[arm] = (d, rec)
-        for k, v in {"paper_commit": rec.get("paper_commit"), "image": rec.get("image"), "venv": rec.get("venv"),
+        for k, v in {**({} if reprobe else {"paper_commit": rec.get("paper_commit")}),
+                     "image": rec.get("image"), "venv": rec.get("venv"),
                      "configs": {x: rec["configs"][x] for x in ("host_config", "sft_config")},
                      "data": rec["data"]["identity"], "n_train": rec["data"]["n_train"],
                      "env3": {x: rec["env3_freeze"].get(x) for x in ("status", "image_line", "local_label")}}.items():
@@ -2229,6 +2301,7 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
         hours[arm] = est["hours"]
         entries.append({
             "arm": arm, "registry_keys": list(ARMS[arm]), "attempt": d.name, "condor_job": rec.get("condor"),
+            **({"probe_run_id": rec["run_id"], "probe_spec_sha256": rec["spec_sha256"]} if reprobe else {}),
             "host_class": rec.get("host_class"), "launch": rec.get("launch"),
             "hostname": (rec.get("host") or {}).get("hostname"), "gpu": rec.get("gpu"),
             "image_digest": (rec.get("image") or {}).get("digest"),
@@ -2500,6 +2573,10 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
         direct.update(other_processes_start=launch.get("other_processes_start"),
                       other_processes_end=launch.get("other_processes_end"), card_shared=launch.get("card_shared"))
         shared_card_loss(outcome, launch.get("other_processes_start"), launch.get("other_processes_end"))
+    if spec["run_id"] == ADA_REPROBE["run_id"] and outcome["stop_class"] in (None, "arm") and any(
+            (direct.get(key) or {}).get("count") != 0 for key in ("other_processes_start", "other_processes_end")):
+        outcome.update(stop="STOP: the Ada 4B re-probe lacks host-side evidence of an empty card",
+                       stop_class="infrastructure")
     receipt = {"schema": RECEIPT_SCHEMA, "run_id": spec["run_id"], "arm": arm, "attempt": n,
                "sealed_path": str(target), "record_readable": record is not None, "sums": sums,
                "identity_verified": verified, "stop": outcome["stop"],
