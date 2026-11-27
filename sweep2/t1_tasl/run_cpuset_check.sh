@@ -77,7 +77,8 @@ if [ "$(sha256sum "$SPEC" | cut -d' ' -f1)" != "$SPEC_SHA" ]; then st "STOP: the
 
 ATTS=()
 tries=0
-while [ "${#ATTS[@]}" -lt 3 ] && [ "$tries" -lt "$MAX_TRIES" ]; do
+# Each sealed attempt contributes two arguments: --attempt and its path.
+while (( ${#ATTS[@]} / 2 < 3 && tries < MAX_TRIES )); do
   tries=$((tries + 1))
   BEFORE=$(ls -d "$ROOT/$NODE"/attempt-* 2>/dev/null | wc -l)
   LOG="$ROOT/_logs/$NODE-$(date -u +%Y%m%dT%H%M%SZ)-$$.node.log"
