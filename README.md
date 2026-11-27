@@ -6,7 +6,7 @@ the improvement of the final configuration over the start.
 
 | Project | Current question | Start here |
 |---|---|---|
-| Paper B | At a matched budget, what do de-duplication, noise-aware rules and proposal-level learning each buy? | [Paper B plan](canon/PAPER_B_PLAN.md) and [manuscript](papers/r1/) |
+| Paper B | At a matched budget, what do de-duplication, noise-aware rules and proposal-level learning each buy? | [Paper B plan](canon/PAPER_B_PLAN.md) and [manuscript](https://github.com/dowlingwong/paper_B_manuscript) |
 | Paper C | When is budget-aware one-step control enough, and when do current actions change future search enough to justify a longer horizon? | [Paper C plan](canon/PAPER_C_PLAN.md) and the [development branch](https://github.com/dowlingwong/Agent_paper_B/tree/paperc-esyn-scaling-20261122/paperC) |
 
 ## Start here
@@ -34,7 +34,8 @@ candidate is fixed-memory, variable-length sequence training.
 |---|---|
 | [`canon/`](canon/README.md) | Paper plans, compute inventory and agent SOUL files |
 | [`docs/r1/`](docs/r1/README.md) | Runbooks, authorizations, reports, reviews and decision history |
-| [`papers/r1/`](papers/r1/) | Paper B LaTeX source |
+| `papers/manuscript/` | Submodule pin for the reviewed Paper B revision in [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript) |
+| [`papers/r1/`](papers/r1/) | Paper B manuscript snapshot from before the migration |
 | [`r1/`](r1/), [`sweep2/`](sweep2/), [`tools/`](tools/) | Experiment and audit code, batch wrappers and tools |
 | [`results/r1/`](results/r1/) | Committed outputs and provenance with evidence class recorded |
 | [`archive/`](archive/README.md) | Historical paper route, manuscript and legacy code |
@@ -43,6 +44,9 @@ candidate is fixed-memory, variable-length sequence training.
 Host deployments use the pinned [autoresearch harness](https://github.com/dowlingwong/autoresearch_harness).
 [COMPUTE.md](canon/COMPUTE.md) records host capabilities, availability snapshots and the current routing.
 Use the project's published branch and signed launch note when an experiment requires them.
+
+Writer and Overleaf use [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript) directly. With access to the manuscript repository,
+run `git submodule update --init -- papers/manuscript` to check out the exact revision recorded here.
 
 ## Checks
 

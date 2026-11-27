@@ -25,6 +25,9 @@ the author as one sheet.
 - `canon/`: kept true in the same merge as any row that changes it.
 - The queue of each agent and the order of the steps (R1-STEP-ORDER): which are complete, what each open one waits for.
 - Verification and publication of every delivered unit; publication of notes a row pre-authorises.
+- Paper B manuscript releases under R1-MANUSCRIPT-REPO. Route LaTeX task cards to [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript).
+  Verify the reported commit, both draft builds and any newly cited released evidence. Publish the reviewed
+  manuscript revision first, then advance the `papers/manuscript` pin and record both commits in `STATE.md`.
 - Decision sheets for the author, and the daily digest. Check that the design agent's comparison is declared
   before its outcome exists and that the local worker's implementation matches it.
 

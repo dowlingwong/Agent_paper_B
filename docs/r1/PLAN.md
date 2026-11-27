@@ -1684,6 +1684,12 @@ preregistration, the gate code and every signed note are unchanged.
 |---|---|
 | R1-D3-CHOICES-T5-CORRECTION | **Correct the T5 figures cited under R1-D3-CHOICES (1)** (author, 27 Nov 2026, in Codex chat, "T5 数字更正同意更正"; `AUTHOR.md` on `coord/coordinator` at `042c1930`). In the ENGINEERING_ONLY T5 simulation at `digits_on`, W = 20 and target s = 0.79, the change in gain from correcting base A2 is +1.38 δ_n per campaign for the feasible keep-count correction and +3.27 δ_n for the correction given the known record error. The earlier +0.47 and +1.84 δ_n figures are for the oracle-prior base in the same cell. Across both digits settings and both budgets at s = 0.79, the A2 gains are +1.38 to +5.70 δ_n (feasible) and +3.27 to +9.97 δ_n (known record error). Source: `docs/r1/theory/T5_SHARED_NOISE_20261122.md` §4.8 and independent review m1 in `docs/r1/reviews/T5_SHARED_NOISE_REVIEW_20261126.md`. The direct screening test and the SHARED decision route remain governed by R1-D3-CHOICES (1) and R1-SCREEN-MEASURE. |
 
+### 27 November 2026 — Paper B manuscript repository (author)
+
+| ID | Decision |
+|---|---|
+| R1-MANUSCRIPT-REPO | **Use the standalone [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript) repository for Paper B LaTeX and Overleaf** (author, 27 Nov 2026, “让writer在这里作业，以及指针指到这里”). The opening manuscript revision imports the published `papers/r1` sources at research commit `cd9af2af8dc2d327b77ea41f1052c9e8c39d2021` into manuscript revision `c2a7de3456a88605ae3ac6284b33dbe3498c8ae5`. That path remains the pre-migration snapshot. The writer uses Codex GPT-6.2 Sol with high reasoning for the writing role, works on task branches in the standalone checkout and puts the repository, exact commit and checks for both draft builds in `coord/writer` here. PLAN, task queues and evidence records live in the research repository. Use only released evidence in the manuscript under the existing proof and release rules. After review and successful builds, the coordinator publishes the standalone revision, then updates the submodule pin at `papers/manuscript` and records both commits in `STATE.md`. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.

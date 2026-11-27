@@ -1,0 +1,3 @@
+[submodule "papers/manuscript"]
+	path = papers/manuscript
+	url = https://github.com/dowlingwong/paper_B_manuscript.git

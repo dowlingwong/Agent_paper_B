@@ -14,7 +14,7 @@ Start with [canon](../../canon/README.md) for the current paper plans, compute r
 | Design inputs, derivations and agent prompts | [inputs/](inputs/), [theory/](theory/) and [prompts/](prompts/) |
 | Prior decisions, checkout lineage and repository hygiene | [STATUS.md](STATUS.md), [BRANCHES.md](BRANCHES.md) and [the current inventory](reports/REPO_HYGIENE_AUDIT_20261126.md) |
 | Recovery fixtures and their manifests | [recovery/](recovery/) |
-| Active manuscript | [papers/r1/](../../papers/r1/) |
+| Active manuscript | [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript); reviewed revision pinned at `papers/manuscript` |
 
 Live tasks are on [coord/coordinator](https://github.com/dowlingwong/Agent_paper_B/tree/coord/coordinator).
 Keep experimental reports with their evidence status and original pins. Put generated or disposable artifacts

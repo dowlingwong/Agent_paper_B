@@ -69,7 +69,7 @@ when the four required parts are, and never delays them (R1-STEP-ORDER).
 | Gate | Preregistered and unread. | Review the Student-t consumer amendment, freeze the arms, then perform the one authorised read. |
 | Closed loop D.3 | Rev 4 and verify-seed option A are signed. Several controller units are merged. | Finish G1/G6, the constants and the verify-seed check. Run the HTCondor preflight in parallel, then the per-arm smoke and the stage-specific authorizations. |
 | Theory | Use main-text statements that pass R1-PROOF-POLICY. | Complete the remaining checks before the gate read. |
-| Manuscript | The matched-budget decomposition leads `papers/r1`. Both gate drafts are available. | Insert authorised effect estimates and intervals, and attribute supported gains to the component contrasts. |
+| Manuscript | The matched-budget decomposition leads the manuscript in [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript). Both gate drafts are available. | Insert authorised effect estimates and intervals, and attribute supported gains to the component contrasts. |
 
 ## 4. Order of steps (R1-STEP-ORDER)
 
@@ -117,7 +117,8 @@ cut, shortened or reordered to meet a date.
 - **Coordinator** publishes reviewed units and authorised notes after their checks, updates the live queue and
   routes any decision that changes the experimental design or launch scope.
 - **Writer and design** keep the outcome readings and evidence in sync. Use the [claim-to-table sheet](../docs/r1/proposals/PAPER_B_CLAIM_TABLE_SHEET_20261126.md)
-  to place the actual effects and intervals in the manuscript when released.
+  to place the actual effects and intervals in the manuscript when released. Writer edits the standalone LaTeX
+  checkout. The coordinator records the reviewed manuscript commit at `papers/manuscript` in this repository.
 
 ## 7. Author decisions
 
