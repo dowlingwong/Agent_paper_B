@@ -37,10 +37,9 @@ slot set (`captures/condor_q_a100_fix.txt`, `captures/condor_q_better_analyze_a1
   capability 8.9 — but `Start = false` (`captures/l40s_slot_ad.txt`). `condor_config_val -startd START` on
   deepthought2 prints `False` (`captures/startd_START.txt`). Job 760148 therefore had no machine willing to run
   it (`captures/condor_q_better_analyze.txt`, `captures/condor_q_reverse_l40s.txt`).
-- **TOpAS A100** (`c03-001-167/175/179`): the parent slots advertise A100-PCIE-40GB. `167` and `179` have no
-  unclaimed parent GPU (their child slots carry the assigned GPUs); `175` shows 5 free on its parent but
-  `Start = false`/`Requirements = false`. `167`/`179` parents report `Start`/`Requirements` as
-  `undefined`/`error`, so none of the three is a runnable A100 target. Captured at 2026-11-27T03:20:09Z in
+- **TOpAS A100** (`c03-001-167/175/179`): the parent slots advertise A100-PCIE-40GB. `167` shows 1 free parent
+  GPU but reports `Start`/`Requirements` as `undefined`/`error`; `179` shows 0 free; `175` shows 5 free but
+  `Start = false`/`Requirements = false`. None of the three is a runnable A100 target. Captured at 2026-11-27T03:20:09Z in
   `captures/topas_a100_slots_fix.txt`; the earlier undated capture is `captures/topas_gpu_slots_start.txt`.
   The other TOpAS GPUs are Tesla V100S-PCIE-32GB, outside the card the task names.
 - **ETP pool:** 23 visible slots at the 760152 analysis, no H200/H100/A100; the committed H200 request `760065` remains Idle. The two
