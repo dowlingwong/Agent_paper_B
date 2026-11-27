@@ -1,14 +1,17 @@
 # D.3 G1/G6 — revision 6c: the replicate-arm driver (FIXR3, EGATE) outside `run_real_campaign`
 
-**Status:** DESIGN REVISION, revision 6c-2 (27 Nov 2026). Level 1: an engineering decision inside the accepted
+**Status:** DESIGN REVISION, revision 6c-3 (27 Nov 2026). Level 1: an engineering decision inside the accepted
 D.3 arm set and the accepted G1/G6 design revision 5b, requested by `tasks/compute/20261127-09-g1-next.md`
 item 2. It changes neither which evidence is collected nor how it is read: the FIXR3/EGATE rules, seeds,
 W = 20, LLM cap 80, K = 10 audit and Y_final remain exactly as the pre-declaration and revision 5b state.
 No code, no campaign, no audit, no label or evaluation read was made for this revision.
 
 Revision 6c-1 (`ed0ad83b`) was reviewed `CHANGES REQUIRED` (`docs/r1/reviews/D3_G1_G6_REV6C_REVIEW_20261127.md`,
-sha256 `c9c136d19d7c8f097199509d7b324b34e8426125b2bec1a3da6f12cdbc443b9a`). This revision answers B1–B4,
-M1–M5 and m1–m7 in §10. It is stacked on revision 6b
+commit file sha256 `041c3c0383f3970b74eed034a2d3b1721117a4734eb8fa3d360c12f29c3e6136`; its self-line content hash is
+`c9c136d19d7c8f097199509d7b324b34e8426125b2bec1a3da6f12cdbc443b9a`). Revision 6c-2 (`690e8626`) was re-reviewed
+`CHANGES REQUIRED` (`docs/r1/reviews/D3_G1_G6_REV6C_REVIEW_R2_20261127.md`, review file sha256
+`686d3277d3c01868149406968e8ac8c38a1e2e497cc47f65266c5f6e7cfaf5d1`). This revision answers B1–B4, M1–M5, m1–m7 and
+the 6c-2 N1–N9 in §10. It is stacked on revision 6b
 (`D3_G1_G6_DESIGN_REV6_LAUNCHERS_20261126.md`, sha256
 `0d696535d94395c85592c7ac9483790483966bbe0bf48961d132c50aa49b922d`, `ACCEPTED FOR CODE`), itself on revision 5b
 (`D3_G1_G6_DESIGN_20261126.md`, sha256
@@ -72,21 +75,30 @@ One campaign is one instance (`campaign_id` = instance id) and one repetition.
    `counter = ChargedRunCounter(W=20, on_charge=recorder.on_charge)`. These two objects are created by one
    factory for every arm; the replicate route has no harness `ComputeBudget` shadow, but the parity check of §5
    makes the counter and the budget equal at every step.
-2. Ask the manager for proposal 0 through the normal `manager_proposal/v1` path. Before the call,
-   `budget.consume_llm_call()`; a call beyond 80 ends the campaign `llm_call_cap`. Each proposal/revision event
+2. Ask the manager for proposal 0 through the normal `manager_proposal/v1` path. `ComputeBudget` is frozen, so the
+   loop keeps it in a mutable holder and reassigns the returned object:
+   `budget_holder["value"] = budget_holder["value"].consume_llm_call()` before the call; a call that would take
+   `llm_calls` past 80 is not made and ends the campaign `llm_call_cap`. Each proposal/revision event
    is recorded so `campaign_usage` counts the same calls. A re-issued call after an infrastructure failure is
    logged `llm_call_reissued` and is not counted (R1-NO-TIMEOUT (1)).
 3. Validate the proposal against the node's active keys exactly as E1 does. A control-plane rejection costs no
    worker run and is not a proposal for the arm; it still costs its LLM call.
 4. At **step start**, after validation and before the first worker call, call
-   `recorder.begin_step(state=projection(engine, counter), incumbent=engine.incumbent or start_config,
-   start_config=start_config, step_index=step_index)` (§4).
+   `recorder.begin_step(trial_id=..., incumbent_config=incumbent_config, start_config=start_config,
+   state=projection(engine, counter), last_kept_trial_index=..., llm_calls=budget_holder["value"].llm_calls,
+   step_index=step_index)` (§4). `incumbent_config` is the **config contents** of the last kept trial
+   (`start_config` before the first keep); the recorder computes `config_sha256` from those contents, as the
+   harness path does. `engine.incumbent` is used only for the EGATE lookup and the projection.
 5. Call `engine.step(config_sha256, run_one, counter)`. `run_one(role, config_sha256, seed, j)`:
    - calls the worker exactly once;
    - catches any worker exception and records its cause and the card/host process counts in a G1
      `RunAttempt` side record, then returns `RunOutcome(success=False)`;
-   - calls `budget.consume_worker_run()` **before** the engine charges the counter, but does **not** charge the
-     counter itself. The engine's own `counter.charge(...)` is the single charge, including for the failed
+   - maps `config_sha256` to the current step's validated proposal/config (`config_by_sha`; the worker receives the
+     proposal, not the sha) and, if the previous step discarded its candidate, restores the incumbent workspace
+     before this call;
+   - reassigns the frozen budget in its holder: `budget_holder["value"] =
+     budget_holder["value"].consume_worker_run(seconds)` **before** the engine charges the counter, but does **not**
+     charge the counter itself; The engine's own `counter.charge(...)` is the single charge, including for the failed
      `RunOutcome` just returned. A reused incumbent run in EGATE is not a `run_one` call and charges neither.
    This is the engine-owned layering (B1): it needs no engine change, and a raising worker call is still
    charged because G1 converts it to a failed `RunOutcome` before the engine's charge.
@@ -95,12 +107,13 @@ One campaign is one instance (`campaign_id` = instance id) and one repetition.
    `OverBudget` and a STOP.
 7. Write one trial record for the step with `extra.control.replicates` exactly as G8 requires (the candidate
    j = 0 run is the trial's own worker run; j ≥ 1 candidate and all executed incumbent runs are entries; a
-   reused incumbent run is `charged: false`). Record `zero_variance_cases` and the G1 `RunAttempt` failure
-   classes in the trial record / summary (§5).
+   reused incumbent run is `charged: false`). Record `zero_variance_cases`, `trial_id`,
+   `last_kept_trial_index`, `llm_calls` and the G1 `RunAttempt` failure classes in `extra.control` / `summary.json`
+   (§5).
 8. Ask for the next proposal while `counter.left` and the LLM cap allow. `UnfundableStep` ends the campaign
    `no_fundable_candidate`; `w = 20` ends it `worker_runs`; an empty proposal stream at the cap ends it
    `llm_call_cap` (an internal error ends it `error`, excluded from the table).
-9. Write `snapshots/final.json` **after the last step's decision** from `engine.incumbent` at the actual
+9. Write `snapshots/final.json` **after the last step's decision** from the final config contents at the actual
    `w_final` (§4); then write `summary.json` and `SHA256SUMS` as the chunk shell does.
 
 The loop never calls `run_real_campaign`; it uses the same `LocalWorker`, node spec, manager, proposal schema
@@ -111,9 +124,11 @@ and record writers as the harness route. It does not resume and refuses an exist
 The snapshot schema is the revision 5b schema plus one optional `pending` object (§10 m2). The difference from
 the harness route is the meaning of "the last E1 hook":
 
-- **Step-start state.** `recorder.begin_step` records the state that the step's E2 decision will see:
-  `incumbent_config` (the kept config before this step), `start_config`, `last_kept_trial_index`, `w` at the
-  step start, the step index, and the engine projection. The projection is built by G1, not by an engine method
+- **Step-start state.** `recorder.begin_step(trial_id, incumbent_config, start_config, state, last_kept_trial_index, llm_calls,
+  step_index)` records the state that the step's E2 decision will see: `incumbent_config` (the **config contents
+  dict** of the kept configuration before this step, not its sha), `start_config` (contents),
+  `last_kept_trial_index`, `llm_calls`, `trial_id`, `w` (read from `recorder.count` at the charge), the step
+  index, and the engine projection. The recorder computes `config_sha256 = config_sha256(incumbent_config)`. The projection is built by G1, not by an engine method
   (B3), from the documented ordered fields:
   - common: `arm`, `version`, `instance_seed`, `steps`, `incumbent`, `seeds`;
   - FIXR3: `incumbent_metrics` (three oriented values), `zero_variance_cases`;
@@ -137,8 +152,11 @@ the harness route is the meaning of "the last E1 hook":
 - **Final.** `final.json` is written after the loop from `engine.incumbent` (or `start_config` when no trial was
   kept) at the actual `w_final`, with `ended_on`. At `w_final = 20` it is a **separate post-decision record**,
   not an alias of `snapshots/w20.json`: the w=20 snapshot is the pre-decision exact-w state, while
-  `final.json` carries the configuration of the campaign's last kept trial (PD §7.1). This is a deliberate
-  difference from the harness route, where the w=20 snapshot is written at E2 after the decision (M3). At
+  `final.json` carries the configuration contents of the campaign's last kept trial (PD §7.1):
+  `write_final_from_state(w_final, ended_on, incumbent_config=final_config, state=projection(engine, counter),
+  ...)`; the recorder computes `config_sha256` from `final_config`. The harness route keeps its own
+  5b rule unchanged; the replicate exact-w snapshot is pre-decision, so its `final.json` is necessarily a separate
+  post-decision record (M3). At
   `w_final = 0` G1 sets `start_config` and the step-start projection explicitly; the only legal `ended_on` is
   `llm_call_cap` (or the excluded `error`) (m1).
 
@@ -194,9 +212,10 @@ under the pre-declaration's `y_raw_w` (revision 4), and is not substituted for Y
 - The verify-seed collision blocks every harness verify arm (A1, A2, A3, A5, A6) until the new reviewed harness
   pin of R1-D3-VERIFY-SEED; it does **not** block the FIXR3/EGATE route, because FIXR3 and EGATE use no KG
   verify.
-- The A1/A2/LADDER constants file (G2) and the signed revision 4 remain prerequisites for those arms; FIXR3 and
-  EGATE need no constants file, but their unit reviews, the pre-declaration signature, the G2 file and the
-  verify-seed check are still required before any evidence run.
+- The A1/A2/LADDER constants file (G2) and the signed revision 4 remain prerequisites for those harness arms.
+  FIXR3 and EGATE need no constants file; their unit reviews, the pre-declaration's freeze/publication (its steps
+  (3) and (5), including the G2 file and the verify-seed check for the harness arms) are still required before any
+  evidence run. R1-D3-PREDECL-R4 is on `main` and is binding in its own order, not yet frozen.
 - No Y(w) analysis code, no G7/G6 code and no per-arm smoke is authorized or changed here.
 
 ## 8. Conditions for the independent review
@@ -215,8 +234,9 @@ The revision is `ACCEPTED FOR CODE` only if the reviewer confirms, with file and
    is the post-decision incumbent, so a keep on the last step is audited.
 4. The loop implements §5.4/§5.5 without changing a rule or constant, the LLM cap is charged through
    `ComputeBudget` before each manager call, and `ended_on` follows `table_ended_on`.
-5. No evidence, label, evaluation or sealed read is introduced; the only new record fields are
-   `campaign_kind` and the optional `pending` object.
+5. No evidence, label, evaluation or sealed read is introduced; the new record fields are `campaign_kind`, the
+   optional `pending` object, and the trial/summary `extra.control` fields `zero_variance_cases` and the
+   `RunAttempt` failure classes (`replicates` is the existing G8 field).
 
 ## 9. References
 
@@ -251,3 +271,17 @@ The revision is `ACCEPTED FOR CODE` only if the reviewer confirms, with file and
 | **m5** `RunOutcome` has no cause | `run_one` keeps a `RunAttempt` side record with the cause and card/host counts; G8 classifies it. §5. |
 | **m6** `RuleLayerController` outside harness | E1 is implemented directly as validate-and-execute; no `ControlView` or controller object is used. §2. |
 | **m7** zero-variance count not reported | G1 reads `engine.zero_variance_cases` into the trial record/summary. §3.7, §5. |
+
+## 11. Response to the 6c-2 re-review
+
+| Finding | Resolution in 6c-3 |
+|---|---|
+| **N1** frozen `ComputeBudget` not reassigned | The loop keeps the budget in a mutable holder and reassigns every `consume_worker_run` / `consume_llm_call` return; the parity and cap checks read the holder. §3.2, §3.5. |
+| **N2** `engine.incumbent` is a sha, not config contents | `begin_step` and `write_final_from_state` take `incumbent_config` / `final_config` (contents dict); the recorder computes `config_sha256`, as in the harness path. G1 keeps the kept config and restores the incumbent workspace after a discard. §3.4, §4. |
+| **N3** missing `trial_id`, `last_kept_trial_index`, `llm_calls` | These are explicit `begin_step`/`write_final_from_state` arguments and are written into `extra.control`; `w` comes from `recorder.count`. §3.4, §3.7, §4. |
+| **N4** wrong harness w=20 comparison | The harness route is stated unchanged; the replicate `final.json` is separate because its exact-w snapshot is pre-decision. §4. |
+| **N5** field list incomplete | Condition 5 now names `campaign_kind`, `pending`, `zero_variance_cases` and the `RunAttempt` failure classes; `replicates` is the existing G8 field. §8. |
+| **N6** G2 listed as a FIXR3/EGATE prerequisite | Corrected: G2 is a harness-arm prerequisite; FIXR3/EGATE need no constants file. §7. |
+| **N7** worker proposal/config mapping and restore unstated | `run_one` maps `config_sha256` to the validated proposal config and restores the incumbent workspace after a discard. §3.5. |
+| **N8** prior-review sha citation | Both the 6c-1 commit file sha and its self-line content hash are cited in the header. |
+| **N9** pre-declaration status | The text now says R1-D3-PREDECL-R4 is on `main`, binding in its own order and not yet frozen, rather than "signature still required". §7. |
