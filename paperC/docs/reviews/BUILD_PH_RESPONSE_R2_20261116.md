@@ -1,0 +1,11 @@
+# Build PH — executor response to review round 2 (16 Nov 2026)
+
+ENGINEERING_ONLY. Executor: chat-session Claude. Review: `BUILD_PH_REVIEW_20261116.md`, Round 2 (NOT ACCEPTED, 1 MAJOR / 4 MINOR). Tests: 90 passed. `python -m paperc.census` regenerates the committed JSON.
+
+| # | Finding | Change |
+|---|---|---|
+| R2-1 | C1 paired sd double-counts the pairing | `c1_paired` uses `sd_joint` as is: all-edit median (the "paired, all edits" columns), material-edit median, per-edit min / max, and the start configuration's seed sd (`sigma_joint`); keys renamed `*_paired_all_edits`, `c1_paired_sd_all_edits_sigma_d`, `c1_paired_sd_material_edits_sigma_d`, `c1_paired_sd_edit_range_sigma_d`; docstring states what `sd_joint` and σ_d are; fixture test corrected (no rescaling by ρ); new test asserts σ_d = material-edit median on all 8 nodes; sweep E1 carries the reading "not determinable from node-level fits". Report: §1 units note, §3.2 table regenerated with the edit range and an edit-dependence note, §4.3 rewritten ("not determinable"; revision 1's "in band on five nodes" withdrawn), §4.4 rewritten (kept increments inside the all-edit noise on climate, ionosphere, credit_approval, sonar; withdrawal reversed; low-stakes reading kept), §5 columns regenerated, §6.5 thresholds require a per-proposal forecaster and per-edit-class noise units |
+| R2-2 | small stakes over-generalised | §4.1 split: small on OpenML except climate (0.08–0.18 σ_d); climate 0.88 σ_d with caveats; digits/tabular "confounded, a lower bound for a guarded loop"; §6.1 and §6.4 follow |
+| R2-3 | interaction priority overstated; mixed units | §4.5 says the mechanism exists at main-effect scale and its control value is unmeasured; §6.3 is a candidate list, with E-SYN to bound the control value first; §5 uses σ_d per row (tabular interactions 0.74, −0.75, 1.37 σ_d; tabular net gain 0.4 σ_d) |
+| R2-4 | trial-1 caveats | census adds `n_distinct_outcomes` (35 / 33) with an independence note and `start_config_seed_sd_sigma_d` per sweep node; §2 adds a seed-sd row and both caveats; the OpenML row is described as within seed variation |
+| R2-5 | 0.02–0.03 vs A2-U's 0.037 | §4.3 and §5 say 0.02–0.04 and cite A2-U's 0.037 / 0.024 |

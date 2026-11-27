@@ -1,0 +1,1262 @@
+{
+  "constants": {
+    "near_band": 0.5,
+    "price_sigma": 0.1,
+    "tail_sigma": 4.0
+  },
+  "inputs": [
+    {
+      "object": "7a198626a996ddfb455845db5600b40f2bb1e9f4",
+      "path": "results/r1/engineering/c3_audit_pilot_20261019T001338Z/audits.jsonl",
+      "ref": "10742f85"
+    },
+    {
+      "object": "3f67ba5bd3cc3e7583a1473030eb48b1ffad2c9e",
+      "path": "results/r1/engineering/c3_audit_pilot_20261019T001338Z/proposals.jsonl",
+      "ref": "10742f85"
+    },
+    {
+      "object": "92329c9a5229d7edda85d781c3a50f3134257ebb",
+      "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/manifest.json",
+      "ref": "10742f85"
+    },
+    {
+      "object": "90f003ee3b7b018d70cf84052eef8a12632aafcc",
+      "path": "results/r1/evidence/C3_sweep_none_20261027T224356Z/manifest.json",
+      "ref": "10742f85"
+    },
+    {
+      "object": "bd7fcef678910d0608bb64f9922fc5408ada7a81",
+      "path": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+      "ref": "10742f85"
+    },
+    {
+      "object": "7652bac8dc602352b5d1c693a265a811a97475d2",
+      "path": "results/r1/pilot/E1b_20261012T161034Z/analysis.json",
+      "ref": "10742f85"
+    },
+    {
+      "object": "07cb52db437a55651413de64a365733ae624d220",
+      "path": "results/r1/pilot/E1b_20261013T151857Z/analysis.json",
+      "ref": "10742f85"
+    },
+    {
+      "object": "087c8a58caafa66a6ed447eba5f69efb3a973134",
+      "path": "results/r1/pilot/E1b_vary_ionosphere_20261012/analysis.json",
+      "ref": "10742f85"
+    },
+    {
+      "object": "90c7762de4f549fd5977eedb10d200558c936eea",
+      "path": "results/r1/tracks/digits_mlp/s04_rerun20261111/manifest.json",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "0f59d8777562e7c4bc2ac7bfc91955556d81ab23",
+      "path": "results/r1/tracks/digits_mlp/s04_rerun20261111/roots.jsonl",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "94848dd5f1f294398217a88604ab8eb315cea7f6",
+      "path": "results/r1/tracks/digits_mlp/s04_rerun20261111/s04_rows.jsonl",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "1fc1a3fe64617ca95a2a8495c817393a74177520",
+      "path": "results/r1/tracks/digits_mlp/s05_t7_20261113/manifest.json",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "82af73503b2feafb37431e119f9f176a800b435a",
+      "path": "results/r1/tracks/digits_mlp/s05_t7_20261113/roots.jsonl",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "a72b779b98e052f6cc9854c54983933b678a72b8",
+      "path": "results/r1/tracks/digits_mlp/s05_t7_20261113/s05b_truncated.jsonl",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "1dc0a000aa4401d6f62e45d0bf9256fa6b056655",
+      "path": "results/r1/tracks/digits_mlp/s11/digits.json",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "195ff10552c2b8daa08738f9e471fe42ff416d01",
+      "path": "results/r1/tracks/openml_breast_w/s11/breast_w.json",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "e1cb428f0e0e087a95b32c0c7c32762af43ab4c1",
+      "path": "results/r1/tracks/tabular_mlp/s04_t7_20261114/manifest.json",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "35d429a006c393807a4aa0b3fc52a56c7456ef9a",
+      "path": "results/r1/tracks/tabular_mlp/s04_t7_20261114/roots.jsonl",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "103a11c230061109259eb721a4163a72c4522044",
+      "path": "results/r1/tracks/tabular_mlp/s04_t7_20261114/s04_rows.jsonl",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "ab551418764108427d71b8fdb802f50786d68851",
+      "path": "results/r1/tracks/tabular_mlp/s05_t7_20261114/manifest.json",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "294571a70f13bc432533aeda2ea46f18b9ea704c",
+      "path": "results/r1/tracks/tabular_mlp/s05_t7_20261114/roots.jsonl",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "53f7ed37922a27f1e0b6222305bc2df3962d527f",
+      "path": "results/r1/tracks/tabular_mlp/s05_t7_20261114/s05b_truncated.jsonl",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "2879794a28603c7c7ac4fc04197e17e8e6fec7a3",
+      "path": "results/r1/tracks/tabular_mlp/s11/tabular.json",
+      "ref": "fab88fce"
+    },
+    {
+      "object": "ea87ff6debdd1b08f5f4d3d9b99ed66b46f1c0ea",
+      "path": "results/r1/evidence/C3_sweep_none_20261027T224356Z/provenance/ledgers",
+      "ref": "10742f85"
+    },
+    {
+      "object": "0edf6c59251f686dc847923911dbec4a3b09ed6e",
+      "path": "results/r1/evidence/C3_sweep_append_only_summary_20261027T154834Z/provenance/ledgers",
+      "ref": "10742f85"
+    }
+  ],
+  "other": {
+    "c1": {
+      "digits_mlp": {
+        "campaign_wrong_share": 0.0,
+        "decision_regret_median": 0.00091,
+        "default_metric": 0.95543,
+        "flip_emp_mean": 0.14,
+        "material_share": 1.0,
+        "n_edits": 5,
+        "paired_sd": 0.00661,
+        "paired_sd_material": 0.00661,
+        "paired_sd_max": 0.01102,
+        "paired_sd_min": 0.00531,
+        "start_seed_sd": 0.01022
+      },
+      "openml_breast_w": {
+        "campaign_wrong_share": 0.6,
+        "decision_regret_median": 3e-05,
+        "default_metric": 0.99114,
+        "flip_emp_mean": 0.6,
+        "material_share": 0.4,
+        "n_edits": 5,
+        "paired_sd": 0.00023,
+        "paired_sd_material": 0.00624,
+        "paired_sd_max": 0.00725,
+        "paired_sd_min": 0.00014,
+        "start_seed_sd": 0.00394
+      },
+      "openml_climate": {
+        "campaign_wrong_share": 0.2,
+        "decision_regret_median": 0.00085,
+        "default_metric": 0.88417,
+        "flip_emp_mean": 0.37778,
+        "material_share": 0.6,
+        "n_edits": 5,
+        "paired_sd": 0.02036,
+        "paired_sd_material": 0.00547,
+        "paired_sd_max": 0.07937,
+        "paired_sd_min": 0.00529,
+        "start_seed_sd": 0.03994
+      },
+      "openml_credit_approval": {
+        "campaign_wrong_share": 0.2,
+        "decision_regret_median": 0.00047,
+        "default_metric": 0.90967,
+        "flip_emp_mean": 0.26667,
+        "material_share": 0.4,
+        "n_edits": 5,
+        "paired_sd": 0.00297,
+        "paired_sd_material": 0.01462,
+        "paired_sd_max": 0.0162,
+        "paired_sd_min": 0.00084,
+        "start_seed_sd": 0.02789
+      },
+      "openml_ionosphere": {
+        "campaign_wrong_share": 0.2,
+        "decision_regret_median": 0.00156,
+        "default_metric": 0.98452,
+        "flip_emp_mean": 0.2,
+        "material_share": 0.4,
+        "n_edits": 5,
+        "paired_sd": 0.01596,
+        "paired_sd_material": 0.04237,
+        "paired_sd_max": 0.04486,
+        "paired_sd_min": 0.00569,
+        "start_seed_sd": 0.041
+      },
+      "openml_sonar": {
+        "campaign_wrong_share": 0.0,
+        "decision_regret_median": 0.00213,
+        "default_metric": 0.73529,
+        "flip_emp_mean": 0.24444,
+        "material_share": 0.6,
+        "n_edits": 5,
+        "paired_sd": 0.01366,
+        "paired_sd_material": 0.04639,
+        "paired_sd_max": 0.10023,
+        "paired_sd_min": 0.0034,
+        "start_seed_sd": 0.06136
+      },
+      "openml_wdbc": {
+        "campaign_wrong_share": 0.0,
+        "decision_regret_median": 0.00023,
+        "default_metric": 0.99705,
+        "flip_emp_mean": 0.25,
+        "material_share": 0.4,
+        "n_edits": 5,
+        "paired_sd": 0.0015,
+        "paired_sd_material": 0.01671,
+        "paired_sd_max": 0.02428,
+        "paired_sd_min": 0.00061,
+        "start_seed_sd": 0.00921
+      },
+      "tabular_mlp": {
+        "campaign_wrong_share": 0.0,
+        "decision_regret_median": 6e-05,
+        "default_metric": 0.9141,
+        "flip_emp_mean": 0.11111,
+        "material_share": 0.6,
+        "n_edits": 5,
+        "paired_sd": 0.00193,
+        "paired_sd_material": 0.00356,
+        "paired_sd_max": 0.00625,
+        "paired_sd_min": 5e-05,
+        "start_seed_sd": 0.01209
+      }
+    },
+    "c3_audit_pilot": {
+      "label": "ENGINEERING_ONLY (older harness, other node versions, tiny sample)",
+      "per_node": {
+        "digits_mlp": {
+          "discarded": 13,
+          "false_keep": 2,
+          "kept": 11,
+          "missed_keep": 4
+        },
+        "openml_breast_w": {
+          "discarded": 47,
+          "false_keep": 0,
+          "kept": 7,
+          "missed_keep": 29
+        },
+        "tabular_mlp": {
+          "discarded": 48,
+          "false_keep": 7,
+          "kept": 21,
+          "missed_keep": 20
+        }
+      },
+      "rule": "keep iff delta_hat > 0; random-selection rows; 6 fresh seeds"
+    },
+    "e1b_pilots": [
+      {
+        "file": "results/r1/pilot/E1b_20261012T161034Z/analysis.json",
+        "label": "PILOT",
+        "n_points": 18,
+        "node": "digits_mlp",
+        "oracle_naive_minus_continue_sigma_d": 0.027,
+        "verify_minus_continue_sigma_d": -0.092
+      },
+      {
+        "file": "results/r1/pilot/E1b_20261012T161034Z/analysis.json",
+        "label": "PILOT",
+        "n_points": 18,
+        "node": "openml_ionosphere",
+        "oracle_naive_minus_continue_sigma_d": 0.01,
+        "verify_minus_continue_sigma_d": -0.033
+      },
+      {
+        "file": "results/r1/pilot/E1b_20261013T151857Z/analysis.json",
+        "label": "PILOT",
+        "n_points": 18,
+        "node": "digits_mlp",
+        "oracle_naive_minus_continue_sigma_d": 0.16,
+        "verify_minus_continue_sigma_d": 0.14
+      },
+      {
+        "file": "results/r1/pilot/E1b_20261013T151857Z/analysis.json",
+        "label": "PILOT",
+        "n_points": 18,
+        "node": "openml_ionosphere",
+        "oracle_naive_minus_continue_sigma_d": 0.0,
+        "verify_minus_continue_sigma_d": 0.0
+      },
+      {
+        "file": "results/r1/pilot/E1b_vary_ionosphere_20261012/analysis.json",
+        "label": "PILOT",
+        "n_points": 18,
+        "node": "openml_ionosphere",
+        "oracle_naive_minus_continue_sigma_d": 0.024,
+        "verify_minus_continue_sigma_d": -0.017
+      }
+    ],
+    "s11_interactions": [
+      {
+        "ci95_excludes_0": true,
+        "interaction_sigma": 0.858,
+        "interaction_sigma_d": 0.856,
+        "main_A_sigma": 2.033,
+        "main_B_sigma": -1.245,
+        "node": "digits_mlp",
+        "pair": "HIDDEN_UNITSxBATCH_SIZE"
+      },
+      {
+        "ci95_excludes_0": true,
+        "interaction_sigma": -0.535,
+        "interaction_sigma_d": -0.534,
+        "main_A_sigma": 1.336,
+        "main_B_sigma": 0.717,
+        "node": "digits_mlp",
+        "pair": "HIDDEN_UNITSxLEARNING_RATE_INIT"
+      },
+      {
+        "ci95_excludes_0": true,
+        "interaction_sigma": 1.238,
+        "interaction_sigma_d": 1.236,
+        "main_A_sigma": -1.055,
+        "main_B_sigma": 1.604,
+        "node": "digits_mlp",
+        "pair": "BATCH_SIZExLEARNING_RATE_INIT"
+      },
+      {
+        "ci95_excludes_0": true,
+        "interaction_sigma": 1.393,
+        "interaction_sigma_d": 0.743,
+        "main_A_sigma": 1.27,
+        "main_B_sigma": -2.121,
+        "node": "tabular_mlp",
+        "pair": "HIDDEN_UNITSxBATCH_SIZE"
+      },
+      {
+        "ci95_excludes_0": true,
+        "interaction_sigma": -1.4,
+        "interaction_sigma_d": -0.747,
+        "main_A_sigma": -0.127,
+        "main_B_sigma": -0.08,
+        "node": "tabular_mlp",
+        "pair": "HIDDEN_UNITSxLEARNING_RATE_INIT"
+      },
+      {
+        "ci95_excludes_0": true,
+        "interaction_sigma": 2.573,
+        "interaction_sigma_d": 1.373,
+        "main_A_sigma": -1.53,
+        "main_B_sigma": 1.907,
+        "node": "tabular_mlp",
+        "pair": "BATCH_SIZExLEARNING_RATE_INIT"
+      },
+      {
+        "ci95_excludes_0": false,
+        "interaction_sigma": 0.0,
+        "interaction_sigma_d": 0.0,
+        "main_A_sigma": 0.0,
+        "main_B_sigma": 0.013,
+        "node": "openml_breast_w",
+        "pair": "max_iterxC"
+      }
+    ],
+    "tracks_net_gain_sigma_d": {
+      "digits_mlp": 1.685,
+      "tabular_mlp": 0.359
+    }
+  },
+  "pins": {
+    "sweep": "10742f85f3450eb93650ac645182460a755ab89e",
+    "tracks": "fab88fced839c5fb794ed62a0742b4646cb76ea2"
+  },
+  "schema": "paperc_census/v2",
+  "sweep": [
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed); duplicates by patch hash",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_noise_1_sigma_d": {
+          "noise_sd": 1.0,
+          "observed_sd": 11.248,
+          "price_over_v_star": 0.022,
+          "status": "ok",
+          "v_star": 4.5045
+        },
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 1.0,
+          "observed_sd": 11.248,
+          "price_over_v_star": 0.022,
+          "status": "ok",
+          "v_star": 4.5045
+        },
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
+      },
+      "e2": {
+        "exact_zero_share": 0.074,
+        "increment_robust_sd_sigma_d": 3.747,
+        "increment_sd_sigma_d": 11.248,
+        "keep_share": 0.502,
+        "kept_increment_median_paired_all_edits": 2.106,
+        "kept_increment_median_sigma_d": 2.106,
+        "n_comparisons": 269,
+        "near_zero_share_paired_all_edits": 0.182,
+        "near_zero_share_sigma_d": 0.182
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "c1_campaign_wrong_share": 0.0,
+        "c1_decision_regret_median_sigma_d": 0.137,
+        "c1_flip_emp_mean": 0.14,
+        "c1_paired_sd_all_edits_sigma_d": 1.0,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.803,
+          1.667
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
+        "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
+      },
+      "n_campaigns": 36,
+      "node": "digits_mlp",
+      "notes": [],
+      "per_mode": {
+        "append_only_summary": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.0,
+          "comparisons_per_campaign": 12.0,
+          "duplicate_share": 0.394,
+          "keeps_after_trial1_per_campaign": 6.0
+        },
+        "none": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.333,
+          "comparisons_per_campaign": 2.944,
+          "duplicate_share": 0.803,
+          "keeps_after_trial1_per_campaign": 1.5
+        }
+      },
+      "sigma": 0.006613322803772441,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 composite)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs)",
+      "tails": {
+        "failed_invalid_share": 0.05,
+        "negative_tail_share": 0.216,
+        "positive_tail_share": 0.175,
+        "tail_share": 0.39
+      },
+      "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
+        "recorded_gain_after_trial1_median_sigma_d": 13.478,
+        "start_config_seed_sd_sigma_d": 1.546,
+        "trial1_minus_c1_default_median_sigma_d": -9.898
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed); duplicates by patch hash",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_noise_1_sigma_d": {
+          "noise_sd": 1.0,
+          "observed_sd": 0.245,
+          "status": "misspecified (observed sd <= noise sd)"
+        },
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.0367,
+          "observed_sd": 0.245,
+          "price_over_v_star": 1.059,
+          "status": "ok",
+          "v_star": 0.0944
+        },
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
+      },
+      "e2": {
+        "exact_zero_share": 0.743,
+        "increment_robust_sd_sigma_d": "degenerate (MAD = 0)",
+        "increment_sd_sigma_d": 0.245,
+        "keep_share": 0.117,
+        "kept_increment_median_paired_all_edits": 3.517,
+        "kept_increment_median_sigma_d": 0.129,
+        "n_comparisons": 222,
+        "near_zero_share_paired_all_edits": 0.743,
+        "near_zero_share_sigma_d": 0.986
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "c1_campaign_wrong_share": 0.6,
+        "c1_decision_regret_median_sigma_d": 0.006,
+        "c1_flip_emp_mean": 0.6,
+        "c1_paired_sd_all_edits_sigma_d": 0.0367,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.022,
+          1.161
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
+        "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
+      },
+      "n_campaigns": 36,
+      "node": "openml_breast_w",
+      "notes": [],
+      "per_mode": {
+        "append_only_summary": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.111,
+          "comparisons_per_campaign": 9.833,
+          "duplicate_share": 0.417,
+          "keeps_after_trial1_per_campaign": 1.389
+        },
+        "none": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.944,
+          "comparisons_per_campaign": 2.5,
+          "duplicate_share": 0.825,
+          "keeps_after_trial1_per_campaign": 0.056
+        }
+      },
+      "sigma": 0.006242116126275927,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 composite)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs)",
+      "tails": {
+        "failed_invalid_share": 0.058,
+        "negative_tail_share": 0.0,
+        "positive_tail_share": 0.0,
+        "tail_share": 0.0
+      },
+      "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
+        "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 0.632,
+        "trial1_minus_c1_default_median_sigma_d": 0.452
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed); duplicates by patch hash",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_noise_1_sigma_d": {
+          "noise_sd": 1.0,
+          "observed_sd": 1.554,
+          "price_over_v_star": 0.593,
+          "status": "ok",
+          "v_star": 0.1687
+        },
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 3.7209,
+          "observed_sd": 1.554,
+          "status": "misspecified (observed sd <= noise sd)"
+        },
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
+      },
+      "e2": {
+        "exact_zero_share": 0.331,
+        "increment_robust_sd_sigma_d": 0.523,
+        "increment_sd_sigma_d": 1.554,
+        "keep_share": 0.138,
+        "kept_increment_median_paired_all_edits": 0.237,
+        "kept_increment_median_sigma_d": 0.882,
+        "n_comparisons": 160,
+        "near_zero_share_paired_all_edits": 0.825,
+        "near_zero_share_sigma_d": 0.512
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "c1_campaign_wrong_share": 0.2,
+        "c1_decision_regret_median_sigma_d": 0.156,
+        "c1_flip_emp_mean": 0.378,
+        "c1_paired_sd_all_edits_sigma_d": 3.7209,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.966,
+          14.506
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
+        "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
+      },
+      "n_campaigns": 36,
+      "node": "openml_climate",
+      "notes": [],
+      "per_mode": {
+        "append_only_summary": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.389,
+          "comparisons_per_campaign": 7.5,
+          "duplicate_share": 0.444,
+          "keeps_after_trial1_per_campaign": 1.167
+        },
+        "none": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.944,
+          "comparisons_per_campaign": 1.389,
+          "duplicate_share": 0.814,
+          "keeps_after_trial1_per_campaign": 0.056
+        }
+      },
+      "sigma": 0.005471612522515804,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 composite)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs)",
+      "tails": {
+        "failed_invalid_share": 0.207,
+        "negative_tail_share": 0.006,
+        "positive_tail_share": 0.025,
+        "tail_share": 0.031
+      },
+      "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
+        "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 7.299,
+        "trial1_minus_c1_default_median_sigma_d": -0.706
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed); duplicates by patch hash",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_noise_1_sigma_d": {
+          "noise_sd": 1.0,
+          "observed_sd": 0.174,
+          "status": "misspecified (observed sd <= noise sd)"
+        },
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.203,
+          "observed_sd": 0.174,
+          "status": "misspecified (observed sd <= noise sd)"
+        },
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
+      },
+      "e2": {
+        "exact_zero_share": 0.35,
+        "increment_robust_sd_sigma_d": 0.076,
+        "increment_sd_sigma_d": 0.174,
+        "keep_share": 0.204,
+        "kept_increment_median_paired_all_edits": 0.379,
+        "kept_increment_median_sigma_d": 0.077,
+        "n_comparisons": 157,
+        "near_zero_share_paired_all_edits": 0.58,
+        "near_zero_share_sigma_d": 0.975
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "c1_campaign_wrong_share": 0.2,
+        "c1_decision_regret_median_sigma_d": 0.032,
+        "c1_flip_emp_mean": 0.267,
+        "c1_paired_sd_all_edits_sigma_d": 0.203,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.058,
+          1.109
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
+        "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
+      },
+      "n_campaigns": 36,
+      "node": "openml_credit_approval",
+      "notes": [],
+      "per_mode": {
+        "append_only_summary": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.333,
+          "comparisons_per_campaign": 7.333,
+          "duplicate_share": 0.547,
+          "keeps_after_trial1_per_campaign": 1.722
+        },
+        "none": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.944,
+          "comparisons_per_campaign": 1.389,
+          "duplicate_share": 0.828,
+          "keeps_after_trial1_per_campaign": 0.056
+        }
+      },
+      "sigma": 0.014616679475904568,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 composite)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs)",
+      "tails": {
+        "failed_invalid_share": 0.067,
+        "negative_tail_share": 0.0,
+        "positive_tail_share": 0.0,
+        "tail_share": 0.0
+      },
+      "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
+        "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 1.908,
+        "trial1_minus_c1_default_median_sigma_d": 1.513
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed); duplicates by patch hash",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_noise_1_sigma_d": {
+          "noise_sd": 1.0,
+          "observed_sd": 0.336,
+          "status": "misspecified (observed sd <= noise sd)"
+        },
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.3767,
+          "observed_sd": 0.336,
+          "status": "misspecified (observed sd <= noise sd)"
+        },
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
+      },
+      "e2": {
+        "exact_zero_share": 0.379,
+        "increment_robust_sd_sigma_d": 0.162,
+        "increment_sd_sigma_d": 0.336,
+        "keep_share": 0.149,
+        "kept_increment_median_paired_all_edits": 0.291,
+        "kept_increment_median_sigma_d": 0.11,
+        "n_comparisons": 161,
+        "near_zero_share_paired_all_edits": 0.609,
+        "near_zero_share_sigma_d": 0.87
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "c1_campaign_wrong_share": 0.2,
+        "c1_decision_regret_median_sigma_d": 0.037,
+        "c1_flip_emp_mean": 0.2,
+        "c1_paired_sd_all_edits_sigma_d": 0.3767,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.134,
+          1.059
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
+        "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
+      },
+      "n_campaigns": 36,
+      "node": "openml_ionosphere",
+      "notes": [],
+      "per_mode": {
+        "append_only_summary": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.389,
+          "comparisons_per_campaign": 7.444,
+          "duplicate_share": 0.428,
+          "keeps_after_trial1_per_campaign": 1.222
+        },
+        "none": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.889,
+          "comparisons_per_campaign": 1.5,
+          "duplicate_share": 0.797,
+          "keeps_after_trial1_per_campaign": 0.111
+        }
+      },
+      "sigma": 0.042374963971105996,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 composite)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs)",
+      "tails": {
+        "failed_invalid_share": 0.236,
+        "negative_tail_share": 0.0,
+        "positive_tail_share": 0.0,
+        "tail_share": 0.0
+      },
+      "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
+        "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 0.968,
+        "trial1_minus_c1_default_median_sigma_d": -1.425
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed); duplicates by patch hash",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_noise_1_sigma_d": {
+          "noise_sd": 1.0,
+          "observed_sd": 0.658,
+          "status": "misspecified (observed sd <= noise sd)"
+        },
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.2945,
+          "observed_sd": 0.658,
+          "price_over_v_star": 0.752,
+          "status": "ok",
+          "v_star": 0.1329
+        },
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
+      },
+      "e2": {
+        "exact_zero_share": 0.526,
+        "increment_robust_sd_sigma_d": "degenerate (MAD = 0)",
+        "increment_sd_sigma_d": 0.658,
+        "keep_share": 0.153,
+        "kept_increment_median_paired_all_edits": 0.615,
+        "kept_increment_median_sigma_d": 0.181,
+        "n_comparisons": 215,
+        "near_zero_share_paired_all_edits": 0.647,
+        "near_zero_share_sigma_d": 0.795
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "c1_campaign_wrong_share": 0.0,
+        "c1_decision_regret_median_sigma_d": 0.046,
+        "c1_flip_emp_mean": 0.244,
+        "c1_paired_sd_all_edits_sigma_d": 0.2945,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.073,
+          2.16
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
+        "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
+      },
+      "n_campaigns": 36,
+      "node": "openml_sonar",
+      "notes": [],
+      "per_mode": {
+        "append_only_summary": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.167,
+          "comparisons_per_campaign": 9.333,
+          "duplicate_share": 0.45,
+          "keeps_after_trial1_per_campaign": 1.778
+        },
+        "none": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.944,
+          "comparisons_per_campaign": 2.611,
+          "duplicate_share": 0.819,
+          "keeps_after_trial1_per_campaign": 0.056
+        }
+      },
+      "sigma": 0.046392368714306215,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 composite)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs)",
+      "tails": {
+        "failed_invalid_share": 0.046,
+        "negative_tail_share": 0.0,
+        "positive_tail_share": 0.0,
+        "tail_share": 0.0
+      },
+      "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
+        "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 1.323,
+        "trial1_minus_c1_default_median_sigma_d": 2.355
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed); duplicates by patch hash",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_noise_1_sigma_d": {
+          "noise_sd": 1.0,
+          "observed_sd": 0.377,
+          "status": "misspecified (observed sd <= noise sd)"
+        },
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.09,
+          "observed_sd": 0.377,
+          "price_over_v_star": 0.973,
+          "status": "ok",
+          "v_star": 0.1028
+        },
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
+      },
+      "e2": {
+        "exact_zero_share": 0.707,
+        "increment_robust_sd_sigma_d": "degenerate (MAD = 0)",
+        "increment_sd_sigma_d": 0.377,
+        "keep_share": 0.075,
+        "kept_increment_median_paired_all_edits": 1.176,
+        "kept_increment_median_sigma_d": 0.106,
+        "n_comparisons": 239,
+        "near_zero_share_paired_all_edits": 0.795,
+        "near_zero_share_sigma_d": 0.946
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "c1_campaign_wrong_share": 0.0,
+        "c1_decision_regret_median_sigma_d": 0.014,
+        "c1_flip_emp_mean": 0.25,
+        "c1_paired_sd_all_edits_sigma_d": 0.09,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.037,
+          1.453
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
+        "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
+      },
+      "n_campaigns": 36,
+      "node": "openml_wdbc",
+      "notes": [],
+      "per_mode": {
+        "append_only_summary": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.278,
+          "comparisons_per_campaign": 10.444,
+          "duplicate_share": 0.374,
+          "keeps_after_trial1_per_campaign": 1.0
+        },
+        "none": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 1.0,
+          "comparisons_per_campaign": 2.833,
+          "duplicate_share": 0.808,
+          "keeps_after_trial1_per_campaign": 0.0
+        }
+      },
+      "sigma": 0.016710257267967522,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 composite)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs)",
+      "tails": {
+        "failed_invalid_share": 0.048,
+        "negative_tail_share": 0.0,
+        "positive_tail_share": 0.0,
+        "tail_share": 0.0
+      },
+      "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
+        "recorded_gain_after_trial1_median_sigma_d": 0.0,
+        "start_config_seed_sd_sigma_d": 0.551,
+        "trial1_minus_c1_default_median_sigma_d": -0.053
+      }
+    },
+    {
+      "budget": {
+        "e1_screening": "none (every proposal executed); duplicates by patch hash",
+        "runs_per_campaign": 20
+      },
+      "e1": {
+        "node_level_noise_1_sigma_d": {
+          "noise_sd": 1.0,
+          "observed_sd": 10.701,
+          "price_over_v_star": 0.03,
+          "status": "ok",
+          "v_star": 3.3328
+        },
+        "node_level_noise_paired_all_edits": {
+          "noise_sd": 0.5428,
+          "observed_sd": 10.701,
+          "price_over_v_star": 0.03,
+          "status": "ok",
+          "v_star": 3.3587
+        },
+        "per_proposal_discrimination": "not measurable without a per-proposal forecaster (Paper B C3)",
+        "price_sigma": 0.1,
+        "reading": "node-level fits depend on the noise unit and the increments are zero-inflated; E1 relevance is not determinable from them"
+      },
+      "e2": {
+        "exact_zero_share": 0.0,
+        "increment_robust_sd_sigma_d": 4.803,
+        "increment_sd_sigma_d": 10.701,
+        "keep_share": 0.45,
+        "kept_increment_median_paired_all_edits": 3.427,
+        "kept_increment_median_sigma_d": 1.86,
+        "n_comparisons": 258,
+        "near_zero_share_paired_all_edits": 0.066,
+        "near_zero_share_sigma_d": 0.12
+      },
+      "incumbent": {
+        "note": "needs fresh audits of final incumbents"
+      },
+      "keep_quality": {
+        "c1_campaign_wrong_share": 0.0,
+        "c1_decision_regret_median_sigma_d": 0.017,
+        "c1_flip_emp_mean": 0.111,
+        "c1_paired_sd_all_edits_sigma_d": 0.5428,
+        "c1_paired_sd_edit_range_sigma_d": [
+          0.014,
+          1.754
+        ],
+        "c1_paired_sd_material_edits_sigma_d": 1.0,
+        "note": "no fresh audits of sweep 1; C1 gives single-seed sign-flip rates on 5 standard edits per node"
+      },
+      "n_campaigns": 36,
+      "node": "tabular_mlp",
+      "notes": [],
+      "per_mode": {
+        "append_only_summary": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.0,
+          "comparisons_per_campaign": 12.389,
+          "duplicate_share": 0.334,
+          "keeps_after_trial1_per_campaign": 5.778
+        },
+        "none": {
+          "campaigns": 18,
+          "campaigns_without_keep_after_trial1": 0.444,
+          "comparisons_per_campaign": 1.944,
+          "duplicate_share": 0.853,
+          "keeps_after_trial1_per_campaign": 0.667
+        }
+      },
+      "sigma": 0.0035613789827285583,
+      "sigma_source": "sweep manifest noise.sigma_d (D28 composite)",
+      "source": "Paper B sweep 1 (C3 labels, qwen2.5-coder:7b, 20 runs)",
+      "tails": {
+        "failed_invalid_share": 0.015,
+        "negative_tail_share": 0.31,
+        "positive_tail_share": 0.14,
+        "tail_share": 0.45
+      },
+      "trial1": {
+        "note": "trial-1 metric at instance seeds vs the C1 default at the C1 seed: compare with the start configuration's own seed sd",
+        "recorded_gain_after_trial1_median_sigma_d": 9.382,
+        "start_config_seed_sd_sigma_d": 3.396,
+        "trial1_minus_c1_default_median_sigma_d": -11.895
+      }
+    }
+  ],
+  "tracks": [
+    {
+      "budget": {
+        "binding_share_by_W": {
+          "8": 1.0,
+          "10": 1.0,
+          "12": 0.94,
+          "20": 0.04
+        },
+        "llm_cap_reached_share_at_W40": 1.0,
+        "runs_used_at_W40": [
+          11,
+          27
+        ],
+        "shadow_price": "undefined: V* is constant across proposals, so a binding W changes where a campaign stops, not any decision (S0.5 summary \u00a74); W matters here only as the price of verify runs"
+      },
+      "e1": {
+        "margin_max_sigma": 2.612,
+        "margin_min_sigma": 2.576,
+        "n_eligible": 298,
+        "near_price_share": 0.0,
+        "price_over_v_star": 0.037,
+        "price_sigma": 0.1,
+        "rule_skip_share": 0.574,
+        "skip_reasons": {
+          "rule_duplicate": 429
+        },
+        "v_star_median_sigma": 2.702,
+        "v_star_range_sigma": 0.036
+      },
+      "e2": {
+        "actions": {
+          "discard": 170,
+          "failed_invalid": 53,
+          "keep": 148
+        },
+        "keep_share": 0.399,
+        "margin_p05_sigma": -16.329,
+        "margin_p95_sigma": 17.337,
+        "n_with_margin": 298,
+        "near_zero_share": 0.154,
+        "near_zero_share_cmp_unit": 0.201
+      },
+      "incumbent": {
+        "corr_with_n_keeps": 0.187,
+        "keeps_without_row": 0,
+        "measure": "sum over keeps after trial 1 of (delta_hat - delta_audit): a summed per-keep selection bias on the S0.4 audit seeds; it cancels any shared offset of the recorded trial-1 value, so it is not the incumbent-value curse itself",
+        "n_campaigns": 10,
+        "n_keeps": 75,
+        "per_campaign_mean_sigma": -1.224,
+        "per_campaign_se_sigma": 1.951,
+        "per_keep_mean_sigma": -0.163,
+        "per_keep_se_sigma": 0.432,
+        "reading": "no winner's curse detected (per-keep mean within 2 se of 0)"
+      },
+      "keep_quality": {
+        "audit_k": 5,
+        "comparison_noise_robust_sd_sigma": 1.502,
+        "comparison_noise_sd_sigma": 3.038,
+        "corr_delta_hat_audit": 0.944,
+        "false_keep": 0.0,
+        "false_keep_clear": 0.0,
+        "keep_rule": "S0.4: delta_hat > 0 (the rule those campaigns used)",
+        "logged_action_mismatches": 0,
+        "missed_audited_max_sigma": 2.11,
+        "missed_audited_median_sigma": 0.422,
+        "missed_keep": 0.167,
+        "missed_keep_clear": 0.083,
+        "missed_keeps_that_are_ties": 11,
+        "n_audited": 165,
+        "n_discarded": 90,
+        "n_kept": 75,
+        "n_missed": 15
+      },
+      "n_campaigns": 20,
+      "node": "digits_mlp",
+      "notes": [
+        "hosts: S0.4 TASL-2, S0.5 TASL-7",
+        "S0.4 kept iff delta_hat > 0 (ExecuteNonRuleController, prior None); S0.5 kept iff A2-U m_hat > 0",
+        "trial 1 is executed and kept unconditionally (no incumbent metric before it)"
+      ],
+      "per_mode": {},
+      "sigma": 0.0066,
+      "sigma_source": "run manifest sigma_node",
+      "source": "Track S S0.4/S0.5 (A2-U, qwen2.5-coder:7b)",
+      "tails": {
+        "audit_positive_share": 0.545,
+        "audit_robust_sd_sigma": 3.754,
+        "audit_sd_sigma": 9.04,
+        "audit_tail_negative_share": 0.218,
+        "audit_tail_positive_share": 0.145,
+        "failed_invalid_share_E2": 0.143
+      },
+      "trial1": {
+        "drop_median_sigma": -41.234,
+        "drop_range_sigma": [
+          -46.763,
+          -34.861
+        ],
+        "independence_note": "S0.5 static rep-0 roots repeat the a2u rep-0 roots; rep 1 shares trial 1 with rep 0; medians are over distinct trial-1 outcomes (drop) and distinct campaigns (net)",
+        "n_distinct_campaigns": 40,
+        "n_distinct_trial1": 30,
+        "n_rows": 60,
+        "net_terminal_minus_start_median_sigma": 1.688,
+        "note": "recorded gains after trial 1 are mostly recoveries of the trial-1 drop"
+      }
+    },
+    {
+      "budget": {
+        "binding_share_by_W": {
+          "8": 1.0,
+          "10": 1.0,
+          "12": 1.0,
+          "20": 0.16
+        },
+        "llm_cap_reached_share_at_W40": 1.0,
+        "runs_used_at_W40": [
+          14,
+          22
+        ],
+        "shadow_price": "undefined: V* is constant across proposals, so a binding W changes where a campaign stops, not any decision (S0.5 summary \u00a74); W matters here only as the price of verify runs"
+      },
+      "e1": {
+        "margin_max_sigma": 4.056,
+        "margin_min_sigma": 4.038,
+        "n_eligible": 330,
+        "near_price_share": 0.0,
+        "price_over_v_star": 0.024,
+        "price_sigma": 0.1,
+        "rule_skip_share": 0.533,
+        "skip_reasons": {
+          "rule_duplicate": 399
+        },
+        "v_star_median_sigma": 4.149,
+        "v_star_range_sigma": 0.018
+      },
+      "e2": {
+        "actions": {
+          "discard": 192,
+          "failed_invalid": 51,
+          "keep": 158
+        },
+        "keep_share": 0.394,
+        "margin_p05_sigma": -28.697,
+        "margin_p95_sigma": 18.009,
+        "n_with_margin": 330,
+        "near_zero_share": 0.115,
+        "near_zero_share_cmp_unit": 0.252
+      },
+      "incumbent": {
+        "corr_with_n_keeps": 0.691,
+        "keeps_without_row": 0,
+        "measure": "sum over keeps after trial 1 of (delta_hat - delta_audit): a summed per-keep selection bias on the S0.4 audit seeds; it cancels any shared offset of the recorded trial-1 value, so it is not the incumbent-value curse itself",
+        "n_campaigns": 10,
+        "n_keeps": 68,
+        "per_campaign_mean_sigma": -0.847,
+        "per_campaign_se_sigma": 6.605,
+        "per_keep_mean_sigma": -0.125,
+        "per_keep_se_sigma": 1.336,
+        "reading": "no winner's curse detected (per-keep mean within 2 se of 0)"
+      },
+      "keep_quality": {
+        "audit_k": 5,
+        "comparison_noise_robust_sd_sigma": 2.647,
+        "comparison_noise_sd_sigma": 9.794,
+        "corr_delta_hat_audit": 0.898,
+        "false_keep": 0.015,
+        "false_keep_clear": 0.0,
+        "keep_rule": "S0.4: delta_hat > 0 (the rule those campaigns used)",
+        "logged_action_mismatches": 0,
+        "missed_audited_max_sigma": 41.703,
+        "missed_audited_median_sigma": 0.832,
+        "missed_keep": 0.081,
+        "missed_keep_clear": 0.052,
+        "missed_keeps_that_are_ties": 0,
+        "n_audited": 154,
+        "n_discarded": 86,
+        "n_kept": 68,
+        "n_missed": 7
+      },
+      "n_campaigns": 20,
+      "node": "tabular_mlp",
+      "notes": [
+        "hosts: S0.4 TASL-7, S0.5 TASL-7",
+        "S0.4 kept iff delta_hat > 0 (ExecuteNonRuleController, prior None); S0.5 kept iff A2-U m_hat > 0",
+        "trial 1 is executed and kept unconditionally (no incumbent metric before it)"
+      ],
+      "per_mode": {},
+      "sigma": 0.0019,
+      "sigma_source": "run manifest sigma_node",
+      "source": "Track S S0.4/S0.5 (A2-U, qwen2.5-coder:7b)",
+      "tails": {
+        "audit_positive_share": 0.481,
+        "audit_robust_sd_sigma": 13.357,
+        "audit_sd_sigma": 22.122,
+        "audit_tail_negative_share": 0.429,
+        "audit_tail_positive_share": 0.221,
+        "failed_invalid_share_E2": 0.127
+      },
+      "trial1": {
+        "drop_median_sigma": -62.83,
+        "drop_range_sigma": [
+          -83.953,
+          -43.847
+        ],
+        "independence_note": "S0.5 static rep-0 roots repeat the a2u rep-0 roots; rep 1 shares trial 1 with rep 0; medians are over distinct trial-1 outcomes (drop) and distinct campaigns (net)",
+        "n_distinct_campaigns": 40,
+        "n_distinct_trial1": 30,
+        "n_rows": 60,
+        "net_terminal_minus_start_median_sigma": 0.672,
+        "note": "recorded gains after trial 1 are mostly recoveries of the trial-1 drop"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1312 @@
+{
+ "calibration": [
+  {
+   "W": 24,
+   "best_member": "evalloc:0.0005,-0.001,1,1,2,best",
+   "best_static": "static:0,-0.001",
+   "block": [
+    1000000,
+    1001000
+   ],
+   "gain": -0.00022287843215972348,
+   "gain_se": 0.00024342820075210427,
+   "n_members": 115,
+   "world": "eval_allocation"
+  },
+  {
+   "W": 32,
+   "best_member": "evalloc:0,-0.001,0.25,2,2,incumbent",
+   "best_static": "static:0,-0.001",
+   "block": [
+    1000000,
+    1001000
+   ],
+   "gain": 0.0022799211924683957,
+   "gain_se": 0.00023213827700226247,
+   "n_members": 81,
+   "world": "eval_allocation"
+  },
+  {
+   "W": 40,
+   "best_member": "evalloc:0,-0.001,0.25,2,2,best",
+   "best_static": "static:0,-0.001",
+   "block": [
+    1000000,
+    1001000
+   ],
+   "gain": 0.0036591250884685164,
+   "gain_se": 0.00021351553330194523,
+   "n_members": 81,
+   "world": "eval_allocation"
+  },
+  {
+   "W": 60,
+   "best_member": "evalloc:0,-0.001,1,3,3,incumbent",
+   "best_static": "static:0,-0.001",
+   "block": [
+    1000000,
+    1001000
+   ],
+   "gain": 0.005829936789881799,
+   "gain_se": 0.0002348155292299299,
+   "n_members": 57,
+   "world": "eval_allocation"
+  },
+  {
+   "W": 24,
+   "best_member": "evalloc:0.0005,-0.001,0,1,2,incumbent",
+   "best_static": "static:0,-0.001",
+   "block": [
+    1000000,
+    1001000
+   ],
+   "gain": -0.0006550966538471071,
+   "gain_se": 0.0002703783883559092,
+   "n_members": 11,
+   "world": "shared_error"
+  },
+  {
+   "W": 60,
+   "best_member": "evalloc:0,0,0,1,3,incumbent",
+   "best_static": "static:0,-0.001",
+   "block": [
+    1000000,
+    1001000
+   ],
+   "gain": 0.0022087627741133637,
+   "gain_se": 0.0002177588865640245,
+   "n_members": 10,
+   "world": "shared_error"
+  }
+ ],
+ "code_sha256": "161606c70d8e0f49616678c6c2ee0db52ce2d5e99ca8948a574ed7f9cc0acedf",
+ "decomposition": {
+  "W40": {
+   "final_best_minus_incumbent": {
+    "a": "evalloc:0,-0.001,0.25,3,2,best",
+    "b": "evalloc:0,-0.001,0.25,3,2,incumbent",
+    "diff": -0.00013419543063481355,
+    "half_width": 3.029138477817519e-05,
+    "share_differing": 0.29685
+   }
+  },
+  "W60": {
+   "final_best_minus_incumbent": {
+    "a": "evalloc:0,-0.001,0.25,3,3,best",
+    "b": "evalloc:0,-0.001,0.25,3,3,incumbent",
+    "diff": 0.0002057556072246336,
+    "half_width": 2.6091302485475088e-05,
+    "share_differing": 0.307
+   }
+  },
+  "best_static": "static:0,-0.001",
+  "block": [
+   3000000,
+   3020000
+  ],
+  "member_thresholds": [
+   0.0,
+   -0.001
+  ],
+  "vs_best_static": {
+   "both_final_best": {
+    "a": "evalloc:0,-0.001,0.25,3,2,best",
+    "b": "static:0,-0.001",
+    "diff": 0.0034784232446913805,
+    "half_width": 0.0001032111827608656,
+    "share_differing": 0.95785
+   },
+   "both_final_incumbent": {
+    "a": "evalloc:0,-0.001,0.25,3,2,incumbent",
+    "b": "static:0,-0.001",
+    "diff": 0.003612618675326194,
+    "half_width": 0.0001009355549521057,
+    "share_differing": 0.9551
+   },
+   "reaudit_only": {
+    "a": "evalloc:0,-0.001,0,1,2,incumbent",
+    "b": "static:0,-0.001",
+    "diff": 0.001490543097555039,
+    "half_width": 8.945892999988118e-05,
+    "share_differing": 0.882
+   },
+   "verify_only": {
+    "a": "evalloc:0,-0.001,0.25,3,1,incumbent",
+    "b": "static:0,-0.001",
+    "diff": 0.0019390727685281816,
+    "half_width": 9.364923218867794e-05,
+    "share_differing": 0.91465
+   }
+  }
+ },
+ "label": "ENGINEERING_ONLY",
+ "n_max": 400000,
+ "n_pilot": 1000,
+ "n_select": 2000,
+ "schema": "paperc_esyn_oracle_table/v2",
+ "tol": 0.05,
+ "worlds": {
+  "budget": {
+   "code_sha256": "161606c70d8e0f49616678c6c2ee0db52ce2d5e99ca8948a574ed7f9cc0acedf",
+   "dp_gain_over_best_static": 0.002114976252166856,
+   "dp_gain_over_selected_static": 0.002114976252166856,
+   "dp_selected_static_exact": 0.009276651751060705,
+   "dp_static_values": {
+    "static:0,0": 0.0066789705168361115,
+    "static:0.000278243,0": 0.0066789705168361115,
+    "static:0.0005,0": 0.008909667797806125,
+    "static:0.000770615,0": 0.008909667797806125,
+    "static:0.001,0": 0.009276651751060705,
+    "static:0.0015,0": 0.009276651751060705,
+    "static:0.002,0": 0.009276651751060705,
+    "static:0.00282688,0": 0.009276651751060705,
+    "static:0.003,0": -0.0005600000000000001
+   },
+   "dp_value": 0.011391628003227561,
+   "oracle": {
+    "W": 8,
+    "channel": "budget",
+    "evaluation": {
+     "instances": [
+      2000000,
+      2011646
+     ],
+     "member_sd": 0.01360845364575573,
+     "member_value": 0.011427026629078765,
+     "n": 11646,
+     "resizing_rounds": 1,
+     "static_sd": 0.01327744455642835,
+     "static_value": 0.009381660493402109
+    },
+    "gain": 0.0020453661356766547,
+    "gain_sign_declared": 1,
+    "half_width": 0.00010116485998972528,
+    "hw_over_gain": 0.049460513804907395,
+    "label": "ENGINEERING_ONLY",
+    "llm_cap": 40,
+    "pass": true,
+    "reference_gain": 0.002114976252166856,
+    "reference_source": "declared (DP gain)",
+    "schema": "paperc_esyn_oracle/v2",
+    "selection": {
+     "best_member": "dp",
+     "best_member_value": 0.011512522263220056,
+     "best_static": "static:0.001,0",
+     "best_static_value": 0.009429258205294541,
+     "gain": 0.0020832640579255147,
+     "gain_se": 0.00012204722635459084,
+     "instances": [
+      1000000,
+      1002000
+     ],
+     "member_search": {
+      "families": {
+       "dp": {
+        "best": "dp",
+        "gain": 0.0020832640579255147,
+        "gh_interior": true,
+        "param_interior": true
+       }
+      },
+      "family": "dp",
+      "gh_interior": true,
+      "param": null,
+      "param_interior": true,
+      "rounds": 0
+     },
+     "n_members": 1,
+     "static_grid": {
+      "g": [
+       0.0,
+       0.0005,
+       0.001,
+       0.0015,
+       0.002,
+       0.003
+      ],
+      "h": [
+       -0.003,
+       -0.002,
+       -0.001,
+       0.0,
+       0.001
+      ]
+     },
+     "static_interior": true
+    },
+    "tolerance": 0.00010574881260834282,
+    "world": "budget"
+   },
+   "seconds": 22.2,
+   "world": {
+    "W": 8,
+    "base": {
+     "fb_accum": false,
+     "fb_early_bf": null,
+     "fb_len": 3,
+     "fb_r_cut": null,
+     "fb_shape": "const",
+     "fb_sign": 1.0,
+     "follow_offset": 0.0,
+     "inst_busy_drop": 0.0,
+     "inst_busy_p": 0.0,
+     "inst_prule_spread": 0.0,
+     "kind": "N0",
+     "lag_max": 5,
+     "lag_min": 2,
+     "mu0": -0.0005,
+     "n_follow": 2,
+     "n_keys": 0,
+     "p_big": 0.0,
+     "p_probe": 0.25,
+     "probe_max_trial": 40,
+     "probe_offset": 1.5,
+     "sigma_cmp": 0.0066,
+     "sigma_eta": 0.002,
+     "sigma_follow": null,
+     "sigma_probe": null,
+     "size_filler": 1.0,
+     "size_probe": 1.0,
+     "size_sd": 0.6,
+     "strength": 0.0,
+     "tau0": 0.004,
+     "trend_late": 0.0,
+     "trend_shape": null,
+     "trend_window": 8,
+     "y0": 0.9
+    },
+    "channel": "budget",
+    "comparison": "increment",
+    "delta_ref": null,
+    "epochs": [
+     "E1",
+     "E2"
+    ],
+    "gain_sign": 1,
+    "interaction": [],
+    "max_obs": 3,
+    "n_audit": 5,
+    "name": "budget",
+    "note": "as strict_null with W = 8 of about 18 executable proposals: budget opportunity cost; exact DP",
+    "regime": {
+     "llm_cap": 40,
+     "p_rule": 0.55,
+     "sigma_audit": 0.004
+    },
+    "run_cost": 1,
+    "size_probs": [
+     0.3,
+     0.5,
+     0.2
+    ],
+    "sizes": [
+     0.4,
+     1.0,
+     2.5
+    ]
+   }
+  },
+  "eval_allocation": {
+   "code_sha256": "161606c70d8e0f49616678c6c2ee0db52ce2d5e99ca8948a574ed7f9cc0acedf",
+   "oracle": {
+    "W": 40,
+    "channel": "eval_allocation",
+    "evaluation": {
+     "instances": [
+      2000000,
+      2007469
+     ],
+     "member_sd": 0.016346893128355237,
+     "member_value": 0.022042206497580426,
+     "n": 7469,
+     "resizing_rounds": 1,
+     "static_sd": 0.016768947385825444,
+     "static_value": 0.018394748726315274
+    },
+    "gain": 0.003647457771265148,
+    "gain_sign_declared": 1,
+    "half_width": 0.00016345576499125276,
+    "hw_over_gain": 0.04481361409553945,
+    "label": "ENGINEERING_ONLY",
+    "llm_cap": 40,
+    "pass": true,
+    "reference_gain": 0.0033,
+    "reference_source": "declared (0.5 sigma_cmp)",
+    "schema": "paperc_esyn_oracle/v2",
+    "selection": {
+     "best_member": "evalloc:0,-0.001,0.25,3,2,incumbent",
+     "best_member_value": 0.022215482761602928,
+     "best_static": "static:0,-0.001",
+     "best_static_value": 0.018369077941136687,
+     "gain": 0.0038464048204662413,
+     "gain_se": 0.0001678434898342512,
+     "instances": [
+      1000000,
+      1002000
+     ],
+     "member_search": {
+      "families": {
+       "evalloc": {
+        "best": "evalloc:0,-0.001,0.25,3,2,incumbent",
+        "gain": 0.0038464048204662413,
+        "gh_interior": true,
+        "param_interior": true
+       }
+      },
+      "family": "evalloc",
+      "gh_interior": true,
+      "param": "(0.25, 3, 2, 'incumbent')",
+      "param_interior": true,
+      "params_searched": [
+       "(0.5, 2, 1, 'incumbent')",
+       "(0.5, 2, 1, 'best')",
+       "(0.5, 2, 2, 'incumbent')",
+       "(0.5, 2, 2, 'best')",
+       "(0.5, 2, 3, 'incumbent')",
+       "(0.5, 2, 3, 'best')",
+       "(0.5, 3, 1, 'incumbent')",
+       "(0.5, 3, 1, 'best')",
+       "(0.5, 3, 2, 'incumbent')",
+       "(0.5, 3, 2, 'best')",
+       "(0.5, 3, 3, 'incumbent')",
+       "(0.5, 3, 3, 'best')",
+       "(1.0, 2, 1, 'incumbent')",
+       "(1.0, 2, 1, 'best')",
+       "(1.0, 2, 2, 'incumbent')",
+       "(1.0, 2, 2, 'best')",
+       "(1.0, 2, 3, 'incumbent')",
+       "(1.0, 2, 3, 'best')",
+       "(1.0, 3, 1, 'incumbent')",
+       "(1.0, 3, 1, 'best')",
+       "(1.0, 3, 2, 'incumbent')",
+       "(1.0, 3, 2, 'best')",
+       "(1.0, 3, 3, 'incumbent')",
+       "(1.0, 3, 3, 'best')",
+       "(2.0, 2, 1, 'incumbent')",
+       "(2.0, 2, 1, 'best')",
+       "(2.0, 2, 2, 'incumbent')",
+       "(2.0, 2, 2, 'best')",
+       "(2.0, 2, 3, 'incumbent')",
+       "(2.0, 2, 3, 'best')",
+       "(2.0, 3, 1, 'incumbent')",
+       "(2.0, 3, 1, 'best')",
+       "(2.0, 3, 2, 'incumbent')",
+       "(2.0, 3, 2, 'best')",
+       "(2.0, 3, 3, 'incumbent')",
+       "(2.0, 3, 3, 'best')",
+       "(4.0, 2, 1, 'incumbent')",
+       "(4.0, 2, 1, 'best')",
+       "(4.0, 2, 2, 'incumbent')",
+       "(4.0, 2, 2, 'best')",
+       "(4.0, 2, 3, 'incumbent')",
+       "(4.0, 2, 3, 'best')",
+       "(4.0, 3, 1, 'incumbent')",
+       "(4.0, 3, 1, 'best')",
+       "(4.0, 3, 2, 'incumbent')",
+       "(4.0, 3, 2, 'best')",
+       "(4.0, 3, 3, 'incumbent')",
+       "(4.0, 3, 3, 'best')",
+       "(1.0, 1, 2, 'incumbent')",
+       "(1.0, 1, 2, 'best')",
+       "(1.0, 1, 3, 'incumbent')",
+       "(1.0, 1, 3, 'best')",
+       "(0.25, 2, 1, 'best')",
+       "(0.25, 2, 1, 'incumbent')",
+       "(0.25, 2, 2, 'best')",
+       "(0.25, 2, 2, 'incumbent')",
+       "(0.25, 2, 3, 'best')",
+       "(0.25, 2, 3, 'incumbent')",
+       "(0.25, 3, 1, 'best')",
+       "(0.25, 3, 1, 'incumbent')",
+       "(0.25, 3, 2, 'best')",
+       "(0.25, 3, 2, 'incumbent')",
+       "(0.25, 3, 3, 'best')",
+       "(0.25, 3, 3, 'incumbent')",
+       "(0.125, 2, 1, 'best')",
+       "(0.125, 2, 1, 'incumbent')",
+       "(0.125, 2, 2, 'best')",
+       "(0.125, 2, 2, 'incumbent')",
+       "(0.125, 2, 3, 'best')",
+       "(0.125, 2, 3, 'incumbent')",
+       "(0.125, 3, 1, 'best')",
+       "(0.125, 3, 1, 'incumbent')",
+       "(0.125, 3, 2, 'best')",
+       "(0.125, 3, 2, 'incumbent')",
+       "(0.125, 3, 3, 'best')",
+       "(0.125, 3, 3, 'incumbent')"
+      ],
+      "rounds": 1
+     },
+     "n_members": 81,
+     "static_grid": {
+      "g": [
+       0.0,
+       0.0005,
+       0.001,
+       0.0015,
+       0.002,
+       0.003
+      ],
+      "h": [
+       -0.003,
+       -0.002,
+       -0.001,
+       0.0,
+       0.001
+      ]
+     },
+     "static_interior": true
+    },
+    "tolerance": 0.000165,
+    "world": "eval_allocation"
+   },
+   "seconds": 125.6,
+   "world": {
+    "W": 40,
+    "base": {
+     "fb_accum": false,
+     "fb_early_bf": null,
+     "fb_len": 3,
+     "fb_r_cut": null,
+     "fb_shape": "const",
+     "fb_sign": 1.0,
+     "follow_offset": 0.0,
+     "inst_busy_drop": 0.0,
+     "inst_busy_p": 0.0,
+     "inst_prule_spread": 0.0,
+     "kind": "N0",
+     "lag_max": 5,
+     "lag_min": 2,
+     "mu0": -0.0005,
+     "n_follow": 2,
+     "n_keys": 0,
+     "p_big": 0.0,
+     "p_probe": 0.25,
+     "probe_max_trial": 40,
+     "probe_offset": 1.5,
+     "sigma_cmp": 0.0066,
+     "sigma_eta": 0.002,
+     "sigma_follow": null,
+     "sigma_probe": null,
+     "size_filler": 1.0,
+     "size_probe": 1.0,
+     "size_sd": 0.6,
+     "strength": 0.0,
+     "tau0": 0.004,
+     "trend_late": 0.0,
+     "trend_shape": null,
+     "trend_window": 8,
+     "y0": 0.9
+    },
+    "channel": "eval_allocation",
+    "comparison": "config",
+    "delta_ref": null,
+    "epochs": [
+     "E1",
+     "E2",
+     "verify",
+     "reaudit",
+     "final"
+    ],
+    "gain_sign": 1,
+    "interaction": [],
+    "max_obs": 3,
+    "n_audit": 5,
+    "name": "eval_allocation",
+    "note": "verify (re-measure the candidate), re-audit (re-measure the incumbent) and final selection among the kept configurations, under the shared-error measurement model; W = 40 leaves room for some extra measurements (at W = 24 none pays for its run)",
+    "regime": {
+     "llm_cap": 40,
+     "p_rule": 0.55,
+     "sigma_audit": 0.004
+    },
+    "run_cost": 1,
+    "size_probs": [],
+    "sizes": []
+   }
+  },
+  "information": {
+   "code_sha256": "161606c70d8e0f49616678c6c2ee0db52ce2d5e99ca8948a574ed7f9cc0acedf",
+   "oracle": {
+    "W": 10,
+    "channel": "information",
+    "evaluation": {
+     "instances": [
+      2000000,
+      2238026
+     ],
+     "member_sd": 0.11834987708499058,
+     "member_value": 0.11049667995310142,
+     "n": 238026,
+     "resizing_rounds": 1,
+     "static_sd": 0.12286139191196037,
+     "static_value": 0.10406229846571792
+    },
+    "gain": 0.006434381487383507,
+    "gain_sign_declared": 1,
+    "half_width": 0.00015465948249726813,
+    "hw_over_gain": 0.024036417921524146,
+    "label": "ENGINEERING_ONLY",
+    "llm_cap": 40,
+    "pass": true,
+    "reference_gain": 0.0033,
+    "reference_source": "declared (0.5 sigma_cmp)",
+    "schema": "paperc_esyn_oracle/v2",
+    "selection": {
+     "best_member": "schedule:0,0.0015,0.003,0.0005,0.002,0.005;0,0.001,0;0.02",
+     "best_member_value": 0.1090057342779345,
+     "best_static": "static:0.0015,0.001",
+     "best_static_value": 0.10294385501666402,
+     "gain": 0.006061879261270484,
+     "gain_se": 0.0008099008564397267,
+     "instances": [
+      1000000,
+      1002000
+     ],
+     "member_search": {
+      "families": {
+       "schedule": {
+        "best": "schedule:0,0.0015,0.003,0.0005,0.002,0.005;0,0.001,0;0.02",
+        "gain": 0.006061879261270484,
+        "gh_interior": true,
+        "param_interior": true
+       }
+      },
+      "family": "schedule",
+      "gh_interior": true,
+      "param": "tau_split=0.02",
+      "param_interior": true,
+      "rounds": 3
+     },
+     "n_members": 131,
+     "static_grid": {
+      "g": [
+       0.0,
+       0.0005,
+       0.001,
+       0.0015,
+       0.002,
+       0.003
+      ],
+      "h": [
+       -0.003,
+       -0.002,
+       -0.001,
+       0.0,
+       0.001,
+       0.003
+      ]
+     },
+     "static_interior": true
+    },
+    "tolerance": 0.000165,
+    "world": "information"
+   },
+   "seconds": 236.6,
+   "world": {
+    "W": 10,
+    "base": {
+     "fb_accum": false,
+     "fb_early_bf": null,
+     "fb_len": 3,
+     "fb_r_cut": null,
+     "fb_shape": "const",
+     "fb_sign": 1.0,
+     "follow_offset": 0.5,
+     "inst_busy_drop": 0.0,
+     "inst_busy_p": 0.0,
+     "inst_prule_spread": 0.0,
+     "kind": "P1",
+     "lag_max": 10,
+     "lag_min": 3,
+     "mu0": 0.0005,
+     "n_follow": 2,
+     "n_keys": 3,
+     "p_big": 0.0,
+     "p_probe": 0.8,
+     "probe_max_trial": 16,
+     "probe_offset": 1.0,
+     "sigma_cmp": 0.0066,
+     "sigma_eta": 0.001,
+     "sigma_follow": 0.05,
+     "sigma_probe": 0.0005,
+     "size_filler": 1.0,
+     "size_probe": 1.0,
+     "size_sd": 0.3,
+     "strength": 16.0,
+     "tau0": 0.004,
+     "trend_late": 0.0,
+     "trend_shape": null,
+     "trend_window": 8,
+     "y0": 0.9
+    },
+    "channel": "information",
+    "comparison": "increment",
+    "delta_ref": null,
+    "epochs": [
+     "E1",
+     "E2"
+    ],
+    "gain_sign": 1,
+    "interaction": [],
+    "max_obs": 3,
+    "n_audit": 5,
+    "name": "information",
+    "note": "Track S P1-diffuse at strength 16 (the follow-up size; Track S ANALYSIS_NOTES section 5.1 grid), W 10: probes open keys whose follow-ups are large (information channel)",
+    "regime": {
+     "llm_cap": 40,
+     "p_rule": 0.55,
+     "sigma_audit": 0.004
+    },
+    "run_cost": 1,
+    "size_probs": [],
+    "sizes": []
+   }
+  },
+  "interaction": {
+   "code_sha256": "161606c70d8e0f49616678c6c2ee0db52ce2d5e99ca8948a574ed7f9cc0acedf",
+   "oracle": {
+    "W": 40,
+    "channel": "interaction",
+    "evaluation": {
+     "instances": [
+      2000000,
+      2003485
+     ],
+     "member_sd": 0.03257448919876724,
+     "member_value": 0.04126480590784602,
+     "n": 3485,
+     "resizing_rounds": 1,
+     "static_sd": 0.03270273560480208,
+     "static_value": 0.04002874085581177
+    },
+    "gain": 0.0012360650520342512,
+    "gain_sign_declared": 1,
+    "half_width": 0.0001562400521766075,
+    "hw_over_gain": 0.1264011565730103,
+    "label": "ENGINEERING_ONLY",
+    "llm_cap": 40,
+    "pass": true,
+    "reference_gain": 0.0033,
+    "reference_source": "declared (0.5 sigma_cmp)",
+    "schema": "paperc_esyn_oracle/v2",
+    "selection": {
+     "best_member": "interaction:0,0,0.25",
+     "best_member_value": 0.04148363540613349,
+     "best_static": "static:0,0",
+     "best_static_value": 0.040222083965748924,
+     "gain": 0.0012615514403845687,
+     "gain_se": 0.0001057229334693007,
+     "instances": [
+      1000000,
+      1002000
+     ],
+     "member_search": {
+      "families": {
+       "interaction_beta": {
+        "best": "interaction:0,0,0.25",
+        "gain": 0.0012615514403845687,
+        "gh_interior": true,
+        "param_interior": true
+       }
+      },
+      "family": "interaction_beta",
+      "gh_interior": true,
+      "param": "0.25",
+      "param_interior": true,
+      "params_searched": [
+       "0.25",
+       "0.5",
+       "1.0",
+       "0.125"
+      ],
+      "rounds": 1
+     },
+     "n_members": 9,
+     "static_grid": {
+      "g": [
+       0.0,
+       0.0005,
+       0.001,
+       0.0015,
+       0.002,
+       0.003
+      ],
+      "h": [
+       -0.003,
+       -0.002,
+       -0.001,
+       0.0,
+       0.001
+      ]
+     },
+     "static_interior": true
+    },
+    "tolerance": 0.000165,
+    "world": "interaction"
+   },
+   "seconds": 24.6,
+   "world": {
+    "W": 40,
+    "base": {
+     "fb_accum": false,
+     "fb_early_bf": null,
+     "fb_len": 3,
+     "fb_r_cut": null,
+     "fb_shape": "const",
+     "fb_sign": 1.0,
+     "follow_offset": 0.0,
+     "inst_busy_drop": 0.0,
+     "inst_busy_p": 0.0,
+     "inst_prule_spread": 0.0,
+     "kind": "N0",
+     "lag_max": 5,
+     "lag_min": 2,
+     "mu0": -0.0005,
+     "n_follow": 2,
+     "n_keys": 4,
+     "p_big": 0.0,
+     "p_probe": 0.25,
+     "probe_max_trial": 40,
+     "probe_offset": 1.5,
+     "sigma_cmp": 0.0066,
+     "sigma_eta": 0.002,
+     "sigma_follow": null,
+     "sigma_probe": null,
+     "size_filler": 1.0,
+     "size_probe": 1.0,
+     "size_sd": 0.6,
+     "strength": 0.0,
+     "tau0": 0.004,
+     "trend_late": 0.0,
+     "trend_shape": null,
+     "trend_window": 8,
+     "y0": 0.9
+    },
+    "channel": "interaction",
+    "comparison": "increment",
+    "delta_ref": null,
+    "epochs": [
+     "E1",
+     "E2"
+    ],
+    "gain_sign": 1,
+    "interaction": [
+     [
+      0.0,
+      0.012,
+      0.0,
+      0.0
+     ],
+     [
+      0.012,
+      0.0,
+      0.0,
+      0.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      0.012
+     ],
+     [
+      0.0,
+      0.0,
+      0.012,
+      0.0
+     ]
+    ],
+    "max_obs": 3,
+    "n_audit": 5,
+    "name": "interaction",
+    "note": "four recurring keys; pairs (0,1) and (2,3) are complements: keeping the first of a pair enables the other",
+    "regime": {
+     "llm_cap": 40,
+     "p_rule": 0.55,
+     "sigma_audit": 0.004
+    },
+    "run_cost": 1,
+    "size_probs": [],
+    "sizes": []
+   }
+  },
+  "keep_feedback": {
+   "code_sha256": "161606c70d8e0f49616678c6c2ee0db52ce2d5e99ca8948a574ed7f9cc0acedf",
+   "oracle": {
+    "W": 10,
+    "channel": "keep_feedback",
+    "evaluation": {
+     "instances": [
+      2000000,
+      2004644
+     ],
+     "member_sd": 0.02396551909495998,
+     "member_value": 0.05288666608064574,
+     "n": 4644,
+     "resizing_rounds": 1,
+     "static_sd": 0.02434192027933496,
+     "static_value": 0.05134464370646449
+    },
+    "gain": 0.0015420223741812432,
+    "gain_sign_declared": 1,
+    "half_width": 0.00016130358263290813,
+    "hw_over_gain": 0.10460521541949375,
+    "label": "ENGINEERING_ONLY",
+    "llm_cap": 40,
+    "pass": true,
+    "reference_gain": 0.0033,
+    "reference_source": "declared (0.5 sigma_cmp)",
+    "schema": "paperc_esyn_oracle/v2",
+    "selection": {
+     "best_member": "dynamic:0.0005,0,0,0,0.016,0,inf",
+     "best_member_value": 0.05288630831478338,
+     "best_static": "static:0.0005,-0.005",
+     "best_static_value": 0.05133996491258507,
+     "gain": 0.001546343402198308,
+     "gain_se": 0.00012322932970107998,
+     "instances": [
+      1000000,
+      1002000
+     ],
+     "member_search": {
+      "families": {
+       "keep_budget": {
+        "best": "dynamic:0.0005,0,0,0,0.016,0,inf",
+        "gain": 0.001546343402198308,
+        "gh_interior": true,
+        "param_interior": true
+       },
+       "schedule": {
+        "best": "schedule:0.0005,0.0005,0.0005,0.0005,0.0005,0.0005;-0.017,-0.009,-0.002;0.02",
+        "gain": 0.001404342568961832,
+        "gh_interior": true,
+        "param_interior": true
+       }
+      },
+      "family": "keep_budget",
+      "gh_interior": true,
+      "param": "0.016",
+      "param_interior": true,
+      "params_searched": [
+       "0.002",
+       "0.004",
+       "0.008",
+       "0.016",
+       "0.032"
+      ],
+      "rounds": 4
+     },
+     "n_members": 182,
+     "static_grid": {
+      "g": [
+       0.0,
+       0.0005,
+       0.001,
+       0.0015,
+       0.002,
+       0.003
+      ],
+      "h": [
+       -0.009,
+       -0.005,
+       -0.003,
+       -0.002,
+       -0.001,
+       0.0,
+       0.001
+      ]
+     },
+     "static_interior": true
+    },
+    "tolerance": 0.000165,
+    "world": "keep_feedback"
+   },
+   "seconds": 124.7,
+   "world": {
+    "W": 10,
+    "base": {
+     "fb_accum": false,
+     "fb_early_bf": null,
+     "fb_len": 6,
+     "fb_r_cut": null,
+     "fb_shape": "r_linear",
+     "fb_sign": 1.0,
+     "follow_offset": 0.0,
+     "inst_busy_drop": 0.0,
+     "inst_busy_p": 0.0,
+     "inst_prule_spread": 0.0,
+     "kind": "P2",
+     "lag_max": 5,
+     "lag_min": 2,
+     "mu0": -0.0005,
+     "n_follow": 2,
+     "n_keys": 0,
+     "p_big": 0.0,
+     "p_probe": 0.25,
+     "probe_max_trial": 40,
+     "probe_offset": 1.5,
+     "sigma_cmp": 0.0066,
+     "sigma_eta": 0.002,
+     "sigma_follow": null,
+     "sigma_probe": null,
+     "size_filler": 1.0,
+     "size_probe": 1.0,
+     "size_sd": 0.6,
+     "strength": 0.012,
+     "tau0": 0.004,
+     "trend_late": 0.0,
+     "trend_shape": null,
+     "trend_window": 8,
+     "y0": 0.9
+    },
+    "channel": "keep_feedback",
+    "comparison": "increment",
+    "delta_ref": null,
+    "epochs": [
+     "E1",
+     "E2"
+    ],
+    "gain_sign": 1,
+    "interaction": [],
+    "max_obs": 3,
+    "n_audit": 5,
+    "name": "keep_feedback",
+    "note": "Track S P2+-diffuse at strength 0.012, W 10 (Track S ANALYSIS_NOTES section 5.1 grid): an early keep raises the theta mean of later proposals (keep-feedback channel)",
+    "regime": {
+     "llm_cap": 40,
+     "p_rule": 0.55,
+     "sigma_audit": 0.004
+    },
+    "run_cost": 1,
+    "size_probs": [],
+    "sizes": []
+   }
+  },
+  "shared_error": {
+   "code_sha256": "161606c70d8e0f49616678c6c2ee0db52ce2d5e99ca8948a574ed7f9cc0acedf",
+   "oracle": {
+    "W": 60,
+    "channel": "shared_error",
+    "evaluation": {
+     "instances": [
+      2000000,
+      2006562
+     ],
+     "member_sd": 0.016410987706732494,
+     "member_value": 0.020416177554885288,
+     "n": 6562,
+     "resizing_rounds": 1,
+     "static_sd": 0.01677612601815723,
+     "static_value": 0.018293037981369577
+    },
+    "gain": 0.002123139573515713,
+    "gain_sign_declared": 1,
+    "half_width": 0.00016041702397998853,
+    "hw_over_gain": 0.07555651356182558,
+    "label": "ENGINEERING_ONLY",
+    "llm_cap": 40,
+    "pass": true,
+    "reference_gain": 0.0033,
+    "reference_source": "declared (0.5 sigma_cmp)",
+    "schema": "paperc_esyn_oracle/v2",
+    "selection": {
+     "best_member": "evalloc:0,0,0,1,3,incumbent",
+     "best_member_value": 0.02087107304926173,
+     "best_static": "static:0,-0.001",
+     "best_static_value": 0.018782417521258688,
+     "gain": 0.0020886555280030424,
+     "gain_se": 0.0001508063413810348,
+     "instances": [
+      1000000,
+      1002000
+     ],
+     "member_search": {
+      "families": {
+       "reaudit_k": {
+        "best": "evalloc:0,0,0,1,3,incumbent",
+        "gain": 0.0020886555280030424,
+        "gh_interior": true,
+        "param_interior": true
+       }
+      },
+      "family": "reaudit_k",
+      "gh_interior": true,
+      "param": "3",
+      "param_interior": true,
+      "params_searched": [
+       "2",
+       "3"
+      ],
+      "rounds": 2
+     },
+     "n_members": 10,
+     "static_grid": {
+      "g": [
+       0.0,
+       0.0005,
+       0.001,
+       0.0015,
+       0.002,
+       0.003
+      ],
+      "h": [
+       -0.003,
+       -0.002,
+       -0.001,
+       0.0,
+       0.001
+      ]
+     },
+     "static_interior": true
+    },
+    "tolerance": 0.000165,
+    "world": "shared_error"
+   },
+   "seconds": 33.1,
+   "world": {
+    "W": 60,
+    "base": {
+     "fb_accum": false,
+     "fb_early_bf": null,
+     "fb_len": 3,
+     "fb_r_cut": null,
+     "fb_shape": "const",
+     "fb_sign": 1.0,
+     "follow_offset": 0.0,
+     "inst_busy_drop": 0.0,
+     "inst_busy_p": 0.0,
+     "inst_prule_spread": 0.0,
+     "kind": "N0",
+     "lag_max": 5,
+     "lag_min": 2,
+     "mu0": -0.0005,
+     "n_follow": 2,
+     "n_keys": 0,
+     "p_big": 0.0,
+     "p_probe": 0.25,
+     "probe_max_trial": 40,
+     "probe_offset": 1.5,
+     "sigma_cmp": 0.0066,
+     "sigma_eta": 0.002,
+     "sigma_follow": null,
+     "sigma_probe": null,
+     "size_filler": 1.0,
+     "size_probe": 1.0,
+     "size_sd": 0.6,
+     "strength": 0.0,
+     "tau0": 0.004,
+     "trend_late": 0.0,
+     "trend_shape": null,
+     "trend_window": 8,
+     "y0": 0.9
+    },
+    "channel": "shared_error",
+    "comparison": "config",
+    "delta_ref": null,
+    "epochs": [
+     "E1",
+     "E2",
+     "reaudit"
+    ],
+    "gain_sign": 1,
+    "interaction": [],
+    "max_obs": 3,
+    "n_audit": 5,
+    "name": "shared_error",
+    "note": "config measurements: a kept candidate's recorded value carries its (selected) measurement error into every later comparison until a re-audit; W non-binding, so a re-audit costs no proposal",
+    "regime": {
+     "llm_cap": 40,
+     "p_rule": 0.55,
+     "sigma_audit": 0.004
+    },
+    "run_cost": 1,
+    "size_probs": [],
+    "sizes": []
+   }
+  },
+  "strict_null": {
+   "code_sha256": "161606c70d8e0f49616678c6c2ee0db52ce2d5e99ca8948a574ed7f9cc0acedf",
+   "dp_gain_over_best_static": 0.0,
+   "dp_gain_over_selected_static": 0.0,
+   "dp_selected_static_exact": 0.017589430935917364,
+   "dp_static_values": {
+    "static:0,0": 0.017589430935917364,
+    "static:0.000278243,0": 0.017589430935917364,
+    "static:0.0005,0": 0.016124484036620226,
+    "static:0.000770615,0": 0.016124484036620226,
+    "static:0.001,0": 0.009362339403312417,
+    "static:0.0015,0": 0.009362339403312417,
+    "static:0.002,0": 0.009362339403312417,
+    "static:0.00282688,0": 0.009362339403312417,
+    "static:0.003,0": -0.0005600000000000001
+   },
+   "dp_value": 0.017589430935917364,
+   "null_family_eval": {
+    "dynamic_null": {
+     "a": "dynamic:0,0.001,0,0.004,0.002,0,0.02",
+     "b": "static:0,0",
+     "diff": -0.00045801084274595485,
+     "half_width": 0.00011477027567801861,
+     "member": "dynamic:0,0.001,0,0.004,0.002,0,0.02",
+     "share_differing": 0.8588
+    },
+    "schedule": {
+     "a": "schedule:0,0,0,0,0.0005,0;0,0,0;0.02",
+     "b": "static:0,0",
+     "diff": 0.0,
+     "half_width": 0.0,
+     "member": "schedule:0,0,0,0,0.0005,0;0,0,0;0.02",
+     "share_differing": 0.0
+    }
+   },
+   "oracle": {
+    "W": 40,
+    "channel": "none",
+    "evaluation": {
+     "instances": [
+      2000000,
+      2001000
+     ],
+     "member_sd": 0.01620743724356678,
+     "member_value": 0.01760528325116133,
+     "n": 1000,
+     "resizing_rounds": 0,
+     "static_sd": 0.01620743724356678,
+     "static_value": 0.01760528325116133
+    },
+    "gain": 0.0,
+    "gain_sign_declared": 0,
+    "half_width": 0.0,
+    "hw_over_gain": null,
+    "label": "ENGINEERING_ONLY",
+    "llm_cap": 40,
+    "pass": true,
+    "reference_gain": 0.0033,
+    "reference_source": "declared (0.5 sigma_cmp)",
+    "schema": "paperc_esyn_oracle/v2",
+    "selection": {
+     "best_member": "schedule:0,0,0,0,0.0005,0;0,0,0;0.02",
+     "best_member_value": 0.017909238890797936,
+     "best_static": "static:0,0",
+     "best_static_value": 0.01790834265134297,
+     "gain": 8.96239454966502e-07,
+     "gain_se": 8.962394549668074e-07,
+     "instances": [
+      1000000,
+      1002000
+     ],
+     "member_search": {
+      "families": {
+       "dynamic_null": {
+        "best": "dynamic:0,0.001,0,0.004,0.002,0,0.02",
+        "gain": -0.0004868222851045524,
+        "gh_interior": true,
+        "param_interior": true
+       },
+       "schedule": {
+        "best": "schedule:0,0,0,0,0.0005,0;0,0,0;0.02",
+        "gain": 8.96239454966502e-07,
+        "gh_interior": true,
+        "param_interior": true
+       }
+      },
+      "family": "schedule",
+      "gh_interior": true,
+      "param": "tau_split=0.02",
+      "param_interior": true,
+      "rounds": 2
+     },
+     "n_members": 75,
+     "static_grid": {
+      "g": [
+       0.0,
+       0.0005,
+       0.001,
+       0.0015,
+       0.002,
+       0.003
+      ],
+      "h": [
+       -0.003,
+       -0.002,
+       -0.001,
+       0.0,
+       0.001
+      ]
+     },
+     "static_interior": true
+    },
+    "tolerance": 0.000165,
+    "world": "strict_null"
+   },
+   "seconds": 72.3,
+   "world": {
+    "W": 40,
+    "base": {
+     "fb_accum": false,
+     "fb_early_bf": null,
+     "fb_len": 3,
+     "fb_r_cut": null,
+     "fb_shape": "const",
+     "fb_sign": 1.0,
+     "follow_offset": 0.0,
+     "inst_busy_drop": 0.0,
+     "inst_busy_p": 0.0,
+     "inst_prule_spread": 0.0,
+     "kind": "N0",
+     "lag_max": 5,
+     "lag_min": 2,
+     "mu0": -0.0005,
+     "n_follow": 2,
+     "n_keys": 0,
+     "p_big": 0.0,
+     "p_probe": 0.25,
+     "probe_max_trial": 40,
+     "probe_offset": 1.5,
+     "sigma_cmp": 0.0066,
+     "sigma_eta": 0.002,
+     "sigma_follow": null,
+     "sigma_probe": null,
+     "size_filler": 1.0,
+     "size_probe": 1.0,
+     "size_sd": 0.6,
+     "strength": 0.0,
+     "tau0": 0.004,
+     "trend_late": 0.0,
+     "trend_shape": null,
+     "trend_window": 8,
+     "y0": 0.9
+    },
+    "channel": "none",
+    "comparison": "increment",
+    "delta_ref": null,
+    "epochs": [
+     "E1",
+     "E2"
+    ],
+    "gain_sign": 0,
+    "interaction": [],
+    "max_obs": 3,
+    "n_audit": 5,
+    "name": "strict_null",
+    "note": "fresh keys, non-binding W, independent comparisons: the myopic Bayes rule is optimal",
+    "regime": {
+     "llm_cap": 40,
+     "p_rule": 0.55,
+     "sigma_audit": 0.004
+    },
+    "run_cost": 1,
+    "size_probs": [
+     0.3,
+     0.5,
+     0.2
+    ],
+    "sizes": [
+     0.4,
+     1.0,
+     2.5
+    ]
+   }
+  }
+ }
+}

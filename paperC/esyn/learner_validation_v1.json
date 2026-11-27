@@ -1,0 +1,3925 @@
+{
+ "schema": "paperc_learner_validation/v1",
+ "label": "ENGINEERING_ONLY",
+ "code_sha256": "6e4e77c98dd88bfcab755047566a94024e160fe7f3ebe0469c707e84ffaceb4f",
+ "design": {
+  "world": "p8_short_budget",
+  "slots": 8,
+  "runs": 4,
+  "train": [
+   0,
+   4096
+  ],
+  "screen": [
+   4500,
+   5268
+  ],
+  "dev": [
+   6000000,
+   6001200
+  ],
+  "test": [
+   7000000,
+   7006000
+  ],
+  "component_key": 60005,
+  "fit_key": 61003,
+  "fit_count": 3,
+  "n6_rate": 0.75,
+  "n6_reps_per_arm": 4,
+  "gain_floor": 0.1,
+  "epsilons": [
+   0.0,
+   0.1,
+   0.25
+  ],
+  "continuation": "static:0.001,-0.00103125",
+  "threads": 1
+ },
+ "reference": {
+  "N1": 0.001199909206883467,
+  "DP": 0.0022681282029522005,
+  "best_static_bayes_keep": 0.0021804603919084353,
+  "best_static_threshold": 0.0007706147730265327,
+  "gap": 0.0010682189960687335,
+  "dp_paired_check": {
+   "mean": 0.001015572946147362,
+   "se": 4.8883498713296184e-05,
+   "ci": [
+    0.0009197437146884777,
+    0.0011114021776062464
+   ],
+   "n": 6000
+  }
+ },
+ "training": {
+  "rows": 41961,
+  "roots": 4096,
+  "fork_points": 14298,
+  "screen_rows": 7892,
+  "prefit": {
+   "status": "meets thresholds",
+   "action_counts": [
+    {
+     "epoch": "E1",
+     "cluster": "(0, 0)",
+     "action": "skip",
+     "count": 1994
+    },
+    {
+     "epoch": "E1",
+     "cluster": "(0, 0)",
+     "action": "execute",
+     "count": 2274
+    },
+    {
+     "epoch": "E1",
+     "cluster": "(0, 1)",
+     "action": "skip",
+     "count": 3821
+    },
+    {
+     "epoch": "E1",
+     "cluster": "(0, 1)",
+     "action": "execute",
+     "count": 1893
+    },
+    {
+     "epoch": "E1",
+     "cluster": "(1, 0)",
+     "action": "skip",
+     "count": 71
+    },
+    {
+     "epoch": "E1",
+     "cluster": "(1, 0)",
+     "action": "execute",
+     "count": 973
+    },
+    {
+     "epoch": "E1",
+     "cluster": "(1, 1)",
+     "action": "skip",
+     "count": 78
+    },
+    {
+     "epoch": "E1",
+     "cluster": "(1, 1)",
+     "action": "execute",
+     "count": 1380
+    },
+    {
+     "epoch": "E2",
+     "cluster": "(0, 0)",
+     "action": "discard",
+     "count": 3351
+    },
+    {
+     "epoch": "E2",
+     "cluster": "(0, 0)",
+     "action": "keep",
+     "count": 351
+    },
+    {
+     "epoch": "E2",
+     "cluster": "(1, 0)",
+     "action": "discard",
+     "count": 148
+    },
+    {
+     "epoch": "E2",
+     "cluster": "(1, 0)",
+     "action": "keep",
+     "count": 2670
+    }
+   ],
+   "action_shortfalls": [],
+   "n_clusters": 6,
+   "missing_stage_actions": [],
+   "min_action": 30,
+   "ess": 1123.3202456854522,
+   "min_ess": 200,
+   "n_evaluation_decisions": 3516,
+   "zero_propensity_target_rows": 0,
+   "zero_propensity_backup_rows": 0
+  }
+ },
+ "methods": {
+  "N6": {
+   "method": "N6",
+   "candidates": [
+    {
+     "candidate": 0,
+     "config": {
+      "alpha": 0.25
+     },
+     "dev_gain": 0.0008969400568809328,
+     "support": {
+      "prefit": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1123.3202456854522,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "candidate": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1304.5720590363617,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "fork_labels": {
+       "status": "meets thresholds",
+       "n": 14298,
+       "missing_stages": [],
+       "missing_clusters": []
+      }
+     }
+    },
+    {
+     "candidate": 1,
+     "config": {
+      "alpha": 5.0
+     },
+     "dev_gain": 0.0009007251103844178,
+     "support": {
+      "prefit": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1123.3202456854522,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "candidate": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1304.5496834943115,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "fork_labels": {
+       "status": "meets thresholds",
+       "n": 14298,
+       "missing_stages": [],
+       "missing_clusters": []
+      }
+     }
+    },
+    {
+     "candidate": 2,
+     "config": {
+      "alpha": 50.0
+     },
+     "dev_gain": 0.0008923547030942422,
+     "support": {
+      "prefit": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1123.3202456854522,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "candidate": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1271.1180754104703,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "fork_labels": {
+       "status": "meets thresholds",
+       "n": 14298,
+       "missing_stages": [],
+       "missing_clusters": []
+      }
+     }
+    }
+   ],
+   "selected": 1,
+   "refits": [
+    {
+     "prefit": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1123.3202456854522,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "candidate": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1304.5496834943115,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "fork_labels": {
+      "status": "meets thresholds",
+      "n": 14298,
+      "missing_stages": [],
+      "missing_clusters": []
+     }
+    },
+    {
+     "prefit": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1123.3202456854522,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "candidate": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1304.5496834943115,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "fork_labels": {
+      "status": "meets thresholds",
+      "n": 14298,
+      "missing_stages": [],
+      "missing_clusters": []
+     }
+    },
+    {
+     "prefit": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1123.3202456854522,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "candidate": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1304.5496834943115,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "fork_labels": {
+      "status": "meets thresholds",
+      "n": 14298,
+      "missing_stages": [],
+      "missing_clusters": []
+     }
+    }
+   ],
+   "fit_seeds": [
+    1481285578,
+    1450560194,
+    726650417
+   ],
+   "policy_ids": [
+    "n6:0053a000f5f9ea53",
+    "n6:0053a000f5f9ea53",
+    "n6:0053a000f5f9ea53"
+   ],
+   "test": {
+    "mean": 0.0009460406454920723,
+    "se": 5.120711084822672e-05,
+    "ci": [
+     0.0008456562988929051,
+     0.0010464249920912395
+    ],
+    "n": 6000,
+    "status": "evaluated",
+    "gain_share": 0.8856242483738795,
+    "share_ci": [
+     0.7916506839937268,
+     0.9795978127540322
+    ],
+    "fit_mean_gains": [
+     0.0009460406454920723,
+     0.0009460406454920723,
+     0.0009460406454920723
+    ],
+    "vs_best_static": {
+     "mean": 1.5641719157704126e-05,
+     "se": 2.023749216796012e-05,
+     "ci": [
+      -2.4031041020227133e-05,
+      5.5314479335635385e-05
+     ],
+     "n": 6000
+    },
+    "clears_gain_floor": true
+   }
+  },
+  "R0": {
+   "method": "R0",
+   "candidates": [
+    {
+     "candidate": 0,
+     "config": {
+      "leaves": 7,
+      "rounds": 36
+     },
+     "dev_gain": 0.0005917341513994606,
+     "support": {
+      "prefit": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1123.3202456854522,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "candidate": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1023.963261475827,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      }
+     }
+    },
+    {
+     "candidate": 1,
+     "config": {
+      "leaves": 15,
+      "rounds": 48
+     },
+     "dev_gain": 0.000451811133759611,
+     "support": {
+      "prefit": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1123.3202456854522,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "candidate": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 979.1570813050593,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      }
+     }
+    },
+    {
+     "candidate": 2,
+     "config": {
+      "leaves": 31,
+      "rounds": 64
+     },
+     "dev_gain": 0.0004335954498411331,
+     "support": {
+      "prefit": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1123.3202456854522,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "candidate": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 903.1909233023193,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      }
+     }
+    }
+   ],
+   "selected": 0,
+   "refits": [
+    {
+     "prefit": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1123.3202456854522,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "candidate": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1023.963261475827,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     }
+    },
+    {
+     "prefit": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1123.3202456854522,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "candidate": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1023.963261475827,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     }
+    },
+    {
+     "prefit": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1123.3202456854522,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "candidate": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1023.963261475827,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     }
+    }
+   ],
+   "fit_seeds": [
+    1481285578,
+    1450560194,
+    726650417
+   ],
+   "policy_ids": [
+    "r0:902374ccbdcdd1be",
+    "r0:ceffd4573ebf066b",
+    "r0:c3ee30ae192923c5"
+   ],
+   "test": {
+    "mean": 0.0007312059525413937,
+    "se": 5.3327300692219394e-05,
+    "ci": [
+     0.0006266652716240062,
+     0.0008357466334587813
+    ],
+    "n": 6000,
+    "status": "evaluated",
+    "gain_share": 0.6845094079326267,
+    "share_ci": [
+     0.5866449425916069,
+     0.7823738732736466
+    ],
+    "fit_mean_gains": [
+     0.0007312059525413937,
+     0.0007312059525413937,
+     0.0007312059525413937
+    ],
+    "vs_best_static": {
+     "mean": -0.0001991929737929746,
+     "se": 3.3695964429015424e-05,
+     "ci": [
+      -0.0002652491780233023,
+      -0.00013313676956264688
+     ],
+     "n": 6000
+    },
+    "clears_gain_floor": true
+   }
+  },
+  "R1": {
+   "method": "R1",
+   "candidates": [
+    {
+     "candidate": 0,
+     "config": {
+      "expectile": 0.7,
+      "inverse_temperature": 3.0,
+      "width": 32,
+      "critic_steps": 3200,
+      "actor_steps": 1200
+     },
+     "dev_gain": 7.138222254860882e-05,
+     "support": {
+      "prefit": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1123.3202456854522,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "candidate": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 2244.572044824319,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      }
+     }
+    },
+    {
+     "candidate": 1,
+     "config": {
+      "expectile": 0.8,
+      "inverse_temperature": 8.0,
+      "width": 32,
+      "critic_steps": 3200,
+      "actor_steps": 1200
+     },
+     "dev_gain": 0.0007993650616319834,
+     "support": {
+      "prefit": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1123.3202456854522,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "candidate": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1900.1050371228237,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      }
+     }
+    },
+    {
+     "candidate": 2,
+     "config": {
+      "expectile": 0.9,
+      "inverse_temperature": 16.0,
+      "width": 32,
+      "critic_steps": 3200,
+      "actor_steps": 1200
+     },
+     "dev_gain": 0.0008256790060976134,
+     "support": {
+      "prefit": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1123.3202456854522,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      },
+      "candidate": {
+       "status": "meets thresholds",
+       "action_counts": [
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "skip",
+         "count": 1994
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 0)",
+         "action": "execute",
+         "count": 2274
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "skip",
+         "count": 3821
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(0, 1)",
+         "action": "execute",
+         "count": 1893
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "skip",
+         "count": 71
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 0)",
+         "action": "execute",
+         "count": 973
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "skip",
+         "count": 78
+        },
+        {
+         "epoch": "E1",
+         "cluster": "(1, 1)",
+         "action": "execute",
+         "count": 1380
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "discard",
+         "count": 3351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(0, 0)",
+         "action": "keep",
+         "count": 351
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "discard",
+         "count": 148
+        },
+        {
+         "epoch": "E2",
+         "cluster": "(1, 0)",
+         "action": "keep",
+         "count": 2670
+        }
+       ],
+       "action_shortfalls": [],
+       "n_clusters": 6,
+       "missing_stage_actions": [],
+       "min_action": 30,
+       "ess": 1771.5991963295126,
+       "min_ess": 200,
+       "n_evaluation_decisions": 3516,
+       "zero_propensity_target_rows": 0,
+       "zero_propensity_backup_rows": 0
+      }
+     }
+    }
+   ],
+   "selected": 2,
+   "refits": [
+    {
+     "prefit": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1123.3202456854522,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "candidate": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1771.5991963295126,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     }
+    },
+    {
+     "prefit": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1123.3202456854522,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "candidate": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1644.2244665123926,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     }
+    },
+    {
+     "prefit": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1123.3202456854522,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     },
+     "candidate": {
+      "status": "meets thresholds",
+      "action_counts": [
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "skip",
+        "count": 1994
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 0)",
+        "action": "execute",
+        "count": 2274
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "skip",
+        "count": 3821
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(0, 1)",
+        "action": "execute",
+        "count": 1893
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "skip",
+        "count": 71
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 0)",
+        "action": "execute",
+        "count": 973
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "skip",
+        "count": 78
+       },
+       {
+        "epoch": "E1",
+        "cluster": "(1, 1)",
+        "action": "execute",
+        "count": 1380
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "discard",
+        "count": 3351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(0, 0)",
+        "action": "keep",
+        "count": 351
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "discard",
+        "count": 148
+       },
+       {
+        "epoch": "E2",
+        "cluster": "(1, 0)",
+        "action": "keep",
+        "count": 2670
+       }
+      ],
+      "action_shortfalls": [],
+      "n_clusters": 6,
+      "missing_stage_actions": [],
+      "min_action": 30,
+      "ess": 1622.586365236235,
+      "min_ess": 200,
+      "n_evaluation_decisions": 3516,
+      "zero_propensity_target_rows": 0,
+      "zero_propensity_backup_rows": 0
+     }
+    }
+   ],
+   "fit_seeds": [
+    1481285578,
+    1450560194,
+    726650417
+   ],
+   "policy_ids": [
+    "r1:c245680fe37e5570",
+    "r1:f4c0f6564a5a1628",
+    "r1:6a01e16bc70c6ca3"
+   ],
+   "test": {
+    "mean": 0.0008992391490240488,
+    "se": 4.81272141315757e-05,
+    "ci": [
+     0.0008048925072352603,
+     0.0009935857908128373
+    ],
+    "n": 6000,
+    "status": "evaluated",
+    "gain_share": 0.8418116063592153,
+    "share_ci": [
+     0.7534901646548423,
+     0.9301330480635882
+    ],
+    "fit_mean_gains": [
+     0.000928565866894848,
+     0.0008993597468509084,
+     0.0008697918333263901
+    ],
+    "vs_best_static": {
+     "mean": -3.115977731031943e-05,
+     "se": 1.2637450108046327e-05,
+     "ci": [
+      -5.593372277925691e-05,
+      -6.385831841381944e-06
+     ],
+     "n": 6000
+    },
+    "clears_gain_floor": true
+   }
+  }
+ },
+ "removed_support": {
+  "N6": {
+   "policy": null,
+   "support": {
+    "prefit": {
+     "status": "insufficient data",
+     "action_counts": [
+      {
+       "epoch": "E1",
+       "cluster": "(0, 1)",
+       "action": "skip",
+       "count": 310
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(0, 1)",
+       "action": "execute",
+       "count": 0
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(1, 1)",
+       "action": "skip",
+       "count": 79
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(1, 1)",
+       "action": "execute",
+       "count": 0
+      }
+     ],
+     "action_shortfalls": [
+      {
+       "epoch": "E1",
+       "cluster": "(0, 1)",
+       "action": "execute",
+       "count": 0
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(1, 1)",
+       "action": "execute",
+       "count": 0
+      }
+     ],
+     "n_clusters": 2,
+     "missing_stage_actions": [
+      {
+       "source": "backup",
+       "stage": 2,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 4,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 6,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 8,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 10,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 12,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 14,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 2,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 4,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 6,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 8,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 10,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 12,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 14,
+       "action": "execute"
+      }
+     ],
+     "min_action": 30,
+     "ess": 387.0,
+     "min_ess": 200,
+     "n_evaluation_decisions": 387,
+     "zero_propensity_target_rows": 387,
+     "zero_propensity_backup_rows": 389
+    },
+    "candidate": null
+   }
+  },
+  "R0": {
+   "policy": null,
+   "support": {
+    "prefit": {
+     "status": "insufficient data",
+     "action_counts": [
+      {
+       "epoch": "E1",
+       "cluster": "(0, 1)",
+       "action": "skip",
+       "count": 310
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(0, 1)",
+       "action": "execute",
+       "count": 0
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(1, 1)",
+       "action": "skip",
+       "count": 79
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(1, 1)",
+       "action": "execute",
+       "count": 0
+      }
+     ],
+     "action_shortfalls": [
+      {
+       "epoch": "E1",
+       "cluster": "(0, 1)",
+       "action": "execute",
+       "count": 0
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(1, 1)",
+       "action": "execute",
+       "count": 0
+      }
+     ],
+     "n_clusters": 2,
+     "missing_stage_actions": [
+      {
+       "source": "backup",
+       "stage": 2,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 4,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 6,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 8,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 10,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 12,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 14,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 2,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 4,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 6,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 8,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 10,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 12,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 14,
+       "action": "execute"
+      }
+     ],
+     "min_action": 30,
+     "ess": 387.0,
+     "min_ess": 200,
+     "n_evaluation_decisions": 387,
+     "zero_propensity_target_rows": 387,
+     "zero_propensity_backup_rows": 389
+    },
+    "candidate": null
+   }
+  },
+  "R1": {
+   "policy": null,
+   "support": {
+    "prefit": {
+     "status": "insufficient data",
+     "action_counts": [
+      {
+       "epoch": "E1",
+       "cluster": "(0, 1)",
+       "action": "skip",
+       "count": 310
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(0, 1)",
+       "action": "execute",
+       "count": 0
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(1, 1)",
+       "action": "skip",
+       "count": 79
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(1, 1)",
+       "action": "execute",
+       "count": 0
+      }
+     ],
+     "action_shortfalls": [
+      {
+       "epoch": "E1",
+       "cluster": "(0, 1)",
+       "action": "execute",
+       "count": 0
+      },
+      {
+       "epoch": "E1",
+       "cluster": "(1, 1)",
+       "action": "execute",
+       "count": 0
+      }
+     ],
+     "n_clusters": 2,
+     "missing_stage_actions": [
+      {
+       "source": "backup",
+       "stage": 2,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 4,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 6,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 8,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 10,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 12,
+       "action": "execute"
+      },
+      {
+       "source": "backup",
+       "stage": 14,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 2,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 4,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 6,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 8,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 10,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 12,
+       "action": "execute"
+      },
+      {
+       "source": "evaluation",
+       "stage": 14,
+       "action": "execute"
+      }
+     ],
+     "min_action": 30,
+     "ess": 387.0,
+     "min_ess": 200,
+     "n_evaluation_decisions": 387,
+     "zero_propensity_target_rows": 387,
+     "zero_propensity_backup_rows": 389
+    },
+    "candidate": null
+   }
+  }
+ }
+}
