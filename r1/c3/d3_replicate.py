@@ -33,6 +33,9 @@ FIXR3_VERSION = "d3_fixr3/v1"
 FIXR3_R = 3            # replicates per executed proposal (R1-BX-PROPOSED-CONFIRM (D7))
 FIXR3_ALPHA = 0.05     # one-sided Welch t-test (R1-BX-PROPOSED-CONFIRM (D7); §13 item 5)
 
+EGATE_VERSION = "d3_egate/v1"
+EGATE_ACTION_VERSION = "verify:pace"   # the declared action version (BUILD_REVIEW_20261012 finding 16)
+
 DECISIONS = ("kept", "discarded", "failed_invalid")
 
 
@@ -154,6 +157,105 @@ class Fixr3Engine:
             self.incumbent, self.incumbent_metrics = config_sha256, metrics
         return StepResult("kept" if keep else "discarded", FIXR3_R, entries, _mean(raw),
                           {**detail, "test": test, "alpha": FIXR3_ALPHA})
+
+
+class EgateEngine:
+    """EGATE (§5.5): the repository's ``PaceStyleGate`` as on ``main`` (alpha = 0.1, clip = 0.05, max_pairs = 8) as a
+    closed-loop E2 rule.
+
+    One step: pair j = 0, 1, ... runs the candidate at replicate seed j and, if the incumbent has no run at seed j,
+    the incumbent too (candidate first; both charged, G8); after each pair ``decide`` sees the oriented paired
+    differences so far: ``commit`` -> kept; ``reject`` with fewer than max_pairs pairs -> the next pair if the budget
+    can fund it, else discarded (``unfundable_pair``); ``reject`` at max_pairs -> discarded.  The first valid trial
+    is kept after one run without a test.  A failed candidate run -> ``failed_invalid`` (charged for the runs used);
+    a failed incumbent run -> discarded (``incumbent_failed``; the run is charged and recorded, and counts in the §10
+    failure rate); a failed (incumbent, seed) run is never re-run, so a later test that reaches that pair ends there
+    with discard.  If not even the first pair can be funded the step is refused before it starts
+    (``UnfundableStep``; the campaign ends ``no_fundable_candidate``).  No constant is changed (§13 item 4)."""
+
+    arm = "EGATE"
+    version = EGATE_VERSION
+    action_version = EGATE_ACTION_VERSION
+
+    def __init__(self, instance_seed: int, *, maximize: bool = True, gate=None):
+        from r1.baselines.responses import PaceStyleGate
+        self.gate = PaceStyleGate() if gate is None else gate
+        if (self.gate.alpha, self.gate.clip, self.gate.max_pairs) != (0.1, 0.05, 8):
+            raise ValueError("EGATE uses PaceStyleGate as on main: alpha 0.1, clip 0.05, max_pairs 8 (§5.5)")
+        self.instance_seed, self.maximize = int(instance_seed), bool(maximize)
+        self.seeds = tuple(replicate_seed(self.instance_seed, j) for j in range(self.gate.max_pairs))
+        self.incumbent: str | None = None
+        self.steps = 0
+
+    def _incumbent_run(self, counter: ChargedRunCounter, j: int):
+        return counter.lookup(self.incumbent, self.seeds[j])
+
+    def step(self, config_sha256: str, run: RunFn, counter: ChargedRunCounter) -> StepResult:
+        first = self.incumbent is None
+        need0 = 1 if first or self._incumbent_run(counter, 0) is not None else 2
+        counter.require(need0)  # refused before it starts; nothing is charged
+        self.steps += 1
+        entries: list[dict] = []
+        raw: list[float] = []
+        diffs: list[float] = []
+        charged = 0
+        detail = {"version": self.version, "action_version": self.action_version, "first_trial": first,
+                  "gate": {"alpha": self.gate.alpha, "clip": self.gate.clip, "max_pairs": self.gate.max_pairs}}
+        for j in range(self.gate.max_pairs):
+            seed = self.seeds[j]
+            prior_inc = None if first else self._incumbent_run(counter, j)
+            need = 1 if first or prior_inc is not None else 2
+            if prior_inc is not None and not prior_inc.success:
+                # a failed (incumbent, seed) run is never re-run: the test ends at this pair, before any run
+                entries.append({"role": "incumbent", "j": j, "seed": seed, "success": False, "charged": False,
+                                "metric": None})
+                return self._end("discarded", charged, entries, raw, {**detail, "pairs": j, "diffs": diffs,
+                                                                     "reason": "incumbent_failed_earlier"})
+            if j > 0 and not counter.can_fund(need):
+                return self._end("discarded", charged, entries, raw, {**detail, "pairs": j, "diffs": diffs,
+                                                                     "reason": "unfundable_pair"})
+            out = run(role="candidate", config_sha256=config_sha256, seed=seed, j=j)
+            counter.charge(kind="trial" if j == 0 else "replicate", role="candidate", seed=seed,
+                           config_sha256=config_sha256, success=out.success, j=j,
+                           metric=out.metric if out.success else None, seconds=out.seconds)
+            charged += 1
+            if j > 0:
+                entries.append({"role": "candidate", "j": j, "seed": seed, "success": out.success, "charged": True,
+                                "metric": out.metric if out.success else None})
+            if not out.success:
+                return self._end("failed_invalid", charged, entries, raw, {**detail, "pairs": j, "diffs": diffs,
+                                                                          "failed_at_j": j})
+            raw.append(float(out.metric))
+            if first:  # the first valid trial: kept after one run, no test
+                self.incumbent = config_sha256
+                return self._end("kept", charged, entries, raw, {**detail, "pairs": 0, "test": None})
+            if prior_inc is None:
+                inc = run(role="incumbent", config_sha256=self.incumbent, seed=seed, j=j)
+                prior_inc = counter.charge(kind="replicate", role="incumbent", seed=seed,
+                                           config_sha256=self.incumbent, success=inc.success, j=j,
+                                           metric=inc.metric if inc.success else None, seconds=inc.seconds)
+                charged += 1
+                entries.append({"role": "incumbent", "j": j, "seed": seed, "success": inc.success, "charged": True,
+                                "metric": inc.metric if inc.success else None})
+            else:
+                entries.append({"role": "incumbent", "j": j, "seed": seed, "success": prior_inc.success,
+                                "charged": False, "metric": prior_inc.metric})
+            if not prior_inc.success:
+                return self._end("discarded", charged, entries, raw, {**detail, "pairs": j, "diffs": diffs,
+                                                                     "reason": "incumbent_failed"})
+            diffs.append(_oriented(out.metric, self.maximize) - _oriented(prior_inc.metric, self.maximize))
+            decision, wealth, n = self.gate.decide(diffs)
+            if decision == "commit":
+                self.incumbent = config_sha256
+                return self._end("kept", charged, entries, raw, {**detail, "pairs": n, "diffs": diffs,
+                                                                "wealth": wealth, "reason": "commit"})
+            detail["wealth"] = wealth
+        return self._end("discarded", charged, entries, raw, {**detail, "pairs": self.gate.max_pairs, "diffs": diffs,
+                                                             "reason": "max_pairs"})
+
+    @staticmethod
+    def _end(decision, charged, entries, raw, detail) -> StepResult:
+        return StepResult(decision, charged, entries, _mean(raw), detail)
 
 
 def _mean(xs: list[float]) -> float | None:
