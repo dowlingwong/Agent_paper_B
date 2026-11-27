@@ -115,14 +115,25 @@ def _lease(args, lease_log: list):
     # An exclusive HTCondor GPU slot has no Track X schedule to read (no origin/main STATUS.md in the job): the host
     # config says so with "lease": "htcondor_slot"; the flock and the foreign-process check still apply. A card leased
     # outside the job by the P.4 direct launcher (p4_direct.py, R1-HOST-FREE) is the same case: "direct_gpu_lease";
-    # that card may be shared with another user's process by design (R1-CARD-SHARE (1): the launcher checked its free
-    # memory and records the other processes at start and end), so the in-job foreign-process check is off there.
+    # that card can be shared (R1-CARD-SHARE (1)). The launcher checks free memory and records other processes.
+    # Standalone GPU checks on an Ada config request an empty-card lease with --gpu in the same host lock directory.
     direct = args.cfg.get("lease") == "direct_gpu_lease"
     status_text = "" if args.cfg.get("lease") == "htcondor_slot" or direct else None
+    gpu = getattr(args, "gpu", None)
+    lock_path = Path(args.cfg["gpu"]["lock_path"]).expanduser()
+    if direct:
+        outer_gpu = os.environ.get("P4_LEASED_GPU_UUID")
+        if outer_gpu:
+            if gpu is not None or os.environ.get("CUDA_VISIBLE_DEVICES") != outer_gpu:
+                raise R.TrackPStop("a P.4 direct job must use its outer card lease")
+        elif gpu is None:
+            raise R.TrackPStop("select an empty card with --gpu for a standalone Track P job")
+        else:
+            lock_path = Path(args.cfg["direct"]["lock_dir"]).expanduser() / R.LOCK_PATH.name
     with R.gpu_lease(f"trackp {args.cmd} {args.base}", run_log=lease_log, status_text=status_text,
-                     check_processes=not direct,
-                     lock_path=Path(os.path.expanduser(args.cfg["gpu"]["lock_path"])),
+                     check_processes=not direct or gpu is not None, gpu=gpu, lock_path=lock_path,
                      log_path=Path(os.path.expanduser(args.cfg["runs_dir"])) / "gpu_lease_log.jsonl") as lease:
+        R.check_environment(args.cfg)      # R1-ENV-PIN, before loading the model on the bound device
         yield lease
 
 
@@ -475,6 +486,8 @@ def main(argv=None) -> int:
         p = sub.add_parser(name)
         p.add_argument("--run-dir", required=name not in ("a6", "rb"))
         p.add_argument("--base", help="a key of config['bases']")
+        if name in ("spike", "toy", "e0", "probes", "sft-dev"):
+            p.add_argument("--gpu", help="empty GPU to lease, by physical index or UUID")
         p.add_argument("--tiny", action="store_true", help="tiny random-weight stand-in on CPU (DRYRUN)")
         p.add_argument("--family", help="with --tiny: kev | laya | startlux | qwen_control | qwen_reason")
         p.add_argument("--head-form", default="softmax12", choices=("softmax12", "cumulative11", "linear12"))
@@ -540,8 +553,6 @@ def main(argv=None) -> int:
         _require_authorization(args)
         if args.cmd == "sft-dev" and _evidence(args) not in SFT_DEV_LABELS:   # before any environment check
             raise R.TrackPStop("sft-dev is ENGINEERING_ONLY (R1-TRACKP-SFT-DEV); P.4 evidence runs are a later unit")
-        if not args.tiny and args.cmd in ("spike", "toy", "e0", "probes", "sft-dev"):
-            R.check_environment(cfg)          # R1-ENV-PIN: torch and code pins before any GPU job
         res = COMMANDS[args.cmd](args, cfg)
         run_dir = Path(args.run_dir)
         manifest = R.run_manifest(subcommand=args.cmd, evidence=_evidence(args), cfg=cfg, seed=args.seed,

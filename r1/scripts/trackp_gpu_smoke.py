@@ -59,24 +59,27 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True)
     ap.add_argument("--out", required=True)
-    ap.add_argument("--lock", default=str(R.LOCK_PATH))
+    ap.add_argument("--gpu", help="empty GPU to lease, by physical index or UUID")
+    ap.add_argument("--lock", default=str(R.LOCK_PATH), help="GPU lock path template in the host's lock directory")
     ap.add_argument("--lease-log", default=str(R.LEASE_LOG))
     args = ap.parse_args(argv)
-    import torch
-    import transformers
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-    import transformers.models.qwen3_5.modeling_qwen3_5 as qm
-    rep = {"torch": torch.__version__, "cuda_runtime": torch.version.cuda, "transformers": transformers.__version__,
-           "kernels_bound": {n: bound_implementation(getattr(qm, n)) for n in KERNEL_NAMES},
-           "checks": {}, "lease": []}
-    try:
-        import fla
-        import causal_conv1d
-        rep["fla"], rep["causal_conv1d"] = fla.__version__, causal_conv1d.__version__
-    except Exception as exc:  # recorded; the comparison then shows the torch path on both sides
-        rep["kernel_import_error"] = repr(exc)
+    lease_log = []
     with R.gpu_lease("trackp phase2 gpu smoke", lock_path=Path(args.lock), log_path=Path(args.lease_log),
-                     run_log=rep["lease"]):
+                     run_log=lease_log, gpu=args.gpu):
+        import torch
+        import transformers
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        import transformers.models.qwen3_5.modeling_qwen3_5 as qm
+        rep = {"torch": torch.__version__, "cuda_runtime": torch.version.cuda,
+               "transformers": transformers.__version__,
+               "kernels_bound": {n: bound_implementation(getattr(qm, n)) for n in KERNEL_NAMES},
+               "checks": {}, "lease": lease_log}
+        try:
+            import fla
+            import causal_conv1d
+            rep["fla"], rep["causal_conv1d"] = fla.__version__, causal_conv1d.__version__
+        except Exception as exc:  # recorded; the comparison then shows the torch path on both sides
+            rep["kernel_import_error"] = repr(exc)
         dev = torch.device("cuda")
         rep["device"] = torch.cuda.get_device_name(0)
         rep["capability"] = list(torch.cuda.get_device_capability(0))
