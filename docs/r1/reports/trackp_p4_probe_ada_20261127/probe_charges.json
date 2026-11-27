@@ -106,8 +106,43 @@
    "total": 2.1603
   }
  },
- "t1": null,
- "t1_gpu_hours": null,
+ "t1": {
+  "cluster_check": "match",
+  "gpu_hours": 0.0,
+  "jobs": [
+   {
+    "charged_gpu_hours": 0.0,
+    "cluster_id": "760065",
+    "remote_wallclock_s": 0.0
+   }
+  ],
+  "record": {
+   "cluster_ids": [
+    "760065"
+   ],
+   "dir": "docs/r1/reports/trackp_p4_cluster_20261125/T1_versions",
+   "files": {
+    "versions.jdl": "fa7ec821ca1fd597184691117f0f846df139c0a40df32db4afb2553d2d33c97d",
+    "versions.sh": "125342d1cfed4fd435d68bbc0c5e7655845318d7522c7c9bd64536e1b3432025"
+   },
+   "history": {
+    "file": "condor_history.txt",
+    "jobs": [
+     {
+      "cluster_id": "760065",
+      "remote_wallclock_s": 0.0
+     }
+    ],
+    "sha256": "df41e2df4d598cfcb561b6f4b718c2faba3701a8a58fac15ff6957e1cbf2a3a9"
+   },
+   "submit_files": {
+    "versions.submit": "3c1cc1afe95b44efd62c983f99a6035a73723acc3284df1b8eb26803fd952afb"
+   }
+  },
+  "source": "input",
+  "wallclock_source": "docs/r1/reports/trackp_p4_cluster_20261125/T1_versions/condor_history.txt"
+ },
+ "t1_gpu_hours": 0.0,
  "total": 2.1603,
  "unrecorded": []
 }
