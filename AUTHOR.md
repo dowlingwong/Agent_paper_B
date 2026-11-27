@@ -1,4 +1,4 @@
-# Waiting on the author — 27 Nov 2026, 11:20 CET (`main` `96eb63da`). Signed 27 Nov in this session: screening note + P4-4B A (published `c76e1b49`); T5 correction published (`7cb5621d`); Paper C rows confirmed and merged (`1b566d78`).
+# Waiting on the author — 27 Nov 2026, 11:20 CET (`main` `9de7eb57`). Signed 27 Nov in this session: screening note + P4-4B A (published `c76e1b49`); T5 correction published (`7cb5621d`); Paper C rows confirmed and merged (`1b566d78`).
 
 Answered on 26 Nov: D1 (rows (f)(g), TIMEOUT A, the three additions) → published `95249de3`. D2 (this tmux session
 coordinates; Codex does not push `main`; `canon/README.md` rule 1 stands, so no row is needed) → recorded. D3 (P.4 on Ada:
@@ -7,7 +7,6 @@ D4 (start order) → see the agents row. **G.5 signed** ("签 G.5：S1–S14 按
 
 | Item | Recommendation | The reply that decides | Blocks |
 |---|---|---|---|
-| **R1-MANUSCRIPT-REPO, recorded by Codex from your Codex chat** (`codex/paper-b-manuscript-repo-20261127` @ `83cc3fe6`, "让writer在这里作业，以及指针指到这里"): Paper B's LaTeX and Overleaf move to the standalone `paper_B_manuscript` repository; the writer role runs on Codex GPT-6.2 Sol there; `papers/r1` stays as the pre-migration snapshot; a `papers/manuscript` pointer and RUNBOOK/runbook edits | It changes where and with which model the writer works, and adds a pointer into this repository. The coordinator cannot see the Codex chat. Recommended: confirm, and say once that rows Codex records from your chat may be published after the coordinator's content check | "确认 R1-MANUSCRIPT-REPO" (and optionally "以后 Codex 记录的签字直接发布") | The writer's next manuscript work |
 | **No batch GPU for D.3's HTCondor preflight** (`compute/20261127-12`): the ETP L40S and the TOpAS A100s advertise `Start = false`; nothing matches | Nothing to decide yet: compute keeps watching. If the pool stays closed, D.3's proposer can run on Ada or the TASL pair under R1-HOST-FREE (one GPU model per instance and campaign), which needs no new row for work not under a signed note | — | D.3 per-arm smoke on HTCondor only |
 | Roles row: design agent; E-INT census choice (Codex commits on `main`, no PLAN row) | Defer until G.5 is signed; then one row for the roles (coordinator, writer, design, local, compute) and one for the census | — | Paper C; design-agent tasks |
 | S9: how an expansion node joins the frozen eight-node split | Sheet due from the local worker (`local/20261126-04`) | — | The G.5 addendum for expansion nodes |

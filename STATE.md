@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 12:30 CET, `main` at `96eb63da`
+# State — 27 Nov 2026, 12:45 CET, `main` at `9de7eb57`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -64,6 +64,8 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | — | `local/20261126-12`: G.5 addendum code | §2 2B | blocked: the author's S9 row, after item 9 |
 
 ## Writer
+
+**Since `9de7eb57` (R1-MANUSCRIPT-REPO):** the writer works in `dowlingwong/paper_B_manuscript` on task branches (Codex GPT-6.2 Sol); the coordinator publishes reviewed manuscript revisions there and updates the `papers/manuscript` submodule pin. `papers/r1` is the pre-migration snapshot. Codex-recorded signatures are published after the coordinator's content check (R1-CODEX-RECORDED-SIGNATURES).
 
 | # | Card | Runbook | State |
 |---|---|---|---|
