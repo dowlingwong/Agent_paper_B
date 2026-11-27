@@ -123,6 +123,18 @@ def sealed_run(spec: dict) -> Path:
     return Path(spec["worker"]["sealed_root"]) / spec["run_id"]
 
 
+def addendum_binding(spec: dict, record: dict | None = None) -> dict:
+    """Bind expansion records to both the spec and the approved note for this run."""
+    a = spec.get("_addendum")
+    if not a:
+        return {}
+    binding = {"spec_sha256": a["spec_sha256"], "addendum_note_sha256": a["note_sha256"]}
+    if record is not None and (record.get("run_id") != spec["run_id"] or
+                               any(record.get(key) != value for key, value in binding.items())):
+        raise Stop("STOP: the artifact names another G.5 addendum spec, note or run")
+    return binding
+
+
 # R1-G5-AUDIT-TWO-CARDS: the TASL-7 claims under <run_id>/_remote (written by g5_job; their state is read here, where
 # the seal needs it, and g5_job uses these helpers)
 REMOTE = "_remote"
@@ -290,7 +302,8 @@ def _attempt_parts(spec: dict, attempt_dir: Path) -> dict:
         rel = Path(attempt_dir).resolve().relative_to(run_root(spec).resolve()).parts
     except ValueError:
         raise Stop(f"STOP: {attempt_dir} is not <run_id>/<node>/<job>[/chunk-i]/attempt-N of this run") from None
-    if len(rel) not in (3, 4) or rel[0] not in S.T1_NODES or rel[1] not in S.JOBS or not G.ATTEMPT.fullmatch(rel[-1]):
+    nodes = [n["node"] for n in spec["nodes"]] if spec.get("_addendum") else S.T1_NODES
+    if len(rel) not in (3, 4) or rel[0] not in nodes or rel[1] not in S.JOBS or not G.ATTEMPT.fullmatch(rel[-1]):
         raise Stop(f"STOP: {attempt_dir} is not <run_id>/<node>/<job>[/chunk-i]/attempt-N")
     kind, _ = rel[1].split("-wave")
     chunk = None
@@ -321,6 +334,7 @@ def seal_attempt(spec: dict, attempt_dir: Path) -> dict:
     bad = [k for k, v in want.items() if record.get(k) != v]
     if bad:
         raise Stop(f"STOP: {rec_path} does not match its place in the run: {bad}")
+    binding = addendum_binding(spec, record)
     sums = src / "SHA256SUMS"
     if sums.is_file():
         if subprocess.run(["sha256sum", "-c", "--quiet", "SHA256SUMS"], cwd=src, capture_output=True).returncode:
@@ -348,7 +362,7 @@ def seal_attempt(spec: dict, attempt_dir: Path) -> dict:
                                       "source": str(src), "copied": copied, "node_log": node_log,
                                       "out_clear_files": out_clear, "stop": record.get("stop"),
                                       "stop_class": record.get("stop_class"),
-                                      "job_record_sha256": L._sha_file(part / "job_record.json")})
+                                      "job_record_sha256": L._sha_file(part / "job_record.json"), **binding})
     if out_clear is not None:
         shutil.rmtree(src / "out")               # sealed and verified: out/ leaves the clear runs tree
     return receipt
@@ -407,7 +421,7 @@ def seal_node(spec: dict, node: str) -> dict:
         if not (a / "job_record.json").is_file():
             raise Stop(f"STOP: {a} has no job record: the node is still running (or close the attempt first)")
         sealed = sealed_attempt_of(spec, a)
-        verify_sealed(sealed)
+        addendum_binding(spec, verify_sealed(sealed))
         if L._sha_file(sealed / "job_record.json") != L._sha_file(a / "job_record.json"):
             raise Stop(f"STOP: {a}'s sealed record differs from the runs tree's")
     target = sealed_run(spec) / node / "_node"
@@ -432,7 +446,7 @@ def seal_node(spec: dict, node: str) -> dict:
         if idx.is_file() and json.loads(idx.read_text())["plan_tar_sha256"] != L._sha_file(part / f"wave{wave}_plan.tar"):
             raise Stop(f"STOP: {node} wave {wave}: plan.tar differs from its index ({part} is left for inspection)")
     return _write_receipt(part, target, {"kind": "node", "run_id": spec["run_id"], "node": node, "copied": names,
-                                   "ended": ended, "attempts": [str(a) for a in attempts]})
+                                   "ended": ended, "attempts": [str(a) for a in attempts], **addendum_binding(spec)})
 
 
 def seal_run(spec: dict, *, not_run: tuple = ()) -> dict:
@@ -442,10 +456,11 @@ def seal_run(spec: dict, *, not_run: tuple = ()) -> dict:
     check_seal_mode(spec)
     remote_final = check_remote_final(spec)      # R1-G5-AUDIT-TWO-CARDS: no open claim, the final TASL-7 log (M2)
     root = run_root(spec)
-    unknown = sorted(set(not_run) - set(S.T1_NODES))
+    nodes = [n["node"] for n in spec["nodes"]] if spec.get("_addendum") else S.T1_NODES
+    unknown = sorted(set(not_run) - set(nodes))
     if unknown:
         raise Stop(f"STOP: {unknown} are not G.5 nodes")
-    for node in S.T1_NODES:
+    for node in nodes:
         if node in not_run:
             if (root / node).exists():
                 raise Stop(f"STOP: {node} is declared not run but has a node directory")
@@ -453,7 +468,7 @@ def seal_run(spec: dict, *, not_run: tuple = ()) -> dict:
         if not (root / node).is_dir():
             raise Stop(f"STOP: {node} has not run; the run is sealed at the table's end (declare it --not-run if "
                        f"the switch refused it)")
-        verify_sealed(sealed_run(spec) / node / "_node")
+        addendum_binding(spec, verify_sealed(sealed_run(spec) / node / "_node"))
     target = sealed_run(spec) / "_run"
     part = _stage(target)
     names = []
@@ -466,7 +481,7 @@ def seal_run(spec: dict, *, not_run: tuple = ()) -> dict:
             _tar_dir(root, name, part / f"{name.lstrip('_')}.tar")
             names.append(f"{name.lstrip('_')}.tar")
     return _write_receipt(part, target, {"kind": "run", "run_id": spec["run_id"], "copied": names,
-                                   "not_run": sorted(not_run), "remote_final": remote_final})
+                                   "not_run": sorted(not_run), "remote_final": remote_final, **addendum_binding(spec)})
 
 
 # =============================================================================================== locks, the reader
@@ -680,6 +695,9 @@ def close_server(spec: dict, server_dir: Path, reason: str, *, alive=None, scan=
     rec = json.loads((src / "server_record.json").read_text())
     if rec.get("run_id") != spec["run_id"] or Path(str(rec.get("server_dir"))).resolve() != src.resolve():
         raise Stop("STOP: the server record names another run or directory")
+    binding = addendum_binding(spec)
+    if binding and rec.get("spec_sha256") != binding["spec_sha256"]:
+        raise Stop("STOP: the server record names another G.5 addendum spec")
     if rec.get("pid") is not None and (alive or _pid_alive)(int(rec["pid"])):
         raise Stop(f"STOP: the server process {rec['pid']} is still alive")
     with G.gpu_lease(prop["lease"]):
@@ -730,7 +748,7 @@ def seal_server(spec: dict, server_dir: Path, *, alive=None) -> dict:
                "closed": bool(end.get("closed")), "latest_log_mtime_utc": end.get("latest_log_mtime_utc"),
                "server_record_sha256": end["server_record_sha256"], "server_log_sha256": end["server_log_sha256"],
                "server_end_sha256": L._sha_file(src / "server_end.json"), "sealed_path": str(target),
-               "files": _files(part), "who": WHO, "host": socket.gethostname(), "sealed_utc": utc()}
+               "files": _files(part), "who": WHO, "host": socket.gethostname(), "sealed_utc": utc(), **binding}
     with (part / RECEIPT).open("x") as fh:
         fh.write(json.dumps(receipt, indent=1, sort_keys=True) + "\n")
     _commit(part, target)
@@ -769,6 +787,7 @@ def register_server_span(spec: dict, receipt_path: Path) -> dict:
     if r.get("schema") != SERVER_RECEIPT_SCHEMA or r.get("run_id") != spec["run_id"] or \
             not SERVER.fullmatch(str(r.get("server"))) or not re.fullmatch(r"[0-9a-f]{64}", str(r.get("server_record_sha256"))):
         raise Stop(f"STOP: {receipt_path} is not a server seal receipt of {spec['run_id']}")
+    addendum_binding(spec, r)
     span = parse_utc(r["stopped_utc"]) - parse_utc(r["started_utc"])
     if span < 0 or abs(span - float(r["span_seconds"])) > 1.0:
         raise Stop("STOP: the receipt's span does not match its times")
@@ -793,6 +812,7 @@ def registered_spans(spec: dict) -> dict[str, dict]:
         if r.get("schema") != SERVER_RECEIPT_SCHEMA or r.get("run_id") != spec["run_id"] or \
                 p.name != f"{r.get('server')}.json":
             raise Stop(f"STOP: {p} is not a registered server span of this run")
+        addendum_binding(spec, r)
         if r["server_record_sha256"] in out:
             raise Stop(f"STOP: two registered spans name the server record {r['server_record_sha256'][:12]}")
         out[r["server_record_sha256"]] = r

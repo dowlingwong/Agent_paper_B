@@ -81,6 +81,21 @@ LEDGER_SCHEMA = "trackg_v2_diff_campaign_ledger/v1"
 ENGINE_FILE = "src/autoresearch/trackg/audit_g5.py"      # one of P5's two declared trackg additions
 ENGINE_MODULE = "autoresearch.trackg.audit_g5"
 ENGINES = {"campaign": (ENGINE_MODULE, "campaign", ENGINE_FILE), "audit": (ENGINE_MODULE, "audit", ENGINE_FILE)}
+# The G.1b census override is process-local. G.5 imports the allowlist once at module import.
+CPU_ONLY_ENGINE = """\
+import json, sys
+from pathlib import Path
+from autoresearch.trackg import noise_floor
+
+node, command, flag, infile, *args = sys.argv[1:]
+if (command, flag) not in {('campaign', '--campaign'), ('audit', '--chunk')} or '--gpu-uuid' in args:
+    sys.exit('STOP: invalid CPU-only G.5 engine invocation')
+if json.loads(Path(infile).read_bytes())['node'] != node:
+    sys.exit('STOP: G.5 input names another node than the CPU-only override')
+noise_floor.CPU_ONLY_NODES = frozenset(noise_floor.CPU_ONLY_NODES) | {node}
+from autoresearch.trackg import audit_g5
+sys.exit(audit_g5.main([command, flag, infile, *args]))
+"""
 ENGINE_CONTRACT = "g5_tasl_engine_contract/1"              # the marker the engine module must carry, with both schemas
 # R1-EXAM-B1-TRUNCATION-INVALID lives in the engine module (harness report G5_ENGINES_20261123 §2 item 7, §7 item 5;
 # review decision 2): manager_v2_diff.py and G.4's pilot stay unchanged.
@@ -859,6 +874,7 @@ RECORD_KEYS = {"schema", "label", "run_id", "node", "family", "job", "wave", "ch
                "ptrace_scope", "cgroup", "harness", "environment", "data", "server_record", "server_props_before",
                "server_props_after", "server_stopped", "latency_probe_before", "latency_probe_after", "deadline_epoch",
                "started_utc", "finished_utc", "gpu_seconds", "engine", "engine_rc", "out_tar_sha256", "plan_sha256",
+               "cpu_lease", "cpu_preflight", "addendum_note_sha256",
                "stop", "stop_class", "node_log", "output_use", "owner", "worker_host", "claim_sha256", "crosshost_pass"}
 
 
@@ -1290,6 +1306,10 @@ def worker_shim(spec: dict, node: dict, context: dict) -> tuple[dict, dict]:
     if node["env"] not in envs or node["env"] not in w["env_python"]:
         raise Stop(f"STOP: {node['node']}'s environment {node['env']!r} is not resolved")
     shim = {"hosts": {host: w}, "harness": {"commit": fam["g5_commit"]}, "envs": envs}
+    if spec.get("_addendum"):
+        if host != S.WORKER_HOST:
+            raise Stop("STOP: the addendum's worker and audits stay on the TASL-2 census CPU set")
+        shim.update(schema=G.X_SCHEMA, cpu_preflight=spec["_addendum"]["cpu_preflight"])
     node["host"] = host
     if host == S.WORKER_HOST and node["node"] in spec["tasl2_cpus"]["replacements"]:     # R1-TASL2-CPU
         node["cpus"] = S.tasl2_node_cpus(spec, node["node"])          # its TASL-2 set replaces the G.1b set
@@ -1309,11 +1329,15 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
     spec_path = Path(spec_path)
     spec = S.load_spec(spec_path)
     node = S.node_entry(spec, node_name)
+    addendum = spec.get("_addendum")
     kind, wave = job_parts(job)
     host = context.get("host", S.WORKER_HOST)
     server_record = server_record or context.get("server_record")
     claim = claim_sha = None
     try:                         # refusals before the lease are recorded too (m7)
+        if addendum and (context.get("K"), context.get("K_row"), (context.get("launch") or {}).get("paper_commit")) != \
+                (addendum["_K"], addendum["_K_row"], spec["paper"]["commit"]):
+            raise Stop("STOP: the expansion job must use the checked addendum launch and the base note's K")
         if host == S.AUDIT_HOST:                                  # R1-G5-AUDIT-TWO-CARDS
             if kind != "audits":
                 raise Stop(f"STOP: only audit chunks run on {S.AUDIT_HOST}")
@@ -1344,11 +1368,16 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         record["claim_sha256"] = claim_sha
         record["crosshost_pass"] = context.get("crosshost_pass")          # the PASS records the switch checked
     gpu = None if node["device"] == "cpu" else w["gpu_uuid"]
-    lease_cm = G.gpu_lease(w["lease"])          # on TASL-7 the proposer server's lease: no shared card
+    leases = contextlib.ExitStack()
     base = run_root(spec)
     try:
-        record["lease"] = lease_cm.__enter__()
+        # Keep the main G.5 worker slot even for CPU-only expansion jobs. The census CPU lease also excludes G.1b.
+        record["lease"] = leases.enter_context(G.gpu_lease(w["lease"]))
+        if addendum:
+            record["cpu_lease"] = leases.enter_context(G.gpu_lease(addendum["cpu_lease"], "CPU-set lease", "G.1b census CPU set"))
+            record["addendum_note_sha256"] = addendum["note_sha256"]
     except Exception as exc:  # noqa: BLE001
+        leases.close()
         G.write_refusal(base, node_name, f"STOP: {exc}", record)
         raise Stop(str(exc)) from exc
     try:
@@ -1356,6 +1385,8 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
             record["engine"] = check_engines(Path(fam["harness_dir"]), fam["g5_commit"], git)
             record["host"] = G.host_identity(shim, host)
             record["affinity"] = G.check_affinity(shim, wnode)
+            if addendum:
+                record["cpu_preflight"] = G.cpu_busy_check(shim, wnode, "before the G.5 job")
             record["gpu"] = G.gpu_check(shim, host, smi) if gpu else {"device": "cpu"}
             if gpu and record["gpu"].get("name") != spec["gpu_model"]:          # one table, one GPU model
                 raise Stop(f"STOP: {record['gpu'].get('name')!r} is not the table's GPU model {spec['gpu_model']}")
@@ -1439,6 +1470,8 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
                 mod, cmd, _ = ENGINES["audit"]
                 argv = [python, "-m", mod, cmd, "--chunk", str(out / "chunk.json")]
                 eng_out = out / "audit"
+            if addendum and node.get("cpu_only") == "census_override":
+                argv[1:3] = ["-c", CPU_ONLY_ENGINE, node_name]
             record["deadline_epoch"] = deadline
             argv += ["--harness-root", str(harness), "--out", str(eng_out)] + (["--gpu-uuid", gpu] if gpu else [])
             record["foreign_checks"].append(G.check_no_foreign(gpu, "before the engine", smi))
@@ -1523,7 +1556,7 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         _write_json(attempt_dir / "diagnostics.json", diag)
         L._write_sums(attempt_dir, ("out.tar", "job_record.json", "diagnostics.json"))
     finally:
-        lease_cm.__exit__(None, None, None)
+        leases.close()
     if kind == "audits" and host == S.WORKER_HOST and record["stop"] is None and audits_done(spec, node_name, wave):
         record["wave_checks"] = wave_checks(spec, node_name, wave)
     if record["stop"]:
@@ -2010,6 +2043,7 @@ def close_attempt(spec: dict, spec_path: Path, node: str, job: str, attempt_dir:
                   "latest_mtime_utc": utc(latest), "gpu_seconds": round(max(0.0, closed - start), 1),
                   "gpu_seconds_to_latest_mtime": round(max(0.0, latest - start), 1), "end_basis": "closed",
                   "stop": f"STOP: closed without a job record: {reason.strip()}", "stop_class": "infrastructure"}
+        record.update(SE.addendum_binding(spec))
         _write_json(attempt_dir / "job_record.json", record)
     return record
 
@@ -2021,14 +2055,20 @@ def serve_launch(spec_path: Path, note_path: Path, *, enable: bool, on_main=G._n
     both keys and the TASL launch binding; then ``g4_tasl.serve_spec`` (lease, binary, build directory, GGUF, exam
     settings, server record) with the G.5 spec."""
     spec_path = Path(spec_path)
-    spec = S.load_spec(spec_path)
+    spec = S.load_spec(spec_path, note_path=note_path, read_main=read_main)
     S.validate_spec(spec, launch=True)
-    S.check_note(note_path, spec_path, spec=spec, on_main=on_main, read_main=read_main)
+    rows = S.PLAN_ROWS
+    if spec.get("_addendum"):
+        from g5_addendum import ROWS
+
+        rows += ROWS
+    else:
+        S.check_note(note_path, spec_path, spec=spec, on_main=on_main, read_main=read_main)
     if not enable or os.environ.get(S.ENABLE_ENV) != "1":
         raise Stop(f"STOP: the G.5 proposer server is disabled (needs --enable AND {S.ENABLE_ENV}=1)")
 
     def bind(repo, s, rows):
         imports = S.check_import_sources(repo)
         return {**G.verify_launch_tasl(repo, s, rows, spec_path=spec_path), "imports": imports}
-    binding = (launch_binding or bind)(S.REPO_ROOT, spec, S.PLAN_ROWS)
+    binding = (launch_binding or bind)(S.REPO_ROOT, spec, rows)
     return (server or T4.serve_spec)(spec, spec_path) | {"launch": binding}
