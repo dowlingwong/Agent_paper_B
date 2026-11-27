@@ -1,7 +1,9 @@
 # G.5 S9 split v2 and G.5 tail-law integration — independent review
 
 `local/20261127-03` unit 1. **ACCEPTED** for the exact implementation and conditional amendment drafts at
-`866fb301e4e21d095cec149716779cf325e1d344`. The initial candidate `095fa11a` was **NOT ACCEPTED**.
+`27aa44706e839ea57123203fbb0cbd37022b017e`. The initial candidate `095fa11a` was **NOT ACCEPTED**.
+The first integrated test at `866fb301` found an unsigned synthetic autoresearch fold fixture. The final
+re-check confirmed the fixture's receipted declaration and fold propagation, with 6 passed and 1 skipped.
 
 The generated split retains the entire T0 block and all eight original T1 node entries byte for byte. It adds
 48 assignments using the existing rule and salts. The v2 file SHA-256 is
