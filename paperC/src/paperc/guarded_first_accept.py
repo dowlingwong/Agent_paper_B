@@ -96,14 +96,16 @@ def verify_keeps(rows: list[dict], start_metric: float) -> list[int]:
 
 
 def accounting(rows: list[dict], events: list[dict]) -> dict:
-    endings = [e["payload"]["compute_budget"] for e in events if e["event_type"] == "campaign_completed"]
-    if len(endings) != 1:
-        raise ValueError("missing or duplicate terminal harness budget")
-    budget = endings[0]
+    endings = [e["payload"] for e in events if e["event_type"] == "campaign_completed"]
+    if len(endings) != 1 or endings[0]["records_written"] != len(rows):
+        raise ValueError("missing, duplicate or inconsistent terminal event")
     runs = sum(features.row_worker_runs(r) for r in rows)
-    calls = budget["llm_calls_used"]
-    if budget["worker_runs_used"] != runs or not 1 <= runs <= 20 or not 1 <= calls <= 80:
-        raise ValueError("ledger is inconsistent with the terminal run/call budget")
+    calls = sum(e["event_type"] == "llm_call" for e in events)
+    proposals = sum(e["event_type"] in ("proposal_created", "proposal_revised")
+                    or (e["event_type"] == "proposal_rejected_inactive_key" and not e["payload"].get("skipped"))
+                    for e in events)
+    if calls != proposals or not 1 <= runs <= 20 or not 1 <= calls <= 80:
+        raise ValueError("ledger or proposal telemetry is inconsistent with the run/call budget")
     return {"candidate_worker_runs": runs, "start_worker_runs": 1, "llm_calls": calls}
 
 
@@ -160,6 +162,7 @@ def run(paper: Path, spec_bytes: bytes, node: str, seed: int, out: Path, scratch
     from autoresearch.memory.event_store import CampaignEventStore
     from autoresearch.nodes.registry import load_registered_node
     from autoresearch.worker.local_worker import LocalWorker
+    from autoresearch.worker.seeds import seed_environment
     from r1.headroom.e1b_collect import make_manager
 
     node_spec = load_registered_node(node, repo_root=h)
@@ -176,12 +179,14 @@ def run(paper: Path, spec_bytes: bytes, node: str, seed: int, out: Path, scratch
         rows = audit.run_config(node, config, seeds, str(scratch), stop_on_invalid=True, stop_on_failure=True,
                                 journal=str(out / f"{label}.jsonl"),
                                 journal_identity={"expected_worker": spec["expected_worker"]})
-        if [row["seed"] for row in rows] != seeds or any(not row["success"] for row in rows):
+        if [row["seed"] for row in rows] != seeds or any(not row["success"] or row["changed_files"] for row in rows):
             raise ValueError(f"incomplete CPU measurement: {label}")
         return [metric(row["metric"], label) for row in rows]
 
     try:
         campaign = f"pc-guarded-first-{node}__s{seed}"
+        worker_runtime = audit.worker_runtime(spec["expected_worker"], node_spec.run_command, seed_environment(seed, seed))
+        (out / "worker_runtime.json").write_text(json.dumps(worker_runtime, indent=2, sort_keys=True) + "\n")
         worker = LocalWorker(node_root=work, artifact_dir=scratch / "art", train_seed=seed, split_seed=seed)
         start, _ = run_guarded(measure_start=lambda: measure("start", start_files, [seed])[0],
                                run_campaign=run_real_campaign, node_spec=node_spec, campaign_id=campaign,
@@ -191,8 +196,7 @@ def run(paper: Path, spec_bytes: bytes, node: str, seed: int, out: Path, scratch
                                                    "temperature": proposer["temperature"],
                                                    "proposal_schema": proposer["proposal_schema"]}),
                                event_store=CampaignEventStore(events),
-                               compute_budget=ComputeBudget(max_worker_runs=20, max_llm_calls=80),
-                               proposal_observer=lambda *_args, **_kwargs: None)
+                               compute_budget=ComputeBudget(max_worker_runs=20, max_llm_calls=80))
         rows = features.read_jsonl(ledger)
         kept = set(verify_keeps(rows, start))
         counts = accounting(rows, features.read_jsonl(events))
@@ -210,7 +214,9 @@ def run(paper: Path, spec_bytes: bytes, node: str, seed: int, out: Path, scratch
         for row in rows:
             if row["budget_index"] in kept:
                 edit = features._row_edit(row)
-                current = features.apply_edit(current, edit) if edit else current
+                if not edit:
+                    raise ValueError("a kept guarded-first row has no replayable edit")
+                current = features.apply_edit(current, edit)
                 candidate = fresh(current)
                 deltas.append({"trial": row["budget_index"], "config": features.files_hash(current),
                                **audit.paired(candidate, previous)})
@@ -220,6 +226,9 @@ def run(paper: Path, spec_bytes: bytes, node: str, seed: int, out: Path, scratch
         c1 = json.loads((paper / C1).read_bytes())
         sigma = dataset.noise_table(paper / C1)[node]["sigma_node"]
         result = {"node": node, "seed": seed, "start_metric": start, "trial_one": rows[0]["decision"],
+                  "paper_commit": note["paper_commit"], "spec_sha256": note["spec_sha256"],
+                  "start_config": features.files_hash(start_files),
+                  "ledger_sha256": hashlib.sha256(ledger.read_bytes()).hexdigest(),
                   "audit_seeds": seeds, "counts": counts, "kept": deltas, "sigma_d": sigma,
                   "c1_sha256": hashlib.sha256((paper / C1).read_bytes()).hexdigest(),
                   "c1_regrets": [e["decision_regret"] for e in c1["nodes"][node]["edits"]
@@ -237,6 +246,12 @@ def summarise(records: list[dict]) -> list[dict]:
     expected = {(node, seed) for node, seeds in INSTANCE_SEEDS.items() for seed in seeds}
     if keys != expected or len(records) != len(keys):
         raise ValueError("guarded-first receipts do not cover the exact roster")
+    if len({(root["paper_commit"], root["spec_sha256"]) for root in records}) != 1:
+        raise ValueError("guarded-first receipts differ in spec or code pin")
+    for root in records:
+        first_seed = AUDIT_START + 10 * (root["seed"] - 62_000)
+        if root["audit_seeds"] != list(range(first_seed, first_seed + 10)):
+            raise ValueError("guarded-first receipt differs from the bound audit seed block")
     out = []
     for node in INSTANCE_SEEDS:
         roots = [r for r in records if r["node"] == node]

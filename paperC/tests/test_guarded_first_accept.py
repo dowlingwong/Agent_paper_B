@@ -53,10 +53,11 @@ def test_a_discard_or_invalid_trial_preserves_start():
 
 def test_guarded_first_accounts_for_prechecks_and_start_separately():
     rows = [{"worker_mode": "local_worker"}, {"worker_mode": "local_worker_precheck"}]
-    events = [{"event_type": "campaign_completed",
-               "payload": {"compute_budget": {"worker_runs_used": 1, "llm_calls_used": 2}}}]
+    events = [{"event_type": "proposal_created"}, {"event_type": "proposal_revised"},
+              {"event_type": "llm_call"}, {"event_type": "llm_call"},
+              {"event_type": "campaign_completed", "payload": {"records_written": 2}}]
     assert guard.accounting(rows, events) == {"candidate_worker_runs": 1, "start_worker_runs": 1,
                                              "llm_calls": 2}
-    events[0]["payload"]["compute_budget"]["worker_runs_used"] = 2
+    events.pop(3)
     with pytest.raises(ValueError, match="inconsistent"):
         guard.accounting(rows, events)
