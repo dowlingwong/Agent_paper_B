@@ -1,0 +1,2314 @@
+{
+ "distinct_trees": 188,
+ "e1_manifest_spans_meeting_block": {},
+ "e1_manifests": {
+  "results/r1/pilot/E1_20261012T145353Z/manifest.json": {
+   "joint": [
+    3001,
+    3010
+   ],
+   "split": [
+    2001,
+    2010
+   ],
+   "train": [
+    1001,
+    1010
+   ]
+  },
+  "results/r1/pilot/E1_20261022T214606Z/manifest.json": {
+   "joint": [
+    3001,
+    3030
+   ],
+   "split": [
+    2001,
+    2030
+   ],
+   "train": [
+    1001,
+    1030
+   ]
+  },
+  "results/r1/pilot/E1_D28_CLIMATE_20261027/manifest.json": {
+   "joint": [
+    3001,
+    3030
+   ],
+   "split": [
+    2001,
+    2030
+   ],
+   "train": [
+    1001,
+    1030
+   ]
+  },
+  "results/r1/pilot/E1_D28_REPAIR_20261027/manifest.json": {
+   "joint": [
+    3001,
+    3030
+   ],
+   "split": [
+    2001,
+    2030
+   ],
+   "train": [
+    1001,
+    1030
+   ]
+  },
+  "results/r1/pilot/E1_remeasure_20261022T100942Z/manifest.json": {
+   "joint": [
+    3001,
+    3030
+   ],
+   "split": [
+    2001,
+    2030
+   ],
+   "train": [
+    1001,
+    1030
+   ]
+  }
+ },
+ "exclude": [
+  "results/r1/evidence/**",
+  "docs/r1/reports/b2_audit_*/**",
+  "docs/r1/reports/sweep2_*/s2_b2_audit_*/**",
+  "**/r1_sealed/**",
+  "**/*label_block*",
+  "**/*evaluation_block*",
+  "**/*test_block*",
+  "**/C3_audit_EVIDENCE*/**",
+  "r1/noise/screen_*.py",
+  "r1/tests/test_screen_measure.py",
+  "docs/r1/authorizations/SCREEN_MEASURE_*",
+  "results/r1/engineering/screen_measure_*/**"
+ ],
+ "hex_run_pattern": "[0-9a-fA-F]{7,}",
+ "include": [
+  "*.py",
+  "*.md",
+  "*.yaml",
+  "*.yml",
+  "*.toml",
+  "*.sh",
+  "*.sub",
+  "*.cfg",
+  "*.txt",
+  "*manifest*.json",
+  "*spec*.json",
+  "*seed*.json",
+  "*design*.json",
+  "*plan*.json"
+ ],
+ "reach_pattern": "(^|[^0-9.])(30[3-9][0-9]|3[1-3][0-9]{2}|34[01][0-9]|3420)([^0-9.]|$)",
+ "refs_sha256": "391ddb2893db38e37018bf511ceb7eef0a835cca8b691bc467d12a8ba1fca48a",
+ "repo_head_count": 205,
+ "seed_reach_hits": [
+  {
+   "contexts": [
+    "T0 and T1) | 1001\u20131030, 2001\u20132030, 3001\u20133030 | `r1/noise/e1_noise_floor.py` `SEED_BA"
+   ],
+   "hex_only": false,
+   "line": 142,
+   "path": "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261122.md",
+   "refs": 1,
+   "text": "| D21 noise floors (T0 and T1) | 1001\u20131030, 2001\u20132030, 3001\u20133030 | `r1/noise/e1_noise_floor.py` `SEED_BASE`; `r1/scripts/build_d28_noise_summary.py`; `authorizations/g1b_t1_tasl_20261121.md` |"
+  },
+  {
+   "contexts": [
+    "\u03c3 (seeds 3001\u20133030, `\"vary\"` split), and the width is s ="
+   ],
+   "hex_only": false,
+   "line": 237,
+   "path": "docs/r1/proposals/T1_G5_AUTHORIZATION_DRAFT_20261120.md",
+   "refs": 42,
+   "text": "\u03c3 (seeds 3001\u20133030, `\"vary\"` split), and the width is s = \u03c3\u0302_node/\u221aK_label (R1-BX-D3). Before any label is"
+  },
+  {
+   "contexts": [
+    "k 5101\u20135112 is disjoint from G.1b (1001\u20133030), G.4 (4001\u20134099), the census seeds"
+   ],
+   "hex_only": false,
+   "line": 322,
+   "path": "docs/r1/proposals/T1_G5_AUTHORIZATION_DRAFT_20261120.md",
+   "refs": 42,
+   "text": "*(proposed)* The instance seed block 5101\u20135112 is disjoint from G.1b (1001\u20133030), G.4 (4001\u20134099), the census seeds"
+  },
+  {
+   "contexts": [
+    "the joint condition is used: seeds 3001\u20133030, with train seed = split seed = s. This"
+   ],
+   "hex_only": false,
+   "line": 78,
+   "path": "docs/r1/reports/CONTROLS_POSITIVE_20261123.md",
+   "refs": 1,
+   "text": "- **Seeds.** Only the joint condition is used: seeds 3001\u20133030, with train seed = split seed = s. This is the pairing the audit uses (`audit.py:3\u20138`)."
+  },
+  {
+   "contexts": [
+    "_collect.py` (blob SHA256 `0001260442f9\u20263271`): the instance-seed rule and `LocalWor"
+   ],
+   "hex_only": false,
+   "line": 27,
+   "path": "docs/r1/reports/MAC_M3_DRYRUNS_20261104.md",
+   "refs": 112,
+   "text": "- the collector binding, read from `ccb4712:r1/headroom/e1b_collect.py` (blob SHA256 `0001260442f9\u20263271`): the instance-seed rule and `LocalWorker(..., train_seed=seed, split_seed=seed)`."
+  },
+  {
+   "contexts": [
+    "22T214606Z` (PILOT, 30 joint seeds 3001\u20133030), `E1_remeasure_\u2026`, `E1_D28_REPAIR_2026"
+   ],
+   "hex_only": false,
+   "line": 15,
+   "path": "docs/r1/reports/SCREENING_TEST_20261122.md",
+   "refs": 1,
+   "text": "| E1 / noise-floor runs: `E1_20261012\u2026`, `E1_20261022T214606Z` (PILOT, 30 joint seeds 3001\u20133030), `E1_remeasure_\u2026`, `E1_D28_REPAIR_20261027` (the pinned noise source), `E1_D28_CLIMATE_\u2026` | **No.** Each node has c0 and five single edits of c"
+  },
+  {
+   "contexts": [
+    "ks and the D.3 seed blocks; for example 3301\u20133420."
+   ],
+   "hex_only": false,
+   "line": 234,
+   "path": "docs/r1/reports/SCREENING_TEST_20261122.md",
+   "refs": 1,
+   "text": "- **Seeds.** **120 joint seeds** (train seed = split seed; 60 at the least) from a fresh block outside 7001\u20137010, the E1 blocks, 5001\u20135006, the Track S blocks and the D.3 seed blocks; for example 3301\u20133420."
+  },
+  {
+   "contexts": [
+    "- The review found 3301\u20133360 clear of `RESERVED_SEED_NAMESPACES",
+    "cks and of the sweep instance universe. 3361\u20133420 needs the same check."
+   ],
+   "hex_only": false,
+   "line": 235,
+   "path": "docs/r1/reports/SCREENING_TEST_20261122.md",
+   "refs": 1,
+   "text": "- The review found 3301\u20133360 clear of `RESERVED_SEED_NAMESPACES` (`r1/c3/d3_analysis.py` @ `mac-d3-predecl-20261122`), of the D.3 blocks and of the sweep instance universe. 3361\u20133420 needs the same check."
+  },
+  {
+   "contexts": [
+    "nchor\": false, \"sum_completion_tokens\": 3389, \"sum_latency_s\": 30.683176908642054, \"",
+    "nchor\": false, \"sum_completion_tokens\": 3285, \"sum_latency_s\": 28.5231031649746, \"tr",
+    "nchor\": false, \"sum_completion_tokens\": 3147, \"sum_latency_s\": 79.68177151773125, \"t",
+    "nchor\": false, \"sum_completion_tokens\": 3303, \"sum_latency_s\": 21.96438471088186, \"t"
+   ],
+   "hex_only": false,
+   "line": 297,
+   "path": "docs/r1/reports/b1_d_20261113_evidence/completion_usage.txt",
+   "refs": 89,
+   "text": "{\"batch_state_sha256\": \"1753fe96a1226e4aff75455a7f60c4c29c81c671110797949c5939c237d16a4c\", \"candidate_modes\": [{\"all_capped_root_hours_at_80_calls\": 7.586854874764156, \"candidate\": \"devstral_small2_24b\", \"completed_roots\": 12, \"llm_calls\": "
+  },
+  {
+   "contexts": [
+    "py:117-122`) is disjoint from G.1b 1001\u20133030, audits"
+   ],
+   "hex_only": false,
+   "line": 120,
+   "path": "docs/r1/reviews/G4_H200_REVIEW_20261121.md",
+   "refs": 42,
+   "text": "> - **Seeds.** The paper allow-list 4001\u20134099 (`g4_lib.py:117-122`) is disjoint from G.1b 1001\u20133030, audits"
+  },
+  {
+   "contexts": [
+    "- **Seeds 3301\u20133360:** clear of every interval in `RES"
+   ],
+   "hex_only": false,
+   "line": 14,
+   "path": "docs/r1/reviews/SCREENING_TEST_REVIEW_20261122.md",
+   "refs": 1,
+   "text": "- **Seeds 3301\u20133360:** clear of every interval in `RESERVED_SEED_NAMESPACES` (`r1/c3/d3_analysis.py:134-149` @ `mac-d3-predecl-20261122`). Also clear of the D.3 blocks (6201\u20136218, 6301\u20136329, 6501\u20136679, 6701\u20136880) and of the sweep instance u"
+  },
+  {
+   "contexts": [
+    "- If Option A is adopted, add 3301\u20133360 to `RESERVED_SEED_NAMESPACES`."
+   ],
+   "hex_only": false,
+   "line": 56,
+   "path": "docs/r1/reviews/SCREENING_TEST_REVIEW_20261122.md",
+   "refs": 1,
+   "text": "- If Option A is adopted, add 3301\u20133360 to `RESERVED_SEED_NAMESPACES`."
+  },
+  {
+   "contexts": [
+    "`counts {duplicates 3274, eligible 1725, noops 0}`, `label_seeds"
+   ],
+   "hex_only": false,
+   "line": 71,
+   "path": "docs/r1/reviews/SWEEP1_TRAINDEV_RELEASE_REVIEW_20261123.md",
+   "refs": 2,
+   "text": "`counts {duplicates 3274, eligible 1725, noops 0}`, `label_seeds`, `evaluation_seeds`) are **exactly equal** to the"
+  },
+  {
+   "contexts": [
+    "s meant: G.1b `joint` \u03c3 from seeds 3001\u20133030, `vary` split. Add the heavy-tail"
+   ],
+   "hex_only": false,
+   "line": 360,
+   "path": "docs/r1/reviews/T1_G5_DRAFT_REVIEW_20261121.md",
+   "refs": 42,
+   "text": "> - **m8 (line 38).** Say which \u03c3\u0302 is meant: G.1b `joint` \u03c3 from seeds 3001\u20133030, `vary` split. Add the heavy-tail"
+  },
+  {
+   "contexts": [
+    "s of seeds 5101\u20135112 holds against 1001\u20133030, 4001\u20134099, 7001\u20137010, 8001\u20138010, 9001+"
+   ],
+   "hex_only": false,
+   "line": 851,
+   "path": "docs/r1/reviews/T1_G5_DRAFT_REVIEW_20261121.md",
+   "refs": 42,
+   "text": "> - **N4.** The disjointness of seeds 5101\u20135112 holds against 1001\u20133030, 4001\u20134099, 7001\u20137010, 8001\u20138010, 9001+ and"
+  },
+  {
+   "contexts": [
+    "\"D21 noise floors, joint seeds\": (3001, 3030),"
+   ],
+   "hex_only": false,
+   "line": 141,
+   "path": "r1/c3/d3_analysis.py",
+   "refs": 1,
+   "text": "\"D21 noise floors, joint seeds\": (3001, 3030),"
+  },
+  {
+   "contexts": [
+    "JOINT_SEEDS = tuple(range(3001, 3031))"
+   ],
+   "hex_only": false,
+   "line": 63,
+   "path": "r1/noise/controls_positive.py",
+   "refs": 1,
+   "text": "JOINT_SEEDS = tuple(range(3001, 3031))"
+  },
+  {
+   "contexts": [
+    "4\", \"condition\": \"joint\", \"train_seed\": 3030, \"split_seed\": 3030}",
+    "int\", \"train_seed\": 3030, \"split_seed\": 3030}"
+   ],
+   "hex_only": false,
+   "line": 136,
+   "path": "r1/tests/htcondor/test_g1b_h200.py",
+   "refs": 42,
+   "text": "assert chunk[\"runs\"][-1] == {\"config\": \"c4\", \"condition\": \"joint\", \"train_seed\": 3030, \"split_seed\": 3030}"
+  },
+  {
+   "contexts": [
+    "1001\u20131030, split 2001\u20132030, joint 3001\u20133030), pinned in `measurement.seed_bases`; t"
+   ],
+   "hex_only": false,
+   "line": 87,
+   "path": "sweep2/g1b/G1B_PLAN.md",
+   "refs": 1,
+   "text": "convention (train 1001\u20131030, split 2001\u20132030, joint 3001\u20133030), pinned in `measurement.seed_bases`; they are disjoint"
+  },
+  {
+   "contexts": [
+    "1001\u20131030, split 2001\u20132030, joint 3001\u20133030), pinned in `measurement.seed_bases`; t"
+   ],
+   "hex_only": false,
+   "line": 87,
+   "path": "sweep2/g1b/superseded_l40s_20261116/G1B_PLAN.md",
+   "refs": 42,
+   "text": "convention (train 1001\u20131030, split 2001\u20132030, joint 3001\u20133030), pinned in `measurement.seed_bases`; they are disjoint"
+  },
+  {
+   "contexts": [
+    "The block is disjoint from G.1b (1001\u20133030), the B.2 audit seeds (7001\u20137010) and t"
+   ],
+   "hex_only": false,
+   "line": 64,
+   "path": "sweep2/g4/G4_PILOT_PLAN.md",
+   "refs": 42,
+   "text": "The block is disjoint from G.1b (1001\u20133030), the B.2 audit seeds (7001\u20137010) and the exam seeds (9001+). Both the"
+  }
+ ],
+ "seed_reach_hits_hex_only": {
+  "by_path": {
+   "docs/r1/PLAN.md": 1,
+   "docs/r1/reports/B1_ANCHOR_DUPLICATE_REFERENCE_REPORT_20261107.md": 1,
+   "docs/r1/reports/B1_MONITOR_INITIAL_6835_20261108.md": 5,
+   "docs/r1/reviews/MAC_A1_REQUIREMENTS_REVIEW_20261104.md": 1,
+   "sweep2/dryrun/c3b/s2_c3b_lib.py": 1,
+   "sweep2/dryrun/c3b/stage/s2_c3b_lib.py": 1,
+   "sweep2/s2_c3b_lib.py": 1
+  },
+  "count": 11
+ },
+ "static_check": {
+  "additional": {
+   "G.4 pilot seed allow-list (sweep2/g4/g4_lib.py; sweep2/t1_tasl/g4_tasl.py: 4001-4099)": [
+    4001,
+    4099,
+    99
+   ]
+  },
+  "block": [
+   3301,
+   3420,
+   120
+  ],
+  "d3": {
+   "D.3 audit seeds (6700 + 10 i + k)": [
+    6701,
+    6880,
+    180
+   ],
+   "D.3 instance seeds": [
+    6201,
+    6218,
+    18
+   ],
+   "D.3 replicate seeds (6500 + 10 i + j)": [
+    6501,
+    6679,
+    162
+   ],
+   "D.3 smoke replicate seeds (6300 + 10 (s - 6300) + j)": [
+    6311,
+    6329,
+    18
+   ],
+   "D.3 smoke seeds": [
+    6301,
+    6302,
+    2
+   ]
+  },
+  "reserved": {
+   "B.2 audit seeds, label 7001-7005 and evaluation 7006-7010 (r1/c3/audit.py DEFAULT_SEEDS)": [
+    7001,
+    7010,
+    10
+   ],
+   "D21 noise floors, joint seeds": [
+    3001,
+    3030,
+    30
+   ],
+   "D21 noise floors, split seeds": [
+    2001,
+    2030,
+    30
+   ],
+   "D21 noise floors, train seeds (r1/noise/e1_noise_floor.py SEED_BASE; g1b note: 30 seeds)": [
+    1001,
+    1030,
+    30
+   ],
+   "E1b audit seeds (r1/headroom/e1b_collect.py AUDIT_SEED_BASE; R1-E1B-RERUN2)": [
+    5001,
+    5006,
+    6
+   ],
+   "G.1b proposed training-seed block (RUNBOOK G.1b; sweep2/s2_c3b_lib.py G1B_SEED_BLOCK)": [
+    8001,
+    8010,
+    10
+   ],
+   "G.4 pilot instance seeds (authorizations/g4_t1_tasl_20261122.md)": [
+    4001,
+    4003,
+    3
+   ],
+   "S2-C3b prompt-measurement seeds (sweep2/s2_c3b_lib.py PROMPT_MEASUREMENT_SEEDS)": [
+    6101,
+    6108,
+    8
+   ],
+   "T1 G.5 instance seeds = P3 T1 split universe (r1/c3/p3_split.py T1_SEEDS)": [
+    5101,
+    5112,
+    12
+   ],
+   "Track S audit blocks (r1/tracks/collect.py AUDIT_SEED_BASES)": [
+    100000,
+    799999,
+    700000
+   ],
+   "Track S instance blocks (r1/tracks/collect.py INSTANCE_SEED_BLOCKS on trackS-ops-20261030)": [
+    30000,
+    39999,
+    10000
+   ],
+   "engineering smoke seeds (r1/e2e.py 999)": [
+    999,
+    999,
+    1
+   ],
+   "exam instance and audit seeds (r1/exam/namespace.py; sweep2/s2_c3b_lib.py EXAM_SEED_BLOCK 9001-9303)": [
+    9001,
+    9303,
+    303
+   ],
+   "sweep 1 and sweep 2 instance seeds = P3 T0 split universe (e1b_collect._instance_seed, k = 0..17)": [
+    100,
+    275,
+    90
+   ]
+  }
+ },
+ "token_hits": [
+  {
+   "contexts": [
+    "ges/coding-agent/test/suite/regressions/3302-find-path-glob.test.ts"
+   ],
+   "hex_only": false,
+   "line": 1048,
+   "path": "archive/old_b_2026-10-09/code/scripts/pi_pristine_manifest.txt",
+   "refs": 205,
+   "text": "d8816a5ed1f3033439e7866dc9c7b87b7e7a265caf186bae3817443b597e1d02  packages/coding-agent/test/suite/regressions/3302-find-path-glob.test.ts"
+  },
+  {
+   "contexts": [
+    "ges/coding-agent/test/suite/regressions/3303-find-nested-gitignore.test.ts"
+   ],
+   "hex_only": false,
+   "line": 1049,
+   "path": "archive/old_b_2026-10-09/code/scripts/pi_pristine_manifest.txt",
+   "refs": 205,
+   "text": "bcc7517366d11bf9cc3b8dade9d54bfbe6cd482a23deb9d6d966d1b2e09c6982  packages/coding-agent/test/suite/regressions/3303-find-nested-gitignore.test.ts"
+  },
+  {
+   "contexts": [
+    "ges/coding-agent/test/suite/regressions/3317-network-connection-lost-retry.test.ts"
+   ],
+   "hex_only": false,
+   "line": 1050,
+   "path": "archive/old_b_2026-10-09/code/scripts/pi_pristine_manifest.txt",
+   "refs": 205,
+   "text": "284f28f007e337c75709cfd54593295ea0fcbacdd4bb2bce83ee1b165b73f663  packages/coding-agent/test/suite/regressions/3317-network-connection-lost-retry.test.ts"
+  },
+  {
+   "contexts": [
+    "ace instead of hardcoded `127.0.0.1` ([#3409](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3409) by [@Michaelliv](https://github.com/Mi"
+   ],
+   "hex_only": false,
+   "line": 927,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Added `PI_OAUTH_CALLBACK_HOST` support for built-in Anthropic, Gemini CLI, Google Antigravity, and OpenAI Codex OAuth flows, allowing local callback servers to bind to a custom interface instead of hardcoded `127.0.0.1` ([#3409](https://g"
+  },
+  {
+   "contexts": [
+    "id unnecessary TPM quota reservation ([#3400](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3400) by [@wirjo](https://github.com/wirjo))"
+   ],
+   "hex_only": false,
+   "line": 931,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Changed Bedrock Converse requests to omit `inferenceConfig.maxTokens` when model token limits are unknown and to omit `temperature` when unset, letting Bedrock use model defaults and avoid unnecessary TPM quota reservation ([#3400](https:"
+  },
+  {
+   "contexts": [
+    "sages contain both thinking and text ([#3387](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3387))"
+   ],
+   "hex_only": false,
+   "line": 935,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed `openai-completions` `compat.requiresThinkingAsText` assistant replay to preserve text-part serialization and avoid same-model crashes when prior assistant messages contain both thinking and text ([#3387](https://github.com/badlogic"
+  },
+  {
+   "contexts": [
+    "n failures for tool-enabled requests ([#3412](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3412) by [@vladlearns](https://github.com/vl"
+   ],
+   "hex_only": false,
+   "line": 936,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed Cloud Code Assist tool schemas to strip JSON Schema meta-declaration keys such as `$schema`, `$defs`, and `definitions` before sending OpenAPI `parameters`, avoiding provider validation failures for tool-enabled requests ([#3412](ht"
+  },
+  {
+   "contexts": [
+    "ndpoints such as VPC or proxy routes ([#3402](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3402) by [@wirjo](https://github.com/wirjo))"
+   ],
+   "hex_only": false,
+   "line": 940,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed direct Bedrock runtime client construction to pass `model.baseUrl` through as the SDK `endpoint`, restoring support for custom Bedrock endpoints such as VPC or proxy routes ([#3402](https://github.com/badlogic/pi-mono/pull/3402) by "
+  },
+  {
+   "contexts": [
+    "ls so prompt caching works there too ([#3392](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3392))"
+   ],
+   "hex_only": false,
+   "line": 941,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed OpenAI-compatible Chat Completions Anthropic-style prompt caching to apply `cache_control` markers to the system prompt, last tool definition, and last user/assistant text content via `compat.cacheControlFormat`, and enabled that co"
+  },
+  {
+   "contexts": [
+    "GovCloud Converse validation errors ([#3359](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3359))"
+   ],
+   "hex_only": false,
+   "line": 947,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed Bedrock bearer-token authentication to use the SDK's native token auth path and omit Claude `thinking.display` for GovCloud targets, avoiding duplicate `Authorization` headers and GovCloud Converse validation errors ([#3359](https:/"
+  },
+  {
+   "contexts": [
+    "e SDK's stricter outbound validation ([#3361](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3361))"
+   ],
+   "hex_only": false,
+   "line": 948,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed direct Mistral tool definitions to strip TypeBox symbol metadata before passing schemas to the SDK, restoring tool calls after the SDK's stricter outbound validation ([#3361](https://github.com/badlogic/pi-mono/issues/3361))"
+  },
+  {
+   "contexts": [
+    "all-2603` and `mistral-small-latest` ([#3338](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3338))"
+   ],
+   "hex_only": false,
+   "line": 959,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed Mistral Small 4 reasoning requests to use `reasoning_effort` instead of `prompt_mode`, restoring default thinking support for `mistral-small-2603` and `mistral-small-latest` ([#3338](https://github.com/badlogic/pi-mono/issues/3338))"
+  },
+  {
+   "contexts": [
+    "of degrading to empty `{}` payloads ([#3325](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3325))"
+   ],
+   "hex_only": false,
+   "line": 960,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed `qwen-chat-template` OpenAI-compatible requests to set `chat_template_kwargs.preserve_thinking: true`, preserving prior Qwen thinking across turns so multi-turn tool calls keep their arguments instead of degrading to empty `{}` payl"
+  },
+  {
+   "contexts": [
+    "ligned with the caller-selected tier ([#3307](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3307) by [@markusylisiurunen](https://github"
+   ],
+   "hex_only": false,
+   "line": 961,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed OpenAI Codex service-tier accounting to trust the explicitly requested tier when the API echoes the default tier in responses, keeping downstream usage costs aligned with the caller-selected tier ([#3307](https://github.com/badlogic"
+  },
+  {
+   "contexts": [
+    ", and updated extension/TUI/RPC docs ([#3413](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3413))"
+   ],
+   "hex_only": false,
+   "line": 1720,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Added extension support for customizing the interactive streaming working indicator via `ctx.ui.setWorkingIndicator()`, including custom animated frames, static indicators, hidden indicators, a new `working-indicator.ts` example extension"
+  },
+  {
+   "contexts": [
+    "an be remapped in `keybindings.json` ([#3343](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3343) by [@mpazik](https://github.com/mpazik"
+   ],
+   "hex_only": false,
+   "line": 1724,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Added configurable keybinding ids for scoped model selector actions and tree filter actions, so those interactive shortcuts can be remapped in `keybindings.json` ([#3343](https://github.com/badlogic/pi-mono/pull/3343) by [@mpazik](https:/"
+  },
+  {
+   "contexts": [
+    "ace instead of hardcoded `127.0.0.1` ([#3409](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3409) by [@Michaelliv](https://github.com/Mi"
+   ],
+   "hex_only": false,
+   "line": 1725,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Added `PI_OAUTH_CALLBACK_HOST` support for built-in OAuth login flows, allowing local callback servers used by `pi auth` to bind to a custom interface instead of hardcoded `127.0.0.1` ([#3409](https://github.com/badlogic/pi-mono/pull/3409"
+  },
+  {
+   "contexts": [
+    "id unnecessary TPM quota reservation ([#3400](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3400) by [@wirjo](https://github.com/wirjo))"
+   ],
+   "hex_only": false,
+   "line": 1731,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Changed Bedrock session requests to omit `maxTokens` when model token limits are unknown and to omit `temperature` when unset, letting Bedrock use provider defaults and avoid unnecessary TPM quota reservation ([#3400](https://github.com/b"
+  },
+  {
+   "contexts": [
+    "stant messages mix thinking and text ([#3387](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3387))"
+   ],
+   "hex_only": false,
+   "line": 1741,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed `openai-completions` assistant replay to preserve `compat.requiresThinkingAsText` text-part serialization, avoiding same-model follow-up crashes when previous assistant messages mix thinking and text ([#3387](https://github.com/badl"
+  },
+  {
+   "contexts": [
+    "or active-session delete protection ([#3364](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3364))"
+   ],
+   "hex_only": false,
+   "line": 1744,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed threaded `/resume` session relationships and current-session detection to canonicalize symlinked session paths during selector comparisons, so shared session directories no longer break parent-child matching or active-session delete"
+  },
+  {
+   "contexts": [
+    "ession` shows the current session ID ([#3390](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3390))"
+   ],
+   "hex_only": false,
+   "line": 1745,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed `/session`, Sessions docs, and CLI help to consistently document that session reuse supports both file paths and session IDs, and that `/session` shows the current session ID ([#3390](https://github.com/badlogic/pi-mono/issues/3390)"
+  },
+  {
+   "contexts": [
+    "gent` instead of falling back to npm ([#3378](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3378))"
+   ],
+   "hex_only": false,
+   "line": 1746,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed Windows pnpm global install detection to recognize `\\\\.pnpm\\\\` store paths, so update notices now suggest `pnpm install -g @mariozechner/pi-coding-agent` instead of falling back to npm ([#3378](https://github.com/badlogic/pi-mono/is"
+  },
+  {
+   "contexts": [
+    "eserved `Ctrl+T` / `Ctrl+O` bindings ([#3374](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3374) by [@vekexasia](https://github.com/vek"
+   ],
+   "hex_only": false,
+   "line": 1751,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed exported share pages to use browser-safe `T` and `O` shortcuts with clickable header toggles for thinking and tool visibility instead of browser-reserved `Ctrl+T` / `Ctrl+O` bindings ([#3374](https://github.com/badlogic/pi-mono/pull"
+  },
+  {
+   "contexts": [
+    "skills` points to `~/.agents/skills` ([#3417](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3417) by [@rwachtler](https://github.com/rwa"
+   ],
+   "hex_only": false,
+   "line": 1752,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed skill resolution to dedupe symlinked aliases by canonical path, so `pi config` no longer shows duplicate skill entries when `~/.pi/agent/skills` points to `~/.agents/skills` ([#3417](https://github.com/badlogic/pi-mono/pull/3417) by"
+  },
+  {
+   "contexts": [
+    "SDK and install telemetry is enabled ([#3414](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3414))"
+   ],
+   "hex_only": false,
+   "line": 1753,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed OpenRouter request attribution to include Pi app headers (`HTTP-Referer: https://pi.dev`, `X-OpenRouter-Title: pi`, `X-OpenRouter-Categories: cli-agent`) when sessions are created through the coding-agent SDK and install telemetry i"
+  },
+  {
+   "contexts": [
+    "caching via `cache_control` markers ([#3392](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3392))"
+   ],
+   "hex_only": false,
+   "line": 1754,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed custom-model `compat` schema/docs to support `cacheControlFormat: \"anthropic\"` for OpenAI-compatible providers that expose Anthropic-style prompt caching via `cache_control` markers ([#3392](https://github.com/badlogic/pi-mono/issue"
+  },
+  {
+   "contexts": [
+    "hema`, `$defs`, and related metadata ([#3412](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3412) by [@vladlearns](https://github.com/vl"
+   ],
+   "hex_only": false,
+   "line": 1755,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed Cloud Code Assist tool schemas to strip JSON Schema meta-declaration keys before provider translation, avoiding validation failures for tool-enabled sessions that use `$schema`, `$defs`, and related metadata ([#3412](https://github."
+  },
+  {
+   "contexts": [
+    "r custom Bedrock VPC or proxy routes ([#3402](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3402) by [@wirjo](https://github.com/wirjo))"
+   ],
+   "hex_only": false,
+   "line": 1756,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed direct Bedrock sessions to honor `model.baseUrl` as the runtime client endpoint, restoring support for custom Bedrock VPC or proxy routes ([#3402](https://github.com/badlogic/pi-mono/pull/3402) by [@wirjo](https://github.com/wirjo))"
+  },
+  {
+   "contexts": [
+    "nger fall back to ad-hoc shell edits ([#3370](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3370) by [@dannote](https://github.com/danno"
+   ],
+   "hex_only": false,
+   "line": 1757,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed the `edit` tool to coerce stringified `edits` JSON before validation, so models that send the array payload as a JSON string no longer fall back to ad-hoc shell edits ([#3370](https://github.com/badlogic/pi-mono/pull/3370) by [@dann"
+  },
+  {
+   "contexts": [
+    "st patterns such as `skills/**/*.md` ([#3350](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3350) by [@neonspectra](https://github.com/n"
+   ],
+   "hex_only": false,
+   "line": 1758,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed package manifest positive glob entries to expand before loading packaged resources, restoring manifest patterns such as `skills/**/*.md` ([#3350](https://github.com/badlogic/pi-mono/pull/3350) by [@neonspectra](https://github.com/ne"
+  },
+  {
+   "contexts": [
+    "list and marking the selector dirty ([#3331](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3331))"
+   ],
+   "hex_only": false,
+   "line": 1774,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed `/scoped-models` Alt+Up/Down to stay a no-op in the implicit `all enabled` state instead of materializing a full explicit enabled-model list and marking the selector dirty ([#3331](https://github.com/badlogic/pi-mono/issues/3331))"
+  },
+  {
+   "contexts": [
+    "all-2603` and `mistral-small-latest` ([#3338](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3338))"
+   ],
+   "hex_only": false,
+   "line": 1775,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed Mistral Small 4 default thinking requests to use the model's supported reasoning control, avoiding `400` errors when starting sessions on `mistral-small-2603` and `mistral-small-latest` ([#3338](https://github.com/badlogic/pi-mono/i"
+  },
+  {
+   "contexts": [
+    "of degrading to empty `{}` payloads ([#3325](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3325))"
+   ],
+   "hex_only": false,
+   "line": 1776,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed Qwen chat-template thinking replay to preserve prior thinking across turns, so affected OpenAI-compatible models keep multi-turn tool-call arguments instead of degrading to empty `{}` payloads ([#3325](https://github.com/badlogic/pi"
+  },
+  {
+   "contexts": [
+    "click-based expand/collapse toggles ([#3332](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3332) by [@xu0o0](https://github.com/xu0o0))"
+   ],
+   "hex_only": false,
+   "line": 1777,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed exported HTML transcripts so text selection no longer triggers click-based expand/collapse toggles ([#3332](https://github.com/badlogic/pi-mono/pull/3332) by [@xu0o0](https://github.com/xu0o0))"
+  },
+  {
+   "contexts": [
+    "try instead of terminating the agent ([#3317](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3317))"
+   ],
+   "hex_only": false,
+   "line": 1780,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed auto-retry transient error detection to treat `Network connection lost.` as retryable, so dropped provider connections retry instead of terminating the agent ([#3317](https://github.com/badlogic/pi-mono/issues/3317))"
+  },
+  {
+   "contexts": [
+    "needed to make local entries unique ([#3308](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3308))"
+   ],
+   "hex_only": false,
+   "line": 1781,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed compact interactive extension startup summaries to disambiguate package extensions and repeated local `index.ts` entries by using package-aware labels and the minimal parent path needed to make local entries unique ([#3308](https://"
+  },
+  {
+   "contexts": [
+    "plays aligned with the selected tier ([#3307](https://github.com/badlogic/pi-mono/pu",
+    "ttps://github.com/badlogic/pi-mono/pull/3307) by [@markusylisiurunen](https://github"
+   ],
+   "hex_only": false,
+   "line": 1785,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed OpenAI Codex service-tier cost accounting to trust the explicitly requested tier when the API echoes the default tier in responses, keeping session cost displays aligned with the selected tier ([#3307](https://github.com/badlogic/pi"
+  },
+  {
+   "contexts": [
+    "g the pattern when it contains a `/` ([#3302](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3302))"
+   ],
+   "hex_only": false,
+   "line": 1815,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed `find` tool returning no results for path-based glob patterns such as `src/**/*.spec.ts` or `some/parent/child/**` by switching fd into full-path mode and normalizing the pattern when it contains a `/` ([#3302](https://github.com/ba"
+  },
+  {
+   "contexts": [
+    "ore` handling via `--no-require-git` ([#3303](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3303))"
+   ],
+   "hex_only": false,
+   "line": 1816,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/coding-agent/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Fixed `find` tool applying nested `.gitignore` rules across sibling directories (e.g. rules from `a/.gitignore` hiding matching files under `b/`) by dropping the manual `--ignore-file` collection and delegating to fd's hierarchical `.giti"
+  },
+  {
+   "contexts": [
+    "static, or hidden loader indicators ([#3413](https://github.com/badlogic/pi-mono/is",
+    "ps://github.com/badlogic/pi-mono/issues/3413))"
+   ],
+   "hex_only": false,
+   "line": 371,
+   "path": "archive/old_b_2026-10-09/code/third_party/pi/packages/tui/CHANGELOG.md",
+   "refs": 205,
+   "text": "- Added `LoaderIndicatorOptions` and `Loader.setIndicator()` support for custom loader frames and animation intervals, allowing TUI consumers to use animated, static, or hidden loader indicators ([#3413](https://github.com/badlogic/pi-mono/"
+  },
+  {
+   "contexts": [
+    "re-review of v3 (`SHA256SUMS` `8f033b81\u20263413d`):"
+   ],
+   "hex_only": false,
+   "line": 61,
+   "path": "docs/r1/reports/EXAM_D3_COOPERATIVE_LEASEGUARD_20261101.md",
+   "refs": 146,
+   "text": "- All three were fixed; re-review of v3 (`SHA256SUMS` `8f033b81\u20263413d`):"
+  },
+  {
+   "contexts": [
+    "ks and the D.3 seed blocks; for example 3301\u20133420."
+   ],
+   "hex_only": false,
+   "line": 234,
+   "path": "docs/r1/reports/SCREENING_TEST_20261122.md",
+   "refs": 1,
+   "text": "- **Seeds.** **120 joint seeds** (train seed = split seed; 60 at the least) from a fresh block outside 7001\u20137010, the E1 blocks, 5001\u20135006, the Track S blocks and the D.3 seed blocks; for example 3301\u20133420."
+  },
+  {
+   "contexts": [
+    "- The review found 3301\u20133360 clear of `RESERVED_SEED_NAMESPACES",
+    "cks and of the sweep instance universe. 3361\u20133420 needs the same check."
+   ],
+   "hex_only": false,
+   "line": 235,
+   "path": "docs/r1/reports/SCREENING_TEST_20261122.md",
+   "refs": 1,
+   "text": "- The review found 3301\u20133360 clear of `RESERVED_SEED_NAMESPACES` (`r1/c3/d3_analysis.py` @ `mac-d3-predecl-20261122`), of the D.3 blocks and of the sweep instance universe. 3361\u20133420 needs the same check."
+  },
+  {
+   "contexts": [
+    "ff: linear attention (expected) | 988 | 3343 | 0.83 |"
+   ],
+   "hex_only": false,
+   "line": 11,
+   "path": "docs/r1/reports/TRACKP_P0_SPIKES_20261026.md",
+   "refs": 171,
+   "text": "| kev-0.8b | kev | 11,350,529 | 3.370 \u2192 2.601 | identical | off: linear attention (expected) | 988 | 3343 | 0.83 |"
+  },
+  {
+   "contexts": [
+    "nchor\": false, \"sum_completion_tokens\": 3389, \"sum_latency_s\": 30.683176908642054, \"",
+    "nchor\": false, \"sum_completion_tokens\": 3303, \"sum_latency_s\": 21.96438471088186, \"t"
+   ],
+   "hex_only": false,
+   "line": 297,
+   "path": "docs/r1/reports/b1_d_20261113_evidence/completion_usage.txt",
+   "refs": 89,
+   "text": "{\"batch_state_sha256\": \"1753fe96a1226e4aff75455a7f60c4c29c81c671110797949c5939c237d16a4c\", \"candidate_modes\": [{\"all_capped_root_hours_at_80_calls\": 7.586854874764156, \"candidate\": \"devstral_small2_24b\", \"completed_roots\": 12, \"llm_calls\": "
+  },
+  {
+   "contexts": [
+    "-rw-rw-r--  1 dowling dowling      3358 11\u6708  8 16:34 s01_rerun_20261109_launch."
+   ],
+   "hex_only": false,
+   "line": 95,
+   "path": "docs/r1/reports/b2_exec_20261115/trks_stop/tasl2_census_20261115/inventory.txt",
+   "refs": 88,
+   "text": "-rw-rw-r--  1 dowling dowling      3358 11\u6708  8 16:34 s01_rerun_20261109_launch.log"
+  },
+  {
+   "contexts": [
+    "0:00:12  0:00:05  258M\r 75 4466M   75 3356M    0     0   256M      0  0:00:17  0:0"
+   ],
+   "hex_only": false,
+   "line": 5,
+   "path": "docs/r1/reports/htcondor_chain_20261114/i3/out_nemo2/i3_download.txt",
+   "refs": 89,
+   "text": "3 4466M    3  172M    0     0   162M      0  0:00:27  0:00:01  0:00:26  162M\r  9 4466M    9  443M    0     0   214M      0  0:00:20  0:00:02  0:00:18  270M\r 16 4466M   16  714M    0     0   233M      0  0:00:19  0:00:03  0:00:16  271M\r 22 4"
+  },
+  {
+   "contexts": [
+    "66` baseline | `r1/tests`: **80 failed, 3360 passed, 142 skipped, 53 subtests passed"
+   ],
+   "hex_only": false,
+   "line": 108,
+   "path": "docs/r1/reports/release_20261122/SWEEP1_RELEASE_COMPAT_20261122.md",
+   "refs": 2,
+   "text": "| main `1402f466` baseline | `r1/tests`: **80 failed, 3360 passed, 142 skipped, 53 subtests passed** |"
+  },
+  {
+   "contexts": [
+    "18550a3f` (first full run) | 81 failed, 3368 passed; one extra transient `test_c3_co"
+   ],
+   "hex_only": false,
+   "line": 109,
+   "path": "docs/r1/reports/release_20261122/SWEEP1_RELEASE_COMPAT_20261122.md",
+   "refs": 2,
+   "text": "| branch `18550a3f` (first full run) | 81 failed, 3368 passed; one extra transient `test_c3_control_dryrun_end_to_end`, which passes standalone on both branch and baseline |"
+  },
+  {
+   "contexts": [
+    "`18550a3f` (full rerun) | **80 failed, 3369 passed, 142 skipped, 53 subtests passed"
+   ],
+   "hex_only": false,
+   "line": 110,
+   "path": "docs/r1/reports/release_20261122/SWEEP1_RELEASE_COMPAT_20261122.md",
+   "refs": 2,
+   "text": "| branch `18550a3f` (full rerun) | **80 failed, 3369 passed, 142 skipped, 53 subtests passed** |"
+  },
+  {
+   "contexts": [
+    "/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.485466"
+   ],
+   "hex_only": false,
+   "line": 205,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.4854662530|664|1011|1011|1|56889870"
+  },
+  {
+   "contexts": [
+    "VIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.530586"
+   ],
+   "hex_only": false,
+   "line": 414,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.5305862750|664|1011|1011|1|56890122"
+  },
+  {
+   "contexts": [
+    "/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.691323"
+   ],
+   "hex_only": false,
+   "line": 622,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.6913233310|664|1011|1011|1|56892058"
+  },
+  {
+   "contexts": [
+    "wen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.064787"
+   ],
+   "hex_only": false,
+   "line": 830,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.0647871860|664|1011|1011|1|56892562"
+  },
+  {
+   "contexts": [
+    "ENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.751025"
+   ],
+   "hex_only": false,
+   "line": 834,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.7510250040|664|1011|1011|1|56893371"
+  },
+  {
+   "contexts": [
+    "/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.304414"
+   ],
+   "hex_only": false,
+   "line": 1035,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.3044149210|664|1011|1011|1|56893370"
+  },
+  {
+   "contexts": [
+    "/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.485466"
+   ],
+   "hex_only": false,
+   "line": 205,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.4854662530|664|1011|1011|1|56889870"
+  },
+  {
+   "contexts": [
+    "VIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.530586"
+   ],
+   "hex_only": false,
+   "line": 414,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.5305862750|664|1011|1011|1|56890122"
+  },
+  {
+   "contexts": [
+    "/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.691323"
+   ],
+   "hex_only": false,
+   "line": 622,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.6913233310|664|1011|1011|1|56892058"
+  },
+  {
+   "contexts": [
+    "wen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.064787"
+   ],
+   "hex_only": false,
+   "line": 830,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.0647871860|664|1011|1011|1|56892562"
+  },
+  {
+   "contexts": [
+    "ENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.751025"
+   ],
+   "hex_only": false,
+   "line": 834,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.7510250040|664|1011|1011|1|56893371"
+  },
+  {
+   "contexts": [
+    "/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.304414"
+   ],
+   "hex_only": false,
+   "line": 1035,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.3044149210|664|1011|1011|1|56893370"
+  },
+  {
+   "contexts": [
+    "/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.485466"
+   ],
+   "hex_only": false,
+   "line": 205,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.4854662530|664|1011|1011|1|56889870"
+  },
+  {
+   "contexts": [
+    "VIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.530586"
+   ],
+   "hex_only": false,
+   "line": 414,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.5305862750|664|1011|1011|1|56890122"
+  },
+  {
+   "contexts": [
+    "/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.691323"
+   ],
+   "hex_only": false,
+   "line": 622,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.6913233310|664|1011|1011|1|56892058"
+  },
+  {
+   "contexts": [
+    "wen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.064787"
+   ],
+   "hex_only": false,
+   "line": 830,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.0647871860|664|1011|1011|1|56892562"
+  },
+  {
+   "contexts": [
+    "ENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.751025"
+   ],
+   "hex_only": false,
+   "line": 834,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.7510250040|664|1011|1011|1|56893371"
+  },
+  {
+   "contexts": [
+    "/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.304414"
+   ],
+   "hex_only": false,
+   "line": 1035,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.3044149210|664|1011|1011|1|56893370"
+  },
+  {
+   "contexts": [
+    "/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.485466"
+   ],
+   "hex_only": false,
+   "line": 205,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.4854662530|664|1011|1011|1|56889870"
+  },
+  {
+   "contexts": [
+    "VIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.530586"
+   ],
+   "hex_only": false,
+   "line": 414,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.5305862750|664|1011|1011|1|56890122"
+  },
+  {
+   "contexts": [
+    "/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.691323"
+   ],
+   "hex_only": false,
+   "line": 622,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.6913233310|664|1011|1011|1|56892058"
+  },
+  {
+   "contexts": [
+    "wen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.064787"
+   ],
+   "hex_only": false,
+   "line": 830,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.0647871860|664|1011|1011|1|56892562"
+  },
+  {
+   "contexts": [
+    "ENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.751025"
+   ],
+   "hex_only": false,
+   "line": 834,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.7510250040|664|1011|1011|1|56893371"
+  },
+  {
+   "contexts": [
+    "/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.304414"
+   ],
+   "hex_only": false,
+   "line": 1035,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.3044149210|664|1011|1011|1|56893370"
+  },
+  {
+   "contexts": [
+    "/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.485466"
+   ],
+   "hex_only": false,
+   "line": 205,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.4854662530|664|1011|1011|1|56889870"
+  },
+  {
+   "contexts": [
+    "VIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.530586"
+   ],
+   "hex_only": false,
+   "line": 414,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.5305862750|664|1011|1011|1|56890122"
+  },
+  {
+   "contexts": [
+    "/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.691323"
+   ],
+   "hex_only": false,
+   "line": 622,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.6913233310|664|1011|1011|1|56892058"
+  },
+  {
+   "contexts": [
+    "wen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.064787"
+   ],
+   "hex_only": false,
+   "line": 830,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.0647871860|664|1011|1011|1|56892562"
+  },
+  {
+   "contexts": [
+    "ENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.751025"
+   ],
+   "hex_only": false,
+   "line": 834,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.7510250040|664|1011|1011|1|56893371"
+  },
+  {
+   "contexts": [
+    "/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.304414"
+   ],
+   "hex_only": false,
+   "line": 1035,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_after.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.3044149210|664|1011|1011|1|56893370"
+  },
+  {
+   "contexts": [
+    "/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.485466"
+   ],
+   "hex_only": false,
+   "line": 205,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.4854662530|664|1011|1011|1|56889870"
+  },
+  {
+   "contexts": [
+    "VIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.530586"
+   ],
+   "hex_only": false,
+   "line": 414,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.5305862750|664|1011|1011|1|56890122"
+  },
+  {
+   "contexts": [
+    "/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.691323"
+   ],
+   "hex_only": false,
+   "line": 622,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.6913233310|664|1011|1011|1|56892058"
+  },
+  {
+   "contexts": [
+    "wen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.064787"
+   ],
+   "hex_only": false,
+   "line": 830,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.0647871860|664|1011|1011|1|56892562"
+  },
+  {
+   "contexts": [
+    "ENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.751025"
+   ],
+   "hex_only": false,
+   "line": 834,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.7510250040|664|1011|1011|1|56893371"
+  },
+  {
+   "contexts": [
+    "/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.304414"
+   ],
+   "hex_only": false,
+   "line": 1035,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_before.tree.txt",
+   "refs": 2,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.3044149210|664|1011|1011|1|56893370"
+  },
+  {
+   "contexts": [
+    "/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.485466"
+   ],
+   "hex_only": false,
+   "line": 205,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.4854662530|664|1011|1011|1|56889870"
+  },
+  {
+   "contexts": [
+    "VIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.530586"
+   ],
+   "hex_only": false,
+   "line": 414,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.5305862750|664|1011|1011|1|56890122"
+  },
+  {
+   "contexts": [
+    "/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.691323"
+   ],
+   "hex_only": false,
+   "line": 622,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.6913233310|664|1011|1011|1|56892058"
+  },
+  {
+   "contexts": [
+    "wen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.064787"
+   ],
+   "hex_only": false,
+   "line": 830,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.0647871860|664|1011|1011|1|56892562"
+  },
+  {
+   "contexts": [
+    "ENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.751025"
+   ],
+   "hex_only": false,
+   "line": 834,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.7510250040|664|1011|1011|1|56893371"
+  },
+  {
+   "contexts": [
+    "/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.304414"
+   ],
+   "hex_only": false,
+   "line": 1035,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_after.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.3044149210|664|1011|1011|1|56893370"
+  },
+  {
+   "contexts": [
+    "/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.485466"
+   ],
+   "hex_only": false,
+   "line": 205,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/DRYRUN/kev-0.8b/select/manifest.json|f|3351|1793106742.4854662530|1793106742.4854662530|664|1011|1011|1|56889870"
+  },
+  {
+   "contexts": [
+    "VIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.530586"
+   ],
+   "hex_only": false,
+   "line": 414,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-0.8b/select/manifest.json|f|3363|1793112309.5305862750|1793112309.5305862750|664|1011|1011|1|56890122"
+  },
+  {
+   "contexts": [
+    "/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.691323"
+   ],
+   "hex_only": false,
+   "line": 622,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/kev-4b/select/manifest.json|f|3351|1793135439.6913233310|1793135439.6913233310|664|1011|1011|1|56892058"
+  },
+  {
+   "contexts": [
+    "wen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.064787"
+   ],
+   "hex_only": false,
+   "line": 830,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-0.8b-base/select/manifest.json|f|3352|1793170817.0647871860|1793170817.0647871860|664|1011|1011|1|56892562"
+  },
+  {
+   "contexts": [
+    "ENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.751025"
+   ],
+   "hex_only": false,
+   "line": 834,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/final.stdout.log|f|3419|1793216275.7510250040|1793216275.7510250040|664|1011|1011|1|56893371"
+  },
+  {
+   "contexts": [
+    "/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.304414"
+   ],
+   "hex_only": false,
+   "line": 1035,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_before.tree.txt",
+   "refs": 30,
+   "text": "/home/dowling/r1_trackp/runs/p3a_operator_20261027/EVIDENCE/qwen3.5-4b-base/select/manifest.json|f|3342|1793198371.3044149210|1793198371.3044149210|664|1011|1011|1|56893370"
+  },
+  {
+   "contexts": [
+    "[::1]:3350          [::]:*"
+   ],
+   "hex_only": false,
+   "line": 13,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/bind_test/ss_listen_after.txt",
+   "refs": 30,
+   "text": "LISTEN 0      2                                       [::1]:3350          [::]:*"
+  },
+  {
+   "contexts": [
+    "*:3389             *:*"
+   ],
+   "hex_only": false,
+   "line": 14,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/bind_test/ss_listen_after.txt",
+   "refs": 30,
+   "text": "LISTEN 0      2                                           *:3389             *:*"
+  },
+  {
+   "contexts": [
+    "[::1]:3350          [::]:*"
+   ],
+   "hex_only": false,
+   "line": 12,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/bind_test/ss_listen_before.txt",
+   "refs": 30,
+   "text": "LISTEN 0      2                                       [::1]:3350          [::]:*"
+  },
+  {
+   "contexts": [
+    "*:3389             *:*"
+   ],
+   "hex_only": false,
+   "line": 13,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/bind_test/ss_listen_before.txt",
+   "refs": 30,
+   "text": "LISTEN 0      2                                           *:3389             *:*"
+  },
+  {
+   "contexts": [
+    "[::1]:3350          [::]:*"
+   ],
+   "hex_only": false,
+   "line": 12,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/bind_test/ss_listen_post.txt",
+   "refs": 30,
+   "text": "LISTEN 0      2                                       [::1]:3350          [::]:*"
+  },
+  {
+   "contexts": [
+    "*:3389             *:*"
+   ],
+   "hex_only": false,
+   "line": 13,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/bind_test/ss_listen_post.txt",
+   "refs": 30,
+   "text": "LISTEN 0      2                                           *:3389             *:*"
+  },
+  {
+   "contexts": [
+    "[::1]:3350          [::]:*"
+   ],
+   "hex_only": false,
+   "line": 12,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/proposer/ss_listen_before.txt",
+   "refs": 30,
+   "text": "LISTEN 0      2                                       [::1]:3350          [::]:*"
+  },
+  {
+   "contexts": [
+    "*:3389             *:*"
+   ],
+   "hex_only": false,
+   "line": 13,
+   "path": "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/proposer/ss_listen_before.txt",
+   "refs": 30,
+   "text": "LISTEN 0      2                                           *:3389             *:*"
+  },
+  {
+   "contexts": [
+    "0:00:14  0:00:06  202M\r 74 4466M   74 3321M    0     0   214M      0  0:00:20  0:0"
+   ],
+   "hex_only": false,
+   "line": 5,
+   "path": "docs/r1/reports/trackp_h200_20261118/i3_h200_20261121/i3_download.txt",
+   "refs": 23,
+   "text": "0 4466M    0 24.1M    0     0  49.7M      0  0:01:29 --:--:--  0:01:29 49.7M\r  5 4466M    5  263M    0     0   177M      0  0:00:25  0:00:01  0:00:24  239M\r 11 4466M   11  503M    0     0   202M      0  0:00:22  0:00:02  0:00:20  239M\r 16 4"
+  },
+  {
+   "contexts": [
+    "_d_7912_20261113_d/launch_precheck.sh`: 3375 B, `-rwx------`, mtime `2026-11-13T14:4"
+   ],
+   "hex_only": false,
+   "line": 7,
+   "path": "docs/r1/reviews/B1_O2_HANDOVER_D_LAUNCH_PRECHECK_FINAL_20261113.md",
+   "refs": 92,
+   "text": "`/tmp/b1_handover_d_7912_20261113_d/launch_precheck.sh`: 3375 B, `-rwx------`, mtime `2026-11-13T14:48:54+01:00`, **sha256 `89385c41d17e17682540d040ebfd29f9a86ee1d5db4e50094b38095a60609820`**, matches the operator value. The other eight fil"
+  },
+  {
+   "contexts": [
+    "in the `hk2` block, then `-O cancel -L 3333:\u2026`** | **Both 3333 and 5555 are cancell",
+    ", then `-O cancel -L 3333:\u2026`** | **Both 3333 and 5555 are cancelled.** The author's"
+   ],
+   "hex_only": false,
+   "line": 29,
+   "path": "docs/r1/reviews/HOREKA_SCAN_PROMPT_REV54_REVIEW_20261104.md",
+   "refs": 141,
+   "text": "| **`LocalForward 5555 \u2026` in the `hk2` block, then `-O cancel -L 3333:\u2026`** | **Both 3333 and 5555 are cancelled.** The author's own forward is gone from his master |"
+  },
+  {
+   "contexts": [
+    "ath=<path from ssh -G hk2> -O cancel -L 3333:\u2026 x` | Only 3333 is cancelled; 5555 sta",
+    "h -G hk2> -O cancel -L 3333:\u2026 x` | Only 3333 is cancelled; 5555 stays |"
+   ],
+   "hex_only": false,
+   "line": 31,
+   "path": "docs/r1/reviews/HOREKA_SCAN_PROMPT_REV54_REVIEW_20261104.md",
+   "refs": 141,
+   "text": "| `ssh -F none -o ControlMaster=no -o ControlPath=<path from ssh -G hk2> -O cancel -L 3333:\u2026 x` | Only 3333 is cancelled; 5555 stays |"
+  },
+  {
+   "contexts": [
+    "d 5555` in the block plus `-O cancel -L 3333:\u2026` removed both)."
+   ],
+   "hex_only": false,
+   "line": 62,
+   "path": "docs/r1/reviews/HOREKA_SCAN_PROMPT_REV54_REVIEW_20261104.md",
+   "refs": 141,
+   "text": "- The mux client sends the master **every** forward in its resolved options: the command-line `-L` and also those from `~/.ssh/config`. For `-O cancel` this means it cancels all of them (tested: `LocalForward 5555` in the block plus `-O can"
+  },
+  {
+   "contexts": [
+    "- **Seeds 3301\u20133360:** clear of every interval in `RES"
+   ],
+   "hex_only": false,
+   "line": 14,
+   "path": "docs/r1/reviews/SCREENING_TEST_REVIEW_20261122.md",
+   "refs": 1,
+   "text": "- **Seeds 3301\u20133360:** clear of every interval in `RESERVED_SEED_NAMESPACES` (`r1/c3/d3_analysis.py:134-149` @ `mac-d3-predecl-20261122`). Also clear of the D.3 blocks (6201\u20136218, 6301\u20136329, 6501\u20136679, 6701\u20136880) and of the sweep instance u"
+  },
+  {
+   "contexts": [
+    "- If Option A is adopted, add 3301\u20133360 to `RESERVED_SEED_NAMESPACES`."
+   ],
+   "hex_only": false,
+   "line": 56,
+   "path": "docs/r1/reviews/SCREENING_TEST_REVIEW_20261122.md",
+   "refs": 1,
+   "text": "- If Option A is adopted, add 3301\u20133360 to `RESERVED_SEED_NAMESPACES`."
+  },
+  {
+   "contexts": [
+    "UUID = \"GPU-11111111-2222-3333-4444-555555555555\""
+   ],
+   "hex_only": false,
+   "line": 38,
+   "path": "r1/tests/test_llamacpp_offload_routes.py",
+   "refs": 205,
+   "text": "UUID = \"GPU-11111111-2222-3333-4444-555555555555\""
+  },
+  {
+   "contexts": [
+    "UUID2 = \"GPU-11111111-2222-3333-4444-555555555555\""
+   ],
+   "hex_only": false,
+   "line": 26,
+   "path": "r1/tests/test_t1_tasl_g1b.py",
+   "refs": 41,
+   "text": "UUID2 = \"GPU-11111111-2222-3333-4444-555555555555\""
+  },
+  {
+   "contexts": [
+    "UUID7 = \"GPU-77777777-2222-3333-4444-555555555555\""
+   ],
+   "hex_only": false,
+   "line": 27,
+   "path": "r1/tests/test_t1_tasl_g1b.py",
+   "refs": 41,
+   "text": "UUID7 = \"GPU-77777777-2222-3333-4444-555555555555\""
+  },
+  {
+   "contexts": [
+    "ASL-2\", \"gpu_uuid\"), \"GPU-11111111-2222-3333-4444-555555555555\"), \"one card per host"
+   ],
+   "hex_only": false,
+   "line": 126,
+   "path": "r1/tests/test_t1_tasl_g1b_ar.py",
+   "refs": 16,
+   "text": "(_set((\"hosts\", \"TASL-2\", \"gpu_uuid\"), \"GPU-11111111-2222-3333-4444-555555555555\"), \"one card per host\"),"
+  },
+  {
+   "contexts": [
+    "UUID2 = \"GPU-11111111-2222-3333-4444-555555555555\""
+   ],
+   "hex_only": false,
+   "line": 29,
+   "path": "r1/tests/test_t1_tasl_g4.py",
+   "refs": 41,
+   "text": "UUID2 = \"GPU-11111111-2222-3333-4444-555555555555\""
+  },
+  {
+   "contexts": [
+    "UUID7 = \"GPU-77777777-2222-3333-4444-555555555555\""
+   ],
+   "hex_only": false,
+   "line": 30,
+   "path": "r1/tests/test_t1_tasl_g4.py",
+   "refs": 41,
+   "text": "UUID7 = \"GPU-77777777-2222-3333-4444-555555555555\""
+  },
+  {
+   "contexts": [
+    "pins[\"boot_id\"] = \"33333333-3333-3333-3333-333333333333\"",
+    "pins[\"boot_id\"] = \"33333333-3333-3333-3333-333333333333\""
+   ],
+   "hex_only": false,
+   "line": 1151,
+   "path": "r1/tests/test_trackp_p3a_probes_only.py",
+   "refs": 1,
+   "text": "pins[\"boot_id\"] = \"33333333-3333-3333-3333-333333333333\""
+  },
+  {
+   "contexts": [
+    "\"current_boot_id\": \"33333333-3333-3333-3333-333333333333\",",
+    "\"current_boot_id\": \"33333333-3333-3333-3333-333333333333\","
+   ],
+   "hex_only": false,
+   "line": 1278,
+   "path": "r1/tests/test_trackp_p3a_probes_only.py",
+   "refs": 1,
+   "text": "\"current_boot_id\": \"33333333-3333-3333-3333-333333333333\","
+  },
+  {
+   "contexts": [
+    "return {\"boot_id\": \"33333333-3333-3333-3333-333333333333\",     # *not* th",
+    "return {\"boot_id\": \"33333333-3333-3333-3333-333333333333\",     # *not* the attempt-"
+   ],
+   "hex_only": false,
+   "line": 1284,
+   "path": "r1/tests/test_trackp_p3a_probes_only.py",
+   "refs": 1,
+   "text": "return {\"boot_id\": \"33333333-3333-3333-3333-333333333333\",     # *not* the attempt-1 boot: recorded, not gated"
+  },
+  {
+   "contexts": [
+    "assert start[\"boot_id\"] == \"33333333-3333-3333-3333-333333333333\" and start[\"boot",
+    "start[\"boot_id\"] == \"33333333-3333-3333-3333-333333333333\" and start[\"boot_id_requir"
+   ],
+   "hex_only": false,
+   "line": 1378,
+   "path": "r1/tests/test_trackp_p3a_probes_only.py",
+   "refs": 1,
+   "text": "assert start[\"boot_id\"] == \"33333333-3333-3333-3333-333333333333\" and start[\"boot_id_required\"] is False"
+  }
+ ],
+ "token_hits_hex_only": {
+  "by_path": {
+   "archive/old_b_2026-10-09/code/protocols/pi_local_modifications.yaml": 1,
+   "archive/old_b_2026-10-09/code/release/paper_b_manifest.json": 2,
+   "archive/old_b_2026-10-09/code/scripts/pi_pristine_manifest.txt": 25,
+   "archive/old_b_2026-10-09/code/third_party/pi/packages/ai/src/providers/data/.manifest.json": 1,
+   "docs/r1/PLAN.md": 2,
+   "docs/r1/STATUS.md": 2,
+   "docs/r1/authorizations/g1b_ar_t1_tasl_20261122.md": 1,
+   "docs/r1/authorizations/g1b_t1_tasl_20261122.md": 1,
+   "docs/r1/authorizations/g4_t1_tasl_20261122.md": 1,
+   "docs/r1/overnight/BATCH_A_24OCT_HANDOFF.md": 3,
+   "docs/r1/proposals/G1B_AR_T1_TASL_NOTE3_DRAFT_20261122.md": 1,
+   "docs/r1/proposals/G1B_T1_TASL_AMEND_FMNIST_DRAFT_20261122.md": 1,
+   "docs/r1/proposals/G1B_T1_TASL_NOTE2_DRAFT_20261121.md": 3,
+   "docs/r1/proposals/G4_T1_TASL_NOTE_DRAFT_20261121.md": 1,
+   "docs/r1/reports/B1_INTEGRATED_MAC_SUITE_CLASSIFICATION_20261107.md": 1,
+   "docs/r1/reports/B1_RETAINED_CAPACITY_ESTIMATE_20261108.md": 1,
+   "docs/r1/reports/B1_STOP_REPORTING_CANDIDATE_20261107.md": 1,
+   "docs/r1/reports/B1_SYNTHETIC_STAGEA_B1_CRASH_RECOVERY_20261107.md": 1,
+   "docs/r1/reports/MAC_OVERNIGHT_QUESTIONS_20261105.md": 1,
+   "docs/r1/reports/TRACKG_U3_PORT_MLAB_20261117.md": 2,
+   "docs/r1/reports/TRACKP_P3A_D2_ACCEPTANCE_20261119.md": 2,
+   "docs/r1/reports/TRACKP_P3A_D2_DELIVERY_20261119.md": 2,
+   "docs/r1/reports/TRACKP_UNITB_TASL7_D2_RESULT_20261119.md": 1,
+   "docs/r1/reports/TRACKS_S04_RERUN_20261111.md": 3,
+   "docs/r1/reports/b1_d_20261113_evidence/b1_manifests.json": 8,
+   "docs/r1/reports/b1_truncation_hostcheck_20261111/host_sha256.txt": 4,
+   "docs/r1/reports/b2_exec_20261115/handback/root_manifests/gemma4_31b/b2/on/digits_mlp__s9012/campaign_manifest.json": 1,
+   "docs/r1/reports/e1_replay_20261116/replay_plan.json": 4,
+   "docs/r1/reports/e1_replay_20261117/SHA256SUMS.txt": 2,
+   "docs/r1/reports/e1_replay_20261117/dryrun/replay_plan.json": 4,
+   "docs/r1/reports/e1_replay_20261117/replay_plan.json": 5,
+   "docs/r1/reports/g1b_ar_20261122/G1B_AR_SPEC_SUPPORT_20261122.md": 1,
+   "docs/r1/reports/g1b_crosscheck_20261121/G1B_CROSSCHECK_20261121.md": 6,
+   "docs/r1/reports/g4_auth_20261121/G4_AUTH_20261121.md": 1,
+   "docs/r1/reports/portal_trackp_host_facts_20261026/followup.txt": 2,
+   "docs/r1/reports/sweep2_20261116/S2_C3_UNIT.md": 1,
+   "docs/r1/reports/sweep2_20261116/SWEEP2_SCHEDULER_DRYRUN_20261120.md": 2,
+   "docs/r1/reports/sweep2_20261116/s2c3_run_20261117/S2_C3_RESULTS.md": 1,
+   "docs/r1/reports/tasl_chain_20261122/TASL_CHAIN_20261122.md": 3,
+   "docs/r1/reports/trackg_g0_20261117/G1B_TASL2_RESULT_20261121.md": 2,
+   "docs/r1/reports/trackg_g0_20261117/G1B_TASL2_RESULT_20261121_captures/_harvest/remote_harvest.txt": 2,
+   "docs/r1/reports/trackg_g0_20261117/G1B_TASL2_RESULT_20261121_captures/_run/g1b_tasl2_20261121.log.txt": 1,
+   "docs/r1/reports/trackg_g0_20261117/G1B_TASL_DRYRUN_20261121.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/JAX_ENV_FIX_20261119.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/B2/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E1/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E2/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E3/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_edits/E4/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s001/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/runs/runs_smoke/s003/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/work/kit_committed/nodes/autoresearch_fixedtokens/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/work/kit_committed/nodes/autoresearch_fixedtokens/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/work/kit_committed/nodes/autoresearch_fixedtokens/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/work/kit_committed/nodes/autoresearch_fixedtokens/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/work/kit_committed/nodes/autoresearch_fixedtokens/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL2_AR_COND7A_RESULT_20261121_captures/work/kit_committed/nodes/autoresearch_fixedtokens/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_after.content.txt": 4,
+   "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_captures/attempt1_before.content.txt": 4,
+   "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_after.content.txt": 4,
+   "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_20261121_run1_precheck_20261121T015718Z/attempt1_before.content.txt": 4,
+   "docs/r1/reports/trackg_g0_20261117/TASL7_ISOLATION_HOST_CHECK_BINDING_20261121.md": 2,
+   "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_after.content.txt": 4,
+   "docs/r1/reports/trackg_g0_20261117/TASL7_PROPOSER_SMOKE_20261121_captures/attempt1_before.content.txt": 4,
+   "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_after.content.txt": 4,
+   "docs/r1/reports/trackg_g0_20261117/TASL7_T1_PRECHECK_20261121_captures/attempt1_before.content.txt": 4,
+   "docs/r1/reports/trackg_g0_20261117/U1_LICENCE_AVAILABILITY_20261117.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/U2_ISO_HOUSEPRICE_RECORD_CORRECTIONS_20261120.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt1_GPU_234004Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/attempt2_GPU_000628Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_retry_20261120T232847Z/references/TRACKG_AR_COND7A_CODE_REVIEW_20261120.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/references/TRACKG_AR_COND7A_CODE_REVIEW_20261120.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s001/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_pre_shared_dev_shm.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_round1.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_round2.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/ar_cond7a_smoke_20261120T223548Z/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_round3.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/kit.txt": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/record_hashes.txt": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_edits/B2/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_edits/B2/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_edits/E1/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_edits/E1/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_edits/E2/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_edits/E2/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_edits/E3/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_edits/E3/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_edits/E4/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_edits/E4/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_smoke/s000_baseline/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_smoke/s000_baseline/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_smoke/s001/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_smoke/s002/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_smoke/s002/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_smoke/s003/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/runs/runs_smoke/s003/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/record_hashes.txt": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/B2/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/B2/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/B2/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/B2/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/B2/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/B2/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E1/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E1/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E1/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E1/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E1/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E1/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E2/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E2/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E2/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E2/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E2/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E2/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E3/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E3/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E3/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E3/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E3/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E3/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E4/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E4/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E4/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E4/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E4/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_edits/E4/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s000_baseline/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s000_baseline/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s000_baseline/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s000_baseline/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s001/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s001/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s002/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s002/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s002/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s002/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s003/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s003/code/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s003/code/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s003/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s003/work/representative_edits/manifest.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/runs/runs_smoke/s003/work/representative_edits/superseded/manifest_pre_isolation.json": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/kit.txt": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/record_hashes.txt": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/B2/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/B2/code/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/B2/code/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/B2/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/B2/work/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/B2/work/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E1/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E1/code/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E1/code/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E1/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E1/work/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E1/work/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E2/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E2/code/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E2/code/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E2/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E2/work/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E2/work/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E3/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E3/code/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E3/code/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E3/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E3/work/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E3/work/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E4/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E4/code/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E4/code/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E4/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E4/work/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_edits/E4/work/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s000_baseline/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s000_baseline/code/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s000_baseline/code/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s000_baseline/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s000_baseline/work/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s000_baseline/work/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s001/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s001/work/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s001/work/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s002/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s002/code/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s002/code/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s002/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s002/work/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s002/work/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s003/code/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s003/code/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s003/code/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s003/work/LICENCES.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s003/work/representative_edits/manifest.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/runs/runs_smoke/s003/work/representative_edits/superseded/manifest_pre_isolation.json": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/env.txt": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/invocation_inner.sh": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/prechecks_jax.txt": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/prechecks_jax_env/env_before.txt": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/record_hashes.txt": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/references/JAX_ENV_FIX_20261119.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/references/JAX_ENV_FIX_EVIDENCE_COMPANION_20261119.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/references/TRACKG_U2_ISO_BREAKOUT_UNIT_REVIEW_20261119.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/scripts/run_node_jax.sh": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/U2_ISO_MLGYM_FMNIST_RESULT_20261119.md": 1,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/record_hashes.txt": 2,
+   "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_houseprice_20261120T215244Z/U2_ISO_MLGYM_HOUSEPRICE_RESULT_20261120.md": 2,
+   "docs/r1/reports/trackp_h200_20261118/stages/e0_h200/registry.yaml": 2,
+   "docs/r1/reports/trackp_h200_20261118/stages/smoke_h200/registry.yaml": 2,
+   "docs/r1/reports/trackp_p0_20261026/kev-0.8b/manifest.json": 1,
+   "docs/r1/reports/trackp_p0_20261026/kev-4b/manifest.json": 1,
+   "docs/r1/reports/trackp_p0_20261026/laya/manifest.json": 1,
+   "docs/r1/reports/trackp_p0_20261026/qwen3.5-0.8b-base/manifest.json": 1,
+   "docs/r1/reports/trackp_p0_20261026/qwen3.5-4b-base/manifest.json": 1,
+   "docs/r1/reports/trackp_p0_20261026/startlux-0.8b/manifest.json": 1,
+   "docs/r1/reports/trackp_p0_20261026/startlux-2b/manifest.json": 1,
+   "docs/r1/reports/trackp_p0_20261026/startlux-4b/manifest.json": 1,
+   "docs/r1/reports/trackp_p3a_attempt1_inventory_20261116/Agent_paper_B/r1/c3/train/registry.yaml": 2,
+   "docs/r1/reports/trackp_p3a_dryrun_20261026/kev-0.8b_hard/manifest.json": 1,
+   "docs/r1/reports/trackp_p4_20261026/kev-0.8b/manifest.json": 1,
+   "docs/r1/reports/trackp_p4_20261026/kev-4b/manifest.json": 1,
+   "docs/r1/reports/trackp_p4_20261026/laya.attempt1/manifest.json": 1,
+   "docs/r1/reports/trackp_p4_20261026/laya/manifest.json": 1,
+   "docs/r1/reports/trackp_p4_20261026/qwen3.5-0.8b-base/manifest.json": 1,
+   "docs/r1/reports/trackp_p4_20261026/qwen3.5-4b-base/manifest.json": 1,
+   "docs/r1/reports/trackp_p4_20261026/startlux-0.8b/manifest.json": 1,
+   "docs/r1/reports/trackp_p4_20261026/startlux-2b/manifest.json": 1,
+   "docs/r1/reports/trackp_p4_20261026/startlux-4b/manifest.json": 1,
+   "docs/r1/reports/trackp_phase2_20261026/kev_release_members_vs_registry.txt": 1,
+   "docs/r1/reports/trackp_unitb_tasl7_d2_20261119T011430Z/DRYRUN/kev-0.8b/probes/runner_manifest.json": 1,
+   "docs/r1/reports/trackp_unitb_tasl7_d2_20261119T011430Z/EVIDENCE/qwen3.5-4b-base/probes/runner_manifest.json": 1,
+   "docs/r1/reviews/B1_COMMITTED_CONFIG_AUTHORITY_R2_REVIEW_20261107.md": 1,
+   "docs/r1/reviews/B1_INTEGRATED_MAC_SUITE_CLASSIFICATION_REVIEW_20261107.md": 1,
+   "docs/r1/reviews/B1_MODEL_INVENTORY_STOP_REVIEW_20261108.md": 1,
+   "docs/r1/reviews/B1_PREFLIGHT_SCRIPT_REVIEW_20261111.md": 1,
+   "docs/r1/reviews/B1_RERUN2_FIXTURE_COMMIT_REVIEW_20261107.md": 1,
+   "docs/r1/reviews/B1_RUN_HEAD_C_REVIEW_20261112.md": 1,
+   "docs/r1/reviews/B1_STOP_REPORTING_REVIEW_20261107.md": 1,
+   "docs/r1/reviews/B2_OCCUPANCY_LAUNCH_REVIEW_20261115.md": 1,
+   "docs/r1/reviews/C3_B2_REPLAY_LLM_SCOPE_REVIEW_20261031.md": 1,
+   "docs/r1/reviews/EXAM_STOP2_RECEIVING_RECONSTRUCTION_20261031.md": 1,
+   "docs/r1/reviews/EXAM_STOP2_REHASH_REVIEW_20261031.md": 1,
+   "docs/r1/reviews/EXPERIMENT_AGENT_RUNBOOK_REVIEW_20261111.md": 1,
+   "docs/r1/reviews/G1B_AR_SPEC_SUPPORT_REVIEW_20261122.md": 2,
+   "docs/r1/reviews/G1B_CROSSCHECK_REVIEW_20261121.md": 4,
+   "docs/r1/reviews/G1B_TASL_DRYRUN_REVIEW_20261121.md": 1,
+   "docs/r1/reviews/G1B_TASL_PRELAUNCH_REVIEW_20261121.md": 1,
+   "docs/r1/reviews/G4_TASL_LAUNCH_REVIEW_20261122.md": 5,
+   "docs/r1/reviews/HTCONDOR_CHAIN_DOCKER_REVIEW_20261114.md": 1,
+   "docs/r1/reviews/LOCAL_L3_REVIEW_20261027.md": 1,
+   "docs/r1/reviews/LOCAL_L4_4_REVIEW_20261027.md": 1,
+   "docs/r1/reviews/M11_D8_LEGACY_VERDICT_REVIEW_20261107.md": 1,
+   "docs/r1/reviews/MAC_B1_AUTHORITY_OVERNIGHT_REVIEW_20261105.md": 1,
+   "docs/r1/reviews/MAC_FULL_SUITE_NO_DELETION_AUDIT_REVIEW_20261107.md": 1,
+   "docs/r1/reviews/MAC_OVERNIGHT_REPORT_REVIEW_20261105.md": 1,
+   "docs/r1/reviews/REVISED_DECISIONS_INDEPENDENT_REVIEW_20261031.md": 2,
+   "docs/r1/reviews/T1_G5_DRAFT_REVIEW_20261121.md": 4,
+   "docs/r1/reviews/TASL2_READONLY_CENSUS_REVIEW_20261115.md": 1,
+   "docs/r1/reviews/TASL7_PROPOSER_SMOKE_REVIEW_20261121.md": 1,
+   "docs/r1/reviews/TASL_LAUNCH_CHAIN_REVIEW_20261122.md": 4,
+   "docs/r1/reviews/TRACKG_AR_COND7A_CODE_REVIEW_20261120.md": 1,
+   "docs/r1/reviews/TRACKG_U2_ISO_BREAKOUT_UNIT_REVIEW_20261119.md": 1,
+   "docs/r1/reviews/TRACKG_U2_ISO_HOUSEPRICE_RESULT_REVIEW_20261120.md": 1,
+   "docs/r1/reviews/TRACKG_U2_RAWCOST_REVIEW_20261117.md": 1,
+   "docs/r1/reviews/TRACKG_U4_CENSUS_AR_ROW_REVIEW_R4_20261121.md": 1,
+   "docs/r1/reviews/TRACKG_U4_CENSUS_AR_ROW_REVIEW_R5_20261121.md": 2,
+   "docs/r1/reviews/TRACKP_P3A_D2_CODE_REVIEW_R3_20261119.md": 9,
+   "docs/r1/reviews/TRACKP_UNITB_D2_RESULT_REVIEW_20261119.md": 5,
+   "docs/r1/reviews/TRACKS_S05_T7_RESUME_REVIEW_R2_20261114.md": 1,
+   "docs/r1/reviews/TRACKX_STAGEA_COOPERATIVE_REVIEW_20261101.md": 2,
+   "docs/r1/reviews/TRACKX_STAGEA_STOP6_OOM_REVIEW_20261102.md": 1,
+   "docs/r1/reviews/WORKER_FIX_REVIEW_20261116.md": 1,
+   "docs/r1/reviews/exam_stop2_20261031/comparison.txt": 1,
+   "r1/c3/train/registry.yaml": 2,
+   "r1/exam/registry.yaml": 2,
+   "results/r1/pilot/E1_20261022T214606Z/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T090510Z/interrupted_provenance/work/roots/digits_mlp__s124/snapshots/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T090510Z/interrupted_provenance/work/roots/digits_mlp__s144/snapshots/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T090510Z/interrupted_provenance/work/roots/openml_ionosphere__s113/snapshots/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T090510Z/interrupted_provenance/work/roots/openml_ionosphere__s113/snapshots/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T090510Z/interrupted_provenance/work/roots/openml_ionosphere__s113/snapshots/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T090510Z/interrupted_provenance/work/roots/openml_ionosphere__s123/snapshots/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T090510Z/interrupted_provenance/work/roots/openml_ionosphere__s123/snapshots/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T151857Z/provenance/snapshots/digits_mlp__s114/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T151857Z/provenance/snapshots/digits_mlp__s114/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T151857Z/provenance/snapshots/digits_mlp__s144/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T151857Z/provenance/snapshots/digits_mlp__s144/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T151857Z/provenance/snapshots/digits_mlp__s144/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T151857Z/provenance/snapshots/openml_ionosphere__s123/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T151857Z/provenance/snapshots/openml_ionosphere__s123/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_20261013T151857Z/provenance/snapshots/openml_ionosphere__s153/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s105/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s105/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s105/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s115/E2_b012/manifest.json": 5,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s135/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s135/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s135/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s175/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s175/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s175/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s185/E2_b004/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s185/E2_b008/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s185/E2_b012/manifest.json": 4,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s205/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s205/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s205/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s215/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s215/E2_b008/manifest.json": 4,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s215/E2_b012/manifest.json": 4,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s225/E2_b004/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s225/E2_b008/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s225/E2_b012/manifest.json": 8,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s255/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s265/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s265/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s265/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s275/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s275/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_breast_w__s275/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s113/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s113/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s113/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s123/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s123/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s123/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s133/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s133/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s133/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s153/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s153/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s153/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s163/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s163/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s173/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s173/E2_b012/manifest.json": 6,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s193/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s193/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s193/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s203/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s203/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s203/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s213/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s213/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s213/E2_b012/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s223/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s223/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s223/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s233/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s233/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s233/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s243/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s243/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s243/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s253/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s253/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s253/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s263/E2_b004/manifest.json": 6,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s263/E2_b008/manifest.json": 7,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s263/E2_b012/manifest.json": 7,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s273/E2_b004/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s273/E2_b008/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/openml_ionosphere__s273/E2_b012/manifest.json": 1,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s102/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s102/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s102/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s112/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s112/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s112/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s122/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s122/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s122/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s132/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s132/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s132/E2_b012/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s142/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s142/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s142/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s152/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s152/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s152/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s162/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s162/E2_b008/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s162/E2_b012/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s172/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s172/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s172/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s182/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s182/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s182/E2_b012/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s192/E2_b004/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s192/E2_b008/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s192/E2_b012/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s202/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s202/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s202/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s212/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s212/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s212/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s222/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s222/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s222/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s232/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s232/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s232/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s242/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s242/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s242/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s252/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s252/E2_b008/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s252/E2_b012/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s262/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s262/E2_b008/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s262/E2_b012/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s272/E2_b004/manifest.json": 2,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s272/E2_b008/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/provenance/snapshots/tabular_mlp__s272/E2_b012/manifest.json": 3,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/sha256_manifest.txt": 30,
+   "results/r1/pilot/E1b_rerun2_A_PARTIAL_memory_on_20261014/stored_sha256_manifest.txt": 34,
+   "sweep2/dryrun/replay/s2_c3_replay.py": 1,
+   "sweep2/dryrun/replay/s2_c3_spec.json": 1,
+   "sweep2/dryrun/replay/spec.replay.example.json": 1,
+   "sweep2/dryrun/replay/spec.replay.openml_credit_approval.json": 1,
+   "sweep2/dryrun/replay/spec.replay.openml_ionosphere.json": 1,
+   "sweep2/evidence/s2_c3_preflight_local_20261116.txt": 1,
+   "sweep2/s2_c3_replay.py": 1,
+   "sweep2/spec.replay.example.json": 1,
+   "sweep2/spec.replay.openml_credit_approval.json": 1,
+   "sweep2/spec.replay.openml_ionosphere.json": 1,
+   "sweep2/t1_tasl/build_launch_chain.py": 2
+  },
+  "count": 944
+ },
+ "token_pattern": "(^|[^0-9.])(330[1-9]|33[1-9][0-9]|34[01][0-9]|3420)([^0-9.]|$)"
+}

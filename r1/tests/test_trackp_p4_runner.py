@@ -38,6 +38,17 @@ PINNED = (ROOT / L.ENV3_FREEZE).read_text()
 SPEC_PATH = PKG / "p4_spec.json"
 SPEC = json.loads(SPEC_PATH.read_text())
 DIGEST = "ghcr.io/dowlingwong/r1-htc-gpu@sha256:" + "2" * 64
+H = "nemo2_h200"                    # the HTCondor host class: these tests exercise the H200 path (R1-HOST-FREE)
+
+
+def _hc(s: dict) -> dict:
+    """The nemo2_h200 class's host config block of a spec (``hosts.nemo2_h200.host_config``)."""
+    return s["hosts"][H]["host_config"]
+
+
+def _est(s: dict) -> dict:
+    """The nemo2_h200 class's estimate (``hosts.nemo2_h200.estimate``)."""
+    return s["hosts"][H]["estimate"]
 
 
 def _sha(b: bytes) -> str:
@@ -376,11 +387,12 @@ def filled() -> dict:
     s = copy.deepcopy(SPEC)
     s["paper"]["commit"] = "3" * 40
     s["image"].update(digest=DIGEST, versions_sha256="4" * 64)
-    s["host_config"]["sha256"] = "5" * 64
+    s["hosts"] = {H: s["hosts"][H]}                       # a launch spec admitting the H200 class only
+    _hc(s)["sha256"] = "5" * 64
     s["labels"].update(partition_sha256="6" * 64, receipt_sha256="7" * 64,
                        freeze_record={"path": "docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md",
                                       "sha256": "8" * 64})
-    s["estimate"]["source"] = "h200_sft_probe: docs/r1/reports/x.md"
+    _est(s)["source"] = "h200_sft_probe: docs/r1/reports/x.md"
     s["caps"]["probe_gpu_hours"] = 0.5
     s["caps"]["probe_charge_files"] = {SYN_PROBE_RUN: [SYN_CHARGE_SHA]}
     return s
@@ -418,7 +430,7 @@ def _probe_tree(root: Path) -> Path:
 # The spec fields the cluster and the chat fill (cluster test plan §5.1), in validate_spec's order, with the pattern a
 # filled value must match. F5: the shipped-spec tests hold both before and after the spec-fill commit.
 SPEC_FILL_FIELDS = ((("paper", "commit"), L.COMMIT), (("image", "versions_sha256"), L.SHA),
-                    (("host_config", "sha256"), L.SHA), (("labels", "partition_sha256"), L.SHA),
+                    (("hosts", H, "host_config", "sha256"), L.SHA), (("labels", "partition_sha256"), L.SHA),
                     (("labels", "receipt_sha256"), L.SHA), (("labels", "freeze_record", "path"),
                                                              re.compile(r"docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_\d{8}\.md")),
                     (("labels", "freeze_record", "sha256"), L.SHA))
@@ -436,15 +448,15 @@ def test_shipped_spec_validates_and_refuses_launch_until_filled():
     estimate and the probe's charge are filled); a synthetic filled copy always passes."""
     loaded = L.validate_spec(copy.deepcopy(SPEC))
     p = loaded["projection"]
-    hours = SPEC["estimate"]["hours"]
+    hours = _est(SPEC)["hours"]
     assert p["within_cap"] and p["total_gpu_hours"] == round(sum(h + 0.5 for h in hours.values()), 3)
     assert p["per_arm"]["kev-4b"]["walltime_s"] == int(np.ceil(hours["kev-4b"] * 3600 * 1.5 + 1800))
     open_ = [".".join(path) for path, pat in SPEC_FILL_FIELDS if L._placeholder(_spec_value(SPEC, path))]
     for path, pat in SPEC_FILL_FIELDS:
         v = _spec_value(SPEC, path)
         assert L._placeholder(v) or pat.fullmatch(v), path
-    probe_open = L._placeholder(SPEC["estimate"]["source"]) or L.probe_gpu_hours(SPEC) is None
-    assert L._placeholder(SPEC["estimate"]["source"]) == (L.probe_gpu_hours(SPEC) is None) == \
+    probe_open = L._placeholder(_est(SPEC)["source"]) or L.probe_gpu_hours(SPEC) is None
+    assert L._placeholder(_est(SPEC)["source"]) == (L.probe_gpu_hours(SPEC) is None) == \
         L._placeholder(SPEC["caps"]["probe_charge_files"])                                        # filled together
     if open_ or probe_open:
         with pytest.raises(L.Stop, match=open_[0] if open_ else "estimate.source|probe_gpu_hours|probe_charge_files"):
@@ -452,36 +464,44 @@ def test_shipped_spec_validates_and_refuses_launch_until_filled():
     else:
         assert L.validate_spec(copy.deepcopy(SPEC), launch=True)["projection"]["within_cap"]
     assert L.validate_spec(filled(), launch=True)["run_id"] == SPEC["run_id"]
-    for path, value, match in ((("estimate", "source"), "assumed", "h200_sft_probe"),
-                               (("estimate", "source"), "h200_sft_probe:", "h200_sft_probe"),
+    for path, value, match in ((("hosts", H, "estimate", "source"), "assumed", "h200_sft_probe"),
+                               (("hosts", H, "estimate", "source"), "h200_sft_probe:", "h200_sft_probe"),
                                (("image", "digest"), "TODO", "image.digest"),
                                (("labels", "receipt_sha256"), "TODO", "labels.receipt_sha256"),
-                               (("host_config", "sha256"), "TODO", "host_config.sha256"),
+                               (("hosts", H, "host_config", "sha256"), "TODO", "host_config.sha256"),
                                (("caps", "probe_gpu_hours"), "TODO: the probe", "caps.probe_gpu_hours"),
                                (("caps", "probe_gpu_hours"), 0.0, "caps.probe_gpu_hours"),
                                (("caps", "probe_gpu_hours"), 0.555, "caps.probe_gpu_hours"),
                                (("caps", "probe_gpu_hours"), True, "caps.probe_gpu_hours")):
         s = filled()
-        s[path[0]][path[1]] = value
+        _spec_value(s, path[:-1])[path[-1]] = value
         with pytest.raises(L.Stop, match=match):
             L.validate_spec(s, launch=True)
 
 
 def test_the_probe_charge_counts_against_the_cap():
-    """P4-PROBECAP A: caps.probe_gpu_hours is added to the projection's cap check, to charged_hours (so to assemble and
-    the switch's check_cap); a placeholder counts 0 at default strength only; a probe spec is never a launch spec."""
+    """P4-PROBECAP A: caps.probe_gpu_hours is added to the projection, to charged_hours (so to assemble and the
+    switch's check_cap); a placeholder counts 0 at default strength only; a probe spec is never a launch spec.
+    R1-NO-TIMEOUT (3): 40 GPU-h is a reporting threshold: passing it is reported (threshold.report_to_author), never
+    refused."""
     s = filled()
     p = L.projection(s)
     assert p["probe_gpu_hours"] == 0.5 and p["total_with_probe_gpu_hours"] == round(p["total_gpu_hours"] + 0.5, 3)
     s["caps"]["probe_gpu_hours"] = round(40.0 - p["total_gpu_hours"] + 0.01, 2)      # the four jobs fit, with it not
-    with pytest.raises(L.Stop, match="exceeds P4-CAP"):
-        L.validate_spec(s, launch=True)
+    got = L.validate_spec(s, launch=True)
+    assert not got["projection"]["within_cap"] and got["threshold"]["reached"] == ["gpu_hours"]
+    assert got["threshold"]["report_to_author"] is True
     s["caps"]["probe_gpu_hours"] = round(40.0 - p["total_gpu_hours"], 2)
-    assert L.validate_spec(s, launch=True)["projection"]["within_cap"]
+    got = L.validate_spec(s, launch=True)
+    assert got["projection"]["within_cap"] and got["threshold"]["report_to_author"] is True     # reaching it (M3)
+    s["caps"]["probe_gpu_hours"] = round(40.0 - p["total_gpu_hours"] - 0.01, 2)
+    assert L.validate_spec(s, launch=True)["threshold"]["report_to_author"] is False
     d = copy.deepcopy(SPEC)
     d["caps"]["probe_gpu_hours"] = "TODO"
     assert L.validate_spec(d)["projection"]["probe_gpu_hours"] is None
-    d["caps"]["probe_gpu_hours"] = 41.0
+    d["caps"]["probe_gpu_hours"] = 41.0                                               # reported, not refused
+    assert L.validate_spec(d)["threshold"]["report_to_author"] is True
+    d["caps"]["probe_gpu_hours"] = -1.0
     with pytest.raises(L.Stop, match="caps.probe_gpu_hours"):
         L.validate_spec(d)
     with pytest.raises(L.Stop, match="a probe spec is never a P.4 launch spec"):
@@ -523,11 +543,9 @@ def _set(*path_value):
     (_set("protocol", "lc_points", [250, 500, 1000]), "lc_points"),
     (_set("protocol", "real_label_test_read", "phase1"), "real_label_test_read"),
     (_set("caps", "gpu_hours", 60.0), "caps"),
-    (_set("estimate", "hours", {"kev-0.8b": 0.83}), "every arm"),
-    (_set("estimate", "hours", {"kev-0.8b": 18.0, "kev-4b": 18.0, "qwen3.5-0.8b-base": 0.8,
-                                "qwen3.5-4b-base": 6.6}), "over 86400 s|exceeds P4-CAP"),
-    (_set("estimate", "hours", {"kev-0.8b": 10.0, "kev-4b": 10.0, "qwen3.5-0.8b-base": 10.0,
-                                "qwen3.5-4b-base": 10.0}), "exceeds P4-CAP"),
+    (_set("hosts", H, "estimate", "hours", {"kev-0.8b": 0.83}), "every arm"),
+    (_set("hosts", H, "estimate", "hours", {"kev-0.8b": 18.0, "kev-4b": 18.0, "qwen3.5-0.8b-base": 0.8,
+                                "qwen3.5-4b-base": 6.6}), "over 86400 s"),
     (_set("layout", "wall_factor", 1.0), "wall_factor"),
 ])
 def test_spec_refusals(edit, match):
@@ -626,12 +644,12 @@ def test_configs_bind_both_shas_and_a_clean_check_config(tmp_path):
         (clone / rel).parent.mkdir(parents=True, exist_ok=True)
         (clone / rel).write_text(rel)
     s = filled()
-    s["host_config"]["sha256"], s["sft_config"]["sha256"] = _sha(L.HOST_CONFIG.encode()), _sha(L.SFT_CONFIG.encode())
+    _hc(s)["sha256"], s["sft_config"]["sha256"] = _sha(L.HOST_CONFIG.encode()), _sha(L.SFT_CONFIG.encode())
     ok = lambda a, **k: _res(0, json.dumps({"placeholders": [], "sha256": "x"}))  # noqa: E731
     assert L.configs(s, clone, ok)["check_config"]["placeholders"] == []
     with pytest.raises(L.Stop, match="not clean"):
         L.configs(s, clone, lambda a, **k: _res(1, json.dumps({"placeholders": ["gpu.name"]})))
-    s["host_config"]["sha256"] = "0" * 64
+    _hc(s)["sha256"] = "0" * 64
     with pytest.raises(L.Stop, match="is not the spec's"):
         L.configs(s, clone, ok)
 
@@ -986,7 +1004,8 @@ def job_world(sweep, tmp_path, monkeypatch):
     job = tmp_path / "job"
     job.mkdir()
     monkeypatch.setattr(L, "image_identity", lambda spec: {"digest": spec["image"]["digest"], "versions_sha256": "4" * 64})
-    monkeypatch.setattr(L, "gpu_identity", lambda sh: {"name": L.GPU_MODEL, "uuid": "GPU-1"})
+    monkeypatch.setattr(L, "gpu_identity", lambda sh: {"name": L.GPU_MODEL, "uuid": "GPU-1",
+                                                       "compute_capability": "9.0"})
     monkeypatch.setattr(L, "host_identity", lambda: {"uid": 1000})
 
     def clone_full(commit, dest, git, sh):
@@ -1039,7 +1058,7 @@ def job_world(sweep, tmp_path, monkeypatch):
 
 def test_job_runs_grid_select_learning_curve_bootstrap_pin_and_seals(job_world, tmp_path):
     s, spec_path, job, calls, state = job_world
-    rec = L.run_job(spec_path, "kev-0.8b", job)
+    rec = L.run_job(spec_path, "kev-0.8b", job, host_class=H)
     assert rec["stop"] is None and rec["steps"][-1] == "test_path"
     devs = [c for c in calls if c[0] == "sft-dev"]
     grid = [c for c in devs if "lc_data" not in " ".join(map(str, c))]
@@ -1065,7 +1084,7 @@ def test_job_records_an_arm_stop_and_still_writes_the_sums(job_world):
     s, spec_path, job, calls, state = job_world
     state["oom_at"] = 4
     with pytest.raises(L.Stop, match="CUDA OOM"):
-        L.run_job(spec_path, "kev-0.8b", job)
+        L.run_job(spec_path, "kev-0.8b", job, host_class=H)
     rec = json.loads((job / "job_record.json").read_text())
     assert rec["stop_class"] == "arm" and rec["steps"][-1] == "data"
     assert subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=job, capture_output=True).returncode == 0
@@ -1077,6 +1096,7 @@ def _sealed_attempt(sealed_root: Path, s: dict, arm: str, spec_sha: str, n: int 
     d.mkdir(parents=True)
     rec = {"label": "ENGINEERING_ONLY", "run_id": s["run_id"], "arm": arm, "spec_sha256": spec_sha, "stop": None,
            "paper_commit": "3" * 40, "image": {"digest": DIGEST}, "configs": {"host_config": 1, "sft_config": 2},
+           "host_class": H, "gpu": {"name": L.GPU_MODEL, "uuid": f"GPU-{arm}", "compute_capability": "9.0"},
            "data": {"sft_data_sha256": "d" * 64, "identity": {"sha256": "i" * 64}},
            "inputs": {"labels": {"partition": f"/var/lib/condor/execute/dir_{arm}/p", "x": 1}},
            "env3_freeze": {"status": "identical"}, "select": {"selected_lr": 3e-5}, "gpu_hours": 2.0,
@@ -1105,8 +1125,8 @@ def test_assemble_needs_every_arm_one_table_and_the_cap(tmp_path):
         L.assemble(dirs_b, s, "f" * 64, root_b)
     big_root = _probe_tree(tmp_path / "c")
     big = [_sealed_attempt(big_root, s, arm, "f" * 64, gpu_hours=9.9) for arm in s["arms"]]   # 39.6 + the probe's 0.5
-    with pytest.raises(L.Stop, match="exceeds P4-CAP"):
-        L.assemble(big, s, "f" * 64, big_root)
+    over = L.assemble(big, s, "f" * 64, big_root)                    # R1-NO-TIMEOUT (3): reported, not refused
+    assert over["gpu_hours_consumed"] == 40.1 and over["threshold"]["report_to_author"] is True
     # round 2, minor 2: the given attempts must lie in the sealed tree the cap counts
     with pytest.raises(L.Stop, match="not a sealed attempt under"):
         L.assemble(dirs, s, "f" * 64, tmp_path / "wrong_root")
@@ -1186,8 +1206,8 @@ def test_two_job_directories_give_one_comparable_record(job_world, tmp_path):
     s, spec_path, job, calls, state = job_world
     job_b = tmp_path / "var" / "lib" / "condor" / "execute" / "dir_42"
     job_b.mkdir(parents=True)
-    rec_a = L.run_job(spec_path, "kev-0.8b", job)
-    rec_b = L.run_job(spec_path, "kev-4b", job_b)
+    rec_a = L.run_job(spec_path, "kev-0.8b", job, host_class=H)
+    rec_b = L.run_job(spec_path, "kev-4b", job_b, host_class=H)
     assert rec_a["data"]["sft_data_sha256"] != rec_b["data"]["sft_data_sha256"]      # the manifests hold paths
     assert L.comparable(rec_a) == L.comparable(rec_b)
     assert rec_a["data"]["identity"]["rows_sha256"] == rec_b["data"]["identity"]["rows_sha256"]
@@ -1282,7 +1302,7 @@ def stage_world(tmp_path, monkeypatch, f2):
     spec_path = tmp_path / "spec.json"
     spec_path.write_text(json.dumps(s))
     stage = tmp_path / "stage"
-    man = RJ.stage(spec_path, stage, table=table, partition=part)
+    man = RJ.stage(spec_path, stage, table=table, partition=part, host_class=H)
     return s, spec_path, stage, man, table, part
 
 
@@ -1294,14 +1314,14 @@ def test_render_stages_one_jdl_per_arm_with_the_inputs(stage_world, tmp_path):
     assert f"+RequestWalltime = {L.arm_walltime_s(s, 'kev-4b')}" in jdl and "NVIDIA H200" in jdl
     assert "label_block.traindev.jsonl,RECEIPT.json" in jdl and "ProvidesEtpCeph" not in jdl
     with pytest.raises(L.Stop, match="not empty"):
-        RJ.stage(spec_path, stage, table=table, partition=part)
+        RJ.stage(spec_path, stage, table=table, partition=part, host_class=H)
     bad = copy.deepcopy(s)
     bad["labels"]["receipt_sha256"] = "0" * 64
     bad_path = tmp_path / "bad.json"
     bad_path.write_text(json.dumps(bad))
     with pytest.raises(L.Stop, match="not the one the spec pins"):
-        RJ.stage(bad_path, tmp_path / "stage_bad", table=table, partition=part)
-    prev = RJ.stage(SPEC_PATH, tmp_path / "stage_preview", table=table, partition=part, preview=True)
+        RJ.stage(bad_path, tmp_path / "stage_bad", table=table, partition=part, host_class=H)
+    prev = RJ.stage(SPEC_PATH, tmp_path / "stage_preview", table=table, partition=part, host_class=H, preview=True)
     assert prev["preview"] is True and "PREVIEW_NOT_SUBMITTABLE" in (tmp_path / "stage_preview/p4_kev-0.8b.jdl").read_text()
     assert man["inputs"]["receipt_table_binding"]["receipt_proposals_sha256"] == SEALED_SYN
 
@@ -1319,7 +1339,7 @@ def test_render_refuses_a_receipt_of_another_table_preview_or_not(stage_world, t
         for preview, spec_file in ((False, bad_path), (True, SPEC_PATH)):
             out = tmp_path / f"stage_{n}_{preview}"
             with pytest.raises(L.Stop, match="not the sealed v2 table"):
-                RJ.stage(spec_file, out, table=table, partition=d, preview=preview)
+                RJ.stage(spec_file, out, table=table, partition=d, host_class=H, preview=preview)
             assert not out.exists()
 
 
@@ -1332,13 +1352,13 @@ def _note_fields(s, spec_sha, **over):
          "label_freeze": f"{s['labels']['freeze_record']['path']} sha256 {s['labels']['freeze_record']['sha256']}",
          "split_file": f"{L.SPLIT_FILE['path']} sha256 {L.SPLIT_FILE['sha256']}",
          "arms": "kev-0.8b, kev-4b, qwen3.5-0.8b-base, qwen3.5-4b-base (P4-ARMS A)",
-         "host_config": f"{L.HOST_CONFIG} {s['host_config']['sha256']}", "micro_batch": "8 (P4-MB A)",
+         "host_config": f"{L.HOST_CONFIG} {_hc(s)['sha256']}", "micro_batch": "8 (P4-MB A)",
          "image": s["image"]["digest"], "versions_sha256": s["image"]["versions_sha256"],
          "env3_freeze": f"{L.ENV3_FREEZE} (R1-ENV-PIN; R1-TRACKP-V21-FREEZE read per R1-TRACKP-P4-RUNNER-DECISIONS (1))",
          "h200_smoke_e0": "docs/r1/reports/a.md",
          "h200_sft_probe": "docs/r1/reports/x.md",
          "gpu_hours_cap": f"40 (P4-CAP A; P4-PROBECAP A: probe_gpu_hours: {s['caps']['probe_gpu_hours']:.2f} GPU-h, "
-                          "T1 included, P4-T1CHARGE A); slot_hours_cap: 64",
+                          "T1 included, P4-T1CHARGE A; GPU-hours on any card, R1-HOST-FREE (5)); slot_hours_cap: 64",
          "label_table_binding": f"P4-F2 A: {L.SEALED_V2_PROPOSALS_SHA256} to {L.V3_PROPOSALS_SHA256} by "
                                 f"{L.FEAT_ONE_IDENTITY['path']} sha256 {L.FEAT_ONE_IDENTITY['sha256']}",
          "probe_charge_files": "; ".join(f"{run} " + ", ".join(shas)
@@ -1348,13 +1368,14 @@ def _note_fields(s, spec_sha, **over):
          "duplicate_policy": "heldout_excludes_seen (R1-TRACKP-SFT-DUP)",
          "split": "P3 (9 test / 3 dev / 6 train per node), the signed split file (P4-P1SPLIT A)",
          "lr_grid": "1e-5,3e-5,1e-4; seeds per lr: 3; learning curve: 250, 500 and the full set, seed 20261122 + n",
-         "host": "NEMO2 H200 (HTCondor), R1-T1-HOST-TASL", "harness_commit": "none (no harness import)",
+         "host": "R1-HOST-FREE: GPU model recorded per job, not fixed; one card per arm; admitted: nemo2_h200 "
+                 "(NVIDIA H200, HTCondor)", "harness_commit": "none (no harness import)",
          "P1": "PASS — docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md and the receipt",
          "P2": "PASS — P.3a records", "P3": "PASS — docs/r1/reviews/TRACKP_P4_RUNNER_REVIEW.md",
          "P4": "PASS — not applicable to phase 1 (T0 is one suite)",
          "P5": "PASS — R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22, R1-TRACKP-IMAGE-V22-B: smoke, E0, probe",
          "P6": "PASS — R1-TRACKP-P4-DECISIONS", "P7": "PASS — trackp.py --check-config clean",
-         "P8": "PASS — R1-T1-HOST-TASL"}
+         "P8": "PASS — R1-T1-HOST-TASL and R1-HOST-FREE"}
     f["labels"] = f["labels"].replace("<root>", "/release")
     f.update(over)
     return f
@@ -1369,7 +1390,8 @@ def _note(dirpath: Path, fields: dict, name="trackp_p4_20991231.md") -> Path:
 
 
 def _probe_text(s) -> str:
-    return "# H200 SFT probe\n" + "".join(f"p4_estimate_hours: {a} {s['estimate']['hours'][a]}\n" for a in s["arms"]) \
+    return f"# SFT probe\np4_probe_host_class: {H}\n" + \
+        "".join(f"p4_estimate_hours: {a} {_est(s)['hours'][a]}\n" for a in s["arms"]) \
         + f"p4_probe_gpu_hours: {s['caps']['probe_gpu_hours']:.2f}\n" \
         + "".join(f"p4_probe_charge_file: {run} " + ("_wallclock.json" if k == 0 else f"_wallclock.{k}.json") +
                   f" {sha}\n" for run, shas in s["caps"]["probe_charge_files"].items() for k, sha in enumerate(shas))
@@ -1379,7 +1401,7 @@ def test_switch_check_binds_the_note_to_the_stage(stage_world, monkeypatch, tmp_
     s, spec_path, stage, man, table, part = stage_world
     monkeypatch.setattr(SW, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(SW, "_blob_text", lambda rel: _probe_text(s) if rel == "docs/r1/reports/x.md" else "")
-    monkeypatch.setattr(SW, "_blob_on_main", lambda rel: rel == "docs/r1/reports/x.md")
+    monkeypatch.setattr(SW, "_blob_on_main", lambda rel: rel in ("docs/r1/reports/x.md", "docs/r1/reports/a.md"))
     spec_sha = _sha((stage / "p4_spec.json").read_bytes())
     yes = lambda rel, raw: True  # noqa: E731
     note = _note(tmp_path, _note_fields(s, spec_sha))
@@ -1433,7 +1455,7 @@ def test_switch_check_needs_the_probe_hours_in_the_spec(stage_world, monkeypatch
     yes = lambda rel, raw: True  # noqa: E731
     good = _probe_text(s)
     assert SW.check(stage, note, on_main=yes, blob_text=lambda rel: good)["arms"] == s["arms"]
-    assert SW.check_probe_hours(good, s) == {a: s["estimate"]["hours"][a] for a in s["arms"]}
+    assert SW.check_probe_hours(good, s) == {a: _est(s)["hours"][a] for a in s["arms"]}
     first = s["arms"][0]
     pg = f"p4_probe_gpu_hours: {s['caps']['probe_gpu_hours']:.2f}"
     assert SW.check_probe_charge(good, s) == s["caps"]["probe_gpu_hours"]
@@ -1445,7 +1467,7 @@ def test_switch_check_needs_the_probe_hours_in_the_spec(stage_world, monkeypatch
                          "is not the probe's"),
                         (good + f"p4_estimate_hours: {first} 1.0\n", "found 2"),
                         ("\n".join(x for x in good.splitlines() if not x.endswith(f" {first} "
-                                                                             f"{s['estimate']['hours'][first]}")),
+                                                                             f"{_est(s)['hours'][first]}")),
                          "found 0")):
         with pytest.raises(SW.Stop, match=match):
             SW.check(stage, note, on_main=yes, blob_text=lambda rel, t=text: t)
@@ -1515,8 +1537,8 @@ def test_switch_submit_needs_both_keys_the_binding_and_the_first_arm(stage_world
     got = SW.check_cap(s_cf, ["kev-4b", "qwen3.5-0.8b-base", "qwen3.5-4b-base"], cf)
     assert got["charged_gpu_hours"] == round(22.5 + 1.745 + 0.01, 4) and got["projected_gpu_hours"] == 15.61
     (L.T1_REPO_ROOT / L.T1_RECORD_DIR / L.T1_HISTORY).write_text(SYN_T1_HISTORY)   # the sealed tree's T1 (r2-m2)
-    with pytest.raises(SW.Stop, match="exceeds P4-CAP"):
-        SW.submit(stage, note, enable=True, first_record=tmp_path / "rec.json", **kw)
+    over = SW.check_cap(s, ["kev-4b", "qwen3.5-0.8b-base", "qwen3.5-4b-base"], tmp_path / "sealed")
+    assert over["threshold"]["report_to_author"] is True       # R1-NO-TIMEOUT (3): reported, the submission goes on
     import shutil as _sh
     _sh.rmtree(tmp_path / "sealed")
     _probe_tree(tmp_path / "sealed")
@@ -1546,7 +1568,8 @@ def test_first_record_gate(stage_world, tmp_path):
 
     def write(**over):
         rec = {"run_id": s["run_id"], "arm": "kev-0.8b", "spec_sha256": spec_sha, "image": {"digest": DIGEST},
-               "gpu": {"name": L.GPU_MODEL}, "env3_freeze": {"status": "causal_conv1d_only"}, "stop": None,
+               "host_class": H, "gpu": {"name": L.GPU_MODEL}, "env3_freeze": {"status": "causal_conv1d_only"},
+               "stop": None,
                "steps": ["identity", "test_path"], **over}
         (arm_dir / "job_record.json").write_text(json.dumps(rec))
         (arm_dir / "SEAL_RECEIPT.json").write_text(
@@ -1631,16 +1654,19 @@ def test_the_note_draft_parses_and_its_completion_binds_a_filled_spec(tmp_path):
              "labels": f"/release/sweep1/traindev/label_block.traindev.jsonl sha256 {s['labels']['partition_sha256']}",
              "label_receipt": f"/release/sweep1/traindev/RECEIPT.json sha256 {s['labels']['receipt_sha256']}",
              "label_freeze": f"{s['labels']['freeze_record']['path']} sha256 {s['labels']['freeze_record']['sha256']}",
-             "host_config": f"{L.HOST_CONFIG} {s['host_config']['sha256']}", "image": s["image"]["digest"],
+             "host_config": f"{L.HOST_CONFIG} {_hc(s)['sha256']}", "image": s["image"]["digest"],
              "versions_sha256": s["image"]["versions_sha256"], "h200_smoke_e0": "docs/r1/reports/smoke.md",
+             "ada_smoke_e0": "none: the spec does not admit ada_rtx6000",
              "h200_sft_probe": "docs/r1/reports/x.md (per base at micro-batch 8)",
+             "ada_sft_probe": "none: the spec does not admit ada_rtx6000",                     # R1-HOST-FREE
              "P1": "PASS — docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md and the receipt",
              "P2": "PASS — P.3a records", "P3": "PASS — docs/r1/reviews/TRACKP_P4_RUNNER_REVIEW.md",
              "P4": "PASS — the author's tick: not applicable to phase 1 (T0 is one suite)",
              "P5": "PASS — R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B: records",
              "P7": "PASS — trackp.py --check-config clean",
              "gpu_hours_cap": "40 (P4-CAP A; P4-PROBECAP A and P4-T1CHARGE A: probe_gpu_hours: 0.50 GPU-h, T1 "
-                              "included; projection 16.94 GPU-h); slot_hours_cap: 64",
+                              "included; projection 16.94 GPU-h; GPU-hours on any card, R1-HOST-FREE (5)); "
+                              "slot_hours_cap: 64",
              "probe_charge_files": f"{SYN_PROBE_RUN} _wallclock.json {SYN_CHARGE_SHA}"}
     lines = []
     import re
@@ -1706,7 +1732,7 @@ def test_the_shipped_spec_host_config_and_note_draft_name_image_v22():
     assert v.startswith("TODO_VERIFY_ON_HOST") or L.SHA.fullmatch(v)
     for path, pat in SPEC_FILL_FIELDS:
         assert L._placeholder(_spec_value(SPEC, path)) or pat.fullmatch(_spec_value(SPEC, path)), path
-    src = SPEC["estimate"]["source"]
+    src = _est(SPEC)["source"]
     assert src.startswith("TODO") or re.fullmatch(r"h200_sft_probe: docs/r1/reports/\S+\.md", src)
     host = json.loads((ROOT / L.HOST_CONFIG).read_text())
     assert host["image"] == {"gpu": V22_GPU, "cpu": V22_CPU, "tag": "20261124-v2.2-667bb9c2"}
@@ -1714,10 +1740,10 @@ def test_the_shipped_spec_host_config_and_note_draft_name_image_v22():
     if _host_config_state(host) == "filled":
         for arm in L.ARMS:                                     # the job's staged directories (T3)
             L.check_local_paths(arm, ROOT, Path("/nonexistent/condor/execute/dir_0"))
-        assert L._placeholder(SPEC["host_config"]["sha256"]) or \
-            SPEC["host_config"]["sha256"] == _sha((ROOT / L.HOST_CONFIG).read_bytes())
+        assert L._placeholder(_hc(SPEC)["sha256"]) or \
+            _hc(SPEC)["sha256"] == _sha((ROOT / L.HOST_CONFIG).read_bytes())
     else:
-        assert L._placeholder(SPEC["host_config"]["sha256"])
+        assert L._placeholder(_hc(SPEC)["sha256"])
     import re
     text = NOTE_DRAFT.read_text()
     assert re.search(r"^approved: false$", text, re.M) and not re.search(r"^approved: true", text, re.M)
@@ -1811,18 +1837,19 @@ def probe_filled() -> dict:
     s = copy.deepcopy(PROBE_TEMPLATE)
     s["paper"]["commit"] = "3" * 40
     s["image"]["versions_sha256"] = "4" * 64
-    s["host_config"]["sha256"] = "5" * 64
+    s["host_class"] = H
+    _hc(s)["sha256"] = "5" * 64
     return s
 
 
 def test_the_probe_template_is_the_p4_spec_with_a_probe_run_id_and_block():
     """§4.2 item 11: the same image, env3, host config, SFT config, table, layout, arms and protocol as p4_spec.json;
     another run id (F10); the fixed probe block; exactly the three host fields left as placeholders."""
-    for key in ("gpu_model", "env3", "sft_config", "split_file", "table", "layout", "arms", "first_arm", "protocol"):
+    for key in ("env3", "sft_config", "split_file", "table", "layout", "arms", "first_arm", "protocol"):
         assert PROBE_TEMPLATE[key] == SPEC[key], key
     for key in ("digest", "row", "tag"):
         assert PROBE_TEMPLATE["image"][key] == SPEC["image"][key]
-    assert PROBE_TEMPLATE["image"]["digest"] == L.IMAGE_V22 and PROBE_TEMPLATE["host_config"]["path"] == L.HOST_CONFIG
+    assert PROBE_TEMPLATE["image"]["digest"] == L.IMAGE_V22 and _hc(PROBE_TEMPLATE)["path"] == L.HOST_CONFIG
     assert {k: v for k, v in PROBE_TEMPLATE["caps"].items() if k in ("gpu_hours", "slot_hours")} == \
         {"gpu_hours": 40.0, "slot_hours": 64.0}
     assert L.PROBE_RUN_ID.fullmatch(PROBE_TEMPLATE["run_id"]) and PROBE_TEMPLATE["run_id"] != L.P4_RUN_ID
@@ -1840,12 +1867,12 @@ def test_probe_strength_needs_the_host_fields_but_not_the_probe_record():
     probe block other than the fixed one; launch strength refuses any probe spec."""
     s = probe_filled()
     got = L.validate_probe_spec(s)
-    assert got["probe"]["steps"] == 50 and L._placeholder(s["estimate"]["source"])
+    assert got["probe"]["steps"] == 50 and L._placeholder(_est(s)["source"])
     assert L._placeholder(s["labels"]["receipt_sha256"]) and L._placeholder(s["caps"]["probe_gpu_hours"])
     L.check_probe_template(s, PROBE_TEMPLATE)
     for edit, match in ((_set("paper", "commit", "TODO"), "paper.commit"),
                         (_set("image", "versions_sha256", "TODO_VERIFY_ON_HOST: x"), "image.versions_sha256"),
-                        (_set("host_config", "sha256", "TODO"), "host_config.sha256"),
+                        (_set("hosts", H, "host_config", "sha256", "TODO"), "host_config.sha256"),
                         (_set("image", "digest", DIGEST), "image v2.2 by digest"),
                         (_set("run_id", L.P4_RUN_ID), "never the P.4 run"),
                         (_set("run_id", "trackp-p4-p1-20261125-b"), "trackp-p4-probe"),
@@ -1912,7 +1939,8 @@ def probe_world(sweep, tmp_path, monkeypatch):
     spec_path = tmp_path / "p4_probe_spec.json"
     spec_path.write_text(json.dumps(probe_filled()))
     monkeypatch.setattr(L, "image_identity", lambda spec: {"digest": spec["image"]["digest"], "versions_sha256": "4" * 64})
-    monkeypatch.setattr(L, "gpu_identity", lambda sh: {"name": L.GPU_MODEL, "uuid": "GPU-1", "memory_total": "143771 MiB"})
+    monkeypatch.setattr(L, "gpu_identity", lambda sh: {"name": L.GPU_MODEL, "uuid": "GPU-1", "memory_total": "143771 MiB",
+                                                       "compute_capability": "9.0"})
     monkeypatch.setattr(L, "host_identity", lambda: {"uid": 1000, "hostname": "n1"})
     monkeypatch.setattr(L, "clone_full", lambda commit, dest, git, sh: dest.symlink_to(ROOT) or {"commit": commit})
     monkeypatch.setattr(L, "env3_freeze", lambda spec, clone, sh: {"status": "identical", "image_line": "x",
@@ -2147,12 +2175,13 @@ def test_probe_attempts_are_sealed_gated_recorded_and_charged(probe_world, tmp_p
                                                     {"micro_batch": 8, "effective_batch": 16, "max_epochs": 5})["hours"]
     assert e0["labels"] == "synthetic" and e0["protocol_deviation"] == {"max_steps": 50} and e0["oom"] is False
     lines = table["lines"]
-    assert lines[-1] == f"p4_probe_gpu_hours: {table['p4_probe_gpu_hours']:.2f}" and len(lines) == 5
+    assert lines[-1] == f"p4_probe_gpu_hours: {table['p4_probe_gpu_hours']:.2f}" and len(lines) == 6
+    assert lines[0] == f"p4_probe_host_class: {H}" and table["host_class"] == H                  # R1-HOST-FREE
     filled_p4 = copy.deepcopy(p4)                         # the lines bind the spec through the switch's checks
-    filled_p4["estimate"]["hours"] = table["estimate_hours"]
+    _est(filled_p4)["hours"] = table["estimate_hours"]
     filled_p4["caps"]["probe_gpu_hours"] = table["p4_probe_gpu_hours"]
     text = "# record\n" + "\n".join(lines) + "\n"
-    assert SW.check_probe_hours(text, filled_p4) and SW.check_probe_charge(text, filled_p4)
+    assert SW.check_probe_hours(text, filled_p4, H) and SW.check_probe_charge(text, filled_p4)
     assert table["projection"]["probe_gpu_hours"] == table["p4_probe_gpu_hours"]
     with pytest.raises(L.Stop, match="needs every arm"):
         L.probe_records(s, spec_sha, p4, dirs[:3], sealed)
@@ -2167,8 +2196,8 @@ def test_probe_attempts_are_sealed_gated_recorded_and_charged(probe_world, tmp_p
         ledger_dir = sealed / s["run_id"] / "kev-4b" / f"attempt-{n}"
         ledger_dir.mkdir()
         (ledger_dir / "SEAL_RECEIPT.json").write_text(json.dumps({"charged_gpu_hours": 2.0, "stop": "STOP: x"}))
-    with pytest.raises(L.Stop, match="exceeds P4-CAP|caps.probe_gpu_hours"):
-        L.probe_records(s, spec_sha, p4, dirs, sealed)
+    over = L.probe_records(s, spec_sha, p4, dirs, sealed)            # R1-NO-TIMEOUT (3): reported, not refused
+    assert over["threshold"]["report_to_author"] is True
 
 
 def test_probe_charges_sum_every_probe_run_and_ignore_the_p4_run(tmp_path):
@@ -2209,7 +2238,7 @@ def test_probe_stage_renders_one_base_with_no_label_transfer(probe_stage_world, 
     man = RJ.stage_probe(spec_path, tmp_path / "st", table=table, arm="kev-0.8b", **kw)
     jdl = (tmp_path / "st" / "p4probe_kev-0.8b.jdl").read_text()
     for line in ("universe = container", f"container_image = docker://{L.IMAGE_V22}", "executable = p4_probe.sh",
-                 "arguments = p4_probe_spec.json kev-0.8b", "request_GPUs = 1", "request_cpus = 8",
+                 "arguments = p4_probe_spec.json kev-0.8b nemo2_h200", "request_GPUs = 1", "request_cpus = 8",
                  "request_memory = 131072", "request_disk = 150000000", "+RequestWalltime = 7200",
                  "periodic_hold = (NumJobStarts > 1)", "transfer_input_files = " + ",".join(L.PROBE_TRANSFER_INPUTS),
                  "transfer_output_files = out.tar,job_record.json,SHA256SUMS,p4_run.log"):
@@ -2261,7 +2290,7 @@ def test_probe_stage_of_another_base_needs_the_sealed_first_probe_record(probe_s
     d.mkdir(parents=True)
 
     def write(**over):
-        rec = {"schema": L.PROBE_RECORD_SCHEMA, "run_id": s["run_id"], "arm": "kev-0.8b",
+        rec = {"schema": L.PROBE_RECORD_SCHEMA, "run_id": s["run_id"], "arm": "kev-0.8b", "host_class": H,
                "spec_sha256": _sha(spec_path.read_bytes()), "stop": None, "steps": ["identity", "probe"], **over}
         (d / "job_record.json").write_text(json.dumps(rec))
         (d / "SEAL_RECEIPT.json").write_text(json.dumps({"job_record_sha256": _sha((d / "job_record.json").read_bytes()),
@@ -2638,11 +2667,12 @@ def test_minor4_probe_stage_desk_binding_against_paper_commit_on_main(tmp_path):
     _git(work, "fetch", "-q", "origin")
     s = probe_filled()
     s["paper"]["commit"] = c
-    s["host_config"]["sha256"] = _sha(b'{"filled": true}\n')
+    _hc(s)["sha256"] = _sha(b'{"filled": true}\n')
     got = RJ.check_probe_binding(s, work)
     assert got["paper_commit"] == c and got["origin_main"] == c
     with pytest.raises(L.Stop, match="host_config.sha256"):
-        RJ.check_probe_binding({**s, "host_config": {**s["host_config"], "sha256": "5" * 64}}, work)
+        RJ.check_probe_binding({**s, "hosts": {H: {**s["hosts"][H], "host_config": {**_hc(s), "sha256": "5" * 64}}}},
+                               work)
     (work / L.PKG_REL / "p4_lib.py").write_text("# changed after the fill commit\n")
     _git(work, "commit", "-qam", "later")
     later = _git(work, "rev-parse", "HEAD")
@@ -3376,3 +3406,177 @@ def test_n4_assemble_compares_the_staged_tokenizer_files():
     other["staging"]["tokenizers"]["pool"]["x"]["files"]["tokenizer.json"]["sha256"] = "b" * 64
     assert L.comparable(base)["tokenizers"] == {"x": {"tokenizer.json": "a" * 64}}
     assert L.comparable(base) != L.comparable(other)
+
+
+
+# ============================================================================================ R1-HOST-FREE (unit 1)
+ADA = "ada_rtx6000"
+ADA_NAME = "NVIDIA RTX 6000 Ada Generation"
+
+
+def _both(ada_sha="a" * 64) -> dict:
+    """filled() admitting both classes (the Ada host config at ``ada_sha``, its own probe record)."""
+    s = filled()
+    s["hosts"][ADA] = copy.deepcopy(SPEC["hosts"][ADA])
+    s["hosts"][ADA]["host_config"]["sha256"] = ada_sha
+    s["hosts"][ADA]["estimate"]["source"] = "ada_sft_probe: docs/r1/reports/ada.md"
+    return s
+
+
+def test_host_free_a_job_on_ada_records_its_class_card_lease_and_processes(job_world, monkeypatch, tmp_path):
+    s, spec_path, job, calls, state = job_world
+    spec_path.write_text(json.dumps({**_both(), "protocol": s["protocol"]}))
+    monkeypatch.setattr(L, "gpu_identity", lambda sh: {"name": ADA_NAME, "uuid": "GPU-ada", "compute_capability": "8.9",
+                                                       "host_class": L.job_host_class()})
+    seen = {"n": 0}
+
+    def procs(sh=None, uuid=None):
+        seen["n"] += 1
+        return {"count": 0 if seen["n"] == 1 else 1, "memory_mib": 0.0 if seen["n"] == 1 else 5000.0}
+    monkeypatch.setattr(L, "card_processes", procs)
+    monkeypatch.setenv(L.LEASED_GPU_ENV, "GPU-ada")
+    rec = L.run_job(spec_path, "kev-0.8b", job, host_class=ADA)
+    assert rec["host_class"] == ADA and rec["launch"] == "direct" and rec["gpu"]["name"] == ADA_NAME
+    assert rec["lease"] == {"leased_uuid": "GPU-ada", "env": L.LEASED_GPU_ENV}
+    assert rec["card_processes_start"] == {"count": 0, "memory_mib": 0.0} and rec["card_processes_end"]["count"] == 1
+    assert L.job_host_class() == H                                       # restored after the job
+    # an OOM with another process on the card is an infrastructure failure (R1-CARD-SHARE (3)), not the author's STOP
+    job2 = tmp_path / "job2"
+    job2.mkdir()
+    seen["n"], state["oom_at"] = 0, 4
+    calls.clear()
+    with pytest.raises(L.Stop, match="R1-CARD-SHARE"):
+        L.run_job(spec_path, "kev-0.8b", job2, host_class=ADA)
+    rec2 = json.loads((job2 / "job_record.json").read_text())
+    assert rec2["stop_class"] == "infrastructure" and rec2["lost_beside_another_process"] is True
+    # without the lease variable, or told a class the spec does not admit
+    monkeypatch.delenv(L.LEASED_GPU_ENV)
+    job3 = tmp_path / "job3"
+    job3.mkdir()
+    state["oom_at"] = None
+    with pytest.raises(L.Stop, match="leased card only"):
+        L.run_job(spec_path, "kev-0.8b", job3, host_class=ADA)
+    spec_path.write_text(json.dumps(s))
+    with pytest.raises(L.Stop, match="not admitted"):
+        L.run_job(spec_path, "kev-0.8b", tmp_path / "job4", host_class=ADA)
+
+
+def test_host_free_assemble_records_each_arms_card_and_admits_mixed_models(tmp_path):
+    s = _both()
+    root = _probe_tree(tmp_path / "a")
+    ada = {"host_class": ADA, "gpu": {"name": ADA_NAME, "uuid": "GPU-ada", "compute_capability": "8.9"}}
+    dirs = [_sealed_attempt(root, s, arm, "f" * 64, **(ada if arm == "kev-4b" else {}),
+                            receipt_over={"launch": "direct", "gpu_uuid": "GPU-ada"} if arm == "kev-4b" else None)
+            for arm in s["arms"]]
+    asm = L.assemble(dirs, s, "f" * 64, root)
+    assert asm["gpu_models"]["kev-4b"] == ADA_NAME and asm["gpu_models"]["kev-0.8b"] == L.GPU_MODEL
+    assert asm["mixed_gpu_models"] is True and asm["jobs"]["kev-4b"]["launch"] == "direct"
+    assert asm["jobs"]["kev-4b"]["host_class"] == ADA and asm["threshold"]["report_to_author"] is False
+    for k, (over, rover) in enumerate(((ada, {"launch": "direct", "gpu_uuid": "GPU-other"}),     # not the leased card
+                                       ({**ada, "host_class": H}, None),                         # GPU of another class
+                                       ({"host_class": None}, None))):                           # no class named
+        r = _probe_tree(tmp_path / f"b{k}")
+        bad = [_sealed_attempt(r, s, arm, "f" * 64, **(over if arm == "kev-4b" else {}),
+                               receipt_over=rover if arm == "kev-4b" else None) for arm in s["arms"]]
+        with pytest.raises(L.Stop, match="stays on one card"):
+            L.assemble(bad, s, "f" * 64, r)
+
+
+@pytest.fixture
+def ada_stage_world(tmp_path, monkeypatch, f2):
+    """stage_world for the Ada class: a stand-in checkout with the Ada host config filled by the fill hook (work root
+    and lease directory in tmp), a spec admitting both classes, and a direct stage of it (descriptors, p4_direct.py)."""
+    from r1.tests.test_trackp_p4_direct import _ada_values
+    repo = tmp_path / "repo"
+    (repo / "r1/scripts/configs").mkdir(parents=True)
+    f2(repo)
+    sft = json.loads((ROOT / L.SFT_CONFIG).read_text())
+    sft["tables"][L.TABLE_PIN]["sha256"] = {"proposals.jsonl": _sha(b"P\n"), "configs.json": _sha(b"C\n")}
+    (repo / L.SFT_CONFIG).write_text(json.dumps(sft))
+    shutil.copy2(ROOT / L.ADA_HOST_CONFIG, repo / L.ADA_HOST_CONFIG)
+    values = tmp_path / "ada_fill.json"
+    values.write_text(json.dumps(_ada_values(str(tmp_path / "work"), str(tmp_path / "locks"))))
+    ada_sha = FH.fill(values, repo / L.ADA_HOST_CONFIG, host_class=ADA)["sha256"]
+    monkeypatch.setattr(RJ, "REPO_ROOT", repo)
+    table = tmp_path / "table"
+    table.mkdir()
+    for name, text in (("proposals.jsonl", b"P\n"), ("configs.json", b"C\n"), ("build.json", b"B\n")):
+        (table / name).write_bytes(text)
+    part, psha, rsha = _partition(tmp_path / "rel")
+    s = _both(ada_sha)
+    s["labels"].update(partition_sha256=psha, receipt_sha256=rsha)
+    spec_path = tmp_path / "spec.json"
+    spec_path.write_text(json.dumps(s))
+    stage = tmp_path / "stage"
+    man = RJ.stage(spec_path, stage, table=table, partition=part, host_class=ADA)
+    return s, spec_path, stage, man, table, part
+
+
+def test_host_free_direct_stage_switch_submit_launch_and_seal_end_to_end(ada_stage_world, monkeypatch, tmp_path):
+    import p4_direct as D
+    from r1.tests.test_trackp_p4_direct import _Host
+    s, spec_path, stage, man, table, part = ada_stage_world
+    assert man["host_class"] == ADA and man["launch"] == "direct"
+    assert {f"p4direct_{a}.json" for a in s["arms"]} | {"p4_direct.py", *L.TRANSFER_INPUTS} <= set(man["files"])
+    assert not list(stage.glob("*.jdl"))                    # the same canonical inputs, a descriptor in place of a JDL
+    monkeypatch.setattr(SW, "REPO_ROOT", tmp_path)
+    ada_text = _probe_text(s).replace(f"p4_probe_host_class: {H}", f"p4_probe_host_class: {ADA}")
+    records = {"docs/r1/reports/x.md": _probe_text(s), "docs/r1/reports/ada.md": ada_text,
+               "docs/r1/reports/a.md": "", "docs/r1/reports/ada_smoke.md": ""}
+    monkeypatch.setattr(SW, "_blob_on_main", lambda rel: rel in records)
+    monkeypatch.setattr(SW, "_blob_text", lambda rel: records.get(rel, ""))
+    spec_sha = _sha((stage / "p4_spec.json").read_bytes())
+    fields = _note_fields(s, spec_sha)
+    ada_cfg = s["hosts"][ADA]["host_config"]
+    fields.update(host=fields["host"] + f", ada_rtx6000 ({ADA_NAME}, direct)",
+                  host_config=f"{fields['host_config']}; {ada_cfg['path']} {ada_cfg['sha256']}",
+                  ada_sft_probe="docs/r1/reports/ada.md", ada_smoke_e0="docs/r1/reports/ada_smoke.md (smoke, E0)")
+    note = _note(tmp_path, fields)
+    yes = lambda rel, raw: True  # noqa: E731
+    got = SW.check(stage, note, on_main=yes)
+    assert got["host_class"] == ADA and got["launch_kind"] == "direct"
+    desc = stage / "p4direct_kev-0.8b.json"                 # a changed descriptor is refused
+    keep = desc.read_text()
+    desc.write_text(keep.replace('"docker"', '"apptainer"'))
+    with pytest.raises(SW.Stop, match="changed after staging"):
+        SW.check(stage, note, on_main=yes)
+    desc.write_text(keep)
+    with pytest.raises(SW.Stop, match="ada.md is not on origin/main"):
+        SW.check(stage, note, on_main=yes, blob_on_main=lambda rel: rel == "docs/r1/reports/x.md")
+    with pytest.raises(SW.Stop, match="smoke/E0 record docs/r1/reports/ada_smoke.md of ada_rtx6000 is not on"):
+        SW.check(stage, note, on_main=yes, blob_on_main=lambda rel: rel != "docs/r1/reports/ada_smoke.md")
+
+    real_run = subprocess.run
+
+    def no_condor(argv, **kw):
+        assert argv[0] != "condor_submit", "no condor_submit on the direct path"
+        return real_run(argv, **kw)
+    monkeypatch.setattr(SW.subprocess, "run", no_condor)
+    monkeypatch.setenv(SW.ENABLE_ENV, "1")
+    sealed = tmp_path / "sealed"
+    _probe_tree(sealed)
+    kw = dict(on_main=yes, launch_binding=lambda repo, sp, rows: {"rows": rows}, spec_path=stage / "p4_spec.json",
+              sealed_root=sealed)
+    with pytest.raises(SW.Stop, match="disabled"):
+        SW.submit(stage, note, enable=False, **kw)
+    out = SW.submit(stage, note, enable=True, arm="kev-0.8b", **kw)
+    entry = out["submitted"][0]
+    assert entry["launch_kind"] == "direct" and "p4_direct.py launch" in entry["launch_on_host"]
+    marker = json.loads((stage / "P4_SUBMIT_STARTED_kev-0.8b.json").read_text())
+    assert marker["launch_kind"] == "direct" and marker["stage_manifest_sha256"] == got["stage_manifest_sha256"]
+    ledger = [json.loads(x) for x in (sealed / s["run_id"] / L.SUBMISSION_LEDGER).read_text().splitlines()]
+    assert ledger == [{**ledger[0], "arm": "kev-0.8b", "launch": "direct", "host_class": ADA,
+                       "stage_manifest_sha256": got["stage_manifest_sha256"]}]
+    assert L.charged_hours(s, sealed)["pending"][0]["arm"] == "kev-0.8b"    # charged until sealed
+    with pytest.raises(SW.Stop, match="not sealed yet"):
+        SW.submit(stage, note, enable=True, arm="kev-0.8b", **kw)
+    # the compute agent copies the stage to the host and launches it there (fakes for the host)
+    host = _Host(record_over={"schema": L.RECORD_SCHEMA, "mode": None, "steps": ["identity", "test_path"],
+                              "spec_sha256": spec_sha, "paper_commit": s["paper"]["commit"]})
+    res = D.Launch(str(stage), "kev-0.8b", 2, run=host.run, popen=host.popen, hostname="ucrtasl", now=host.now,
+                   environ={}).main()
+    assert res["status"] == "finished" and host.argv[-4:] == ["p4_job.sh", "p4_spec.json", "kev-0.8b", ADA]
+    receipt = L.seal(Path(res["job_dir"]), s, "kev-0.8b", sealed)
+    assert receipt["launch"] == "direct" and receipt["identity_verified"] is True and receipt["charged_gpu_hours"] == 2.0
+    charged = L.charged_hours(s, sealed)
+    assert charged["pending"] == [] and charged["per_arm"]["kev-0.8b"] == 2.0

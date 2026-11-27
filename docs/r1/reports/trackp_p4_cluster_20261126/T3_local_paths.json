@@ -1,0 +1,16 @@
+{
+ "kev-0.8b": {
+  "local_path": "/nonexistent/condor/execute/dir_0/models/qwen3.5-0.8b-base",
+  "adapter_local_path": "/nonexistent/condor/execute/dir_0/models/kev-0.8b"
+ },
+ "kev-4b": {
+  "local_path": "/nonexistent/condor/execute/dir_0/models/qwen3.5-4b-base",
+  "adapter_local_path": "/nonexistent/condor/execute/dir_0/models/kev-4b"
+ },
+ "qwen3.5-0.8b-base": {
+  "local_path": "/nonexistent/condor/execute/dir_0/models/qwen3.5-0.8b-base"
+ },
+ "qwen3.5-4b-base": {
+  "local_path": "/nonexistent/condor/execute/dir_0/models/qwen3.5-4b-base"
+ }
+}

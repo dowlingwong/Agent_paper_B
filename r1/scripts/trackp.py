@@ -113,9 +113,14 @@ def _lease(args, lease_log: list):
         yield None
         return
     # An exclusive HTCondor GPU slot has no Track X schedule to read (no origin/main STATUS.md in the job): the host
-    # config says so with "lease": "htcondor_slot"; the flock and the foreign-process check still apply.
-    status_text = "" if args.cfg.get("lease") == "htcondor_slot" else None
+    # config says so with "lease": "htcondor_slot"; the flock and the foreign-process check still apply. A card leased
+    # outside the job by the P.4 direct launcher (p4_direct.py, R1-HOST-FREE) is the same case: "direct_gpu_lease";
+    # that card may be shared with another user's process by design (R1-CARD-SHARE (1): the launcher checked its free
+    # memory and records the other processes at start and end), so the in-job foreign-process check is off there.
+    direct = args.cfg.get("lease") == "direct_gpu_lease"
+    status_text = "" if args.cfg.get("lease") == "htcondor_slot" or direct else None
     with R.gpu_lease(f"trackp {args.cmd} {args.base}", run_log=lease_log, status_text=status_text,
+                     check_processes=not direct,
                      lock_path=Path(os.path.expanduser(args.cfg["gpu"]["lock_path"])),
                      log_path=Path(os.path.expanduser(args.cfg["runs_dir"])) / "gpu_lease_log.jsonl") as lease:
         yield lease
@@ -398,6 +403,20 @@ def cmd_sft_select(args, cfg) -> dict:
     from r1.c3.train import sft as SFT
     if not args.runs:
         raise R.TrackPStop("sft-select needs --runs")
+    # local/20261127-02: a missing or unreadable run is a protocol STOP (rc 2) before any read by select_lr, not a
+    # FileNotFoundError (rc 1, infrastructure); the placeholder config used to stop earlier and hid this
+    bad = []
+    for r in args.runs:
+        rep_path = Path(r) / "stage_s" / "sft_report.json"
+        try:
+            if not rep_path.is_file():
+                raise OSError("not a file")
+            if not isinstance(json.loads(rep_path.read_text(encoding="utf-8")), dict):
+                raise ValueError("not a JSON object")
+        except (OSError, ValueError) as exc:
+            bad.append(f"{rep_path} ({type(exc).__name__}: {exc})")
+    if bad:
+        raise R.TrackPStop(f"sft-select: run report missing or unreadable: {'; '.join(bad)}")
     rep = SFT.select_lr([Path(r) / "stage_s" for r in args.runs])
     print(f"label status of the compared runs: {rep['label_status']}", file=sys.stderr)
     return {"report": rep, "base": {}, "model_files": {}, "lease": [], "data": [rep]}

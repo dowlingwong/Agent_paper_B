@@ -1,0 +1,10 @@
+C7 / T1_TASL_PLAN §6 item 7 — TASL-7 proposer, manual ENGINEERING host test 2026-11-27
+Server URL: http://tasl-7.tail119748.ts.net:8095 (bound to the Tailscale address only)
+From TASL-7:
+  /health -> {"status":"ok"}
+  127.0.0.1:8095 -> connection refused (rc 7), so the listener is on the Tailscale address, not localhost
+From TASL-2 (Tailscale):
+  /health time_total s, five probes: 0.126016 0.032849 0.029110 0.031820 0.032305
+  /props -> build_info b1-620d222, total_slots 1, n_ctx_slot 32768, model google_gemma-4-31B-it-Q4_K_M.gguf
+Lease test while the server was live:
+  flock -n /home/dowling/r1_locks/gpu0.lock -c true -> rc 1 (second holder refused); lease free after stop.

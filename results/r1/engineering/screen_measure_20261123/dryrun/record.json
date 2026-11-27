@@ -1,0 +1,48 @@
+{
+ "commands": [
+  "python3 -m r1.noise.screen_design --out results/r1/engineering/screen_measure_20261123/design.json",
+  "python3 -m r1.noise.screen_measure plan --out /tmp/.../plan.json",
+  "python3 -m r1.noise.screen_measure run --stub --stub-shared 0 --out /tmp/.../stub_s0",
+  "python3 -m r1.noise.screen_measure run --stub --stub-shared 0.7082 --out /tmp/.../stub_s07082",
+  "python3 -m r1.noise.screen_analysis /tmp/.../stub_s0 --engineering --out results/r1/engineering/screen_measure_20261123/dryrun/analysis_stub_s0.json",
+  "python3 -m r1.noise.screen_analysis /tmp/.../stub_s07082 --engineering --out results/r1/engineering/screen_measure_20261123/dryrun/analysis_stub_s07082.json",
+  "python3 -m r1.noise.screen_analysis /tmp/.../stub_s0 --out /tmp/.../should_refuse.json   (evidence mode on a stub table)"
+ ],
+ "evidence_mode_on_stub_table": "AnalysisRefused: the evidence analysis reads only an EVIDENCE table from the harness (no stub)",
+ "label": "ENGINEERING_ONLY",
+ "note": "Local dry run on stub data only (synthetic metrics from screen_power's model); no harness, no remote host. The run tables (3.7 MB each) are not committed; their sha256 and the manifests are. Never a result.",
+ "plan": {
+  "design_sha256": "bbc98b87d2170ad89ff17a92303ffb440583b74b035d2690a6a2ababeb8d8ec8",
+  "n_runs": 10164,
+  "plan_json_sha256": "682b79223da24e46ade889c3b1a6f6deb8104db3f806eabc0c2373568ca0a0c0"
+ },
+ "regenerated": {
+  "by": "AI-assisted (Claude, subagent, 23 Nov 2026), after the independent review SCREEN_MEASURE_PREDECL_REVIEW_20261123.md",
+  "empty_resamples": "16 of 2,000 in the secondary p->c-only reading of openml_sonar (one eligible triple), in both stub analyses; 0 in every primary reading",
+  "unchanged": "plan.json and both lineage_runs.jsonl have the same sha256 as before; the two engineering analyses are equal to the previous ones apart from the new bootstrap_empty_resamples field; verdicts unchanged",
+  "why": "the code changed (review M1-M3, N2, N5, N6), so the manifests' code_sha256 change, and the analysis output gains bootstrap_empty_resamples (N5)"
+ },
+ "schema": "r1_screen_measure_dryrun/v1",
+ "stub_s0": {
+  "lineage_runs_sha256": "61cf4d108702fdbcca99b5909b1ee6383a7082495356a9a5691ca199755c7bb0",
+  "stdout": {
+   "elapsed_seconds": 0.4,
+   "failed_runs": 0,
+   "label": "ENGINEERING_ONLY",
+   "planned_runs": 10164,
+   "stop": null,
+   "written_runs": 10164
+  }
+ },
+ "stub_s07082": {
+  "lineage_runs_sha256": "ff25c6cdf667af60bb79aafae3d3d2dec8601fbc05e5da8baf9f923e83062d38",
+  "stdout": {
+   "elapsed_seconds": 0.4,
+   "failed_runs": 0,
+   "label": "ENGINEERING_ONLY",
+   "planned_runs": 10164,
+   "stop": null,
+   "written_runs": 10164
+  }
+ }
+}
