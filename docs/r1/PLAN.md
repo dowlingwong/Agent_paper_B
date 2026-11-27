@@ -1690,6 +1690,18 @@ preregistration, the gate code and every signed note are unchanged.
 |---|---|
 | R1-SCREEN-MEASURE-REISSUE | **The screening evidence note is re-issued with the launch interpreter named `python3`, and the author signs the re-issued note** (author, 27 Nov 2026: "签 screening 重发 A"; option A in `AUTHOR.md` on `coord/coordinator` @ `ef8cdc4b`). The run of 27 Nov under `docs/r1/authorizations/screen_measure_20261127.md` STOPped at its first worker-runtime probe with 0 of 10,164 runs written (STOP record on `main` `6cf3ca70`): the launch ran `…/venv/bin/python`, the worker reported `…/venv/bin/python3`, both the same interpreter, and the probe compares `sys.executable` literally. (1) The signed note of 27 Nov stays unchanged as the record of that attempt. (2) A re-issued note, a new file, differs from it only in naming `python3` in the launch command, in its run stamp and output folder, and in a sentence citing this row and the STOP. It keeps the same `code_commit`, design, seeds, data cache, companion pre-declaration and every hash. (3) The screening reviewer re-checks that diff and writes "accepted"; the coordinator then publishes the re-issued note with `approved: true`, which this row pre-authorises (R1-AUTONOMY (3)), and compute launches a new `SMEAS_EVIDENCE_<stamp>` after the strict preflight. Any other change returns to the author. |
 
+### 27 November 2026 — Paper B manuscript repository (author)
+
+| ID | Decision |
+|---|---|
+| R1-MANUSCRIPT-REPO | **Use the standalone [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript) repository for Paper B LaTeX and Overleaf** (author, 27 Nov 2026, “让writer在这里作业，以及指针指到这里”). The opening manuscript revision imports the published `papers/r1` sources at research commit `cd9af2af8dc2d327b77ea41f1052c9e8c39d2021` into manuscript revision `c2a7de3456a88605ae3ac6284b33dbe3498c8ae5`. That path remains the pre-migration snapshot. The writer uses Codex GPT-6.2 Sol with high reasoning for the writing role, works on task branches in the standalone checkout and puts the repository, exact commit and checks for both draft builds in `coord/writer` here. PLAN, task queues and evidence records live in the research repository. Use only released evidence in the manuscript under the existing proof and release rules. After review and successful builds, the coordinator publishes the standalone revision, then updates the submodule pin at `papers/manuscript` and records both commits in `STATE.md`. |
+
+### 27 November 2026 (e) — signatures recorded by Codex (author)
+
+| ID | Decision |
+|---|---|
+| R1-CODEX-RECORDED-SIGNATURES | **Rows that Codex records from the author's Codex chat are published by the coordinator without a further confirmation in the coordinator's session** (author, 27 Nov 2026: "以后 Codex 记录的签字直接发布"). (1) Codex records the author's words verbatim in the row and works on its own branch; it does not push `main` (D2, `canon/README.md` rule 1). (2) Before publishing, the coordinator checks the content as for any author row: the quoted words answer an item the coordinator put to the author, or are a decision the author can make; a signed document differs from its reviewed candidate only in its signature lines; hashes match; PLAN gains additions only; the D8 guard passes. A mismatch is not published and goes back to the author. (3) The author may withdraw this by one sentence. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.

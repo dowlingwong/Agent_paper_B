@@ -67,9 +67,14 @@ when it is complete and reviewed at the submission decision. Venue dates govern 
 
 ## 3. Paper B manuscript and results
 
-The writer starts with [introduction](../../../papers/r1/sections/introduction.tex),
-[problem](../../../papers/r1/sections/problem.tex), [theory](../../../papers/r1/sections/theory.tex),
-[setup](../../../papers/r1/sections/setup.tex), and [results](../../../papers/r1/sections/results.tex).
+The writer works in a standalone clone of [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript) (R1-MANUSCRIPT-REPO). Start with
+[introduction](https://github.com/dowlingwong/paper_B_manuscript/blob/main/sections/introduction.tex),
+[problem](https://github.com/dowlingwong/paper_B_manuscript/blob/main/sections/problem.tex),
+[theory](https://github.com/dowlingwong/paper_B_manuscript/blob/main/sections/theory.tex),
+[setup](https://github.com/dowlingwong/paper_B_manuscript/blob/main/sections/setup.tex), and
+[results](https://github.com/dowlingwong/paper_B_manuscript/blob/main/sections/results.tex).
+Build both drafts there. Put the manuscript branch, commit and build results on this repository's
+`coord/writer`. The coordinator publishes reviewed manuscript changes and advances the research pin.
 
 1. **Lead with the decisions and outcome.** Show a proposer, incumbent, E1/E2 controller and independent terminal
    audit. State the matched hard-budget question in the abstract and first page. The learning object in A3/A5 is a
