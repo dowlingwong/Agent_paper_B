@@ -1,0 +1,25 @@
+{
+ "schema": "trackp_p4_host_fill/1",
+ "comment": "Host-side input of r1/scripts/htcondor/trackp_p4/p4_fill_host_config.py; every value confirmed on the host by the cluster agent (\u00a75.2 of the P.4 cluster test plan); the FILL values must be replaced.",
+ "values": {
+  "bases.kev-0.8b.adapter_local_path": "models/kev-0.8b",
+  "bases.kev-0.8b.local_path": "models/qwen3.5-0.8b-base",
+  "bases.kev-4b.adapter_local_path": "models/kev-4b",
+  "bases.kev-4b.local_path": "models/qwen3.5-4b-base",
+  "bases.laya.local_path": "models/laya",
+  "bases.qwen3.5-0.8b-base.local_path": "models/qwen3.5-0.8b-base",
+  "bases.qwen3.5-4b-base.local_path": "models/qwen3.5-4b-base",
+  "bases.startlux-0.8b.local_path": "models/startlux-0.8b",
+  "bases.startlux-2b.local_path": "models/startlux-2b",
+  "bases.startlux-4b.local_path": "models/startlux-4b",
+  "gpu.compute_capability": "9.0",
+  "gpu.lock_path": "gpu0.lock",
+  "gpu.name": "NVIDIA H200",
+  "hf_home": "hf",
+  "models_dir": "models",
+  "runs_dir": "out",
+  "venv.causal_conv1d": "1.7.0 built from source in image v2.2, TORCH_CUDA_ARCH_LIST 8.0;8.9;9.0, build log sha256 fe872a3edc8f9745148c7e2fe5e02f3f02aebd3c47f5d7a686c610ec816d3312 (R1-TRACKP-IMAGE-V22-B), confirmed by T1 and T2",
+  "venv.path": "/opt/r1/envs/trackp",
+  "work_dir": "."
+ }
+}
