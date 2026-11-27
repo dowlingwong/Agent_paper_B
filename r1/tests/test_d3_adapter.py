@@ -227,23 +227,76 @@ def test_harness_chunk_runs_eighteen_a0_campaigns_and_resolves_ended_on(tmp_path
     assert (out / "SHA256SUMS").is_file()
 
 
-def test_replicate_chunk_runs_fixr3_and_uses_table_ended_on(tmp_path):
-    m = load_manifest()
+def _replicate_factory(m, *, manager_cls=ToggleManager):
     constants = A.load_constants(m)
+    workers = []
+
+    def make_worker(node, seed):
+        worker = FakeWorker(node, seed)
+        workers.append(worker)
+        return worker
+
     factory = A.make_replicate_factory(
         m, constants, harness=HARNESS, apply_env=False,
-        manager_factory=lambda mm, seed, rep: ToggleManager(),
-        worker_factory=lambda node, seed: FakeWorker(node, seed),
+        manager_factory=lambda mm, seed, rep: manager_cls(),
+        worker_factory=make_worker,
     )
+    return factory, workers
+
+
+def test_replicate_chunk_runs_fixr3_and_uses_table_ended_on(tmp_path):
+    m = load_manifest()
+    factory, workers = _replicate_factory(m)
     spec = _spec(arm="FIXR3")
     summary = run_chunk(spec, tmp_path / "chunk", replicate_factory=factory,
                         manifest=m.chunk_manifest(), observed=_observed(m))
     assert summary["campaigns"] == 18
     # 3 seeded runs per step: six complete steps (18 runs); the seventh cannot be funded.
     assert summary["ended_on"] == {"no_fundable_candidate": 18}
+    assert len(workers) == 18 and sum(w.calls for w in workers) == 18 * 18
     first = tmp_path / "chunk" / "campaigns" / f"{NODE}__s6201"
+    rows = [json.loads(line)["record"] for line in (first / "runs.jsonl").read_text().splitlines()]
+    assert len(rows) == 18 and all(row["success"] for row in rows)
+    assert {row["j"] for row in rows} == {0, 1, 2}
     final = json.loads((first / "snapshots" / "final.json").read_text())
     assert final["w"] == 18 and final["ended_on"] == "no_fundable_candidate"
+
+
+def test_replicate_egate_runs_without_an_incumbent_metric(tmp_path):
+    m = load_manifest()
+    factory, workers = _replicate_factory(m)
+    spec = _spec(arm="EGATE")
+    summary = run_chunk(spec, tmp_path / "chunk", replicate_factory=factory,
+                        manifest=m.chunk_manifest(), observed=_observed(m))
+    assert summary["campaigns"] == 18
+    assert sum(w.calls for w in workers) > 0
+    first = tmp_path / "chunk" / "campaigns" / f"{NODE}__s6201"
+    rows = [json.loads(line)["record"] for line in (first / "runs.jsonl").read_text().splitlines()]
+    assert rows and all(row["success"] for row in rows)
+    assert 1 <= summary["worker_runs"] // 18 <= 20
+
+
+class BadPathManager(ToggleManager):
+    def propose_next_trial(self, status, memory_context, node_spec):
+        from autoresearch.manager.base import ManagerProposal
+        return ManagerProposal(
+            manager_mode=self.mode, proposal_summary="out of scope", proposal_rationale="",
+            target_files=("benchmark.py",), objective="bad",
+            extra={"structured_edit": {"type": "python_constant", "path": "benchmark.py",
+                                       "symbol": SYMBOL, "old": "0.001", "new": "0.01"}},
+        )
+
+
+def test_replicate_validation_rejects_an_out_of_scope_edit(tmp_path):
+    m = load_manifest()
+    factory, workers = _replicate_factory(m, manager_cls=BadPathManager)
+    spec = _spec(arm="FIXR3")
+    summary = run_chunk(spec, tmp_path / "chunk", replicate_factory=factory,
+                        manifest=m.chunk_manifest(), observed=_observed(m))
+    # Every proposal is a control-plane rejection: its LLM call is charged, no worker run is.
+    assert summary["worker_runs"] == 0
+    assert summary["ended_on"] == {"llm_call_cap": 18}
+    assert sum(w.calls for w in workers) == 0
 
 
 def test_learned_seam_accepts_a_supplied_a3_prior_but_never_a6():

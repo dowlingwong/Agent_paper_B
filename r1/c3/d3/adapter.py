@@ -68,7 +68,10 @@ from autoresearch.control_plane.action_versions import (  # noqa: E402
     KEEP_RULE_DEFAULT, NEW_CAMPAIGN_VERIFY_SPLIT_POLICY, VERIFY_RESPONSE_MEAN, ActionVersions,
 )
 from autoresearch.control_plane.controller import ContinueController  # noqa: E402
+from autoresearch.manager.base import ManagerProposal, ManagerStatus  # noqa: E402
+from autoresearch.manager.hyperparam_edits import values_equal  # noqa: E402
 from autoresearch.manager.langgraph_manager import LangGraphManager  # noqa: E402
+from autoresearch.nodes.active_keys import inactive_key_in_proposal  # noqa: E402
 from autoresearch.memory.similarity import RepeatedBadStats  # noqa: E402
 from autoresearch.memory.summarizer import MemoryContext, MemoryMode  # noqa: E402
 from autoresearch.nodes.registry import load_registered_node  # noqa: E402
@@ -603,9 +606,8 @@ def make_replicate_factory(manifest: Manifest, constants: Constants, *,
                 state.files = files
             constants_now = _parse_constants(state.node_dir, spec_node.editable_paths,
                                              tuple(getattr(spec_node, "editable_symbols", ()) or ()))
-            from autoresearch.manager.base import ManagerProposal, ManagerStatus
             best = None
-            if state.engine is not None and state.engine.incumbent_metrics:
+            if state.engine is not None and getattr(state.engine, "incumbent_metrics", None):
                 oriented = math.fsum(state.engine.incumbent_metrics) / len(state.engine.incumbent_metrics)
                 best = oriented if _metric_direction(spec_node) else -oriented
             status = ManagerStatus(
@@ -622,6 +624,17 @@ def make_replicate_factory(manifest: Manifest, constants: Constants, *,
             extra = getattr(proposal, "extra", None) or {}
             edit = extra.get("structured_edit")
             if not isinstance(edit, dict):
+                return None
+            path, symbol = str(edit.get("path") or ""), str(edit.get("symbol") or "")
+            if path not in spec_node.editable_paths:
+                return None
+            editable = tuple(getattr(spec_node, "editable_symbols", ()) or ())
+            if editable and symbol not in editable:
+                return None
+            if values_equal(str(edit.get("old") or ""), str(edit.get("new") or "")):
+                return None
+            constants_now = _parse_constants(state.node_dir, spec_node.editable_paths, editable)
+            if inactive_key_in_proposal(proposal, spec_node, constants_now) is not None:
                 return None
             try:
                 files = apply_edit(state.files, edit)
