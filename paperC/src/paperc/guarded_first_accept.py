@@ -190,7 +190,7 @@ def run(paper: Path, spec_bytes: bytes, node: str, seed: int, out: Path, scratch
         worker = LocalWorker(node_root=work, artifact_dir=scratch / "art", train_seed=seed, split_seed=seed)
         start, _ = run_guarded(measure_start=lambda: measure("start", start_files, [seed])[0],
                                run_campaign=run_real_campaign, node_spec=node_spec, campaign_id=campaign,
-                               worker=worker, budget=40, records_path=ledger, manager_mode="baseline_manager",
+                               worker=worker, budget=40, records_path=ledger, manager_mode="langgraph_manager",
                                memory_mode="append_only_summary", proposal_backend=make_manager(
                                    node, seed, 0, {"kind": "langgraph", "model": proposer["model"],
                                                    "temperature": proposer["temperature"],
