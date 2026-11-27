@@ -1,0 +1,2 @@
+slot1@deepthought.etp.kit.edu Unclaimed Idle 2 NVIDIA GeForce GTX TITAN X 12207 525.147.05
+slot1@deepthought2.etp.kit.edu Unclaimed Idle 1 NVIDIA L40S 45468 570.211.01

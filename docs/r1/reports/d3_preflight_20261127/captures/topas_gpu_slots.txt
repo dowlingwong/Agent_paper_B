@@ -1,0 +1,99 @@
+slot1@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB 32494
+slot1_1@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot1_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot1_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot1_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot1_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot1_6@c03-001-159.gridka.de Preempting 56 1 Tesla V100S-PCIE-32GB 32494
+slot2@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB 32494
+slot2_1@c03-001-159.gridka.de Claimed 56 1 Tesla V100S-PCIE-32GB 32494
+slot2_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot2_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot2_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot2_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot3@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB 32494
+slot3_1@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot3_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot3_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot3_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot3_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot3_12@c03-001-159.gridka.de Preempting 56 1 Tesla V100S-PCIE-32GB 32494
+slot4@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB 32494
+slot4_1@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot4_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot4_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot4_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot4_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot4_6@c03-001-159.gridka.de Claimed 56 1 Tesla V100S-PCIE-32GB 32494
+slot5@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB 32494
+slot5_1@c03-001-159.gridka.de Claimed 56 1 Tesla V100S-PCIE-32GB 32494
+slot5_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot5_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot5_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot5_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot5_6@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot6@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB 32494
+slot6_1@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot6_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot6_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot6_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot6_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot6_6@c03-001-159.gridka.de Claimed 56 1 Tesla V100S-PCIE-32GB 32494
+slot7@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB 32494
+slot7_1@c03-001-159.gridka.de Claimed 56 1 Tesla V100S-PCIE-32GB 32494
+slot7_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot7_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot7_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot7_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot7_6@c03-001-159.gridka.de Claimed 56 0 undefined undefined
+slot1@c03-001-167.gridka.de Unclaimed 8 0 NVIDIA A100-PCIE-40GB 40464
+slot1_1@c03-001-167.gridka.de Claimed 8 2 NVIDIA A100-PCIE-40GB 40464
+slot1_2@c03-001-167.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_3@c03-001-167.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_4@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_5@c03-001-167.gridka.de Claimed 8 2 NVIDIA A100-PCIE-40GB 40464
+slot1_6@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_7@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_8@c03-001-167.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_9@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_10@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_11@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_12@c03-001-167.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_13@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_14@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_15@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_16@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_17@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_18@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_19@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_20@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_21@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_22@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_23@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_24@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_25@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1_26@c03-001-167.gridka.de Claimed 8 0 undefined undefined
+slot1@c03-001-175.gridka.de Unclaimed 8 5 NVIDIA A100-PCIE-40GB 40464
+slot1_1@c03-001-175.gridka.de Claimed 8 2 NVIDIA A100-PCIE-40GB 40464
+slot1_5@c03-001-175.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_16@c03-001-175.gridka.de Claimed 8 0 undefined undefined
+slot1@c03-001-179.gridka.de Unclaimed 8 0 NVIDIA A100-PCIE-40GB 40464
+slot1_1@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_2@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_3@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_4@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_5@c03-001-179.gridka.de Claimed 8 0 undefined undefined
+slot1_6@c03-001-179.gridka.de Claimed 8 0 undefined undefined
+slot1_7@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_8@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_9@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_10@c03-001-179.gridka.de Claimed 8 0 undefined undefined
+slot1_11@c03-001-179.gridka.de Claimed 8 0 undefined undefined
+slot1_12@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB 40464
+slot1_13@c03-001-179.gridka.de Claimed 8 0 undefined undefined
+slot1_14@c03-001-179.gridka.de Claimed 8 0 undefined undefined
+slot1_15@c03-001-179.gridka.de Claimed 8 0 undefined undefined
+slot1_16@c03-001-179.gridka.de Claimed 8 0 undefined undefined
+slot1_17@c03-001-179.gridka.de Claimed 8 0 undefined undefined
+slot1_18@c03-001-179.gridka.de Claimed 8 0 undefined undefined
+slot1_28@c03-001-179.gridka.de Claimed 8 0 undefined undefined

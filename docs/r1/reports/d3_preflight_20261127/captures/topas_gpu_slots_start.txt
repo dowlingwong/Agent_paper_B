@@ -1,0 +1,99 @@
+slot1@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB undefined error
+slot1_1@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot1_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot1_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot1_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot1_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot1_6@c03-001-159.gridka.de Preempting 56 1 Tesla V100S-PCIE-32GB undefined false
+slot2@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB undefined error
+slot2_1@c03-001-159.gridka.de Claimed 56 1 Tesla V100S-PCIE-32GB undefined error
+slot2_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot2_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot2_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot2_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot3@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB undefined error
+slot3_1@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot3_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot3_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot3_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot3_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot3_12@c03-001-159.gridka.de Preempting 56 1 Tesla V100S-PCIE-32GB undefined false
+slot4@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB undefined error
+slot4_1@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot4_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot4_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot4_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot4_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot4_6@c03-001-159.gridka.de Claimed 56 1 Tesla V100S-PCIE-32GB undefined error
+slot5@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB undefined error
+slot5_1@c03-001-159.gridka.de Claimed 56 1 Tesla V100S-PCIE-32GB undefined error
+slot5_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot5_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot5_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot5_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot5_6@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot6@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB undefined error
+slot6_1@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot6_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot6_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot6_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot6_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot6_6@c03-001-159.gridka.de Claimed 56 1 Tesla V100S-PCIE-32GB undefined error
+slot7@c03-001-159.gridka.de Unclaimed 56 7 Tesla V100S-PCIE-32GB undefined error
+slot7_1@c03-001-159.gridka.de Claimed 56 1 Tesla V100S-PCIE-32GB undefined error
+slot7_2@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot7_3@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot7_4@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot7_5@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot7_6@c03-001-159.gridka.de Claimed 56 0 undefined undefined error
+slot1@c03-001-167.gridka.de Unclaimed 8 0 NVIDIA A100-PCIE-40GB undefined error
+slot1_1@c03-001-167.gridka.de Claimed 8 2 NVIDIA A100-PCIE-40GB undefined error
+slot1_2@c03-001-167.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_3@c03-001-167.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_4@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_5@c03-001-167.gridka.de Claimed 8 2 NVIDIA A100-PCIE-40GB undefined error
+slot1_6@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_7@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_8@c03-001-167.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_9@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_10@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_11@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_12@c03-001-167.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_13@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_14@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_15@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_16@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_17@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_18@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_19@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_20@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_21@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_22@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_23@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_24@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_25@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1_26@c03-001-167.gridka.de Claimed 8 0 undefined undefined error
+slot1@c03-001-175.gridka.de Unclaimed 8 5 NVIDIA A100-PCIE-40GB false false
+slot1_1@c03-001-175.gridka.de Claimed 8 2 NVIDIA A100-PCIE-40GB false false
+slot1_5@c03-001-175.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB false false
+slot1_16@c03-001-175.gridka.de Claimed 8 0 undefined false false
+slot1@c03-001-179.gridka.de Unclaimed 8 0 NVIDIA A100-PCIE-40GB undefined error
+slot1_1@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_2@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_3@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_4@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_5@c03-001-179.gridka.de Claimed 8 0 undefined undefined error
+slot1_6@c03-001-179.gridka.de Claimed 8 0 undefined undefined error
+slot1_7@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_8@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_9@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_10@c03-001-179.gridka.de Claimed 8 0 undefined undefined error
+slot1_11@c03-001-179.gridka.de Claimed 8 0 undefined undefined error
+slot1_12@c03-001-179.gridka.de Claimed 8 1 NVIDIA A100-PCIE-40GB undefined error
+slot1_13@c03-001-179.gridka.de Claimed 8 0 undefined undefined error
+slot1_14@c03-001-179.gridka.de Claimed 8 0 undefined undefined error
+slot1_15@c03-001-179.gridka.de Claimed 8 0 undefined undefined error
+slot1_16@c03-001-179.gridka.de Claimed 8 0 undefined undefined error
+slot1_17@c03-001-179.gridka.de Claimed 8 0 undefined undefined error
+slot1_18@c03-001-179.gridka.de Claimed 8 0 undefined undefined error
+slot1_28@c03-001-179.gridka.de Claimed 8 0 undefined undefined error
