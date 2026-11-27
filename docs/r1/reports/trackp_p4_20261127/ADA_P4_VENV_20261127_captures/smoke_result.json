@@ -1,0 +1,1 @@
+{"available": true, "capability": [8, 9], "cuda": "12.4", "device_count": 1, "elapsed_s": 0.53, "matmul_sum": 127330.1875, "max_memory_allocated_mib": 168.1, "name": "NVIDIA RTX 6000 Ada Generation", "torch": "2.6.0+cu124"}
