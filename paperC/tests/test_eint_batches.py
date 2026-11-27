@@ -39,7 +39,9 @@ def test_packing_preserves_positions_masks_and_reference_attention():
 def test_complete_cell_receipts_require_matched_inputs():
     common = {"seed": 61005, "status": "complete", "target_sha256": "targets", "trained_tokens": 16,
               "validation_tokens": 4, "allocator_cap_bytes": 100, "paper_commit": "commit",
-              "gpu_model": "GPU", "data_manifest_sha256": "data"}
+              "gpu_model": "GPU", "data_manifest_sha256": "data", "phase": "development",
+              "spec_sha256": "spec", "validation_target_sha256": "validation",
+              "torch_version": "2", "cuda_version": "1"}
     rows = [{**common, "cell": cell, "validation_loss": loss}
             for cell, loss in zip(census.CELLS, (4, 3.5, 3, 2))]
     assert census.interaction(rows)[61005]["quality_interaction"] == .5
@@ -47,6 +49,9 @@ def test_complete_cell_receipts_require_matched_inputs():
     assert census.interaction(rows)[61005]["quality_interaction"] is None
     rows[-1].update(status="complete", target_sha256="another")
     with pytest.raises(ValueError, match="unmatched"):
+        census.interaction(rows)
+    rows[-1].update(target_sha256="targets", validation_loss=float("nan"))
+    with pytest.raises(ValueError, match="non-finite"):
         census.interaction(rows)
 
 

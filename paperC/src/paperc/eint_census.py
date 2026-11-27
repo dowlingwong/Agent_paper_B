@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -15,7 +17,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from paperc import eint_batches as E
-from r1.c3.audit import _key_block, _published_bytes
+from r1.c3 import audit
 
 AUTHORIZATION = "docs/r1/authorizations/paperc_eint_census_20261127.md"
 CELLS = {"baseline": (512, False), "A": (512, True), "B": (2048, False), "A+B": (2048, True)}
@@ -78,7 +80,11 @@ def _launch_note(root: Path, spec_bytes: bytes) -> dict:
     def git(*args):
         return subprocess.check_output(["git", "-C", str(root), *args], text=True, timeout=30).strip()
 
-    note = _key_block(_published_bytes(root, AUTHORIZATION).decode())
+    root = root.resolve()
+    if (Path(__file__).resolve().parents[3] != root or Path(E.__file__).resolve().parents[3] != root
+            or Path(audit.__file__).resolve().parents[2] != root):
+        raise ValueError("running modules did not come from the pinned paper checkout")
+    note = audit._key_block(audit._published_bytes(root, AUTHORIZATION).decode())
     head = git("rev-parse", "HEAD")
     expected = {"approved": "true", "paper_commit": head,
                 "spec_sha256": hashlib.sha256(spec_bytes).hexdigest(), "task": "local/20261127-20"}
@@ -99,6 +105,9 @@ def run(root: Path, data: Path, out: Path, spec_bytes: bytes, cell: str, seed: i
         raise ValueError("cell and seed are outside the authorized attempts")
     if torch.cuda.device_count() != 1 or torch.cuda.get_device_name(0) != spec["gpu_model"]:
         raise ValueError("E-INT requires exactly one visible GPU of the bound model")
+    if (os.environ.get("PYTORCH_NO_CUDA_MEMORY_CACHING", "0") not in ("", "0")
+            or torch.cuda.memory.get_allocator_backend() != "native"):
+        raise ValueError("E-INT requires the enabled native CUDA caching allocator")
     cap = int(spec["allocator_cap_bytes"])
     steps = int(spec["updates"])
     validation_targets = int(spec["validation_targets"])
@@ -111,6 +120,7 @@ def run(root: Path, data: Path, out: Path, spec_bytes: bytes, cell: str, seed: i
     result = {"cell": cell, "seed": seed, "phase": spec["phase"], "paper_commit": note["paper_commit"],
               "gpu_model": spec["gpu_model"], "allocator_cap_bytes": cap, "trained_tokens": 0,
               "torch_version": torch.__version__, "cuda_version": torch.version.cuda,
+              "spec_sha256": note["spec_sha256"],
               "data_manifest_sha256": E.MANIFEST_SHA256, "planned_train_tokens": steps * TARGETS_PER_UPDATE,
               "validation_tokens": validation_targets}
     torch.cuda.set_per_process_memory_fraction(cap / total, 0)
@@ -124,11 +134,9 @@ def run(root: Path, data: Path, out: Path, spec_bytes: bytes, cell: str, seed: i
         optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
         stream = E.documents(data, split="train", seed=seed)
         digest = hashlib.sha256()
-        with (out / "updates.jsonl").open("x") as log, torch.autocast("cuda", dtype=torch.bfloat16):
+        with (out / "updates.jsonl").open("x") as log, torch.autocast("cuda", dtype=torch.bfloat16, cache_enabled=False):
             for segments in E.updates(stream, context=context, tokens_per_update=TARGETS_PER_UPDATE, steps=steps):
-                for segment in segments:
-                    for target in segment.targets:
-                        digest.update(target.to_bytes(4, "little"))
+                E.add_targets(digest, segments)
                 count = train_update(model, optimizer, segments, device, context=context, packed=packed)
                 result["trained_tokens"] += count
                 log.write(json.dumps({"loss_tokens": count, "trained_tokens": result["trained_tokens"]}) + "\n")
@@ -137,10 +145,12 @@ def run(root: Path, data: Path, out: Path, spec_bytes: bytes, cell: str, seed: i
             result["training_seconds"] = time.monotonic() - started
             result["target_sha256"] = digest.hexdigest()
             val_docs = E.documents(data, split="validation", seed=seed)
-            result["validation_loss"] = E.validate(model, val_docs, device, target_count=validation_targets)
+            result["validation_loss"], result["validation_target_sha256"] = E.validate(
+                model, val_docs, device, target_count=validation_targets)
         torch.cuda.synchronize()
-        if result["trained_tokens"] != result["planned_train_tokens"] or torch.cuda.max_memory_reserved(0) > cap:
-            raise ValueError("E-INT target or allocator cap check failed")
+        if (result["trained_tokens"] != result["planned_train_tokens"] or torch.cuda.max_memory_reserved(0) > cap
+                or not math.isfinite(result["validation_loss"])):
+            raise ValueError("E-INT target budget, allocator cap or finite-loss check failed")
         result["status"] = "complete"
     except torch.OutOfMemoryError:
         result["status"] = "out_of_memory"
@@ -169,11 +179,14 @@ def interaction(records: list[dict]) -> dict:
         statuses = {cell: rec["status"] for cell, rec in cells.items()}
         delta = None
         if set(statuses.values()) == {"complete"}:
-            for key in ("target_sha256", "trained_tokens", "validation_tokens", "allocator_cap_bytes",
-                        "paper_commit", "gpu_model", "data_manifest_sha256"):
+            for key in ("phase", "spec_sha256", "target_sha256", "validation_target_sha256", "trained_tokens",
+                        "validation_tokens", "allocator_cap_bytes", "paper_commit", "gpu_model",
+                        "data_manifest_sha256", "torch_version", "cuda_version"):
                 if len({rec[key] for rec in cells.values()}) != 1:
                     raise ValueError(f"E-INT seed {seed} is unmatched on {key}")
             loss = {cell: rec["validation_loss"] for cell, rec in cells.items()}
+            if not all(math.isfinite(value) for value in loss.values()):
+                raise ValueError(f"E-INT seed {seed} has non-finite evaluation loss")
             delta = loss["A"] + loss["B"] - loss["A+B"] - loss["baseline"]
         summaries[seed] = {"status": statuses, "quality_interaction": delta}
     return summaries

@@ -32,6 +32,12 @@ def _sha(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def add_targets(digest, segments: Iterable[Segment]) -> None:
+    for segment in segments:
+        for target in segment.targets:
+            digest.update(target.to_bytes(4, "little"))
+
+
 def verify_data(root: Path) -> None:
     """Verify the precise source and every file before opening the pinned tokenizer."""
     manifest = (root / "data_manifest.json").read_bytes()
@@ -152,10 +158,12 @@ def batch_loss(model, batch: dict, device: torch.device) -> torch.Tensor:
 
 @torch.no_grad()
 def validate(model, validation_documents: Iterable[Sequence[int]], device: torch.device, *,
-             context: int = 512, target_count: int = 65_536) -> float:
+             context: int = 512, target_count: int = 65_536) -> tuple[float, str]:
     """Evaluate every cell with the same context, order, target positions and denominator."""
     model.eval()
     segments, = updates(validation_documents, context=context, tokens_per_update=target_count, steps=1)
+    digest = hashlib.sha256()
+    add_targets(digest, segments)
     loss = sum(float(batch_loss(model, batch, device)) for batch in
                rows(segments, context=context, packed=False, max_rows=4))
-    return loss / target_count
+    return loss / target_count, digest.hexdigest()
