@@ -64,7 +64,6 @@ elif args[1] == "cpuset-verdict":
     attempts = [Path(args[i + 1]).name for i, arg in enumerate(args) if arg == "--attempt"]
     passed = len(attempts) == 3
     print(json.dumps({{"attempts": attempts, "verdict": "PASS" if passed else "STOP"}}))
-    raise SystemExit(0 if passed else 1)
 else:
     raise SystemExit(f"unexpected fixture command: {{args}}")
 """)
