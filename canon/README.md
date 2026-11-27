@@ -60,9 +60,10 @@ what each choice blocks, and the reply that approves it. Keep independent work m
 
 The repository carries the messages (R1-AUTONOMY):
 
-- **Tasks.** The coordinator writes one file per task to branch `coord/coordinator`:
-  `tasks/<role>/<YYYYMMDD>-<nn>-<slug>.md` (what to do, inputs with commits and hashes, done-when, what to report).
-  The same branch carries `STATE.md` (who is on what, what is blocked) and `AUTHOR.md` (what waits on the author).
+- **Tasks.** The coordinator breaks down the next-phase runbook into one card per deliverable on `coord/coordinator`
+  under `tasks/<role>/<YYYYMMDD>-<nn>-<slug>.md`. Each card gives its source, inputs, dependencies, acceptance checks
+  and report. `STATE.md` orders the queue for each role and records current work and blockers. `AUTHOR.md` records
+  decisions that wait on the author. Follow the [dispatch procedure](../docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md#7-dispatch-and-run-the-queues).
 - **Reports.** Each agent writes one file per finished task or STOP to its own branch (`coord/local`,
   `coord/compute`, `coord/writer`): `reports/<YYYYMMDD>-<nn>-<slug>.md` with the task id, the result in five
   lines, each branch and tip, each sha256 that matters, what it decided alone, and what it needs. A report may carry
@@ -71,8 +72,9 @@ The repository carries the messages (R1-AUTONOMY):
 - **One coordinator at a time.** The file `COORDINATOR` on `coord/coordinator` names the session that holds the role.
   Only that session writes tasks and publishes `main`. A hand-over is one commit to that file by the session taking
   over; a session that finds another name there stops coordinating.
-- **Rhythm.** An agent looks for new tasks when it finishes one and every 15 minutes while idle. The coordinator
-  looks at the report branches at least hourly, verifies and merges what is ready, and writes the next tasks.
+- **Rhythm.** A worker fetches after each task and takes the next ready card in its queue. It checks for new work
+  every 30 minutes while idle. The coordinator looks at the report branches at least hourly, verifies and merges
+  what is ready, and writes the next tasks.
 - **The author** gets one Chinese digest a day with completed work, results, next steps and decisions.
   Raise a Level 2 decision immediately if it blocks the critical path. Follow existing incident and resource
   reporting requirements.
@@ -82,10 +84,10 @@ The repository carries the messages (R1-AUTONOMY):
 | Role | Runs on | Where |
 |---|---|---|
 | coordinator | Claude Opus 5.5, soft limit only | a tmux session that stays up |
-| writing and brainstorming | Codex GPT-6.2 Sol, high reasoning | [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript) checkout |
+| writing and brainstorming | Codex GPT-6.2 Sol, high reasoning effort | `paperb-writer` in Codex CLI signed in with ChatGPT, working in a [paper_B_manuscript](https://github.com/dowlingwong/paper_B_manuscript) checkout |
 | design | session assigned by the coordinator or author | design handoff in the existing writer workflow until a dedicated channel is set |
-| local worker | Claude, on the author's Mac | pushes its own branches; never `main` |
-| compute agent | DeepSeek | reaches deepthought and the pool, TASL-2, TASL-7 and Ada by SSH (R1-AGENT-COMPUTE) |
+| local worker | GPT-6.2 Sol, high reasoning effort | Codex CLI signed in with ChatGPT, `paperb-local` |
+| compute agent | DeepSeek Flash through OpenCode | `paperb-compute`, with SSH to the hosts in R1-AGENT-COMPUTE |
 
 A new session of any role starts by reading this file, its `SOUL.md`, `PAPER_B_PLAN.md`, `COMPUTE.md`, and the PLAN
 §10 sections dated after the plan file's "as of" line.

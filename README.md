@@ -20,6 +20,41 @@ The dated PLAN decisions govern execution. The short files in `canon/` summarize
 defines the work sequence from design through audit and writing. Signed evidence notes, reports and reviews
 live in `docs/r1/`.
 
+## Start the Paper B workers
+
+This guide assumes the Mac checkout already has the locally provisioned launcher at
+`tools/start_workers.py`. From that checkout, run `python3 tools/start_workers.py`. The launcher fetches `origin`, creates a separate
+worktree for each worker beside the repository under `agent_paper_B-workers/`, and sends each worker an initial
+prompt to read the published queue. Worktrees start from `origin/main`. Workers put deliverables on task branches
+and reports on their role branches. Later launches reuse live sessions and worktrees. The launcher locates the
+recorded Coordinator even under another tmux name, or resumes that same Claude session with Remote Control.
+The coordinator breaks the [next-phase runbook](docs/r1/runbooks/AUTOML_AS_DAC_NEXT_PHASE_20261126.md#7-dispatch-and-run-the-queues)
+into task cards and keeps one ordered queue per role in `STATE.md`. Workers take the next ready card immediately
+after a task and check again every 30 minutes when idle.
+
+| Role | Model | Reasoning effort | Client and session |
+|---|---|---|---|
+| Coordinator | Claude Opus 5.5 | Session setting | Claude Code, `paperb-coordinator` |
+| Compute | DeepSeek Flash (`deepseek/deepseek-flash`) | Provider default | OpenCode, `paperb-compute` |
+| Local / Implementer | GPT-6.2 Sol (`gpt-6.2-sol`) | High | Codex CLI signed in with ChatGPT, `paperb-local` |
+| Writer | GPT-6.2 Sol (`gpt-6.2-sol`) | High | Codex CLI signed in with ChatGPT, `paperb-writer` |
+| Design | Selected for each handoff | Session setting | Existing writer or coordinator workflow |
+
+Configure Claude Code sign-in, connect [DeepSeek in OpenCode](https://api-docs.deepseek.com/quick_start/agent_integrations/opencode/),
+and sign in with ChatGPT in Codex CLI before launching. `codex login status` shows the active sign-in method.
+For a handoff, `python3 tools/start_workers.py --stop-legacy` waits for the old Local and Writer turns and their
+subagents to finish, checks their worktrees are clean and panes detached, and exits both Claude workers. Start
+the replacements with `python3 tools/start_workers.py --role local --role writer`. The launcher reuses their
+worktrees. Use `--role compute` to start or retry Compute. Use `--compute-model`, `--local-model` or
+`--writer-model` to select the corresponding client's model ID.
+
+Use `tmux attach -t paperb-compute` from a normal terminal or `tmux switch-client -t paperb-compute` from inside
+tmux. Press `Ctrl-b` then `s` to switch sessions, or `Ctrl-b` then `d` to detach. A worker pane stays available
+after the client exits, so you can inspect startup errors. Use the Coordinator's session name from the launch output.
+
+To see the same coordinator in **Claude App → Code**, run `/remote-control Paper B Coordinator` inside its
+Claude session, then confirm the session appears under that name from the same Claude account.
+
 ## Status as of 26 Nov 2026
 
 Both T0 sweeps are audited and their train/dev labels are released. The offline gate is unread and the
