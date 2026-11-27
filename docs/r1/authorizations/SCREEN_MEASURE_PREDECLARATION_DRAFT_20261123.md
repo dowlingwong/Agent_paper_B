@@ -462,8 +462,9 @@ name exactly the six OpenML nodes; every run gets a copy of its node's cache, an
 download or a change) is the STOP `data_cache`. The note's `data_cache_sha256` is the total tree sha256, and the
 measurement uses the same directory as the smoke, so it is built in a durable place outside both the paper checkout
 and the harness worktree (neither may become dirty), on deepthought in the evidence environment (Python 3.13.15,
-scikit-learn 1.8.0, `AR_HARNESS_ROOT` the clean `6adf3859` worktree): the cache layout (`…/data/v1/download/<id>/<name>.arff.gz`)
-is scikit-learn's, and an older version's layout fails the one-ARFF check. The pilot cross-check covers the ARFF data
+scikit-learn 1.8.0, `AR_HARNESS_ROOT` the clean `6adf3859` worktree). The ARFF file is identified by its content, not its
+name (local/20261127-05, after compute's STOP: scikit-learn 1.8.0 stores it as `…/data/v1/download/<file id>.gz`): the
+first line that is neither blank nor a `%` comment starts with `@relation`; exactly one such file per node. The pilot cross-check covers the ARFF data
 only; the description, feature and quality files that `fetch_openml` also reads are bound, with every other file, by
 the tree sha256 the note carries. A failed build leaves a partial directory without `MANIFEST.json`, which no run
 accepts; the operator moves it aside and builds into a new directory. A failed run's log tail and failure category are
@@ -536,12 +537,12 @@ result.
 | File | sha256 |
 |---|---|
 | `r1/noise/screen_design.py` | `3443c044cc8a779a75f46561667dfba744f71e81233f503ca81051c9541791b5` |
-| `r1/noise/screen_measure.py` (data caches, local/20261126-02) | `9907689f891a12cb18f93e1efd8f4806059c7f3e6b6ea39185e591fc62751edf` |
+| `r1/noise/screen_measure.py` (data caches, local/20261126-02) | `5c04aeeef13afebc6dd2839737691b16b76e4485f546e9789380d6d4a575bd38` |
 | `r1/noise/screen_analysis.py` | `a54753e1b9cba5cf5605f83d7e53a97d98246aded14b4c97aecb9edc1a2ed089` |
 | `r1/noise/screen_seeds.py` (unchanged by the corrections) | `dff8252b46101b695c9a938d722c11f3c68f56fb3c388859350a03e5112f2c4e` |
 | `r1/noise/screen_power.py` | `8775c7ffd6e4722a8752aa90b63fde1e91f48db44c3b5652a927c85e078fd5dd` |
 | `r1/noise/e1_noise_floor.py` (unchanged from `53e2fe41`) | `a3fa508f0c16ec1cfb5b2afa0b37c8cfa6e9b965a8e5d90b6ab6e3c92a830b75` |
-| `r1/tests/test_screen_measure.py` | `67d7a05e37022e632683ae42b2ca6517d74a5e00f3e1b722a9caddd1c6f850e7` |
+| `r1/tests/test_screen_measure.py` | `7f359aceb3c759d159d33067c412909a6ee8597389d85d8d04facc4bf8eb7be3` |
 | design (canonical JSON, `screen_design.design_sha256`) | `bbc98b87d2170ad89ff17a92303ffb440583b74b035d2690a6a2ababeb8d8ec8` |
 | noise source `results/r1/noise/D28_REPAIR_20261027/summary.json` | `3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310` |
 

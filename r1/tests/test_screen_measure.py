@@ -981,15 +981,15 @@ class DataCacheTest(unittest.TestCase):
     def test_pilot_reference(self):
         root = Path(tempfile.mkdtemp(prefix="smeas_pilot_"))
         self.addCleanup(shutil.rmtree, root, True)
-        _write_cache(root, "openml_wdbc", b"not the pilot's data")
+        _write_cache(root, "openml_wdbc", b"@relation not the pilot's data")
         _write_cache_manifest(root, ["openml_wdbc"])
         with self.assertRaisesRegex(sm.RunStop, "differs from the E1 pilot"):
             sm.read_data_cache(root, ["openml_wdbc"])
-        with mock.patch.dict(sm.PILOT_ARFF_SHA256, {"openml_wdbc": hashlib.sha256(b"not the pilot's data").hexdigest()}):
+        with mock.patch.dict(sm.PILOT_ARFF_SHA256, {"openml_wdbc": hashlib.sha256(b"@relation not the pilot's data").hexdigest()}):
             sm.read_data_cache(root, ["openml_wdbc"])
         two = Path(tempfile.mkdtemp(prefix="smeas_two_"))
         self.addCleanup(shutil.rmtree, two, True)
-        _write_cache(two, "openml_sonar", b"x", extra={"second.arff": b"y"})
+        _write_cache(two, "openml_sonar", b"@relation x", extra={"second.arff": b"% comment\n@RELATION y"})
         _write_cache_manifest(two, ["openml_sonar"])
         with self.assertRaisesRegex(sm.RunStop, "2 ARFF files"):
             sm.read_data_cache(two, ["openml_sonar"])
@@ -1129,7 +1129,7 @@ class BuildDataCacheTest(unittest.TestCase):
                 order.append(node)
                 dl = self.root / "data_cache" / "openml" / "download"
                 dl.mkdir(parents=True)
-                (dl / f"{node}.arff.gz").write_bytes(gzip.compress(node.encode(), mtime=0))
+                (dl / f"{node}.arff.gz").write_bytes(gzip.compress(b"@relation " + node.encode(), mtime=0))
                 ok = fail["on"] != node
                 return types.SimpleNamespace(success=ok, failure_message=None if ok else "exit code 1")
         e1 = types.SimpleNamespace(HARNESS=harness, library_versions=lambda: {"scikit-learn": "1.8.0"},
@@ -1184,6 +1184,60 @@ class NoDeadlineTest(unittest.TestCase):
             sm.main(["run", "--stub", "--out", "/nonexistent/x", "--deadline", "10800"])
         args = argparse.Namespace(code_commit="a" * 40, code_review="r", data_cache_sha256="d" * 64)
         self.assertNotIn("deadline_seconds", sm.expected_note(args, DESIGN, Path(REPO).resolve()))
+
+
+
+class ArffByContentTest(unittest.TestCase):
+    """local/20261127-05 (compute's STOP): scikit-learn 1.8.0 stores the ARFF as ``data/v1/download/<id>.gz``; the ARFF
+    is found by content, exactly one per node, and the pilot's pinned decompressed sha256 still applies."""
+
+    def setUp(self):
+        import gzip
+        self.gzip = gzip
+        self.root = Path(tempfile.mkdtemp(prefix="smeas_arff_"))
+        self.addCleanup(shutil.rmtree, self.root, True)
+
+    def write_skl18(self, node: str, arff: bytes) -> Path:
+        d = self.root / node / "data_cache" / "openml" / "openml.org"
+        (d / "data" / "v1" / "download").mkdir(parents=True)
+        (d / "data" / "v1" / "download" / "52350.gz").write_bytes(self.gzip.compress(arff, mtime=1))
+        for sub in ("data", "data/features", "data/qualities"):
+            (d / "api" / "v1" / "json" / sub).mkdir(parents=True, exist_ok=True)
+            (d / "api" / "v1" / "json" / sub / "15.gz").write_bytes(self.gzip.compress(b'{"data_set_description": {}}', mtime=1))
+        return self.root / node / "data_cache"
+
+    def test_is_arff(self):
+        self.assertTrue(sm.is_arff(b"% a comment\n\n@RELATION breast-w\n@attribute x numeric\n"))
+        self.assertTrue(sm.is_arff(b"@relation r"))
+        self.assertFalse(sm.is_arff(b'{"data_set_description": {}}'))
+        self.assertFalse(sm.is_arff(b"% only comments\n"))
+        self.assertFalse(sm.is_arff(b""))
+
+    def test_id_gz_layout_counts_as_the_one_arff(self):
+        cache = self.write_skl18("openml_sonar", b"% c\n@relation sonar\n@data\n1\n")
+        files = sm.cache_tree(cache)
+        self.assertEqual([k for k, v in files.items() if v["arff"]], ["openml/openml.org/data/v1/download/52350.gz"])
+        sm.check_pilot("openml_sonar", files)                                  # no pilot pin for sonar: only the count
+        _write_cache_manifest(self.root, ["openml_sonar"])
+        sm.read_data_cache(self.root, ["openml_sonar"])
+
+    def test_pilot_pin_applies_to_the_id_gz_file(self):
+        data = b"@relation breast-w\n@data\n"
+        files = sm.cache_tree(self.write_skl18("openml_breast_w", data))
+        with self.assertRaisesRegex(sm.RunStop, "differs from the E1 pilot"):
+            sm.check_pilot("openml_breast_w", files)
+        with mock.patch.dict(sm.PILOT_ARFF_SHA256, {"openml_breast_w": hashlib.sha256(data).hexdigest()}):
+            sm.check_pilot("openml_breast_w", files)
+
+    def test_no_arff_or_two_arffs_refused(self):
+        files = sm.cache_tree(self.write_skl18("openml_climate", b'{"not": "arff"}'))
+        with self.assertRaisesRegex(sm.RunStop, "0 ARFF files"):
+            sm.check_pilot("openml_climate", files)
+        cache = self.write_skl18("openml_wdbc", b"@relation wdbc")
+        (cache / "openml" / "openml.org" / "data" / "v1" / "download" / "99.gz").write_bytes(
+            self.gzip.compress(b"@relation other", mtime=1))
+        with self.assertRaisesRegex(sm.RunStop, "2 ARFF files"):
+            sm.check_pilot("openml_wdbc", sm.cache_tree(cache))
 
 
 if __name__ == "__main__":
