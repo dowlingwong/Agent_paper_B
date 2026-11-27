@@ -1,0 +1,46 @@
+{
+ "schema": "trackp_p4_probe_stage/1",
+ "run_id": "trackp-p4-probe-20261127-b",
+ "arm": "qwen3.5-4b-base",
+ "mode": "probe",
+ "host_class": "ada_rtx6000",
+ "launch": "direct",
+ "probe": {
+  "rule": "P4-PROBE A (R1-P4-TESTPLAN-DECISIONS): at most 50 steps of sft-dev on synthetic labels, one job per base, nothing kept as an arm; it counts as no training run. walltime_s is the probe job's +RequestWalltime and the charge of a probe attempt with no readable record.",
+  "steps": 50,
+  "lr": 1e-05,
+  "seed": 0,
+  "sample_ms": 500,
+  "walltime_s": 7200,
+  "labels": "synthetic"
+ },
+ "spec_sha256": "7181ebc555c4484c477d74824a6109aa96c5a7f87a557cd266e50ebd4733e45f",
+ "first_probe_record": {
+  "first_probe_record_sha256": "3d9af7d21f89edd86b8fd4efdf25bc8e2bd00e211c20acfccd547dfbc3b9c943"
+ },
+ "binding": {
+  "paper_commit": "e92f3c7389e06347a0ff78f5f68971024133c670",
+  "origin_main": "e92f3c7389e06347a0ff78f5f68971024133c670",
+  "host_class": "ada_rtx6000",
+  "host_config_sha256": "bb0c7251a5d47e04e82e33c738160be317bfbf59984b82a0d611b0798c4fa908"
+ },
+ "inputs": {
+  "proposals.jsonl": "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5",
+  "configs.json": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+  "build.json": "7f56619c2cc5ef2145ace44350baac3bc7906433e279a284e9627a2452e1b643"
+ },
+ "files": {
+  "p4direct_qwen3.5-4b-base.json": "a69cc0a5473c2d021836aeee5323be1528b464178f376afe21bb89173b95da2e",
+  "p4_probe.sh": "96b591887c7b2e75f749e62dffe284c4dead77ad62836f9695f727b4375a86a4",
+  "p4_lib.py": "0e1b9770556553266a2df77a95eb2ffea49adca9702970e1195bf8a3660c31d7",
+  "p4_direct.py": "f997e7bc02ab8939ab461a4c8b2ef80dd4c81bdd7508f50d63870f4271ba371d",
+  "p4_probe_spec.json": "7181ebc555c4484c477d74824a6109aa96c5a7f87a557cd266e50ebd4733e45f",
+  "proposals.jsonl": "d0048567a4bedb8618bc174b0103ba07e71194de853c883d16699dab9afcd1d5",
+  "configs.json": "b585b72758668a17c65b842c204e3c08253ee6c7af92c34c9a8bc8b4a53882df",
+  "build.json": "7f56619c2cc5ef2145ace44350baac3bc7906433e279a284e9627a2452e1b643"
+ },
+ "submission_ledger": "/ceph/srv/dwong/paperb/trackp_p4/trackp-p4-probe-20261127-b/_submissions.jsonl",
+ "submit": "exactly one launch of this stage on the host: python3 p4_direct.py launch --stage <this stage> --arm qwen3.5-4b-base --gpu <index>",
+ "stage_dir": "/work/dwong/paperb/work/trackp-p4-probe-20261127b/stage_qwen4",
+ "staged_utc": "2026-11-27T11:49:05Z"
+}

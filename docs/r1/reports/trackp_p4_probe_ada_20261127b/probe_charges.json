@@ -1,0 +1,179 @@
+{
+ "charge_files": {},
+ "pending": [],
+ "runs": {
+  "trackp-p4-probe-20261125-a": {
+   "attempts": [
+    {
+     "arm": "kev-0.8b",
+     "attempt": "attempt-1",
+     "charge_basis": "receipt (direct launcher record)",
+     "charged_gpu_hours": 0.0092,
+     "cluster_check": "direct launch (no HTCondor job)",
+     "cluster_id": null,
+     "launch": "direct",
+     "receipt_gpu_hours": 0.0092,
+     "remote_wallclock_s": null,
+     "stop": "STOP: unexpected FileNotFoundError: [Errno 2] No such file or directory: 'uv'"
+    },
+    {
+     "arm": "kev-0.8b",
+     "attempt": "attempt-2",
+     "charge_basis": "receipt (direct launcher record)",
+     "charged_gpu_hours": 0.0688,
+     "cluster_check": "direct launch (no HTCondor job)",
+     "cluster_id": null,
+     "launch": "direct",
+     "receipt_gpu_hours": 0.0688,
+     "remote_wallclock_s": null,
+     "stop": "STOP: trackp.py sft-data failed rc=1; see 000_sft-data.log"
+    },
+    {
+     "arm": "kev-0.8b",
+     "attempt": "attempt-3",
+     "charge_basis": "receipt (direct launcher record)",
+     "charged_gpu_hours": 0.0596,
+     "cluster_check": "direct launch (no HTCondor job)",
+     "cluster_id": null,
+     "launch": "direct",
+     "receipt_gpu_hours": 0.0596,
+     "remote_wallclock_s": null,
+     "stop": "STOP: trackp.py sft-data failed rc=1; see 000_sft-data.log"
+    },
+    {
+     "arm": "kev-0.8b",
+     "attempt": "attempt-4",
+     "charge_basis": "receipt (direct launcher record)",
+     "charged_gpu_hours": 0.1231,
+     "cluster_check": "direct launch (no HTCondor job)",
+     "cluster_id": null,
+     "launch": "direct",
+     "receipt_gpu_hours": 0.1231,
+     "remote_wallclock_s": null,
+     "stop": null
+    },
+    {
+     "arm": "kev-4b",
+     "attempt": "attempt-1",
+     "charge_basis": "receipt (direct launcher record)",
+     "charged_gpu_hours": 0.632,
+     "cluster_check": "direct launch (no HTCondor job)",
+     "cluster_id": null,
+     "launch": "direct",
+     "receipt_gpu_hours": 0.632,
+     "remote_wallclock_s": null,
+     "stop": "STOP: CUDA OOM in sft-dev at micro-batch 8 (P4-MB; the author decides); see 001_sft-dev.log"
+    },
+    {
+     "arm": "qwen3.5-0.8b-base",
+     "attempt": "attempt-1",
+     "charge_basis": "receipt (direct launcher record)",
+     "charged_gpu_hours": 0.1588,
+     "cluster_check": "direct launch (no HTCondor job)",
+     "cluster_id": null,
+     "launch": "direct",
+     "receipt_gpu_hours": 0.1588,
+     "remote_wallclock_s": null,
+     "stop": "STOP: trackp.py sft-data refused: STOP: ValueError: origin/main is stale or missing; fetch before evidence use"
+    },
+    {
+     "arm": "qwen3.5-0.8b-base",
+     "attempt": "attempt-2",
+     "charge_basis": "receipt (direct launcher record)",
+     "charged_gpu_hours": 0.4511,
+     "cluster_check": "direct launch (no HTCondor job)",
+     "cluster_id": null,
+     "launch": "direct",
+     "receipt_gpu_hours": 0.4511,
+     "remote_wallclock_s": null,
+     "stop": null
+    },
+    {
+     "arm": "qwen3.5-4b-base",
+     "attempt": "attempt-1",
+     "charge_basis": "receipt (direct launcher record)",
+     "charged_gpu_hours": 0.6577,
+     "cluster_check": "direct launch (no HTCondor job)",
+     "cluster_id": null,
+     "launch": "direct",
+     "receipt_gpu_hours": 0.6577,
+     "remote_wallclock_s": null,
+     "stop": "STOP: CUDA OOM in sft-dev at micro-batch 8 (P4-MB; the author decides); see 001_sft-dev.log"
+    }
+   ],
+   "charge_files": [],
+   "pending": [],
+   "total": 2.1603
+  },
+  "trackp-p4-probe-20261127-b": {
+   "attempts": [
+    {
+     "arm": "kev-4b",
+     "attempt": "attempt-1",
+     "charge_basis": "receipt (direct launcher record)",
+     "charged_gpu_hours": 0.4474,
+     "cluster_check": "direct launch (no HTCondor job)",
+     "cluster_id": null,
+     "launch": "direct",
+     "receipt_gpu_hours": 0.4474,
+     "remote_wallclock_s": null,
+     "stop": null
+    },
+    {
+     "arm": "qwen3.5-4b-base",
+     "attempt": "attempt-1",
+     "charge_basis": "receipt (direct launcher record)",
+     "charged_gpu_hours": 0.4833,
+     "cluster_check": "direct launch (no HTCondor job)",
+     "cluster_id": null,
+     "launch": "direct",
+     "receipt_gpu_hours": 0.4833,
+     "remote_wallclock_s": null,
+     "stop": null
+    }
+   ],
+   "charge_files": [],
+   "pending": [],
+   "total": 0.9307
+  }
+ },
+ "t1": {
+  "cluster_check": "match",
+  "gpu_hours": 0.0,
+  "jobs": [
+   {
+    "charged_gpu_hours": 0.0,
+    "cluster_id": "760065",
+    "remote_wallclock_s": 0.0
+   }
+  ],
+  "record": {
+   "cluster_ids": [
+    "760065"
+   ],
+   "dir": "docs/r1/reports/trackp_p4_cluster_20261125/T1_versions",
+   "files": {
+    "versions.jdl": "fa7ec821ca1fd597184691117f0f846df139c0a40df32db4afb2553d2d33c97d",
+    "versions.sh": "125342d1cfed4fd435d68bbc0c5e7655845318d7522c7c9bd64536e1b3432025"
+   },
+   "history": {
+    "file": "condor_history.txt",
+    "jobs": [
+     {
+      "cluster_id": "760065",
+      "remote_wallclock_s": 0.0
+     }
+    ],
+    "sha256": "df41e2df4d598cfcb561b6f4b718c2faba3701a8a58fac15ff6957e1cbf2a3a9"
+   },
+   "submit_files": {
+    "versions.submit": "3c1cc1afe95b44efd62c983f99a6035a73723acc3284df1b8eb26803fd952afb"
+   }
+  },
+  "source": "input",
+  "wallclock_source": "docs/r1/reports/trackp_p4_cluster_20261125/T1_versions/condor_history.txt"
+ },
+ "t1_gpu_hours": 0.0,
+ "total": 3.091,
+ "unrecorded": []
+}
