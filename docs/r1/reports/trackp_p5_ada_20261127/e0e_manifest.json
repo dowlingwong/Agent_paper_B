@@ -1,0 +1,166 @@
+{
+  "argv": [
+    "--config",
+    "/data1/zli538/paperb_p4_20261127/p5_20261127_b/e0_config_ref.json",
+    "e0",
+    "--stage",
+    "final",
+    "--base",
+    "kev-0.8b",
+    "--evidence",
+    "DRYRUN",
+    "--variant",
+    "fresh",
+    "--lr",
+    "0.0001",
+    "--seed",
+    "0",
+    "--gpu",
+    "GPU-9be33fd1-8eeb-497d-772a-87362d6720be",
+    "--run-dir",
+    "/data1/zli538/paperb_p4_20261127/p5_20261127_b/e0e"
+  ],
+  "base": {
+    "adapter_repo": "jaredpalmer/kev-0.8b",
+    "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+    "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+    "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+    "family": "kev"
+  },
+  "config_sha256": "754f68543be565f2a63db6c6afc6f3c5b0e17f89ff26c1b1b7274f30d2b796cc",
+  "created_utc": "2026-11-27T21:11:16Z",
+  "data_manifest_sha256": "b963be2dd378241e0b0689907d4051bfa62922a8e4968aa40061ed7ef275bfef",
+  "environment": {
+    "packages": {
+      "kev": {
+        "path": "/data1/zli538/paperb_p4_20261127/venv/lib/python3.12/site-packages/kev",
+        "pip_commit": "2074cc44256200bb37540103fa4572901faa10f3"
+      },
+      "laya": {
+        "path": "/data1/zli538/paperb_p4_20261127/venv/lib/python3.12/site-packages/laya",
+        "pip_commit": "a478221bcad24d1a9c47b361c79328ebd2b100c6"
+      },
+      "startlux_decide": {
+        "path": "/data1/zli538/paperb_p4_20261127/venv/lib/python3.12/site-packages/startlux_decide",
+        "pip_commit": "a99977d9332decc9fb27a2488b4a83b533b6cd5f"
+      }
+    },
+    "peft": "0.21.2",
+    "torch": "2.6.0+cu124",
+    "transformers": "5.19.0"
+  },
+  "evidence_label": "DRYRUN",
+  "git": {
+    "harness": {
+      "branch": "HEAD",
+      "commit": "897d83c8efa364ec2fdd37288241cc42e01d7274",
+      "dirty": false,
+      "dirty_files": [],
+      "path": "/data1/zli538/paperb_p4_20261127/harness"
+    },
+    "paper": {
+      "branch": "HEAD",
+      "commit": "c80f83bc5bc93356dfacadbcb5b186dfb59d028f",
+      "dirty": false,
+      "dirty_files": [],
+      "path": "/data1/zli538/paperb_p4_20261127/p5_20261127_b/paper_c80f83bc"
+    }
+  },
+  "gpu_lease": [
+    {
+      "event": "start",
+      "gpu_index": 0,
+      "gpu_uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be",
+      "job": "trackp e0 kev-0.8b",
+      "other_processes": {
+        "count": 0,
+        "memory_mib": 0
+      },
+      "pid": 5542,
+      "trackx_marker": "absent: /home/zli538/r1_locks/trackx_evidence.active",
+      "utc": "2026-11-27T20:33:06Z"
+    },
+    {
+      "event": "end",
+      "gpu_index": 0,
+      "gpu_uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be",
+      "job": "trackp e0 kev-0.8b",
+      "other_processes": {
+        "count": 0,
+        "memory_mib": 0
+      },
+      "pid": 5542,
+      "utc": "2026-11-27T21:11:15Z"
+    }
+  ],
+  "head_form": "linear12",
+  "host": {
+    "cuda_device_order": null,
+    "cuda_visible_devices": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be",
+    "device": {
+      "compute_capability": "8.9",
+      "name": "NVIDIA RTX 6000 Ada Generation",
+      "uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be"
+    },
+    "gpus": [
+      {
+        "compute_capability": "8.9",
+        "driver": "545.23.08",
+        "name": "NVIDIA RTX 6000 Ada Generation",
+        "uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be"
+      },
+      {
+        "compute_capability": "8.9",
+        "driver": "545.23.08",
+        "name": "NVIDIA RTX 6000 Ada Generation",
+        "uuid": "GPU-aa340032-6f94-9783-8f3d-50a15da47a6f"
+      },
+      {
+        "compute_capability": "8.9",
+        "driver": "545.23.08",
+        "name": "NVIDIA RTX 6000 Ada Generation",
+        "uuid": "GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154"
+      },
+      {
+        "compute_capability": "8.9",
+        "driver": "545.23.08",
+        "name": "NVIDIA RTX 6000 Ada Generation",
+        "uuid": "GPU-5d61f1bc-1a65-f322-6feb-3aeaf6051f94"
+      },
+      {
+        "compute_capability": "8.9",
+        "driver": "545.23.08",
+        "name": "NVIDIA RTX 6000 Ada Generation",
+        "uuid": "GPU-379470db-a02e-893a-57a0-71b119173890"
+      },
+      {
+        "compute_capability": "8.9",
+        "driver": "545.23.08",
+        "name": "NVIDIA RTX 6000 Ada Generation",
+        "uuid": "GPU-5357dc5f-5d1d-af80-a3f4-3eb5aeb38f0d"
+      },
+      {
+        "compute_capability": "8.9",
+        "driver": "545.23.08",
+        "name": "NVIDIA RTX 6000 Ada Generation",
+        "uuid": "GPU-3b36edea-1a09-a37e-aa42-8277c7319e77"
+      },
+      {
+        "compute_capability": "8.9",
+        "driver": "545.23.08",
+        "name": "NVIDIA RTX 6000 Ada Generation",
+        "uuid": "GPU-3719bd35-06de-4674-7c7a-e56136fed589"
+      }
+    ],
+    "hostname": "ucrtasl"
+  },
+  "model_files_sha256": {
+    "adapter/README.md": "a0173fd31ca435f29eb449dc56f7b49b9f94761831a6bb701297ec93202c34b0",
+    "adapter/adapter_config.json": "976c20e133bae4237347d90cc570c14f462fbc61343315c136fdf0b894f2532d",
+    "adapter/adapter_model.safetensors": "af750a90eb3224dc8a2c11a67ba529ab62f9f5e7b6ab3773eafe0a7f4e531004",
+    "heads.safetensors": "fc7c577674d7bee17b5747c04b88ba1670c72059374b7ce6a3b41cb7b5480c24"
+  },
+  "schema": "trackp_run_manifest/v1",
+  "seed": 0,
+  "subcommand": "e0"
+}
