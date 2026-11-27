@@ -53,11 +53,15 @@ One entry per card (Ada's eight cards are eight entries on hostname `ucrtasl`), 
   PASS record** `docs/r1/reports/<dir>/G5_AUDIT_HOST_XC_VERDICT_<host>_<node>_<YYYYMMDD>.json` with its sha256, or
   `PENDING short cross-check: <node>` (the node then runs on the TASL pair only, R1-XC3-FAIL-READING).
 
-At each claim (on TASL-2), job start (on the card) and registration (on TASL-2) the node's admission is read on main
-(`g5_audit_hosts.check_admission`): the G5-7 family, G5-TASL-GPUH A, environment filled, host check, C12 where
+At each claim (on TASL-2) and job start (on the card) the node's admission is read on main
+(`g5_audit_hosts.check_admission`; at the registration on TASL-2 it is re-read for information only and never blocks
+the accounting, as TASL-7's cross-host PASS): the G5-7 family, G5-TASL-GPUH A, environment filled, host check, C12 where
 required, hardware class, the cross-check spec in the checkout at its sha256, the PASS on main at its sha256 (this node,
 mode short, complete, PASS, both sides deterministic, the TASL-2 side the node's declared sealed attempt, the host side
-`<run>-<host>`), and that file the one such verdict of the node and host on main.
+`<run>-<host>` on the card UUID and driver the cross-check spec names), and that file the one such verdict of the node
+and host on main. The PASS is measured on one card of the host under one driver: an entry is admitted under it only
+with that driver, on that host and GPU model; the key line names the card it was measured on, so the coverage of the
+host's other cards is stated in the note. A new driver needs a new cross-check.
 
 ## 3. Procedure on the TASL-2 runs tree (unchanged for TASL-7)
 
@@ -67,8 +71,11 @@ tree; the job runs there (`g5_tasl.py run … --host Ada-g0 --chunk … --addend
 the signed G.5 note, both keys, and this note); every attempt is registered on TASL-2 in order (`register-chunk …
 --addendum <file>`) before it counts for the meter, the STOP records, E5 and the seal; a claim the card cannot finish
 is handed back by `abandon-claim`. After the card's last job its access log is registered a last time
-(`finalize-remote --host Ada-g0`); `seal-run` requires every host's final registration. An attempt during which
-another compute process was seen on the card is an infrastructure failure and is repeated (R1-NO-TIMEOUT (2): a run's
+(`finalize-remote --host Ada-g0`, a host some claim names); `seal-run` requires every host's final registration. The
+card is sampled for other compute processes at three points (before the job, before the engine, after the engine; a
+process that comes and goes between two samples is not seen): no job or engine starts beside one, and an attempt
+during which one was seen is an infrastructure failure and is repeated, whatever it ended in (a baseline failure
+included), except an isolation-gate STOP 2, a seed STOP 10 and the left-processes STOP 9 (R1-NO-TIMEOUT (2): a run's
 budget decides a proposal only on an attempt that had its card to itself; the audit rows are sealed, so the whole
 attempt is repeated; R1-CARD-SHARE (3)). The hours of every attempt count inside `cap_gpu_hours`.
 
@@ -84,14 +91,15 @@ g5_run_id: PENDING: c3_t1_labels_YYYYMMDD (the signed note's date)
 g5_spec_sha256: 16b39b475e5ccccd9143de06b0a69996e5274d73033521d5cac8c1db0470627f
 addendum_spec: sweep2/t1_tasl/g5_audit_hosts_addendum_<YYYYMMDD>.json
 audit_hosts: TASL-7 (the signed note's tasl7_audits, unchanged); Ada-g0 (NVIDIA RTX 6000 Ada Generation)
-audit_host_Ada_g0: ucrtasl PENDING: the card's nvidia-smi UUID NVIDIA RTX 6000 Ada Generation driver PENDING: driver_version; lease ~/r1_locks/ada_gpu0.lock (its own; free memory at least 24576 MiB, the card's other compute processes recorded, R1-CARD-SHARE); host check PENDING: docs/r1/reports/<dir>/ADA_ISOLATION_HOST_CHECK_<date>.md sha256 PENDING; G5-7 checkout /home/dowling/r1_tracks/t1_tasl/harness_g5; hardware class: another GPU model than the table's NVIDIA GeForce RTX 4090; no audit chunk runs here unless R1-G5-AUDIT-HOST-CLASS is on main naming NVIDIA RTX 6000 Ada Generation (R1-HOST-FREE (2)(a)); per node the short cross-check PASS against its sealed TASL-2 attempt under sweep2/t1_tasl/g5_audit_host_xc_ada_spec.json sha256 8470694f42c49ff3d0e0068da2f9ffeed86517689c47290822e2434f6cf8daf7: mlab_cifar10: PENDING (runs on the TASL pair only); mlab_imdb: PENDING (runs on the TASL pair only); mlab_ogbn_arxiv: PENDING (runs on the TASL pair only); mlgym_breakout_minatar: PENDING (runs on the TASL pair only); mlgym_cifar10: PENDING (runs on the TASL pair only); mlgym_fmnist: PENDING (runs on the TASL pair only); mlgym_houseprice: PENDING (runs on the TASL pair only)
+audit_host_Ada_g0: ucrtasl PENDING: the card's nvidia-smi UUID NVIDIA RTX 6000 Ada Generation driver PENDING: driver_version; lease ~/r1_locks/ada_gpu0.lock (its own; free memory at least 24576 MiB, the card's other compute processes recorded, R1-CARD-SHARE); host check PENDING: docs/r1/reports/<dir>/ADA_ISOLATION_HOST_CHECK_<date>.md sha256 PENDING; G5-7 checkout /home/dowling/r1_tracks/t1_tasl/harness_g5; hardware class: another GPU model than the table's NVIDIA GeForce RTX 4090; no audit chunk runs here unless R1-G5-AUDIT-HOST-CLASS is on main naming NVIDIA RTX 6000 Ada Generation (R1-HOST-FREE (2)(a)); per node the short cross-check PASS against its sealed TASL-2 attempt under sweep2/t1_tasl/g5_audit_host_xc_ada_spec.json sha256 8470694f42c49ff3d0e0068da2f9ffeed86517689c47290822e2434f6cf8daf7 (measured on Ada's card PENDING: the card's nvidia-smi UUID (compute agent survey) and covering this card of the same host, GPU model and driver, driver PENDING: nvidia-smi driver_version (compute agent survey)): mlab_cifar10: PENDING (runs on the TASL pair only); mlab_imdb: PENDING (runs on the TASL pair only); mlab_ogbn_arxiv: PENDING (runs on the TASL pair only); mlgym_breakout_minatar: PENDING (runs on the TASL pair only); mlgym_cifar10: PENDING (runs on the TASL pair only); mlgym_fmnist: PENDING (runs on the TASL pair only); mlgym_houseprice: PENDING (runs on the TASL pair only)
 addendum_cuda_ipc: The author accepts, for the G.5 audit chunks on Ada-g0 admitted by this addendum, the residual risk that harness-isolation host-check item 7 (CUDA IPC across the isolation boundary, reports/HARNESS_ISOLATION_20261117.md §3) is untested on these hosts, as for TASL-2 and TASL-7 in the signed note's cuda_ipc_acceptance line. Disclosed in the T1 report.
-addendum_scope: G.5 audit chunks of the G5-7 family only (autoresearch_fixedtokens's audits stay on TASL-2); campaign waves, a wave's plan and its last chunk (E5) stay on TASL-2; a chunk is claimed on TASL-2 for one host, one open claim per host, and every attempt is registered on TASL-2 before it counts; its hours count inside cap_gpu_hours (R1-NO-TIMEOUT (3)); an attempt during which another compute process was seen on its card is an infrastructure failure and is repeated (R1-NO-TIMEOUT (2), R1-CARD-SHARE (3)); a node without its PASS on main runs on the TASL pair only (R1-XC3-FAIL-READING)
+addendum_scope: G.5 audit chunks of the G5-7 family only (autoresearch_fixedtokens's audits stay on TASL-2); campaign waves, a wave's plan and its last chunk (E5) stay on TASL-2; a chunk is claimed on TASL-2 for one host, one open claim per host, and every attempt is registered on TASL-2 before it counts; its hours count inside cap_gpu_hours (R1-NO-TIMEOUT (3)); the card is sampled for other compute processes before the job, before the engine and after the engine: no job or engine starts beside one, and an attempt during which one was seen is an infrastructure failure and is repeated (R1-NO-TIMEOUT (2), R1-CARD-SHARE (3)); a process between two samples is not seen; a node without its PASS on main runs on the TASL pair only (R1-XC3-FAIL-READING)
 addendum_spec_sha256: <the addendum spec's sha256>
 ```
 
 Rows the strict check reads on main: R1-HOST-FREE, R1-G5-SIGNATURE, R1-CARD-SHARE; for a card of another GPU model also
-R1-G5-AUDIT-HOST-CLASS at every admission.
+R1-G5-AUDIT-HOST-CLASS at every admission, which must open with the lead sentence of the draft row in §5 naming that
+GPU model.
 
 ## 5. The author's decision (AH-CLASS)
 
@@ -123,8 +131,10 @@ Draft row text (B):
 > (2)(a) for T1 G.5 audit chunks and amends R1-G5-AUDIT-TWO-CARDS's "one table, one GPU model" for them: the candidate
 > and incumbent audits of one proposal may run on the two GPU models when the node's short cross-check (the default
 > part, bit-identical to its sealed TASL-2 attempt, `g5_audit_host_xc_ada_spec.json`) is a cross-host PASS on main and
-> an addendum note lists it. Campaign waves, plans, E5 chunks and autoresearch's audits stay on TASL-2. The T1 report
-> states per node which audit runs ran on which GPU model (R1-HOST-FREE (4)); no analysis by GPU model is added. |
+> an addendum note lists it. Campaign waves, plans, E5 chunks and autoresearch's audits stay on TASL-2. For the
+> CPU-only mlgym_houseprice no GPU model enters: its audits on such a host run on that host's CPUs, and the row covers
+> them on the same terms (its cross-host PASS on that host's CPU set). The T1 report states per node which audit runs
+> ran on which GPU model or CPU (R1-HOST-FREE (4)); no analysis by GPU model is added. |
 
 Draft row text (A):
 

@@ -25,19 +25,27 @@ not an empty card; records list the card's other compute processes); R1-NO-TIMEO
   Ada) is ``cross_model_row``: refused at every admission until the author's row ``R1-G5-AUDIT-HOST-CLASS`` is on main
   naming that GPU model and reading a node's cross-host PASS as one hardware class for that node's audits. Fail closed:
   without the row, no G.5 audit chunk runs on a card of another GPU model.
-* **Admission per node** (``check_admission``, at the claim, at the job start and at the registration): the G5-7 family,
+* **Admission per node** (``check_admission``, at the claim and at the job start; at the registration it is re-read
+  for information only and never blocks the accounting, as TASL-7's cross-host PASS): the G5-7 family,
   G5-TASL-GPUH A, the node's environment and CPU set on that host filled, the host check record on main at its sha256
   (PASS for that hostname at the seven nodes' G.1b pin, as TASL-7's), the C12 record under ``cuda_ipc: c12``, the
   hardware class, the cross-check spec in the checkout at its sha256, and the node's short cross-check PASS on main at
   its sha256 (this node, mode short, complete, PASS, both sides deterministic, the TASL-2 side the node's declared
-  sealed attempt, the host side ``<run>-<host>``) and the one such verdict file of the node and host on main. Any
+  sealed attempt, the host side ``<run>-<host>`` on the card and driver the cross-check spec names) and the one such
+  verdict file of the node and host on main. The PASS is measured on one card of the host (the cross-check spec's
+  ``gpu_uuid`` and ``driver``); an entry is admitted under it only with that driver, on that host, of that GPU model,
+  and the note's key line names the card it was measured on (per-host coverage, stated). Any
   failure refuses only that node on that host; nothing else changes (R1-XC3-FAIL-READING: the node's audits stay where
   they are).
 * **Card share** (``card_share_check``): an addendum host's job starts beside other compute processes when the card has
   the free memory the entry declares; each check records the count and memory of the card's other compute processes
-  (never their owners or commands). An attempt during which another compute process was seen on its card at any check
-  is an infrastructure failure and is repeated (R1-NO-TIMEOUT (2): a run's budget decides the proposal only on an
-  attempt that had its card to itself; the audit rows are sealed, so the whole attempt is repeated). TASL-7 keeps its
+  (never their owners or commands). Sharing is sampled at three points (before the job, before the engine, after the
+  engine): a job does not start, and its engine is not started, while another compute process is on the card (such an
+  attempt would be repeated anyway); an attempt during which another compute process was seen at any of the three
+  checks is an infrastructure failure and is repeated (R1-NO-TIMEOUT (2): a run's budget decides the proposal only on
+  an attempt that had its card to itself; the audit rows are sealed, so the whole attempt is repeated), whatever it
+  ended in, except an isolation-gate STOP 2, a seed STOP 10 and the left-processes STOP 9, which are not about budget
+  or memory and keep their class. A process that comes and goes between two samples is not seen. TASL-7 keeps its
   reviewed empty-card check (R1-CARD-SHARE (5)).
 * **The cross-check spec of an addendum host** (schema ``g5_audit_host_crosscheck_spec/1``, ``check_host_xc_spec``):
   the default part of each node on the host, compared with the node's sealed TASL-2 attempt, as xc3. For the four xc3
@@ -74,6 +82,8 @@ CARD_SHARE_TERMS = ("check free memory, not an empty card",)
 # The author's row a host of another GPU model needs (proposed in the unit report; not on main at this unit).
 CLASS_ROW = "R1-G5-AUDIT-HOST-CLASS"
 CLASS_TERMS = ("one hardware class", "cross-host PASS")
+CLASS_LEAD = ("**For the G.5 audit chunks of a G5-7 node, a card of {model} is one hardware class with the RTX 4090 "
+              "pair once the node has a cross-host PASS**")
 HARDWARE_CLASSES = ("same_gpu_model", "cross_model_row")
 SHORT_MODE = "short"
 VERDICT_TOKEN = "G5_AUDIT_HOST_XC_VERDICT_"
@@ -264,6 +274,12 @@ def _check_host(spec: dict, h: dict, *, launch: bool) -> None:
             (not S._ph(xh["hostname"]) and xh["hostname"] != h["hostname"]):
         raise Stop(f"STOP: {where}: the cross-check spec's host ({xh['name']}, {xh['hostname']}, {xh['gpu_model']}) is "
                    f"not this host's")
+    if launch and any(S._ph(xh[k]) for k in ("hostname", "gpu_uuid", "driver")):
+        raise Stop(f"STOP: {where}: the cross-check spec's host hostname, gpu_uuid and driver must be filled (the card "
+                   f"and driver its PASS was measured on)")
+    if not S._ph(xh["driver"]) and not S._ph(h["driver"]) and xh["driver"] != h["driver"]:
+        raise Stop(f"STOP: {where}: driver {h['driver']} is not the driver {xh['driver']} its cross-check PASS was "
+                   f"measured under (a new driver needs a new cross-check)")
     adm = h["admission"]
     if not isinstance(adm, dict) or sorted(adm) != sorted(S.SEVEN):
         raise Stop(f"STOP: {where}: admission must name exactly the seven G5-7 nodes ({S.AR}'s audits stay on "
@@ -308,6 +324,10 @@ def note_lines(spec: dict, spec_path: Path, add: dict, add_path: Path) -> dict:
     cuda = spec["key_values"]["cuda_ipc"]
     for h in add["hosts"]:
         hc, xc = h["isolation_host_check"], h["crosscheck"]
+        xh = json.loads((REPO_ROOT / xc["spec"]).read_text())["host"]
+        measured = ("measured on this card" if xh["gpu_uuid"] == h["gpu_uuid"] else
+                    f"measured on {xh['name']}'s card {xh['gpu_uuid']} and covering this card of the same host, GPU "
+                    f"model and driver")
         cls = ("hardware class: the table's GPU model" if h["hardware_class"] == "same_gpu_model" else
                f"hardware class: another GPU model than the table's {spec['gpu_model']}; no audit chunk runs here "
                f"unless {CLASS_ROW} is on main naming {h['gpu_model']} (R1-HOST-FREE (2)(a))")
@@ -319,7 +339,7 @@ def note_lines(spec: dict, spec_path: Path, add: dict, add_path: Path) -> dict:
             f"free memory at least {h['card_share']['min_free_mib']} MiB, the card's other compute processes recorded, "
             f"{CARD_SHARE_ROW}); host check {hc['record']} sha256 {hc['sha256']}; G5-7 checkout {h['harness_dir']}; "
             f"{cls}; per node the short cross-check PASS against its sealed TASL-2 attempt under {xc['spec']} sha256 "
-            f"{xc['sha256']}: {adm}")
+            f"{xc['sha256']} ({measured}, driver {xh['driver']}): {adm}")
     if cuda.get("mode") == "c12":
         lines["addendum_cuda_ipc"] = "; ".join(
             (f"C12 PASS: {h['c12']['record']} sha256 {h['c12']['sha256']} ({h['host']})" if h["c12"] else
@@ -330,8 +350,10 @@ def note_lines(spec: dict, spec_path: Path, add: dict, add_path: Path) -> dict:
         f"G.5 audit chunks of the G5-7 family only ({S.AR}'s audits stay on {S.WORKER_HOST}); campaign waves, a wave's "
         f"plan and its last chunk (E5) stay on {S.WORKER_HOST}; a chunk is claimed on {S.WORKER_HOST} for one host, one "
         f"open claim per host, and every attempt is registered on {S.WORKER_HOST} before it counts; its hours count "
-        f"inside cap_gpu_hours (R1-NO-TIMEOUT (3)); an attempt during which another compute process was seen on its "
-        f"card is an infrastructure failure and is repeated (R1-NO-TIMEOUT (2), {CARD_SHARE_ROW} (3)); a node without "
+        f"inside cap_gpu_hours (R1-NO-TIMEOUT (3)); the card is sampled for other compute processes before the job, "
+        f"before the engine and after the engine: no job or engine starts beside one, and an attempt during which one "
+        f"was seen is an infrastructure failure and is repeated (R1-NO-TIMEOUT (2), {CARD_SHARE_ROW} (3)); a process "
+        f"between two samples is not seen; a node without "
         f"its PASS on main runs on the TASL pair only (R1-XC3-FAIL-READING)")
     return lines
 
@@ -428,6 +450,10 @@ def hardware_class(spec: dict, entry: dict, read_main) -> dict:
         raise Stop(f"STOP: {entry['host']} is a {entry['gpu_model']}, not the table's {spec['gpu_model']}: the "
                    f"candidate and incumbent audits of one proposal stay on one hardware class (R1-HOST-FREE (2)(a)); "
                    f"no G.5 audit chunk runs there without {CLASS_ROW} on main ({exc})") from None
+    lead = CLASS_LEAD.format(model=entry["gpu_model"])
+    if not line.split("|", 2)[2].strip().startswith(lead):
+        raise Stop(f"STOP: the PLAN row {CLASS_ROW} does not open with {lead!r}; no G.5 audit chunk runs on "
+                   f"{entry['host']} ({entry['gpu_model']}; R1-HOST-FREE (2)(a))")
     return {"class": "cross_model_row", "gpu_model": entry["gpu_model"], "row": CLASS_ROW,
             "row_sha256": S._sha_bytes(line.encode())}
 
@@ -452,7 +478,8 @@ def check_verdict(xspec: dict, node: str, rel: str, raw: bytes) -> dict:
     ``g1b_tasl_crosscheck_verdict/1``, ENGINEERING_ONLY, this node, mode short, PASS with no reason, complete, the
     spec's rule and run id, the node's G.1b pin and spec, sides exactly TASL-2 and the host, each with
     run_id/spec_sha256/job_record_sha256/attempt and deterministic, the TASL-2 side the declared reference, the host
-    side ``<run>-<host>``."""
+    side ``<run>-<host>`` with the ``gpu_uuid`` and ``driver`` the cross-check spec's host names (the runner of an
+    addendum host's cross-check writes them; a verdict without them does not admit)."""
     try:
         v = json.loads(raw)
     except ValueError:
@@ -466,7 +493,9 @@ def check_verdict(xspec: dict, node: str, rel: str, raw: bytes) -> dict:
             for x in sides.values())
     if sides_ok:
         sides_ok = all(sides[S.WORKER_HOST][k] == ref[k] for k in SIDE_FIELDS) and \
-            sides[host]["run_id"] == f"{xspec['run_id']}-{host}"
+            sides[host]["run_id"] == f"{xspec['run_id']}-{host}" and \
+            sides[host].get("gpu_uuid") == xspec["host"]["gpu_uuid"] and \
+            sides[host].get("driver") == xspec["host"]["driver"]
     problems = [k for k, ok in (
         ("schema", v.get("schema") == X.VERDICT_SCHEMA),
         ("label", v.get("label") == G.ENGINEERING_ONLY),
@@ -506,6 +535,11 @@ def check_admission(spec: dict, entry: dict, node: str, read_main, list_main) ->
         raise Stop(f"STOP: the cross-check spec {xc['spec']} in the checkout differs from its sha256")
     xspec = json.loads((REPO_ROOT / xc["spec"]).read_text())
     check_host_xc_spec(xspec)
+    xh = xspec["host"]
+    if any(S._ph(xh[k]) for k in ("hostname", "gpu_uuid", "driver")) or xh["driver"] != entry["driver"] or \
+            xh["hostname"] != entry["hostname"]:
+        raise Stop(f"STOP: {host}: the cross-check spec's card and driver ({xh['gpu_uuid']}, {xh['driver']}) are not "
+                   f"filled or not this host's driver; {node}'s audits do not run on {host}")
     entries = entry["admission"][node]
     if not isinstance(entries, list):
         raise Stop(f"STOP: {xc_pending(node)} on {host}: no short cross-check PASS is listed; {node}'s audits run on "
@@ -558,7 +592,7 @@ def gpu_check(entry: dict, smi=G._sh) -> dict:
     return {"uuid": want, "name": gpus[want][1], "driver": gpus[want][2], "memory_total": gpus[want][3]}
 
 
-def card_share_check(entry: dict, gpu_uuid: str | None, when: str, smi=G._sh) -> dict:
+def card_share_check(entry: dict, gpu_uuid: str | None, when: str, smi=G._sh, *, refuse_shared: bool = False) -> dict:
     """R1-CARD-SHARE on an addendum host: the card's free memory at least ``card_share.min_free_mib`` (else an
     infrastructure STOP: wait for memory and start again) and the count and memory of its other compute processes."""
     if gpu_uuid is None:
@@ -583,6 +617,9 @@ def card_share_check(entry: dict, gpu_uuid: str | None, when: str, smi=G._sh) ->
         mem += int(m.group(1)) if m else 0
     out = {"when": when, "free_mib": free, "min_free_mib": entry["card_share"]["min_free_mib"],
            "other_processes": len(others), "other_memory_mib": mem}
+    if refuse_shared and others:
+        raise Stop(f"STOP: {len(others)} other compute process(es) ({mem} MiB) on {gpu_uuid} {when}: an attempt beside "
+                   f"them would be repeated (R1-NO-TIMEOUT (2)); start again when the card is free ({CARD_SHARE_ROW})")
     if free < entry["card_share"]["min_free_mib"]:
         raise Stop(f"STOP: {gpu_uuid} has {free} MiB free {when}, below the {entry['card_share']['min_free_mib']} MiB "
                    f"the addendum declares ({CARD_SHARE_ROW}; an infrastructure failure: start again when memory is "
@@ -592,6 +629,19 @@ def card_share_check(entry: dict, gpu_uuid: str | None, when: str, smi=G._sh) ->
 
 def shared(checks: list[dict]) -> bool:
     return any(c.get("other_processes") for c in checks)
+
+
+SHARED_KEEPS = ("STOP 2", "STOP 10")     # isolation gate, seed outside the plan: not about budget or memory
+
+
+def reclassify_shared(stop, stop_class) -> bool:
+    """Whether an attempt's outcome on a shared addendum card becomes an infrastructure failure: every outcome (a
+    complete attempt, a timing STOP, STOP 9 at the deadline, STOP 6 baseline_failed, any other node-class STOP) except
+    an infrastructure one already, STOP 2, STOP 10 and the left-processes STOP 9 (which needs the operator first)."""
+    if stop_class == "infrastructure":
+        return False
+    text = str(stop or "")
+    return not text.startswith(SHARED_KEEPS) and "ar_* run cgroups" not in text
 
 
 SHARED_STOP = ("STOP: another compute process was on the card during this attempt ({checks}); a run's budget decides a "

@@ -1267,6 +1267,9 @@ def finalize_remote(spec: dict, spec_path: Path, access_log: Path, *, hostname=N
     _check_tasl2(spec, hostname)
     if host == S.WORKER_HOST or not isinstance(host, str):
         raise Stop(f"STOP: {S.WORKER_HOST} has no remote access log")
+    if host != S.AUDIT_HOST and host not in SE.claim_hosts(spec):
+        raise Stop(f"STOP: {host} is neither {S.AUDIT_HOST} nor a host any claim of this run names; nothing to "
+                   f"finalize")
     _require_not_final(spec, "final registration", host)
     mine = [c for c in open_claims(spec) if c.get("host", S.AUDIT_HOST) == host]
     if mine:
@@ -1581,7 +1584,7 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
         except Exception as exc:  # noqa: BLE001
             record["stop"], record["stop_class"] = f"STOP: unexpected {type(exc).__name__}: {exc}", "infrastructure"
         if entry is not None and AH.shared(record["foreign_checks"]) and \
-                (record["stop"] is None or record["stop_class"] == "timing" or str(record["stop"]).startswith("STOP 9")):
+                AH.reclassify_shared(record["stop"], record["stop_class"]):
             prior = record["stop"]                     # R1-NO-TIMEOUT (2): only an unshared attempt decides a budget
             record["stop"] = AH.SHARED_STOP.format(checks=[(c["when"], c["other_processes"], c["other_memory_mib"])
                                                            for c in record["foreign_checks"]]) + (
@@ -1631,7 +1634,7 @@ def _card_check(entry: dict | None, gpu: str | None, when: str, smi, *, enforce:
         e = dict(entry, card_share=dict(entry["card_share"], min_free_mib=0))
         return dict(AH.card_share_check(e, gpu, when, smi), min_free_mib=entry["card_share"]["min_free_mib"],
                     enforced=False)
-    return AH.card_share_check(entry, gpu, when, smi)
+    return AH.card_share_check(entry, gpu, when, smi, refuse_shared=True)     # an attempt beside one is repeated
 
 
 OPERATOR_RULE = ("operator rule: inspect user@<uid>.service/app.slice/*/ar_* (this job's scope is the record's "

@@ -15,8 +15,8 @@ identity (hostname, GPU UUID, GPU model, driver), its own GPU lease, the R1-CARD
 checkout and the table's runs-tree layout, environments, its harness-isolation host check record, its C12 record (or
 the addendum's own CUDA-IPC acceptance line), the cross-check spec it was checked under, and per G5-7 node the short
 cross-check PASS record against the node's sealed TASL-2 attempt (or `PENDING short cross-check: <node>`). A node is
-admitted on a card at each claim, job start and registration (`check_admission`); any failure refuses that node on
-that card only. A card of **another GPU model** than the table's RTX 4090 is refused for every G.5 audit chunk unless
+admitted on a card at each claim and job start (`check_admission`; at the registration it is re-read for information
+only); any failure refuses that node on that card only. A card of **another GPU model** than the table's RTX 4090 is refused for every G.5 audit chunk unless
 the author's row `R1-G5-AUDIT-HOST-CLASS` is on main naming that model (R1-HOST-FREE (2)(a), §3). The job side reuses
 TASL-7's claim → run → register path with the host named in the claim: one open claim per host, the card's own lease,
 its GPU model and driver checked, its free memory checked and its other compute processes recorded (count and memory)
@@ -106,8 +106,10 @@ Draft row (B):
 > (2)(a) for T1 G.5 audit chunks and amends R1-G5-AUDIT-TWO-CARDS's "one table, one GPU model" for them: the candidate
 > and incumbent audits of one proposal may run on the two GPU models when the node's short cross-check (the default
 > part, bit-identical to its sealed TASL-2 attempt, `g5_audit_host_xc_ada_spec.json`) is a cross-host PASS on main and
-> an addendum note lists it. Campaign waves, plans, E5 chunks and autoresearch's audits stay on TASL-2. The T1 report
-> states per node which audit runs ran on which GPU model (R1-HOST-FREE (4)); no analysis by GPU model is added. |
+> an addendum note lists it. Campaign waves, plans, E5 chunks and autoresearch's audits stay on TASL-2. For the
+> CPU-only mlgym_houseprice no GPU model enters: its audits on such a host run on that host's CPUs, and the row covers
+> them on the same terms (its cross-host PASS on that host's CPU set). The T1 report states per node which audit runs
+> ran on which GPU model or CPU (R1-HOST-FREE (4)); no analysis by GPU model is added. |
 
 Draft row (A):
 
@@ -129,9 +131,34 @@ Draft row (A):
 - The G5-7 checkout and the runs tree must be at `/home/dowling/r1_tracks/t1_tasl/{harness_g5,runs}` on `ucrtasl` (as
   on TASL-7; links into `/data1/dowling` are fine).
 
+## 6a. Review round 1 (fresh tier-E review of `473b17bb`: ACCEPTED WITH MINORS) — corrections
+
+- **m1** (fixed): on a shared addendum card every outcome becomes an infrastructure failure except an infrastructure
+  STOP already, STOP 2 (isolation gate), STOP 10 (seed) and the left-processes STOP 9 (`reclassify_shared`); STOP 6
+  `baseline_failed` is included (the audit engine can emit it: `engine_stop` maps any engine's `stop_kind`). Tests: the
+  rule table and an end-to-end shared baseline_failed attempt (infrastructure) beside an unshared one (node).
+- **m2** (fixed): the cross-check spec's host must name the card (`gpu_uuid`) and `driver` its PASS was measured on
+  (filled at launch); an entry's driver must equal it; the verdict's host side must carry that `gpu_uuid` and `driver`
+  (the later runner unit writes them); the key line names the measured card and states the coverage of the host's
+  other cards. Tests: driver mismatch, unfilled spec host at launch, verdict without or with another driver/card, the
+  coverage wording.
+- **m3** (fixed): the class row must open with the lead sentence of the draft row B naming the GPU model. Test: a row
+  naming every term but not as its lead is refused.
+- **m4** (fixed): no job and no engine starts on an addendum card beside another compute process (a refusal, no
+  attempt burnt at the job start); the note's scope line discloses the three sampling points. Tests updated (a process
+  arriving during the engine; a card shared at the start).
+- **m5** (fixed): registration re-reads the admission for information only (module docstring, note draft §2, §1 here).
+- **m6** (fixed): `finalize-remote --host` must be TASL-7 or a host some claim names (test). Points noted, not built:
+  (a) two addenda could name the same card under two entry names; each addendum is validated alone, so the
+  coordinator publishes at most one live addendum per card (a later addendum supersedes by naming the same entries);
+  (b) the per-host meter at a remote job start counts the claim's TASL-2 reading plus that host's own unregistered
+  records, so two remote hosts running at once can each miss the other's in-flight attempt; the cap is a reporting
+  threshold under R1-NO-TIMEOUT (3), and every attempt reaches the TASL-2 meter at its registration.
+- **m7** (fixed): row B states that it covers the CPU-only `mlgym_houseprice` on the host's CPUs on the same terms.
+
 ## 7. Tests
 
-`r1/tests/test_t1_g5_audit_hosts.py`, 14 tests, synthetic (no GPU, no host, no label):
+`r1/tests/test_t1_g5_audit_hosts.py`, 17 tests (14 + 3 added in review round 1), synthetic (no GPU, no host, no label):
 signed spec bytes and key lines pinned to the base; the switch on the TASL pair refuses an addendum and is unchanged;
 a TASL-7 claim keeps its fields; the addendum validator (≈ 25 refusals incl. the TASL pair's hosts, families, hardware
 class, paths, card share, CPU sets, environments, placeholders at launch, admission records, cross-check spec binding,
@@ -147,6 +174,11 @@ refused; the switch on an addendum card (context, refusals, row, addendum note o
 Module tests (`test_t1_g5_job.py`, `test_t1_g5_seal.py`, `test_t1_g5_tasl.py`, `test_t1_tasl_xc3.py`,
 `test_t1_tasl_crosscheck.py`): base 20 failed / 377 passed, tip 20 failed / 377 passed, the same failing ids (macOS
 tar/sha256sum environment failures of the seal tests, as on the base).
+
+After review round 1, run with `COPYFILE_DISABLE=1` (macOS tar otherwise adds AppleDouble members that break the seal
+tests): base `6684e840` 1 failed / 396 passed (a first base run showed 2 failed / 395 passed: one flaky base test); tip
+(the correction commit) the five module files plus `test_t1_g5_audit_hosts.py`: 1 failed / 413 passed (396 + 17 new).
+The one failing id is the same on base and tip: `test_t1_g5_tasl.py::test_two_cards_xc3_fail_b_removes_a_failed_node_from_g5`.
 
 ## 8. Full suite
 

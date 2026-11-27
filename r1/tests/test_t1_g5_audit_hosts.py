@@ -40,8 +40,9 @@ ADA_MODEL = "NVIDIA RTX 6000 Ada Generation"
 UUIDA = "GPU-0a1b2c3d-0000-4000-8000-00000000ada0"
 DRIVERA = "550.54.15"
 HOSTCHECK_A = "docs/r1/reports/ada_20261201/ADA_ISOLATION_HOST_CHECK_20261201.md"
-CLASS_ROW_TEXT = ("| R1-G5-AUDIT-HOST-CLASS | (synthetic) for the G.5 audit chunks of a node, a card of NVIDIA RTX 6000 "
-                  "Ada Generation is one hardware class with the RTX 4090 pair once the node has a cross-host PASS |")
+CLASS_ROW_TEXT = ("| R1-G5-AUDIT-HOST-CLASS | **For the G.5 audit chunks of a G5-7 node, a card of NVIDIA RTX 6000 "
+                  "Ada Generation is one hardware class with the RTX 4090 pair once the node has a cross-host PASS** "
+                  "(synthetic) |")
 ROWS = {"R1-HOST-FREE": "| R1-HOST-FREE | (synthetic) further hosts join it through an addendum note; a node's results "
                         "need a cross-host PASS |",
         "R1-G5-SIGNATURE": "| R1-G5-SIGNATURE | (synthetic) further hosts and the expansion nodes join by addendum "
@@ -70,7 +71,7 @@ def fake_repo(tmp_path, monkeypatch, *, name="Ada", model=ADA_MODEL):
         (repo / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(ROOT / rel, repo / rel)
     xc = json.loads((ROOT / ADA_XC_REL).read_text())
-    xc["host"].update(name=name, gpu_model=model)
+    xc["host"].update(name=name, gpu_model=model, gpu_uuid=UUIDA, driver=DRIVERA)
     xc["verdicts"] = {n: v.replace("_Ada_", f"_{name}_") for n, v in xc["verdicts"].items()}
     rel = ADA_XC_REL if (name, model) == ("Ada", ADA_MODEL) else "sweep2/t1_tasl/xc_host_test.json"
     (repo / rel).write_text(json.dumps(xc, indent=1) + "\n")
@@ -88,7 +89,8 @@ def verdict(xc, node_, **kw) -> bytes:
          "crosscheck_run_id": xc["run_id"],
          "sides": {"TASL-2": {**{k: ref[k] for k in AH.SIDE_FIELDS}, "deterministic": True},
                    host: {"run_id": f"{xc['run_id']}-{host}", "spec_sha256": "3" * 64,
-                          "job_record_sha256": "4" * 64, "attempt": 1, "deterministic": True}}}
+                          "job_record_sha256": "4" * 64, "attempt": 1, "deterministic": True,
+                          "gpu_uuid": xc["host"]["gpu_uuid"], "driver": xc["host"]["driver"]}}}
     v.update(kw)
     return json.dumps(v, sort_keys=True).encode()
 
@@ -233,6 +235,8 @@ def test_addendum_validates_and_fails_closed(tmp_path, monkeypatch):
             record="docs/r1/reports/x/G5_AUDIT_HOST_XC_VERDICT_Ada_mlab_cifar10_20261127.json"))
     bad("differs from its sha256", lambda a: a["hosts"][0]["crosscheck"].update(sha256="0" * 64))
     bad("is not this host's", lambda a: a["hosts"][0].update(hostname="otherhost"))
+    bad("is not the driver 550.54.15 its cross-check PASS was measured under",
+        lambda a: a["hosts"][0].update(driver="545.23.08"))                                     # m2
     two_cards = copy.deepcopy(add)
     two_cards["hosts"].append(dict(copy.deepcopy(add["hosts"][0]), host="Ada-g1"))
     stop("is named by two audit hosts", AH.validate_addendum, SPEC, sp, two_cards)
@@ -240,6 +244,14 @@ def test_addendum_validates_and_fails_closed(tmp_path, monkeypatch):
     stop("share the lease", AH.validate_addendum, SPEC, sp, two_cards)
     two_cards["hosts"][1]["lease"] = "~/r1_locks/ada_gpu1.lock"
     assert AH.validate_addendum(SPEC, sp, two_cards)["hosts"] == ["Ada-g0", "Ada-g1"]
+    xc_open = json.loads((repo / xc_rel).read_text())                 # m2: the measured card must be named at launch
+    xc_open["host"]["driver"] = "PENDING: survey"
+    (repo / xc_rel).write_text(json.dumps(xc_open, indent=1) + "\n")
+    unbound = copy.deepcopy(add)
+    unbound["hosts"][0]["crosscheck"]["sha256"] = sha((repo / xc_rel).read_bytes())
+    stop("hostname, gpu_uuid and driver must be filled", AH.validate_addendum, SPEC, sp, unbound, launch=True)
+    AH.validate_addendum(SPEC, sp, unbound, launch=False)
+    (repo / xc_rel).write_text(json.dumps(xc, indent=1) + "\n")
     draft = copy.deepcopy(add)                       # placeholders pass only outside launch
     draft["hosts"][0].update(gpu_uuid="PENDING: survey", driver="PENDING: survey")
     draft["hosts"][0]["env_python"]["torch312"] = "PENDING: path"
@@ -272,7 +284,14 @@ def test_addendum_note_binds_spec_note_and_rows(tmp_path, monkeypatch):
     assert lines["audit_hosts"] == f"TASL-7 (the signed note's tasl7_audits, unchanged); Ada-g0 ({ADA_MODEL})"
     assert "no audit chunk runs here unless R1-G5-AUDIT-HOST-CLASS is on main" in lines["audit_host_Ada_g0"]
     assert "mlab_cifar10: PENDING (runs on the TASL pair only)" in lines["audit_host_Ada_g0"]
+    assert f"(measured on this card, driver {DRIVERA})" in lines["audit_host_Ada_g0"]
+    g1 = copy.deepcopy(add)
+    g1["hosts"][0].update(host="Ada-g1", gpu_uuid=UUIDA[:-1] + "1", lease="~/r1_locks/ada_gpu1.lock")
+    assert f"measured on Ada's card {UUIDA} and covering this card of the same host, GPU model and driver" in \
+        AH.note_lines(s0, sp, g1, add_path)["audit_host_Ada_g1"]                     # per-host coverage, stated (m2)
     assert lines["addendum_cuda_ipc"].startswith("The author accepts, for the G.5 audit chunks on Ada-g0")
+    assert "sampled for other compute processes before the job, before the engine and after the engine" in \
+        lines["addendum_scope"]                                                                         # m4
     c12 = copy.deepcopy(s0)
     c12["key_values"]["cuda_ipc"]["mode"] = "c12"
     assert AH.note_lines(c12, sp, add, add_path)["addendum_cuda_ipc"] == \
@@ -331,6 +350,11 @@ def test_admission_per_node(tmp_path, monkeypatch):
     stop("does not name", AH.check_admission, SPEC, e, "mlab_imdb", m.read, m.ls)
     m["docs/r1/PLAN.md"] = m["docs/r1/PLAN.md"].replace(
         CLASS_ROW_TEXT.replace(ADA_MODEL, "NVIDIA L40S").encode() + b"\n", b"")
+    weak = (f"| R1-G5-AUDIT-HOST-CLASS | not one hardware class: {ADA_MODEL} stays out, whatever its cross-host PASS "
+            f"(synthetic) |")                          # names every term, but not as the row's lead sentence (m3)
+    m["docs/r1/PLAN.md"] += weak.encode() + b"\n"
+    stop("does not open with", AH.check_admission, SPEC, e, "mlab_imdb", m.read, m.ls)
+    m["docs/r1/PLAN.md"] = m["docs/r1/PLAN.md"].replace(weak.encode() + b"\n", b"")
     put_main(m, xc, add)
     AH.check_admission(SPEC, e, "mlab_imdb", m.read, m.ls)
     # the TASL pair's nodes and autoresearch
@@ -346,6 +370,15 @@ def test_admission_per_node(tmp_path, monkeypatch):
         e2 = copy.deepcopy(e)
         e2["admission"]["mlab_imdb"][0]["sha256"] = sha(raw)
         stop("is not a short cross-check PASS", AH.check_admission, SPEC, e2, "mlab_imdb", m.read, m.ls)
+    for side_edit in ({"driver": "535.309.01"}, {"gpu_uuid": UUIDA[:-1] + "9"}, {"driver": None}):   # m2
+        v = json.loads(good)
+        v["sides"]["Ada"].update(side_edit)
+        if side_edit.get("driver", 1) is None:
+            v["sides"]["Ada"].pop("driver")
+        m[rel] = json.dumps(v, sort_keys=True).encode()
+        e2 = copy.deepcopy(e)
+        e2["admission"]["mlab_imdb"][0]["sha256"] = sha(m[rel])
+        stop("sides", AH.check_admission, SPEC, e2, "mlab_imdb", m.read, m.ls)
     v = json.loads(good)
     v["sides"]["TASL-2"]["job_record_sha256"] = "9" * 64            # not the declared sealed TASL-2 attempt
     m[rel] = json.dumps(v, sort_keys=True).encode()
@@ -455,6 +488,7 @@ def test_card_share_check_records_others_and_needs_free_memory():
     out = AH.card_share_check(e, UUIDA, "before the job", smi)
     assert (out["other_processes"], out["other_memory_mib"]) == (2, 10000) and AH.shared([out])
     assert "pid" not in json.dumps(out)                                  # count and memory only
+    stop("other compute process", AH.card_share_check, e, UUIDA, "before the job", smi, refuse_shared=True)
     state["free"] = 1000
     stop("below the 24576 MiB", AH.card_share_check, e, UUIDA, "before the job", smi)
     assert AH.card_share_check(e, None, "x")["device"] == "cpu"
@@ -594,14 +628,26 @@ def test_addendum_host_job_refusals_and_shared_card(ada, tmp_path):
                                {"host": "Ada-g0", "audit_host": w["add"]["hosts"][0]})
     assert node["cpus"] == "16-23" and shim["hosts"]["Ada-g0"]["extra_env"]["AR_HOUSEPRICE_TRAIN_CSV"] == \
         "/data1/dowling/hp/train.csv"
-    # another compute process on the card during the attempt: an infrastructure failure, repeated (R1-NO-TIMEOUT (2))
+    # a card shared at the start: refused before an attempt is taken (m4)
     w["ada_state"]["apps"] = f"{UUIDA}, 4242, 8000 MiB\n"
+    stop("other compute process.*before the job", run_ada, w, 1, eng)
+    assert not (J.job_dir(s, "mlab_imdb", "audits-wave1", 1) / "attempt-1").exists()
+    w["ada_state"]["apps"] = ""
+
+    class Arrives:                   # another process arrives while the engine runs (seen only after the engine)
+        def __init__(self, inner):
+            self.inner = inner
+
+        def __call__(self, argv, **kw):
+            w["ada_state"]["apps"] = f"{UUIDA}, 4242, 8000 MiB\n"
+            return self.inner(argv, **kw)
+    # another compute process on the card during the attempt: an infrastructure failure, repeated (R1-NO-TIMEOUT (2))
     with pytest.raises(S.Stop, match="another compute process was on the card"):
-        run_ada(w, 1, eng)
+        run_ada(w, 1, Arrives(eng))
     a1 = J.job_dir(s, "mlab_imdb", "audits-wave1", 1) / "attempt-1" / "job_record.json"
     r1 = json.loads(a1.read_text())
-    assert r1["stop_class"] == "infrastructure" and r1["foreign_checks"][0]["other_processes"] == 1
-    assert r1["foreign_checks"][0]["other_memory_mib"] == 8000
+    assert r1["stop_class"] == "infrastructure" and [c["other_processes"] for c in r1["foreign_checks"]] == [0, 0, 1]
+    assert r1["foreign_checks"][-1]["other_memory_mib"] == 8000
     w["on"]("TASL-2")
     stage, log = back_from(w, tmp_path, "Ada-g0", "mlab_imdb", "audits-wave1", 1, 1)
     J.register_attempt(s, w["sp"], stage, "mlab_imdb", 1, 1, log, addendum=w["add_path"], **TJ.mkw(w))
@@ -663,3 +709,52 @@ def test_switch_admits_an_addendum_host_audit_chunk(tmp_path, monkeypatch, keys)
     bad["g5_spec"]["sha256"] = "0" * 64
     write_json(add_path, bad)
     stop("name the signed G.5 spec", TT.go, sp, note, m, **t)
+
+
+def test_shared_attempt_reclassification_covers_baseline_failed():
+    """m1 of the review: on a shared addendum card every budget- or memory-related outcome becomes an infrastructure
+    failure, the audit engine's STOP 6 baseline_failed (a baseline OOM beside another process) included; STOP 2, STOP 10
+    and the left-processes STOP 9 keep their class; an infrastructure STOP stays as it is."""
+    b6, cls6 = J.engine_stop({"stop": "x", "stop_kind": "baseline_failed"}, "audit")
+    assert b6.startswith("STOP 6") and cls6 == "node"                 # the audit engine can emit it (generic mapping)
+    for stop_, cls in ((None, None), (b6, cls6), ("STOP 9: the audit engine stopped at the job deadline", "node"),
+                       ("STOP 4: timing", "timing"), ("STOP 8: something else", "node")):
+        assert AH.reclassify_shared(stop_, cls), stop_
+    for stop_, cls in (("STOP 2: the audit engine stopped on the isolation gate", "node"),
+                       ("STOP 10: seed 9001 is not an audit seed", "node"), (J.ORPHANS_EXIT, "node"),
+                       ("STOP 7: infrastructure rows", "infrastructure")):
+        assert not AH.reclassify_shared(stop_, cls), stop_
+
+
+def test_shared_baseline_failed_attempt_is_infrastructure_end_to_end(ada):
+    w = ada
+    s = w["spec"]
+    TJ.first_wave(w)
+    claim_ada(w)
+    copy_to(w, "Ada-g0", "mlab_imdb", 1, 1)
+    w["on"]("Ada-g0")
+    inner = TJ.Engine(s, chunk_stop="baseline OOM", chunk_stop_kind="baseline_failed")
+
+    def arrives(argv, **kw):
+        w["ada_state"]["apps"] = f"{UUIDA}, 4242, 30000 MiB\n"
+        return inner(argv, **kw)
+    with pytest.raises(S.Stop, match="another compute process was on the card.*recorded before: STOP 6"):
+        run_ada(w, 1, arrives)
+    r = json.loads((J.job_dir(s, "mlab_imdb", "audits-wave1", 1) / "attempt-1" / "job_record.json").read_text())
+    assert r["stop_class"] == "infrastructure"
+    w["ada_state"]["apps"] = ""                                       # unshared: STOP 6 keeps its node class
+    inner2 = TJ.Engine(s, chunk_stop="baseline", chunk_stop_kind="baseline_failed")
+    with pytest.raises(S.Stop, match="STOP 6"):          # (attempt 2 on the card; only its class is checked)
+        run_ada(w, 1, inner2)
+    r2 = json.loads((J.job_dir(s, "mlab_imdb", "audits-wave1", 1) / "attempt-2" / "job_record.json").read_text())
+    assert r2["stop_class"] == "node"
+
+
+def test_finalize_names_a_claim_host(ada, tmp_path):
+    """m6: finalize-remote is for TASL-7 or a host some claim names."""
+    w = ada
+    log = tmp_path / "log.jsonl"
+    log.write_text("")
+    stop("neither TASL-7 nor a host any claim of this run names", J.finalize_remote, w["spec"], w["sp"], log,
+         hostname=TJ.HOST2, host="Ada-g9")
+    stop("has no remote access log", J.finalize_remote, w["spec"], w["sp"], log, hostname=TJ.HOST2, host="TASL-2")
