@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 21:00 CET, `main` at `f43823da`
+# State — 27 Nov 2026, 21:35 CET, `main` at `a5a14901`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -65,7 +65,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | 2a | `local/20261127-12` **done** (note ready to sign, review ACCEPTED, `b2360a7a`); `local/20261127-13` **done** (rev 4 binds G2; merged); `local/20261127-11` **done**: launcher venv mode ACCEPTED (`4a77a45b`), merged `66cc33f2` | §2 2A, 4 | `compute/20261127-18` (Ada host config, probe) |
 | (old) | `local/20261127-01`: G.5 Student-t path | §2 2B | superseded by `-09`; was STOP: re-check NOT ACCEPTED pending the author's scope (gate oracle and A2 fit) and scale (sd matching) decision (`AUTHOR.md`). Branch `mac-g5-student-t-20261127` @ `b9bc00fc` kept |
 | 2b | `local/20261126-08` final render | §2 2B | **STOP for decisions** (`mac-g5-render-20261126` @ `2959b369`; review NOT ACCEPTED on B1–B4): P10 and P11 go to the author (`sheets/G5_P10_P11_S9_SHEET_20261127.md`); B3 (copy review's verdict case) → `compute/20261127-03`; `paper.commit` filled at publication |
-| 11e | `local/20261127-29`: four addendum drafts merged `f43823da`; switch STOPped on bindings → `local/20261127-30` (PRE-SPLIT amendment publish-ready; switch with its own launch binding; the main G.5 note does not wait); D6 copy `compute/20261127-36` | §2 2B | in progress |
+| 11e | `local/20261127-29`: four addendum drafts merged `f43823da`; switch STOPped on bindings → PRE-SPLIT v2 amendment **published** `a5a14901` (`split_v2_amendment` passes on `main`, sha256 `970d3e45…`); `local/20261127-30` ( switch with its own launch binding; the main G.5 note does not wait); D6 copy `compute/20261127-36` | §2 2B | in progress |
 
 ## Writer
 
