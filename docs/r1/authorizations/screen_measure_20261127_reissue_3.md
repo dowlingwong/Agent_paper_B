@@ -102,8 +102,8 @@ retains its STOP on bit-identical metric vectors across the measurement seeds.
 
 After the coordinator publishes the exact-code review and this note, Compute checks the attempt
 ledger, scheduler CPU entitlement, the shared e1 environment and cache visibility on deepthought2.
-Run this command on that host after those checks. It uses a new UTC stamp for the checkout, output
-and scratch directories.
+Record the three thread-limit settings from the command in the launch receipt. Run the command on
+that host after those checks. It uses a new UTC stamp for the checkout, output and scratch directories.
 
 ```bash
 (
@@ -151,7 +151,8 @@ and scratch directories.
   manifest and analysis when eligible. Compute reports the attempt stamp, runtime and hashes. The old attempts
   stay in their original directories.
 
-STOPs (preserve the scene and report the refusal; a run is never resumed):
+STOPs (each returns to the author, including a deepthought2 co-tenancy STOP; outputs are kept;
+nothing is resumed, patched or silently retried):
 - before launch: missing or unsigned publication, a key field or hash mismatch, a missing PLAN row or review,
   an environment, host, cache, harness or seed namespace refusal, an edit-set mismatch, an existing output
   or scratch directory, a CPU-affinity or GPU-visibility mismatch, or inadequate co-tenancy headroom.
