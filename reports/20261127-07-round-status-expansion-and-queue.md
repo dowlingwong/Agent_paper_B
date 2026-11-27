@@ -7,7 +7,7 @@
 
 | Node | State | Attempt | Evidence |
 |---|---|---|---|
-| `gc7rc_etth1` | **finished 16:34Z** (460/460 successful, 0 divergent, determinism true, `stop: null`) | `attempt-1` | sealed at `/home/dowling/r1_tracks/t1_tasl_x/sealed_g1b/g1b-x-tasl-20261126-a/gc7rc_etth1/attempt-1`; `job_record.json` sha256 `2c50d59acbf1d224ddbc35927318237be2f4ebdaf76ff7d5cb4632092394aca2`; `out.tar` sha256 `7c48fb633e284b6dd9d22358672f89770e161a436fa836a611557b7376cf60af`; seal receipt written 00:37:08Z |
+| `gc7rc_etth1` | **finished 00:34:07Z** (460/460 successful, 0 divergent, determinism true, `stop: null`) | `attempt-1` | sealed at `/home/dowling/r1_tracks/t1_tasl_x/sealed_g1b/g1b-x-tasl-20261126-a/gc7rc_etth1/attempt-1`; `job_record.json` sha256 `2c50d59acbf1d224ddbc35927318237be2f4ebdaf76ff7d5cb4632092394aca2`; `out.tar` sha256 `7c48fb633e284b6dd9d22358672f89770e161a436fa836a611557b7376cf60af`; seal receipt written 00:37:08Z |
 | `mlgym_metamaze` | running, pid 106579 | `attempt-1` | CPU set 0-3; train phase |
 | `gc7rc_forestcover` | running, pid 106573 | `attempt-1` | CPU set 4-7; train phase |
 | `mlgym_titanic` | running, pid 106578 | `attempt-1` | CPU set 12-15; train phase |
