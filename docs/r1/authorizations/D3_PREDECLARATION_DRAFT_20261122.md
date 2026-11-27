@@ -876,12 +876,12 @@ into the script before signing, and §9/§14 then re-pin its sha256.
 ## 14. Key block
 
 ```
-frozen: false
-signed_by: <pending: author signature>
-frozen_utc: <pending>
+frozen: true
+signed_by: the author, R1-D3-PREDECL-R4 (27 Nov 2026, "签 D.3 rev 4"); step (5) ACCEPTED in docs/r1/reviews/D3_PREDECL_R4_STEP5_THIRD_REVIEW_20261127.md
+frozen_utc: 2026-11-27T11:50:08Z
 implements: R1-D3-MIN, R1-MINSUB-CHOICES (4), R1-D3-CHOICES (2), R1-D3B-UNCONDITIONAL, R1-D3-DECOMP, R1-D3-OUTCOMES2, R1-D3-HPO-REF, R1-D3-ORDER, R1-HOST-FREE (2)(c), R1-CARD-SHARE (3), R1-NO-TIMEOUT, R1-STEP-ORDER
 revision: 4 (27 Nov 2026; over revision 3, which followed reviews/D3_PREDECLARATION_REVIEW_20261122.md, _R2_, _R3_, _R4_DIFF_)
-approved: false
+approved: true
 d3_nodes: digits_mlp, openml_breast_w, openml_climate, openml_credit_approval, openml_ionosphere, openml_sonar, tabular_mlp
 memory_mode: append_only_summary
 W: 20
