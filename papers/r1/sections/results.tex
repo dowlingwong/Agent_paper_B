@@ -13,11 +13,11 @@
   \else\ifRuleSourceUnclear The decomposition does not attribute the gain to either component.\space\fi\fi}
 \newcommand{\ReadingLearnedLoop}{Learned control raises audited campaign gain at a matched budget. On the seven controlled nodes, \LoopHeadline{} Table~\ref{tab:decomp} reports the component contrasts.}
 \newcommand{\ReadingLearnedPass}{\ReadingLearnedLoop{} The offline gate also shows a one-step gain for \GatePassingArms.}
-\newcommand{\ReadingLearnedFail}{\ReadingLearnedLoop{} The offline gate does not pass. The campaign and one-step findings differ (Section~\ref{sec:results-agree}).}
+\newcommand{\ReadingLearnedFail}{\ReadingLearnedLoop{} The offline gate does not pass. We report this difference in decisions alongside per-node agreement (Section~\ref{sec:results-agree}) and give the gate estimates, intervals and design power (Section~\ref{sec:results-gate}).}
 \newcommand{\ReadingRuleLoop}{Rule-based control raises audited campaign gain. The learned arms show no demonstrated further gain. On the seven controlled nodes, \LoopHeadline{}}
-\newcommand{\ReadingRulePass}{\ReadingRuleLoop{} The offline gate shows a one-step gain for \GatePassingArms{} that did not carry into the loop. We examine the mechanism counts and agreement descriptively (Section~\ref{sec:results-agree}).}
+\newcommand{\ReadingRulePass}{\ReadingRuleLoop{} The offline gate shows a one-step gain for \GatePassingArms. We examine the mechanism counts and agreement descriptively (Section~\ref{sec:results-agree}).}
 \newcommand{\ReadingRuleFail}{\ifRuleLayerAlone The learned arms show no demonstrated further gain. On the seven controlled nodes, \LoopHeadline{}\else\ReadingRuleLoop{}\fi{} The gate does not pass. The intervals show the precision of the comparisons (Tables~\ref{tab:decomp} and~\ref{tab:gate}), and Table~\ref{tab:app-tier} reports offline gains by tier.}
-\newcommand{\ReadingNegative}{A2 shows no demonstrated gain over A0 at this budget. \LoopHeadline{} The control errors and the theory stand (Sections~\ref{sec:results-c1} and~\ref{sec:theory}).}
+\newcommand{\ReadingNegative}{A2 shows no demonstrated gain over A0 at this budget. \LoopHeadline{} The paired interval shows which gains and losses are compatible with the data (Table~\ref{tab:decomp}). Sections~\ref{sec:results-c1} and~\ref{sec:theory} give the control-error audit and the theory.}
 \newcommand{\ReadingLearnedStopped}{D.3b stopped before analysis. \TBD{Give the STOP record and the D.3a contrasts and intervals.}}
 \newcommand{\ReadingLearnedForGate}{%
   \ifGateStopped\ReadingLearnedLoop\else\ifGatePassed\ReadingLearnedPass\else\ReadingLearnedFail\fi\fi}
@@ -52,7 +52,7 @@
 \subsection{The closed loop at a matched budget}
 \label{sec:results-closed}
 
-Each analysed arm controlled \LoopInstances{} fresh campaigns per node on the seven primary T0 nodes, with \LoopW{} worker runs and at most \LoopCalls{} manager calls. Table~\ref{tab:decomp} gives the contrasts of the decomposition. Table~\ref{tab:closed} in the appendix gives every arm, with the reference rules, worker runs and manager calls.
+Each analysed arm controlled \LoopInstances{} fresh campaigns per node on the seven primary T0 nodes, capped at \LoopW{} worker runs and \LoopCalls{} manager calls. Table~\ref{tab:decomp} gives the component contrasts. Appendix Table~\ref{tab:closed} gives the runs and calls used by each arm.
 
 \begin{table}[t]
 \caption{The decomposition (closed loop, T0). Reading guide: each row is a paired difference in $Y$, the audited improvement of the final incumbent over the start in units of $\sigma_{\mathrm{node}}$, averaged over nodes, with its 95\% interval; a star marks a rejection by the two-sided Holm step-down within the row's family. The first two rows separate the rule layer from the one-step rule. A5 $-$ A3 compares the two full forecasting arms, which differ in the model and in what it reads.}
@@ -83,8 +83,8 @@ A5 $-$ A3 & the two forecasting arms & \LoopDAFivevAThree \\
 \end{table}
 
 \paragraph{What the rule layer and the one-step rule add.}
-% Prompt: A0R - A0 and A2 - A0R with intervals and Holm decisions. If most of A2 - A0 comes from the rule layer, say
-% so in those words. Then A1 - A0, the one-step rule without de-duplication.
+% Prompt: A0R - A0 and A2 - A0R with paired intervals and Holm decisions. If A2 beats A0 and only A0R - A0
+% supports an improvement, credit de-duplication and give the uncertainty in A2 - A0R. Then report A1 - A0.
 \TBD{One paragraph from Table~\ref{tab:decomp}: the rule layer, then the one-step rule.} Under A0, \LoopDupShareAZero. The rule layer made \LoopRuleSkips, and the screen made \LoopValueSkips.
 % Prompt: if the screen with a constant forecast makes no value skip at this run price, say that A2 - A0R is then
 % the effect of the keep threshold alone.
@@ -108,7 +108,7 @@ A5 $-$ A3 & the two forecasting arms & \LoopDAFivevAThree \\
 \begin{figure}[t]
 \centering
 \FigShell{budget curve: mean $Y(w)$ at $w=5,10,15,20$ per arm, with intervals}
-\caption{Reading guide: one line per arm; the audited improvement of the incumbent after the $w$-th charged worker run. Descriptive.}
+\caption{Audited improvement after $w$ charged worker runs, averaged over campaigns that reached $w$. Each point gives that count. Descriptive.}
 \label{fig:budget}
 \end{figure}
 
