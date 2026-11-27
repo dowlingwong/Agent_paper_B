@@ -1,4 +1,4 @@
-# State — 27 Nov 2026, 17:25 CET, `main` at `35c42b81`
+# State — 27 Nov 2026, 17:55 CET, `main` at `35c42b81`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -25,11 +25,11 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | 1b0 | `compute/20261127-22`: screening evidence run | §2 2A | **STOP** at the first worker-runtime probe (`python` vs `python3`, same interpreter; 0 runs); re-issued note published `b2f94c29`; run `compute/20261127-25` **STOPPED** (30 runs; cache tree changes under fetch_openml); fix merged `83425c70`; cache rebuilt (tree `3843b53c…`) and smoke 168/168 PASS, merged `523ccfbc`; second re-issue **signed and published** `280c0015` (R1-SCREEN-MEASURE-REISSUE-2); run `compute/20261127-30` **RUNNING** since 15:50Z (`SMEAS_EVIDENCE_20261127T1550Z`, deepthought, strict preflight passed); then a second re-issue for the author. Earlier: re-issue signed (R1-SCREEN-MEASURE-REISSUE, `96eb63da`); note prepared by `local/20261127-21`, then publication and a new launch |
 | done | `compute/20261127-24`: 4B re-probe **PASS** (14.1 / 17.0 GB peak; total probe 3.10 GPU-h; projection 23.67), merged `85b2421f`; phase-1 draft merged `e56de25b`; P2 done (both Kev bases eligible; merged `523ccfbc`); P3 launch unit merged `a3c8284d`; choices signed (R1-P4-PHASE1-SIGNATURE, `280c0015`); Ada P5 records `compute/20261127-29`, then the coordinator publishes the note | §4 | — |
 | 1c | `compute/20261127-19`: Ada P.4 probe: **0.8B bases PASS; 4B bases OOM at micro-batch 8 (STOP, author)**; record reviewed and merged `ebc28ec0`; 4B choice with the author | §4 | **ready** (host config on `main` `91cfd48a`) |
-| 1c3 | Ada P5 (`compute/20261127-29`) | §4 | **blocked**: Track P `gpu_lease` checks all GPUs; per-card lease `local/20261127-28` |
+| 1c3 | Ada P5 (`compute/20261127-29`) | §4 | **blocked**: Track P `gpu_lease` checks all GPUs; per-card lease ACCEPTED (`801b2d49`), merge under test; then compute reruns P5 |
 | 1c2 | `compute/20261127-12`: D.3 HTCondor preflight | §2 2A | **no match**: L40S and TOpAS A100 `Start = false`; keep watching (record merging) |
 | done | G1 adapter (`ac01717e`) and G6 audit (`0716ed8d`), merged `91cfd48a` | §2 2A | HPO-REF resumes (`local/20261127-15`); per-arm smoke once rev 4 freezes |
 | 1d | `compute/20261127-16`: G1 core merged with the verify-seed checker; next the 6c replicate driver, then the G1 adapter at harness `9bb41680` (`verify_seed_base=20000`), then G6 | §2 2A | ready after `-12`/`-13` |
-| 2 | houseprice CPU-set check | §2 2B | **STOP** `too_few_attempts` (2 of 3 attempts, both PASS); driver fix `local/20261127-27` |
+| 2 | houseprice CPU-set check | §2 2B | **STOP** `too_few_attempts`; driver fix ACCEPTED (`b5626bf4`), merge under test; then compute reruns |
 | 2b | `compute/20261126-11`: survey redaction | §4 | delivered `f60a2225`, **incomplete** (truncated `ps` user column in `Ada.txt` l.49–62); fix in `compute/20261127-02` item 2, then merge |
 | 2c | `compute/20261127-03`: copy review's verdict case (G.5 B3); P11 evidence table | §2 2B | ready, after the launch |
 | done | `cluster/20261126-01`: torch tests of the fill | §4 P.4 | fill merged with the STOP fix by the coordinator (torch env, 194/194) |
