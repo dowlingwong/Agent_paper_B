@@ -50,8 +50,8 @@ R3 review (`docs/r1/reviews/D3_G1_G6_REV6C_REVIEW_R3_20261127.md`).
 
 ## Tests run
 
-- New and changed modules: **34 passed** (`test_d3_g1_snapshots.py` 19, `test_d3_g1_chunk.py` 9,
-  `test_d3_g1_replicate.py` 8) at the branch tip, Python 3.11.13, pytest 9.2.0, `AR_HARNESS_ROOT` at the pinned
+- New and changed modules: **34 passed** (`test_d3_g1_snapshots.py` 18, `test_d3_g1_chunk.py` 9,
+  `test_d3_g1_replicate.py` 7) at the branch tip, Python 3.11.13, pytest 9.2.0, `AR_HARNESS_ROOT` at the pinned
   harness checkout.
 - The related delivered modules (`test_d3_fixr3.py`, `test_d3_egate.py`, `test_d3_g8_accounting.py`) pass too:
   **109 passed** together.
