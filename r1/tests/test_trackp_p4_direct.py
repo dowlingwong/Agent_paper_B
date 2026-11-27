@@ -100,7 +100,7 @@ def test_the_shipped_specs_admit_both_classes_and_name_no_fixed_gpu_model():
             assert L._placeholder(h["host_config"]["sha256"]) and L._placeholder(h["estimate"]["source"])
     assert L.HOST_CLASSES[ADA] == {"launch": "direct", "gpu_name": ADA_NAME, "compute_capability": "8.9",
                                    "host_config_path": "r1/scripts/configs/trackp_ada_v1.json",
-                                   "probe_label": "ada_sft_probe"}
+                                   "probe_label": "ada_sft_probe", "smoke_label": "ada_smoke_e0"}
     assert L.HOST_CLASSES[H200]["gpu_name"] == L.GPU_MODEL == "NVIDIA H200"
     assert L._placeholder(PROBE_TEMPLATE["host_class"]) and "host_class" not in SPEC
     assert "R1-HOST-FREE" in L.PLAN_ROWS
@@ -275,7 +275,7 @@ class _Host:
         self.name, self.cap, self.free, self.others, self.rc = name, cap, free, others, rc
         self.hours, self.seconds, self.record_over = hours, seconds, record_over or {}
         self.t = 1_800_000_000.0
-        self.calls, self.argv, self.env = [], None, None
+        self.calls, self.argv, self.env, self.running = [], None, None, ""
 
     def now(self):
         return self.t
@@ -289,10 +289,12 @@ class _Host:
             return _res(0, self.others)
         if argv[1:] == ["--version"]:
             return _res(0, f"{argv[0]} version 1.2.3\n")
+        if argv[:2] == ["docker", "ps"]:
+            return _res(0, self.running)
         return _res(0)
 
-    def popen(self, argv, cwd=None, env=None):
-        self.argv, self.env, host = argv, env, self
+    def popen(self, argv, cwd=None, env=None, pass_fds=()):
+        self.argv, self.env, self.pass_fds, host = argv, env, pass_fds, self
         lock = Path(json.loads(Path(cwd, L.DIRECT_LAUNCH_FILE).read_text())["lease"]["lock_path"])
 
         class Proc:
@@ -374,8 +376,17 @@ def test_the_launcher_refusals(ada_repo, tmp_path):
     out = _launch(st, _Host())
     held.close()
     assert out["status"] == "refused" and out["exit_code"] == D.LEASE_BUSY_EXIT and out["wall_clock_s"] == 0.0
-    rec = json.loads(Path(out["job_dir"], L.DIRECT_LAUNCH_FILE).read_text())
-    assert rec["gpu"] is None and rec["wall_clock_basis"] == "no lease taken"
+    assert out["job_dir"] is None and not (tmp_path / "work").exists()        # review M2: nothing written
+    assert not (st / "P4_DIRECT_LAUNCHED_kev-0.8b.json").exists()
+    assert _launch(st, _Host())["status"] == "finished"                     # the stage stays launchable
+    # review M1: a P.4 docker container still running on the card (its launcher was killed) is refused
+    (tmp_path / "dock").mkdir()
+    st = _stage(tmp_path / "dock", repo, ps)
+    busy_host = _Host()
+    busy_host.running = "p4-x-kev-0.8b-old\n"
+    out = _launch(st, busy_host)
+    assert out["status"] == "refused" and "still runs on card 3" in out["refusal"] and out["job_dir"] is None
+    assert ["docker", "ps", "--filter", f"label={D.DOCKER_LABEL}={UUID}", "--format", "{{.Names}}"] in busy_host.calls
     # a changed staged file, a preview descriptor, another runtime, an unpinned image
     (tmp_path / "chg").mkdir()
     st = _stage(tmp_path / "chg", repo, ps)
@@ -432,8 +443,8 @@ def test_a_signal_stops_the_container_and_is_recorded_as_interrupted(ada_repo, t
                       environ={})
     real_popen = host.popen
 
-    def popen(argv, cwd=None, env=None):
-        proc = real_popen(argv, cwd=cwd, env=env)
+    def popen(argv, cwd=None, env=None, pass_fds=()):
+        proc = real_popen(argv, cwd=cwd, env=env, pass_fds=pass_fds)
         inner = proc.wait
 
         def wait():
@@ -555,14 +566,21 @@ def test_rows_g_an_oom_beside_another_process_is_sealed_as_infrastructure(ada_re
     assert alone["stop_class"] == "arm" and "lost_beside_another_process" not in alone
 
 
-def test_a_refused_launch_is_sealed_at_its_launcher_wall_clock(ada_repo, tmp_path):
+def test_review_m2_a_refusal_before_the_claim_writes_nothing_and_m9_m1_dirs_and_lease_fd(ada_repo, tmp_path):
     repo, sha = ada_repo
     ps = _probe_spec(sha)
     st = _stage(tmp_path, repo, ps)
     out = _launch(st, _Host(free=10))
-    got = L.seal(Path(out["job_dir"]), ps, "kev-0.8b", tmp_path / "sealed")
-    assert got["launch"] == "direct" and got["kind"] == "probe" and got["identity_verified"] is False
-    assert got["stop"].startswith("STOP: card 3 has 10.0 MiB free") and got["charged_gpu_hours"] == 0.0
+    assert out["status"] == "refused" and out["refusal"].startswith("STOP: card 3 has 10.0 MiB free")
+    assert out["job_dir"] is None and not (st / "P4_DIRECT_LAUNCHED_kev-0.8b.json").exists()
+    host = _Host()
+    out = _launch(st, host)                                  # the same stage, now with a card that fits
+    job = Path(out["job_dir"])
+    assert out["status"] == "finished" and (st / "P4_DIRECT_LAUNCHED_kev-0.8b.json").is_file()
+    for d in (job, job.parent, job.parent.parent):           # review M9: every level created 0700
+        assert d.stat().st_mode & 0o777 == 0o700, d
+    assert len(host.pass_fds) == 1                           # review M1: the container inherits the lease
+    assert "--label" in host.argv and f"{D.DOCKER_LABEL}={UUID}" in host.argv
 
 
 # ============================================================================================ the switch's key lines
@@ -586,12 +604,14 @@ def _fields(s: dict, spec_sha: str, **over) -> dict:
          "split": "P3, P4-P1SPLIT A", "lr_grid": "1e-5,3e-5,1e-4; seeds per lr: 3; 250, 500; 20261122",
          "host": host, "harness_commit": "none",
          "h200_sft_probe": "none: the spec does not admit nemo2_h200", "ada_sft_probe": "none: not admitted",
+         "h200_smoke_e0": "none: the spec does not admit nemo2_h200", "ada_smoke_e0": "none: not admitted",
          "label_table_binding": f"P4-F2 A {L.SEALED_V2_PROPOSALS_SHA256} {L.V3_PROPOSALS_SHA256} "
                                 f"{L.FEAT_ONE_IDENTITY['path']} {L.FEAT_ONE_IDENTITY['sha256']}",
          "probe_charge_files": "trackp-p4-probe-20261125-a " + "9" * 64,
          "arms": ", ".join(s["arms"]), "micro_batch": "8"}
     for c in s["hosts"]:
         f[L.HOST_CLASSES[c]["probe_label"]] = SW.probe_record(s, c)
+        f[L.HOST_CLASSES[c]["smoke_label"]] = f"docs/r1/reports/{c}_smoke.md and docs/r1/reports/{c}_e0.md"
     f.update(over)
     return f
 
@@ -619,6 +639,15 @@ def test_switch_host_lines_name_the_admitted_classes_and_their_probe_records(cla
     fields.pop("ada_sft_probe")
     with pytest.raises(SW.Stop, match="ada_sft_probe"):
         SW.check_binding(fields, s, "b" * 64)
+    # review B1 (R1-QTORCH-AMEND): every admitted class's smoke and E0 records, never another class's
+    for line in ("none: not yet", "the H200 records", ""):
+        with pytest.raises(SW.Stop, match="ada_smoke_e0 must cite the Track P smoke and E0 records"):
+            SW.check_binding(_fields(s, "b" * 64, ada_smoke_e0=line), s, "b" * 64)
+    if H200 not in classes:
+        with pytest.raises(SW.Stop, match="h200_smoke_e0 must read none"):
+            SW.check_binding(_fields(s, "b" * 64, h200_smoke_e0="docs/r1/reports/h.md"), s, "b" * 64)
+    assert SW.smoke_records("docs/r1/reports/a.md (smoke 1), docs/r1/reviews/b.md") == \
+        ["docs/r1/reports/a.md", "docs/r1/reviews/b.md"] and SW.smoke_records("none: docs/r1/x.md") == []
 
 
 def test_switch_probe_hours_are_per_class():
@@ -704,3 +733,52 @@ def test_fill_hook_ada_fills_exactly_and_names_its_class(ada_repo, tmp_path):
 def test_trackp_reads_the_direct_lease_like_an_exclusive_slot_without_the_foreign_process_check():
     text = (ROOT / "r1/scripts/trackp.py").read_text()
     assert 'direct = args.cfg.get("lease") == "direct_gpu_lease"' in text and "check_processes=not direct" in text
+
+
+
+# ============================================================================================ review round 1
+def test_review_b2_the_htcondor_jdl_requests_its_own_classes_walltime():
+    s = _launch_spec("a" * 64, (ADA, H200))
+    s["hosts"][ADA]["estimate"]["hours"]["kev-4b"] = 16.0           # Ada slower: max over classes = 88,200 s
+    assert L.arm_walltime_s(s, "kev-4b") == 88200 > L.MAX_WALLTIME_S
+    assert L.validate_spec(s, launch=True)["run_id"] == SPEC["run_id"]     # H200's own 6.64 h fits one HTCondor job
+    own = L.arm_walltime_s(s, "kev-4b", H200)
+    jdl = RJ.render(s, "kev-4b", host_class=H200)
+    assert f"+RequestWalltime = {own}" in jdl and own <= L.MAX_WALLTIME_S and "88200" not in jdl
+    assert json.loads(RJ.render_direct(s, "kev-4b", ADA, mode="job", preview=True, repo=ROOT))["walltime_bound_s"] \
+        == 88200                                                            # the charge bound stays the largest
+
+
+def test_review_m3_reaching_the_figure_is_reported():
+    s = _launch_spec("a" * 64)
+    p = L.projection(s)
+    s["caps"]["probe_gpu_hours"] = round(40.0 - p["total_gpu_hours"], 2)
+    got = L.validate_spec(s, launch=True)
+    assert got["projection"]["total_with_probe_gpu_hours"] == 40.0 and got["threshold"]["report_to_author"] is True
+    assert L.threshold_report(L.projection(s), 39.99)["reached"] == []
+
+
+def test_review_m3_seal_reports_the_threshold(ada_repo, tmp_path, capsys):
+    ps, job = _launched(ada_repo, tmp_path, hours=41.0)
+    L.seal(job, ps, "kev-0.8b", tmp_path / "sealed")
+    got = L.seal_threshold(ps, tmp_path / "sealed")
+    assert got["gpu_hours"] == 41.0 and got["report_to_author"] is True
+    assert "REPORT TO THE AUTHOR" in capsys.readouterr().err
+
+
+def test_review_m4_an_attempt_logging_a_direct_class_is_not_sealed_as_htcondor(ada_repo, tmp_path):
+    ps, job = _launched(ada_repo, tmp_path)
+    (job / L.DIRECT_LAUNCH_FILE).unlink()
+    (job / "job_record.json").write_text("")                 # the record lost too: only the wrapper's log tells
+    (job / "SHA256SUMS").write_text("")
+    (job / "p4_run.log").write_text(f"P4 probe container job start 2026-11-27T00:00:00Z host=x arm=kev-0.8b "
+                                    f"host_class={ADA} uid=1000\n")
+    with pytest.raises(L.Stop, match="p4_run.log names the direct class ada_rtx6000"):
+        L.seal(job, ps, "kev-0.8b", tmp_path / "sealed")
+    assert L.logged_host_class(job) == ADA
+
+
+def test_review_m8_a_shared_card_probe_is_marked_descriptive():
+    assert L.card_was_shared({}, {"card_shared": True})
+    assert L.card_was_shared({"card_processes_end": {"count": 1}}, {})
+    assert not L.card_was_shared({"card_processes_start": {"count": 0}}, {"other_processes_start": {"count": 0}})

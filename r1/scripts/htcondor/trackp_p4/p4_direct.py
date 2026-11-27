@@ -18,31 +18,35 @@ stage is copied to the host unchanged. Then::
    by ``p4_switch.py submit`` after the signed note's checks and the two keys; ``check`` never writes it), naming this
    arm and this stage manifest's sha256; a probe (mode ``probe``) was entered in the probe run's submission ledger when
    it was staged (``p4_render_jdl.stage_probe``);
-3. the stage launches once: ``P4_DIRECT_LAUNCHED_<arm>.json`` is created exclusively in the stage (a second launch
-   from the same stage is refused; a repeat is a new stage);
-4. creates a fresh job directory ``<work_root>/<run_id>/<arm>/<UTC stamp>-<pid>-<random>`` (an existing one is never reused)
-   and writes the launcher record ``direct_launch.json`` there at once (``trackp_p4_direct_launch/1``, status
-   ``started``), so every launch leaves an attempt to seal;
-5. takes our GPU lease: an exclusive, non-blocking ``flock`` on ``<lock_dir>/gpu<index>.lock`` (the same lock our
-   other jobs on the host take); a held lock is a refusal (status ``refused``, exit 75): two of our P.4 jobs never
-   hold one lease, and the agent takes another card or waits;
-6. the leased card (``nvidia-smi --id=<index>``) must be the class's GPU (name and compute capability) with at least
+3. takes our GPU lease: an exclusive, non-blocking ``flock`` on ``<lock_dir>/gpu<index>.lock`` (the same lock our
+   other jobs on the host take); a held lock is a refusal (exit 75): two of our P.4 jobs never hold one lease, and the
+   agent takes another card or waits. The container inherits the lease's descriptor (``pass_fds``), so a SIGKILLed
+   launcher does not free the card while an apptainer container runs; a docker container (run by dockerd) carries the
+   label ``r1.p4.gpu_uuid=<uuid>``, and a card with such a running container is refused (review M1);
+4. the leased card (``nvidia-smi --id=<index>``) must be the class's GPU (name and compute capability) with at least
    ``min_free_mib`` MiB free (the host config's value; R1-CARD-SHARE (1): free memory decides, not an empty card, so
-   the job shares a card with another user's process when it must; ``p4_direct.py cards`` lists free memory and
-   processes so that the agent takes an empty card when one exists). The card's other compute processes are recorded
-   at the start and at the end (count and memory only, R1-CARD-SHARE (4)), and ``card_shared`` says whether there
-   were any; speed on a shared card is descriptive only (R1-CARD-SHARE (2));
-7. copies the staged inputs into the job directory (each checked against the manifest) and runs the entry script
+   the job shares a card with another user's process when it must; ``p4_direct.py cards`` lists free memory,
+   processes and running P.4 containers so that the agent takes an empty card when one exists, and the class's SFT
+   probe runs on an empty card). A refusal in steps 1-4 writes nothing: no job directory, and the stage stays
+   launchable (review M2);
+5. the stage launches once: ``P4_DIRECT_LAUNCHED_<arm>.json`` is created exclusively in the stage (a second launch
+   from the same stage is refused; a repeat is a new stage); then a fresh job directory
+   ``<work_root>/<run_id>/<arm>/<UTC stamp>-<pid>-<random>`` (never an existing one; every new level mode 0700) and
+   the launcher record ``direct_launch.json`` (``trackp_p4_direct_launch/1``, status ``started``), so every launch
+   from here leaves an attempt to seal. The card's other compute processes are recorded at the start and at the end
+   (count and memory only, R1-CARD-SHARE (4)), and ``card_shared`` says whether there were any; speed on a shared
+   card is descriptive only (R1-CARD-SHARE (2));
+6. copies the staged inputs into the job directory (each checked against the manifest) and runs the entry script
    (``p4_job.sh`` or ``p4_probe.sh``, with the spec, the arm and the host class) in the digest-pinned image v2.2
    through the configured runtime, ``apptainer`` or ``docker`` only (anything else is refused), with only the leased
    card visible (by UUID: ``--gpus device=<uuid>`` or ``--nv --nvccli`` with ``NVIDIA_VISIBLE_DEVICES``; the job's own
    identity step refuses anything but exactly one GPU of its class, and ``P4_LEASED_GPU_UUID`` binds it to this
    lease), as the calling non-root user, the job directory the working directory and ``HOME``;
-8. no wall-clock limit (R1-NO-TIMEOUT): the container runs until it exits. A SIGTERM, SIGINT or SIGHUP to the
+7. no wall-clock limit (R1-NO-TIMEOUT): the container runs until it exits. A SIGTERM, SIGINT or SIGHUP to the
    launcher stops the container and is recorded (status ``interrupted``); the attempt is sealed as an infrastructure
    failure and repeated in a new stage and attempt directory, never resumed and never an outcome (R1-CARD-SHARE (3);
    likewise an OOM beside another process, ``p4_lib.seal``);
-9. writes the final launcher record (host, hostname, user, runtime and its version, image digest, lease path, card
+8. writes the final launcher record (host, hostname, user, runtime and its version, image digest, lease path, card
    index, UUID, name, driver, the other processes at start and end, start and end UTC, ``wall_clock_s`` = the lease
    span, exit code) and releases the lease. The GPU-hours of the attempt are ``wall_clock_s`` / 3600 (one card,
    R1-HOST-FREE (5)), or the job record's ``gpu_hours`` if larger (``p4_lib.seal``).
@@ -237,7 +241,25 @@ def list_cards(run=_run):
              if ln.strip() and len(ln.split(",")) == 7]
     for c in cards:
         c["other_processes"] = card_processes(c["uuid"], run)
+        try:
+            c["running_p4_docker_containers"] = running_p4_containers(c["uuid"], run)
+        except (Refusal, OSError) as exc:                 # no docker on the host, or not usable: said so
+            c["running_p4_docker_containers"] = "unknown: {}".format(exc)
     return cards
+
+
+DOCKER_LABEL = "r1.p4.gpu_uuid"                       # every P.4 docker container carries its leased card's UUID
+
+
+def running_p4_containers(uuid=None, run=_run):
+    """Review M1: the running docker containers of P.4 jobs (by their ``r1.p4.gpu_uuid`` label; only the card ``uuid``
+    when given). A docker container outlives a SIGKILLed launcher (dockerd runs it), so ``launch`` refuses a card that
+    still has one and ``cards`` lists them. A failing ``docker ps`` is a refusal for ``launch``."""
+    flt = "label={}={}".format(DOCKER_LABEL, uuid) if uuid else "label={}".format(DOCKER_LABEL)
+    res = run(["docker", "ps", "--filter", flt, "--format", "{{.Names}}"])
+    if res.returncode != 0:
+        raise Refusal("STOP: docker ps failed: {}".format((res.stderr or "").strip()[:200]))
+    return [x.strip() for x in (res.stdout or "").splitlines() if x.strip()]
 
 
 def card_processes(uuid, run=_run):
@@ -273,7 +295,8 @@ def container_argv(desc, job_dir, uuid, uid, gid, name):
            "CUDA_VISIBLE_DEVICES": uuid, "NVIDIA_VISIBLE_DEVICES": uuid, LEASED_GPU_ENV: uuid}
     args = ["/bin/bash", desc["entry"], desc["spec_file"], desc["arm"], desc["host_class"]]
     if host["container_runtime"] == "docker":
-        argv = ["docker", "run", "--rm", "--name", name, "--gpus", "device={}".format(uuid),
+        argv = ["docker", "run", "--rm", "--name", name, "--label", "{}={}".format(DOCKER_LABEL, uuid),
+                "--gpus", "device={}".format(uuid),
                 "--user", "{}:{}".format(uid, gid), "--shm-size", host["shm_size"],
                 "-v", "{0}:{0}".format(job_dir), "-w", job_dir, "--entrypoint", args[0]]
         for k in sorted(env):
@@ -326,6 +349,7 @@ class Launch(object):
                 pass
 
     def prepare(self):
+        """Checks that need no lease and leave nothing behind: user, descriptor, stage, host name, switch marker."""
         if os.geteuid() == 0:
             raise Refusal("STOP: the launcher runs as root")
         desc = load_descriptor(self.stage, self.arm)
@@ -337,57 +361,85 @@ class Launch(object):
         for name in desc["inputs"]:
             if name not in files:
                 raise Refusal("STOP: the input {} is not in the stage manifest".format(name))
+        if os.path.exists(self._launched_path()):
+            raise Refusal("STOP: {} was already launched from this stage; a repeat is a new stage".format(self.arm))
         self.desc, self.files = desc, files
         self.manifest_sha, self.marker_sha = manifest_sha, marker_sha
-        try:                                            # once per stage: a repeat is a new stage
-            fd = os.open(os.path.join(self.stage, "P4_DIRECT_LAUNCHED_{}.json".format(self.arm)),
-                         os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        self.lock_path = os.path.join(os.path.expanduser(desc["host"]["lock_dir"]), "gpu{}.lock".format(self.gpu_index))
+
+    def _launched_path(self):
+        return os.path.join(self.stage, "P4_DIRECT_LAUNCHED_{}.json".format(self.arm))
+
+    def acquire(self):
+        """The lease and the card checks (review M2: before anything is written, so a refusal here leaves no job
+        directory and does not use up the stage): our flock, the class's GPU, no P.4 container of ours still running on
+        the card (review M1, docker), enough free memory, a usable runtime."""
+        self.lease = take_lease(self.lock_path)
+        self.lease_t = self.now()
+        card = query_card(self.gpu_index, self.run)
+        self.card = card
+        if card["name"] != self.desc["gpu_name"] or card["compute_capability"] != self.desc["compute_capability"]:
+            raise Refusal("STOP: card {} is {} ({}), not the class's {} ({})".format(
+                self.gpu_index, card["name"], card["compute_capability"], self.desc["gpu_name"],
+                self.desc["compute_capability"]))
+        runtime = self.desc["host"]["container_runtime"]
+        if runtime == "docker":
+            running = running_p4_containers(card["uuid"], self.run)
+            if running:
+                raise Refusal("STOP: a P.4 container still runs on card {} ({}): its launcher was killed; wait for it "
+                              "or stop it before leasing the card again".format(self.gpu_index, running))
+        self.others_start = card_processes(card["uuid"], self.run)
+        self.need = int(self.desc["host"]["min_free_mib"])
+        if card["memory_free_mib"] is None or card["memory_free_mib"] < self.need:
+            raise Refusal("STOP: card {} has {} MiB free, the job needs {} MiB (R1-CARD-SHARE (1): free memory, not "
+                          "an empty card, decides); lease another card".format(self.gpu_index,
+                                                                                 card["memory_free_mib"], self.need))
+        self.runtime_version = runtime_version(runtime, self.run)
+
+    def _mkdir_private(self, path):
+        """Create ``path`` and any missing parent below the work root, each with mode 0700 (review M9)."""
+        root = os.path.expanduser(self.desc["host"]["work_root"])
+        if not os.path.isdir(root):
+            os.makedirs(root, mode=0o700)
+            os.chmod(root, 0o700)
+        rel = os.path.relpath(path, root).split(os.sep)
+        cur = root
+        for i, part in enumerate(rel):
+            cur = os.path.join(cur, part)
+            last = i == len(rel) - 1
+            if last or not os.path.isdir(cur):
+                os.mkdir(cur, 0o700)                    # the job directory itself is never an existing one
+                os.chmod(cur, 0o700)                    # whatever the umask
+
+    def claim(self):
+        """Once the lease and the card are ours: the once-only launch marker in the stage, then a fresh job directory
+        and the launcher record (status ``started``). From here on every outcome leaves an attempt to seal."""
+        try:
+            fd = os.open(self._launched_path(), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         except OSError as exc:
             if exc.errno == errno.EEXIST:
                 raise Refusal("STOP: {} was already launched from this stage; a repeat is a new stage".format(self.arm))
             raise
+        desc = self.desc
         stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(self.now()))
-        root = os.path.expanduser(desc["host"]["work_root"])
         name = "{}-{}-{}".format(stamp, os.getpid(), binascii.hexlify(os.urandom(3)).decode())
-        self.job_dir = os.path.join(root, desc["run_id"], self.arm, name)
-        os.makedirs(os.path.dirname(self.job_dir), mode=0o700, exist_ok=True)
-        os.mkdir(self.job_dir, 0o700)                   # never an existing directory
+        self.job_dir = os.path.join(os.path.expanduser(desc["host"]["work_root"]), desc["run_id"], self.arm, name)
+        self._mkdir_private(self.job_dir)
         with os.fdopen(fd, "w") as fh:
             fh.write(json.dumps({"arm": self.arm, "job_dir": self.job_dir, "launched_utc": _utc(self.now())}) + "\n")
         self.record = {
             "schema": LAUNCH_SCHEMA, "label": ENGINEERING_ONLY, "run_id": desc["run_id"], "arm": self.arm,
             "mode": desc["mode"], "host_class": desc["host_class"], "expected_hostname": desc["host"]["hostname"],
             "ssh_alias": desc["host"].get("ssh_alias"), "hostname": self.hostname, "user": self.environ.get("USER"),
-            "uid": os.getuid(), "runtime": desc["host"]["container_runtime"], "runtime_version": None,
+            "uid": os.getuid(), "runtime": desc["host"]["container_runtime"], "runtime_version": self.runtime_version,
             "image_digest": desc["image_digest"], "host_config": desc.get("host_config"),
-            "lease": {"lock_path": os.path.join(os.path.expanduser(desc["host"]["lock_dir"]),
-                                                "gpu{}.lock".format(self.gpu_index)), "gpu_index": self.gpu_index},
-            "gpu": None, "other_processes_start": None, "other_processes_end": None,
-            "stage": {"dir": self.stage, "manifest_sha256": self.manifest_sha, "submit_marker_sha256": marker_sha},
-            "job_dir": self.job_dir, "command": None, "started_utc": _utc(self.now()), "ended_utc": None,
+            "lease": {"lock_path": self.lock_path, "gpu_index": self.gpu_index, "acquired_utc": _utc(self.lease_t)},
+            "gpu": self.card, "other_processes_start": self.others_start, "other_processes_end": None,
+            "card_shared": bool(self.others_start["count"]), "memory_needed_mib": self.need,
+            "stage": {"dir": self.stage, "manifest_sha256": self.manifest_sha, "submit_marker_sha256": self.marker_sha},
+            "job_dir": self.job_dir, "command": None, "started_utc": _utc(self.lease_t), "ended_utc": None,
             "wall_clock_s": None, "exit_code": None, "status": "started", "refusal": None,
-            "timeout": "none (R1-NO-TIMEOUT)"}
-        self._save()
-
-    def acquire(self):
-        self.lease = take_lease(self.record["lease"]["lock_path"])
-        self.record["_lease_t"] = self.now()
-        self.record["lease"]["acquired_utc"] = _utc(self.record["_lease_t"])
-        card = query_card(self.gpu_index, self.run)
-        self.record["gpu"] = card
-        if card["name"] != self.desc["gpu_name"] or card["compute_capability"] != self.desc["compute_capability"]:
-            raise Refusal("STOP: card {} is {} ({}), not the class's {} ({})".format(
-                self.gpu_index, card["name"], card["compute_capability"], self.desc["gpu_name"],
-                self.desc["compute_capability"]))
-        self.record["other_processes_start"] = card_processes(card["uuid"], self.run)
-        need = int(self.desc["host"]["min_free_mib"])
-        self.record["memory_needed_mib"] = need
-        self.record["card_shared"] = bool(self.record["other_processes_start"]["count"])
-        if card["memory_free_mib"] is None or card["memory_free_mib"] < need:
-            raise Refusal("STOP: card {} has {} MiB free, the job needs {} MiB (R1-CARD-SHARE (1): free memory, not "
-                          "an empty card, decides); lease another card".format(self.gpu_index,
-                                                                                 card["memory_free_mib"], need))
-        self.record["runtime_version"] = runtime_version(self.record["runtime"], self.run)
+            "timeout": "none (R1-NO-TIMEOUT)", "_lease_t": self.lease_t}
         self._save()
 
     def copy_inputs(self):
@@ -401,16 +453,18 @@ class Launch(object):
 
     def execute(self):
         uuid = self.record["gpu"]["uuid"]
-        self.container_name = "p4-{}-{}-{}".format(self.desc["run_id"], self.arm, os.path.basename(self.job_dir))
-        argv, extra_env = container_argv(self.desc, self.job_dir, uuid, os.getuid(), os.getgid(),
-                                         re.sub(r"[^A-Za-z0-9_.-]", "-", self.container_name))
+        self.container_name = re.sub(r"[^A-Za-z0-9_.-]", "-", "p4-{}-{}-{}".format(
+            self.desc["run_id"], self.arm, os.path.basename(self.job_dir)))
+        argv, extra_env = container_argv(self.desc, self.job_dir, uuid, os.getuid(), os.getgid(), self.container_name)
         self.record["command"] = argv
         self.record["status"] = "running"
         self._save()
         env = dict(self.environ, **extra_env)
         old = {s: signal.signal(s, self._on_signal) for s in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)}
         try:
-            self.proc = self.popen(argv, cwd=self.job_dir, env=env)
+            # review M1: the child inherits the lease's descriptor, so a SIGKILLed launcher does not free the card
+            # while the container runs (apptainer runs in the child; a docker container is found by its label)
+            self.proc = self.popen(argv, cwd=self.job_dir, env=env, pass_fds=(self.lease.fileno(),))
             rc = self.proc.wait()                       # no timeout: R1-NO-TIMEOUT
         finally:
             for s, h in old.items():
@@ -420,25 +474,28 @@ class Launch(object):
     def main(self):
         try:
             self.prepare()
-        except Refusal as exc:                          # nothing launched, no job directory (or an empty one)
-            if self.record is None:
-                return {"status": "refused", "refusal": str(exc), "job_dir": self.job_dir, "exit_code": REFUSED_EXIT}
-            self._finish("refused", REFUSED_EXIT, str(exc))
-            return self.summary()
+            self.acquire()
+        except Refusal as exc:                          # nothing written: no job directory, the stage not used up
+            busy = "is held by another job" in str(exc)
+            if self.lease is not None:
+                self.lease.close()
+            return {"status": "refused", "refusal": str(exc), "job_dir": None,
+                    "exit_code": LEASE_BUSY_EXIT if busy else REFUSED_EXIT, "wall_clock_s": 0.0, "outputs": []}
         try:
             try:
-                self.acquire()
+                self.claim()
                 self.copy_inputs()
             except Refusal as exc:
-                busy = "is held by another job" in str(exc)
-                self._finish("refused", LEASE_BUSY_EXIT if busy else REFUSED_EXIT, str(exc))
+                if self.record is None:
+                    return {"status": "refused", "refusal": str(exc), "job_dir": None, "exit_code": REFUSED_EXIT,
+                            "wall_clock_s": 0.0, "outputs": []}
+                self._finish("refused", REFUSED_EXIT, str(exc))
                 return self.summary()
             rc = self.execute()
-            if self.record["gpu"]:
-                try:
-                    self.record["other_processes_end"] = card_processes(self.record["gpu"]["uuid"], self.run)
-                except Refusal as exc:
-                    self.record["other_processes_end"] = {"error": str(exc)}
+            try:
+                self.record["other_processes_end"] = card_processes(self.record["gpu"]["uuid"], self.run)
+            except Refusal as exc:
+                self.record["other_processes_end"] = {"error": str(exc)}
             if self.interrupted is not None:
                 self._finish("interrupted", rc, "STOP: the launcher received signal {}; the container was stopped "
                                                 "(a repeat is a new stage, never a resume)".format(self.interrupted))
@@ -446,6 +503,8 @@ class Launch(object):
                 self._finish("finished", rc)
             return self.summary()
         except Exception as exc:  # noqa: BLE001 - the record says what happened; the lease is released below
+            if self.record is None:
+                raise
             self._finish("refused" if self.proc is None else "interrupted", REFUSED_EXIT,
                          "STOP: launcher failure {}: {}".format(type(exc).__name__, exc))
             return self.summary()

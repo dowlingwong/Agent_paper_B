@@ -493,7 +493,9 @@ def test_the_probe_charge_counts_against_the_cap():
     assert got["threshold"]["report_to_author"] is True
     s["caps"]["probe_gpu_hours"] = round(40.0 - p["total_gpu_hours"], 2)
     got = L.validate_spec(s, launch=True)
-    assert got["projection"]["within_cap"] and got["threshold"]["report_to_author"] is False
+    assert got["projection"]["within_cap"] and got["threshold"]["report_to_author"] is True     # reaching it (M3)
+    s["caps"]["probe_gpu_hours"] = round(40.0 - p["total_gpu_hours"] - 0.01, 2)
+    assert L.validate_spec(s, launch=True)["threshold"]["report_to_author"] is False
     d = copy.deepcopy(SPEC)
     d["caps"]["probe_gpu_hours"] = "TODO"
     assert L.validate_spec(d)["projection"]["probe_gpu_hours"] is None
@@ -1399,7 +1401,7 @@ def test_switch_check_binds_the_note_to_the_stage(stage_world, monkeypatch, tmp_
     s, spec_path, stage, man, table, part = stage_world
     monkeypatch.setattr(SW, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(SW, "_blob_text", lambda rel: _probe_text(s) if rel == "docs/r1/reports/x.md" else "")
-    monkeypatch.setattr(SW, "_blob_on_main", lambda rel: rel == "docs/r1/reports/x.md")
+    monkeypatch.setattr(SW, "_blob_on_main", lambda rel: rel in ("docs/r1/reports/x.md", "docs/r1/reports/a.md"))
     spec_sha = _sha((stage / "p4_spec.json").read_bytes())
     yes = lambda rel, raw: True  # noqa: E731
     note = _note(tmp_path, _note_fields(s, spec_sha))
@@ -1654,6 +1656,7 @@ def test_the_note_draft_parses_and_its_completion_binds_a_filled_spec(tmp_path):
              "label_freeze": f"{s['labels']['freeze_record']['path']} sha256 {s['labels']['freeze_record']['sha256']}",
              "host_config": f"{L.HOST_CONFIG} {_hc(s)['sha256']}", "image": s["image"]["digest"],
              "versions_sha256": s["image"]["versions_sha256"], "h200_smoke_e0": "docs/r1/reports/smoke.md",
+             "ada_smoke_e0": "none: the spec does not admit ada_rtx6000",
              "h200_sft_probe": "docs/r1/reports/x.md (per base at micro-batch 8)",
              "ada_sft_probe": "none: the spec does not admit ada_rtx6000",                     # R1-HOST-FREE
              "P1": "PASS — docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20991231.md and the receipt",
@@ -3514,7 +3517,8 @@ def test_host_free_direct_stage_switch_submit_launch_and_seal_end_to_end(ada_sta
     assert not list(stage.glob("*.jdl"))                    # the same canonical inputs, a descriptor in place of a JDL
     monkeypatch.setattr(SW, "REPO_ROOT", tmp_path)
     ada_text = _probe_text(s).replace(f"p4_probe_host_class: {H}", f"p4_probe_host_class: {ADA}")
-    records = {"docs/r1/reports/x.md": _probe_text(s), "docs/r1/reports/ada.md": ada_text}
+    records = {"docs/r1/reports/x.md": _probe_text(s), "docs/r1/reports/ada.md": ada_text,
+               "docs/r1/reports/a.md": "", "docs/r1/reports/ada_smoke.md": ""}
     monkeypatch.setattr(SW, "_blob_on_main", lambda rel: rel in records)
     monkeypatch.setattr(SW, "_blob_text", lambda rel: records.get(rel, ""))
     spec_sha = _sha((stage / "p4_spec.json").read_bytes())
@@ -3522,7 +3526,7 @@ def test_host_free_direct_stage_switch_submit_launch_and_seal_end_to_end(ada_sta
     ada_cfg = s["hosts"][ADA]["host_config"]
     fields.update(host=fields["host"] + f", ada_rtx6000 ({ADA_NAME}, direct)",
                   host_config=f"{fields['host_config']}; {ada_cfg['path']} {ada_cfg['sha256']}",
-                  ada_sft_probe="docs/r1/reports/ada.md")
+                  ada_sft_probe="docs/r1/reports/ada.md", ada_smoke_e0="docs/r1/reports/ada_smoke.md (smoke, E0)")
     note = _note(tmp_path, fields)
     yes = lambda rel, raw: True  # noqa: E731
     got = SW.check(stage, note, on_main=yes)
@@ -3535,6 +3539,8 @@ def test_host_free_direct_stage_switch_submit_launch_and_seal_end_to_end(ada_sta
     desc.write_text(keep)
     with pytest.raises(SW.Stop, match="ada.md is not on origin/main"):
         SW.check(stage, note, on_main=yes, blob_on_main=lambda rel: rel == "docs/r1/reports/x.md")
+    with pytest.raises(SW.Stop, match="smoke/E0 record docs/r1/reports/ada_smoke.md of ada_rtx6000 is not on"):
+        SW.check(stage, note, on_main=yes, blob_on_main=lambda rel: rel != "docs/r1/reports/ada_smoke.md")
 
     real_run = subprocess.run
 

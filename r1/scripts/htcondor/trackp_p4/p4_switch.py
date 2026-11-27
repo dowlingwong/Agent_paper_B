@@ -8,7 +8,9 @@ compared with a fresh canonical render. The note's ``host:`` must cite R1-HOST-F
 one card per arm, and name every admitted class with its GPU model; ``host_config:`` every admitted class's config and
 sha256; each admitted class's probe line (``h200_sft_probe:``, ``ada_sft_probe:``) its record, which must be on
 ``origin/main`` with one ``p4_probe_host_class: <class>`` line and that class's hours (a class not admitted reads
-``none``); ``gpu_hours_cap:`` cites R1-HOST-FREE (5); P8 cites R1-HOST-FREE. ``submit`` of a direct stage takes the
+``none``); each admitted class's smoke line (``h200_smoke_e0:``, ``ada_smoke_e0:``) cites that class's Track P smoke
+and E0 records (``docs/r1/...md``), each on ``origin/main`` (R1-QTORCH-AMEND: one smoke and one E0 check per GPU model
+actually used; a class not admitted reads ``none``); ``gpu_hours_cap:`` cites R1-HOST-FREE (5); P8 cites R1-HOST-FREE. ``submit`` of a direct stage takes the
 same note checks, two keys, launch binding, cap report, once-only marker and ledger entry, and then starts nothing:
 the marker (``launch_kind: direct``, the stage manifest's sha256) is what ``p4_direct.py`` requires on the host before
 it launches the arm. ``check_cap`` reports usage against the 40 GPU-h figure and never refuses for it
@@ -161,9 +163,14 @@ def check_binding(fields: dict, spec: dict, spec_sha256: str) -> None:
         for needle in needles:
             if needle not in fields.get(key, ""):
                 raise Stop(f"STOP: note {key} must contain {needle!r}")
-    for c, h in lib.HOST_CLASSES.items():          # a probe line of a class the spec does not admit reads none
-        if c not in spec["hosts"] and h["probe_label"] in fields and not fields[h["probe_label"]].startswith("none"):
-            raise Stop(f"STOP: note {h['probe_label']} must read none: the spec does not admit {c}")
+    for c, h in lib.HOST_CLASSES.items():          # a class's lines for a class the spec does not admit read none
+        for key in (h["probe_label"], h["smoke_label"]):
+            if c not in spec["hosts"] and key in fields and not fields[key].startswith("none"):
+                raise Stop(f"STOP: note {key} must read none: the spec does not admit {c}")
+    for c in sorted(spec["hosts"]):                # R1-QTORCH-AMEND: smoke and E0 per GPU model actually used
+        if not smoke_records(fields.get(lib.HOST_CLASSES[c]["smoke_label"], "")):
+            raise Stop(f"STOP: note {lib.HOST_CLASSES[c]['smoke_label']} must cite the Track P smoke and E0 records "
+                       f"(docs/r1/...md) of {c} (R1-QTORCH-AMEND: one smoke and one E0 check per GPU model used)")
     if not fields["micro_batch"].startswith("8 ") and fields["micro_batch"] != "8":
         raise Stop("STOP: note micro_batch must be 8 (P4-MB A)")
     if not re.match(r"^40(?![0-9.])", fields["gpu_hours_cap"]):
@@ -206,6 +213,14 @@ PROBE_CLASS = re.compile(r"^p4_probe_host_class:\s*(\S+)\s*$", re.M)
 def probe_record(spec: dict, host_class: str) -> str:
     """The probe record the class's ``estimate.source`` names (``<probe_label>: docs/r1/reports/<record>.md``)."""
     return str(spec["hosts"][host_class]["estimate"]["source"]).split(":", 1)[-1].strip()
+
+
+SMOKE_RECORD = re.compile(r"(?<![\w/.-])(docs/r1/[\w./-]+\.md)")
+
+
+def smoke_records(line: str) -> list[str]:
+    """The record paths (``docs/r1/...md``) a class's ``<class>_smoke_e0:`` line cites; ``none...`` cites none."""
+    return [] if line.startswith("none") else SMOKE_RECORD.findall(line)
 
 
 def _one_class(spec: dict, host_class: str | None) -> str:
@@ -310,7 +325,10 @@ def check(stage_dir: Path, note_path: Path, *, on_main=_note_on_main, blob_on_ma
         check_probe_hours(probe_text, spec, host_class)
         check_probe_charge(probe_text, spec)
         check_probe_charge_files(probe_text, spec)
-    manifest_raw = (stage_dir / "STAGE_MANIFEST.json").read_bytes()
+        for rec in smoke_records(fields[lib.HOST_CLASSES[host_class]["smoke_label"]]):   # R1-QTORCH-AMEND
+            if not (blob_on_main or _blob_on_main)(rec):
+                raise Stop(f"STOP: the smoke/E0 record {rec} of {host_class} is not on origin/main (P5; R1-QTORCH-AMEND)")
+    manifest_raw =(stage_dir / "STAGE_MANIFEST.json").read_bytes()
     manifest = json.loads(manifest_raw)
     if manifest.get("preview") is not False:
         raise Stop("STOP: a preview stage is never submittable")

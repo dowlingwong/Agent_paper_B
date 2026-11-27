@@ -54,6 +54,44 @@ revised to R1-HOST-FREE and rows (g) (`approved: false`).
    (in the job record, and again at seal from the launcher's host-side counts); an interrupted or refused direct
    launch is infrastructure too. Each is repeated in a new stage and attempt directory, never resumed.
 
+## Review round 1 corrections (verdict NOT ACCEPTED at f90c1bff; `docs/r1/reviews/P4_DIRECT_REVIEW_20261127.md`)
+
+- **B1, fixed with option (a).** Each class has a `smoke_label` (`h200_smoke_e0`, `ada_smoke_e0`). `check_binding`
+  requires, for every admitted class, that its line cites `docs/r1/...md` records (a class not admitted reads
+  `none`); `check` requires every cited record on `origin/main`. The note draft has `ada_smoke_e0:` and a P5 sentence:
+  **the Ada smoke and E0 (image v2.2 on sm_89, through `p4_direct.py`) come before the Ada SFT probe, so the probe
+  times the bound causal_conv1d kernel path.** Alternative (b), for the coordinator: read R1-QTORCH-AMEND ("on
+  HTCondor") as not binding the direct launch. Recommendation: (a), as built, because the row's reason (a kernel built
+  per architecture, sm_89 here) does not depend on the scheduler.
+- **B2, fixed.** `render` requests `arm_walltime_s(spec, arm, host_class)`, the value `validate_spec` checks; the
+  largest over classes stays for the projection, a pending submission's charge and the incomplete-record bound
+  (the descriptor's `walltime_bound_s`). Test: Ada kev-4b 16.0 h, the H200 JDL requests H200's own value.
+- **M1, fixed.** The container is started with `pass_fds` holding the lease descriptor (an apptainer child keeps the
+  flock after a SIGKILLed launcher); a docker container carries the label `r1.p4.gpu_uuid=<uuid>`, and `launch`
+  refuses a card with such a running container (`docker ps --filter label=...`); `cards` lists them.
+- **M2, fixed.** Order is now: checks without a lease, then the lease and the card checks, then the once-only marker,
+  the fresh job directory and the launcher record. A refusal before the marker writes nothing and leaves the stage
+  launchable (test); from the marker on, every outcome leaves an attempt to seal.
+- **M3, fixed.** `threshold_report` uses `>=`; the `validate` CLI prints `threshold`; the `seal` CLI prints
+  `seal_threshold` (charged GPU-hours after the seal against 40, with "REPORT TO THE AUTHOR" when reached).
+- **M4, fixed.** `seal` refuses an attempt without a launcher record whose `p4_run.log` start line names a direct
+  class (`logged_host_class`).
+- **M5, stated.** The seal receipt's `stop` and `stop_class` are authoritative after the R1-CARD-SHARE (3)
+  reclassification (seal docstring).
+- **M6, fixed.** The note draft's P7 covers `trackp_ada_v1.json` when `ada_rtx6000` is admitted.
+- **M7, stated.** A filled host config is not re-filled: changing `direct.min_free_mib` (or any filled value) after
+  the fill, for example to the Ada probe's peak memory with headroom, is a hand edit in a reviewed commit, which gives
+  a new sha256 for the spec's `hosts.ada_rtx6000.host_config` and the note's `host_config:` (note draft P7).
+- **M8, fixed.** `probe_records` marks each entry's `card_shared` (the launcher's host-side counts in the receipt or
+  the job's own counts) and the record's `card_shared_arms` and `fit_and_timing_reliable`; the launcher docstring
+  says the class's SFT probe runs on an empty card (`p4_direct.py cards`).
+- **M9, fixed.** Every new level under the work root (`<run_id>`, `<arm>`, the job directory) is created with mode
+  0700 and chmod-ed so (test).
+
+Module tests after the corrections: `test_trackp_p4_direct.py` 41 passed (anaconda Python, no torch);
+`test_trackp_p4_runner.py` 159 passed with `~/anaconda3/envs/hupdate/bin/python` (torch 2.11). Only the P.4 package,
+its tests and docs changed in this correction, so the full suite was not re-run (its round-1 counts below stand).
+
 ## Decided alone (level 0)
 
 - Spec shape: `hosts.<class>` = {launch, gpu_name, compute_capability, host_config, estimate}; the top-level
@@ -153,7 +191,9 @@ Paths are examples; `<sealed root>` is `/ceph/srv/dwong/paperb/trackp_p4` on dee
         --host-class ada_rtx6000            # prints the new sha256 of r1/scripts/configs/trackp_ada_v1.json
     git add r1/scripts/configs/trackp_ada_v1.json docs/r1/reports/trackp_p4_ada_<YYYYMMDD>/ && git commit
 
-**(b) A direct probe on Ada (compute/20261126-07)**, after the fill commit is on `main`:
+**(b) A direct probe on Ada (compute/20261126-07)**, after the fill commit is on `main` and after the Ada Track P
+smoke and E0 equivalence records (image v2.2 on sm_89, R1-QTORCH-AMEND; their own reviewed task, not built here) are
+on `main`; the probe takes an empty card (the first `cards` entry with no other process and no running P.4 container):
 
     # a filled copy of $P/p4_probe_spec.json: paper.commit = the fill commit on main, image.versions_sha256 = T1's
     # value, host_class = "ada_rtx6000", hosts.ada_rtx6000.host_config.sha256 = the sha256 from (a)

@@ -142,12 +142,16 @@ ADA_HOST_CONFIG = "r1/scripts/configs/trackp_ada_v1.json"      # the ada_rtx6000
 # class's model and compute capability, exactly one GPU visible; the record names host, GPU model, uuid, driver and the
 # env3 freeze. ``launch`` is how a job of the class starts: "htcondor" (p4_render_jdl + p4_switch, condor_submit) or
 # "direct" (p4_direct.py over SSH under a GPU lease). ``probe_label`` is the key of the class's SFT probe record in the
-# spec's estimate.source and in the note (the H200 one keeps its name, h200_sft_probe).
+# spec's estimate.source and in the note (the H200 one keeps its name, h200_sft_probe). ``smoke_label`` is the note key
+# that names the class's Track P smoke and E0 equivalence records (R1-QTORCH-AMEND: one smoke and one E0 check per GPU
+# model actually used; the switch requires the line, with records on origin/main, for every admitted class).
 HOST_CLASSES = {
     "nemo2_h200": {"launch": "htcondor", "gpu_name": "NVIDIA H200", "compute_capability": "9.0",
-                   "host_config_path": HOST_CONFIG, "probe_label": "h200_sft_probe"},
+                   "host_config_path": HOST_CONFIG, "probe_label": "h200_sft_probe",
+                   "smoke_label": "h200_smoke_e0"},
     "ada_rtx6000": {"launch": "direct", "gpu_name": "NVIDIA RTX 6000 Ada Generation", "compute_capability": "8.9",
-                    "host_config_path": ADA_HOST_CONFIG, "probe_label": "ada_sft_probe"},
+                    "host_config_path": ADA_HOST_CONFIG, "probe_label": "ada_sft_probe",
+                    "smoke_label": "ada_smoke_e0"},
 }
 HOST_FIXED = ("launch", "gpu_name", "compute_capability")       # a spec's hosts.<class> carries these values as above
 DIRECT_LAUNCH_FILE = "direct_launch.json"        # the direct launcher's record beside the job outputs (p4_direct.py)
@@ -248,7 +252,9 @@ def _pin(value, name: str, pattern=SHA, *, allow: bool) -> None:
 def arm_hours(spec: dict, arm: str, host_class: str | None = None) -> float:
     """The arm's estimated training hours on ``host_class`` (its ``hosts.<class>.estimate.hours``), or, with no class,
     the largest over the spec's admitted classes: an arm may land on any of them, so the projection and the walltime
-    bound take the slowest (R1-HOST-FREE (5); with one admitted class this is that class's value)."""
+    bound take the slowest (R1-HOST-FREE (5); with one admitted class this is that class's value). The largest is used
+    only for the projection, a pending submission's charge and an incomplete launcher record's bound; an HTCondor JDL
+    requests its own class's value (``p4_render_jdl.render``), the value ``validate_spec`` checks against 86,400 s."""
     classes = [host_class] if host_class is not None else sorted(spec["hosts"])
     return max(float(spec["hosts"][c]["estimate"]["hours"][arm]) for c in classes)
 
@@ -445,7 +451,7 @@ def threshold_report(proj: dict, charged: float | None = None) -> dict:
     refuses a spec, a submission, a launch or an assembly."""
     gpu = proj["total_with_probe_gpu_hours"] if charged is None else charged
     reached = [k for k, have, cap in (("gpu_hours", gpu, proj["cap_gpu_hours"]),
-                                     ("slot_hours", proj["total_slot_hours"], proj["cap_slot_hours"])) if have > cap]
+                                     ("slot_hours", proj["total_slot_hours"], proj["cap_slot_hours"])) if have >= cap]
     return {"rule": "R1-NO-TIMEOUT (3): a reporting threshold, not a refusal", "reached": reached,
             "report_to_author": bool(reached), "gpu_hours": gpu, "gpu_hours_threshold": proj["cap_gpu_hours"],
             "slot_hours_projected": proj["total_slot_hours"], "slot_hours_threshold": proj["cap_slot_hours"]}
@@ -2164,7 +2170,8 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
             "memory_total_mib": mem["memory_total_mib"], "headroom_frac": mem["headroom_frac"],
             "memory_samples": mem["samples"], "oom": bool(rec.get("oom")), "rc": 0, "stop": rec.get("stop"),
             "stop_class": rec.get("stop_class"), "gpu_hours_consumed": rec.get("gpu_hours"),
-            "estimate_hours": est["hours"], "estimate_steps": est["steps"]})
+            "estimate_hours": est["hours"], "estimate_steps": est["steps"],
+            "card_shared": card_was_shared(rec, json.loads(_read_utf8(d / "SEAL_RECEIPT.json")))})
     charges = probe_charges(sealed_root, wallclock=wallclock, t1_wallclock=t1_wallclock)
     if probe_spec["run_id"] not in charges["runs"]:
         raise Stop(f"STOP: no sealed attempt of {probe_spec['run_id']} under {sealed_root}")
@@ -2204,7 +2211,20 @@ def probe_records(probe_spec: dict, probe_spec_sha256: str, p4_spec: dict, seale
             "extra_stop_free_attempts": {a: v for a, v in sorted(extras.items()) if v},
             "headroom_below_15pct": sorted(e["arm"] for e in entries if e["headroom_frac"] is not None
                                            and e["headroom_frac"] < 0.15),
+            "card_shared_arms": sorted(e["arm"] for e in entries if e["card_shared"]),
+            "fit_and_timing_reliable": not any(e["card_shared"] for e in entries),
             "lines": lines}
+
+
+def card_was_shared(record: dict, receipt: dict) -> bool:
+    """Review M8: another compute process was on the probe's card at its start or end (the launcher's host-side
+    counts in the receipt, or the job's own counts). The fit (peak memory, headroom) and the timing of a shared-card
+    probe are descriptive only (R1-CARD-SHARE (2)); the record says so (``card_shared_arms``,
+    ``fit_and_timing_reliable``), and the Ada probe is run on an empty card (``p4_direct.py cards``)."""
+    counts = [receipt.get("other_processes_start"), receipt.get("other_processes_end"),
+              record.get("card_processes_start"), record.get("card_processes_end")]
+    return bool(receipt.get("card_shared")) or any(isinstance(c, dict) and isinstance(c.get("count"), int) and
+                                                   c["count"] > 0 for c in counts)
 
 
 # =============================================================================================== seal / assemble
@@ -2220,6 +2240,18 @@ def _read_record(path: Path):
 
 LOG_HEADER = {"probe": "P4 probe container job start", "p4": "P4 container job start"}   # p4_probe.sh, p4_job.sh
 CLEAN_END = re.compile(r"^P4 (?:probe )?container job end \S+ rc=0\s*$", re.M)   # the wrappers' last line on rc 0
+
+
+def logged_host_class(src: Path) -> str | None:
+    """The ``host_class=`` the wrapper's start line in ``p4_run.log`` names (``p4_job.sh``, ``p4_probe.sh``), or None."""
+    log = Path(src) / "p4_run.log"
+    if not log.is_file():
+        return None
+    for line in log.read_bytes().decode("utf-8", "replace").splitlines():
+        if line.startswith((LOG_HEADER["probe"], LOG_HEADER["p4"])):
+            m = re.search(r"\shost_class=(\S+)", line)
+            return m.group(1) if m else None
+    return None
 
 
 def clean_exit_logged(src: Path) -> bool:
@@ -2293,8 +2325,14 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
     card) and the record's ``gpu_hours``; an incomplete one (the launcher was killed before its end) charges the
     largest of the time from the launch start to this seal, the requested walltime bound and the record's
     ``gpu_hours`` (fail closed: nothing bounds a direct job's wall clock). Without a launcher record, a record that
-    names a direct class is a STOP (no evidence bounds its GPU time); an HTCondor attempt is sealed as before, and
-    ``identity_verified`` needs its record to name an admitted HTCondor class whose GPU it carries."""
+    names a direct class is a STOP (no evidence bounds its GPU time), and so is one whose ``p4_run.log`` start line
+    names a direct class (review M4); an HTCondor attempt is sealed as before, and ``identity_verified`` needs its
+    record to name an admitted HTCondor class whose GPU it carries.
+
+    **The receipt's ``stop`` and ``stop_class`` are authoritative** (review M5): an arm STOP of an attempt that lost its
+    card to another compute process is reclassified ``infrastructure`` here (R1-CARD-SHARE (3)) from the launcher's
+    host-side counts even when the job record, which saw only what the container showed, still says ``arm``; every
+    reader of an attempt's outcome reads the receipt."""
     src = Path(job_output).resolve()
     record = _read_record(src / "job_record.json")
     if record is not None and (record.get("label") != ENGINEERING_ONLY or record.get("run_id") != spec["run_id"]
@@ -2302,6 +2340,11 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
         raise Stop("STOP: the job record does not match the run/arm or is not ENGINEERING_ONLY")
     launch = read_direct_launch(src)
     rec_class = (record or {}).get("host_class")
+    if launch is None and rec_class is None:        # review M4: the wrapper's log names the class the job was told
+        rec_class_logged = logged_host_class(src)
+        if rec_class_logged in HOST_CLASSES and HOST_CLASSES[rec_class_logged]["launch"] == "direct":
+            raise Stop(f"STOP: p4_run.log names the direct class {rec_class_logged} but {DIRECT_LAUNCH_FILE} is "
+                       "missing: it is not sealed as an HTCondor attempt (copy the launcher record back)")
     if launch is None and rec_class in HOST_CLASSES and HOST_CLASSES[rec_class]["launch"] == "direct":
         raise Stop(f"STOP: the record names the direct class {rec_class} but {DIRECT_LAUNCH_FILE} is missing: nothing "
                    "bounds its GPU time; copy the launcher record back with the outputs (the author decides otherwise)")
@@ -2389,6 +2432,21 @@ def seal(job_output: Path, spec: dict, arm: str, sealed_root: Path = SEALED_ROOT
                "source_dir": str(src), "sealed_utc": _utc()}
     (target / "SEAL_RECEIPT.json").write_text(json.dumps(receipt, indent=1) + "\n")
     return receipt
+
+
+def seal_threshold(spec: dict, sealed_root: Path = SEALED_ROOT) -> dict:
+    """R1-NO-TIMEOUT (3) at seal: the run's charged GPU-hours after this seal (every sealed attempt, pending
+    submissions, the probes' charge) against the 40 GPU-h figure; ``report_to_author`` when reached. Printed by the
+    ``seal`` CLI; never a refusal (a run whose tree cannot be counted is reported as such)."""
+    try:
+        charged = charged_hours(spec, sealed_root)
+        out = threshold_report(projection(spec), charged["total"])
+    except (Stop, KeyError, TypeError, ValueError) as exc:
+        return {"error": f"the charge could not be counted: {exc}"}
+    if out["report_to_author"]:
+        print(f"REPORT TO THE AUTHOR: {charged['total']} GPU-h charged in {spec['run_id']} reaches the P4-CAP figure "
+              f"{spec['caps']['gpu_hours']} GPU-h (R1-NO-TIMEOUT (3): reported, not refused)", file=sys.stderr)
+    return out
 
 
 def read_direct_launch(src: Path) -> dict | None:
@@ -2731,7 +2789,8 @@ def main(argv=None) -> int:
                              indent=1))
         elif args.cmd == "validate":
             loaded = validate_spec(load_spec(Path(args.spec)), launch=args.launch)
-            print(json.dumps({"ok": True, "run_id": loaded["run_id"], "projection": loaded["projection"]}, indent=1))
+            print(json.dumps({"ok": True, "run_id": loaded["run_id"], "projection": loaded["projection"],
+                              "threshold": loaded["threshold"]}, indent=1))
         elif args.cmd == "probe":
             rec = run_probe(Path(args.spec), args.arm, host_class=args.host_class)
             print(json.dumps({"ok": True, "arm": args.arm, "memory": rec["memory"],
@@ -2766,8 +2825,10 @@ def main(argv=None) -> int:
             rec = run_job(Path(args.spec), args.arm, host_class=args.host_class)
             print(json.dumps({"ok": True, "arm": args.arm, "selected_lr": rec["select"]["selected_lr"]}, indent=1))
         elif args.cmd == "seal":
-            print(json.dumps(seal(Path(args.job_output), load_spec(Path(args.spec)), args.arm,
-                                  unknown_kind_confirmed=args.unknown_kind_confirmed), indent=1))
+            spec = load_spec(Path(args.spec))
+            receipt = seal(Path(args.job_output), spec, args.arm, unknown_kind_confirmed=args.unknown_kind_confirmed)
+            print(json.dumps(receipt, indent=1))
+            print(json.dumps({"threshold": seal_threshold(spec)}, indent=1), file=sys.stderr)
         else:
             print(json.dumps(assemble([Path(x) for x in args.sealed], load_spec(Path(args.spec)),
                                       _sha_file(Path(args.spec))), indent=1))

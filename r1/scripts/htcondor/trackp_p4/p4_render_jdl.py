@@ -104,7 +104,7 @@ def render(spec: dict, arm: str, *, preview: bool = False, host_class: str = HTC
         f"request_memory = {spec['layout']['request_memory_mb']}",
         f"request_disk = {spec['layout']['request_disk_kb']}",
         "request_GPUs = 1",
-        f"+RequestWalltime = {lib.arm_walltime_s(spec, arm)}",
+        f"+RequestWalltime = {lib.arm_walltime_s(spec, arm, host_class)}",   # the class's own (B2)
         "+RemoteJob = True",
         "periodic_hold = (NumJobStarts > 1)",
         "periodic_hold_reason = \"no resume: NumJobStarts > 1 must be rerun as a fresh submission into a new dir\"",
