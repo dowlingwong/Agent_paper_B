@@ -15,11 +15,11 @@ branch. The G1 chunk unit (`D3_G1_UNIT_20261127.md`) explicitly left the two lau
 | File | sha256 | Content |
 |---|---|---|
 | `r1/c3/d3/launch.py` | `756e8793329c5ad165f2d7a26b75b37a0b36b7797e8dd138234258a8374bf702` | The `r1_d3_launch/v1` record validation (delegating the signed W, LLM cap and 6201–6218 seeds to `ChunkSpec.from_launch`), the one chunk argv, the reviewed HTCondor request and its refusal on any edit, count/memory-only other-process parsing (including `MiB` and `N/A`), the free-memory check and the lease probe. |
-| `r1/c3/d3/probe.py` | `79622c2e0d43545c6afc163fc2c3540c877266c7aace447063fd9f0ba2ac886f` | The job-side hardware probe that produces the `r1_d3_observed/v1` record at the start of a chunk: host, card model/UUID/driver, total/free memory, other compute processes (count and memory only), the proposer identity and the launcher's request/scope. HTCondor records the actual worker and its scheduler assignment; SSH records the leased host. |
+| `r1/c3/d3/probe.py` | `b06207be79846aa80c50f0bc51e5384b83f527b91bdadc709ae9a7c27691b2d2` | The job-side hardware probe that produces the `r1_d3_observed/v1` record at the start of a chunk: host, card model/UUID/driver, total/free memory, other compute processes (count and memory only), the proposer identity and the launcher's request/scope. HTCondor records the actual worker and its scheduler assignment; SSH records the leased host. |
 | `r1/c3/d3/launch_htcondor.py` | `5dae455fe8ef880ab47f3fcbc5d408f9db575916f08c9d5eb25c2df82bb37e3e` | `render_submit` / `submit`: one job per chunk, the same `python -m r1.c3.d3.campaign_chunk` argv, the exact reviewed request, a pinned repo tarball, `d3_chunk.sh` (which probes the assigned card and then runs the chunk) and a submit record. |
 | `r1/c3/d3/launch_ssh.py` | `ecd18402c7a112ada21fed825c00235fe5a779aa4df034da7e0919783a5037c6` | `render_remote_script` / `launch`: stages the launch/manifest, takes the card's lease with `flock -n` for the whole chunk, probes the card after the lease, and runs the same argv in a delegated user scope. |
 | `r1/c3/d3/campaign_chunk.py` | `2fc943ec355f08641239027a9b0b2360176916fac55326371ae000654505674d` | Adds the job entry `main`, a host-mismatch refusal (SSH/direct; HTCondor's chosen worker is recorded, not compared), and an automatic end sample for a probed card; after the last campaign and before `chunk.json`, `other_processes_end` is filled (count and memory only). The campaign, snapshot, audit and record logic is unchanged. |
-| `r1/tests/test_d3_launchers.py` | `6deaa8c93bfabff986e36c557c835017a1013e43073a08bd21083fa872c337fb` | 14 tests: signed-value refusals, argv parity, request immutability, tarball pin, count/memory-only parsing (including real `nvidia-smi` units), probe parsing, host-mismatch refusal, memory and lease helpers, SSH refusals and dry-run fields, HTCondor job-side probe, cluster-id parsing. |
+| `r1/tests/test_d3_launchers.py` | `3db7585a4087bb9623f93b98d51bbb83724f3607f71ede828a4545bae78a4177` | 17 tests: signed-value refusals, argv parity, request immutability, tarball pin, count/memory-only parsing (including real `nvidia-smi` units), probe parsing, host-mismatch refusal, memory and lease helpers, SSH refusals and dry-run fields, HTCondor job-side probe, cluster-id parsing. |
 
 The chunk's existing `r1/tests/test_d3_g1_chunk.py` gains one test for `end_sampler`.
 
@@ -48,7 +48,7 @@ Run with Python 3.12.8, pytest 9.2.0, harness `9bb41680`:
 ```
 AR_HARNESS_ROOT=<harness9bb> python -m pytest -q \
   r1/tests/test_d3_launchers.py r1/tests/test_d3_g1_chunk.py r1/tests/test_d3_g1_snapshots.py
-44 passed
+47 passed
 ```
 
 Focused new tests: **14 passed**; chunk + snapshot focus: 44 passed. The full `r1/tests` suite was
@@ -79,6 +79,17 @@ This revision answers it:
   worker is recorded and disclosed.
 - **M3 (HTCondor lease):** the probe records the scheduler assignment as `lease: true`,
   `lease_path: null`, `lease_kind: htcondor`; the SSH path still holds the lock file.
+
+The second review (`ceea2f7f`) found one remaining blocker and two majors; this revision answers
+them:
+
+- **R2-B1 (SSH/direct host check vacuous):** the probe now records `socket.gethostname()` for
+  every launcher, so `check_hardware` compares the actual host with the launch record; the test
+  uses a monkeypatched hostname, not a hand-built record.
+- **R2-M1 (GPU 0 always sampled):** the probe derives the card index from the `gpu<index>.lock`
+  lease (HTCondor's container has one visible card, index 0); a test runs `nvidia-smi -i 3`.
+- **R2-M2 (default 46,000 MiB exceeds an L40S):** `hardware.required_memory_mib` is now required
+  in the launch record, with no magic default; the probe refuses without it.
 
 ## Decided alone
 

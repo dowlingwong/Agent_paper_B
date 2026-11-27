@@ -50,6 +50,16 @@ def parse_gpu(text: str) -> dict[str, Any]:
         raise LaunchStop(f"cannot read GPU memory from {text!r}") from exc
 
 
+def gpu_index_from_lease(lease_path: str | None) -> int:
+    """Read the card index from a ``gpu<index>.lock`` lease; 0 when there is no indexed lease."""
+    if not lease_path:
+        return 0
+    import re
+
+    match = re.search(r"gpu(\d+)\.lock$", str(lease_path))
+    return int(match.group(1)) if match else 0
+
+
 def probe(*, gpu_index: int = 0, required_memory_mib: int = 46000,
           proposer_model: str = "gemma4_31b", host: str | None = None,
           lease: bool = True, lease_path: str | None = None, lease_kind: str = "ssh",
@@ -82,7 +92,7 @@ def probe(*, gpu_index: int = 0, required_memory_mib: int = 46000,
 
 def probe_from_records(launch: Mapping[str, Any], manifest: Mapping[str, Any], *,
                        lease_path: str | None = None, runner: Callable[..., Any] | None = None,
-                       gpu_index: int = 0) -> dict[str, Any]:
+                       gpu_index: int | None = None) -> dict[str, Any]:
     """Build the probe from a launch record and a campaign manifest.
 
     ``launch["hardware"]`` may carry ``required_memory_mib``; the manifest names the proposer.
@@ -93,13 +103,20 @@ def probe_from_records(launch: Mapping[str, Any], manifest: Mapping[str, Any], *
     if launcher not in ("htcondor", "ssh", "direct"):
         raise LaunchStop(f"unknown launcher {launcher!r}")
     hardware = launch.get("hardware") or {}
-    required = int(hardware.get("required_memory_mib") or 46000)
-    proposer = str(manifest.get("proposer_model") or hardware.get("proposer_model") or "gemma4_31b")
-    # HTCondor chooses the worker; record the actual hostname.  SSH/direct target one host.
-    host = None if launcher == "htcondor" else str(launch.get("host") or "")
+    if hardware.get("required_memory_mib") is None:
+        raise LaunchStop("the launch record must declare hardware.required_memory_mib")
+    required = int(hardware["required_memory_mib"])
+    proposer = str(manifest.get("proposer_model")
+                   or (manifest.get("proposer") or {}).get("model")
+                   or hardware.get("proposer_model") or "")
+    if not proposer:
+        raise LaunchStop("the manifest must name its proposer model")
+    # Record the host the probe actually runs on, for every launcher; HTCondor chooses it and
+    # SSH/direct target one host, which check_hardware then compares with the launch record.
     lease_kind = "htcondor" if launcher == "htcondor" else "lease"
-    return probe(gpu_index=gpu_index, required_memory_mib=required, proposer_model=proposer,
-                 host=host, lease=True, lease_path=lease_path, lease_kind=lease_kind,
+    index = gpu_index if gpu_index is not None else gpu_index_from_lease(lease_path)
+    return probe(gpu_index=index, required_memory_mib=required, proposer_model=proposer,
+                 host=None, lease=True, lease_path=lease_path, lease_kind=lease_kind,
                  request=launch.get("request"), scope=launch.get("scope"),
                  environment_freeze=hardware.get("environment_freeze"), runner=runner)
 
@@ -110,7 +127,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--manifest", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--lease-path", default=None)
-    ap.add_argument("--gpu-index", type=int, default=0)
+    ap.add_argument("--gpu-index", type=int, default=None,
+                    help="card index; derived from a gpu<index>.lock lease when omitted")
     args = ap.parse_args(argv)
     launch = read_json(args.launch)
     manifest = read_json(args.manifest)

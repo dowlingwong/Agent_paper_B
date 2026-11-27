@@ -21,6 +21,7 @@ def _record(**kw):
         "schema": L.LAUNCH_SCHEMA, "stage": "a", "arm": "A2", "node": "digits_mlp",
         "repetition": 0, "instance_seeds": list(range(6201, 6219)), "W": 20, "llm_cap": 80,
         "launcher": "ssh", "host": "TASL-2", "campaign_model_source": dict(SOURCE),
+        "hardware": {"required_memory_mib": 20000},
         "manifest": {"path": "manifest.json", "sha256": "b" * 64},
         "observed": {"path": "observed.json", "sha256": "c" * 64},
     }
@@ -218,3 +219,40 @@ def test_htcondor_job_probes_the_assigned_card(tmp_path):
     assert "r1.c3.d3.probe" in wrapper and "--out observed.json" in wrapper
     assert not (tmp_path / "submit" / "observed.json").exists()
     assert got["launcher"] == "htcondor" and got["dry_run"] is True
+
+
+def test_gpu_index_is_read_from_the_lease():
+    assert P.gpu_index_from_lease("/home/x/r1_locks/gpu0.lock") == 0
+    assert P.gpu_index_from_lease("/home/x/r1_locks/gpu3.lock") == 3
+    assert P.gpu_index_from_lease(None) == 0
+    assert P.gpu_index_from_lease("/home/x/r1_locks/other.lock") == 0
+
+
+def test_probe_from_records_uses_the_actual_host_and_lease_card(monkeypatch):
+    class Proc:
+        def __init__(self, stdout):
+            self.returncode, self.stdout, self.stderr = 0, stdout, ""
+
+    seen = []
+
+    def runner(argv, **kw):
+        seen.append(argv)
+        if "name,uuid,driver_version,memory.total,memory.free" in " ".join(argv):
+            return Proc("NVIDIA RTX 4090, GPU-card3, 535.113, 24564, 24000\n")
+        return Proc("GPU-card3, 1234, 512 MiB\n")
+
+    monkeypatch.setattr(P.socket, "gethostname", lambda: "TASL-2.actual")
+    launch = _record(launcher="ssh")
+    launch["hardware"] = {"required_memory_mib": 20000}
+    record = P.probe_from_records(launch, {"proposer_model": "gemma4_31b"},
+                                  lease_path="/home/x/r1_locks/gpu3.lock", runner=runner)
+    assert record["host"] == "TASL-2.actual"
+    assert record["gpu_uuid"] == "GPU-card3"
+    assert ["-i", "3"] == seen[0][1:3]
+
+
+def test_probe_requires_a_declared_memory_requirement():
+    launch = _record(launcher="ssh")
+    launch.pop("hardware")
+    with pytest.raises(L.LaunchStop):
+        P.probe_from_records(launch, {"proposer_model": "gemma4_31b"}, runner=lambda *a, **k: None)
