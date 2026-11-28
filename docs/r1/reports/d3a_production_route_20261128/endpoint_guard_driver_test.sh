@@ -34,10 +34,11 @@ for n in openml_breast_w openml_climate openml_credit_approval openml_ionosphere
 done
 
 cleanup() {
-  [ -n "${FOREIGN_PID:-}" ] && kill -TERM "$FOREIGN_PID" 2>/dev/null
-  [ -f "$ROOT/driver/server.pid" ] && kill -TERM "$(cat "$ROOT/driver/server.pid")" 2>/dev/null
-  [ -f "$ROOT/ss_pid" ] && kill -TERM "$(cat "$ROOT/ss_pid")" 2>/dev/null
-  wait 2>/dev/null
+  [ -n "${FOREIGN_PID:-}" ] && kill -TERM "$FOREIGN_PID" 2>/dev/null || true
+  [ -f "$ROOT/driver/server.pid" ] && kill -TERM "$(cat "$ROOT/driver/server.pid")" 2>/dev/null || true
+  [ -f "$ROOT/ss_pid" ] && kill -TERM "$(cat "$ROOT/ss_pid")" 2>/dev/null || true
+  wait 2>/dev/null || true
+  true
 }
 trap cleanup EXIT
 

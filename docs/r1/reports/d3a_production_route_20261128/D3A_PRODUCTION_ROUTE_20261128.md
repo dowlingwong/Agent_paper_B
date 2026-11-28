@@ -229,6 +229,49 @@ Python 3.11.17 also has no field in the current key block, so the same row must 
 image; none is currently available. Until that row exists, no D.3a campaign starts. No evidence run
 has started, so this is a binding decision, not a STOP of existing evidence.
 
+### 4.1 Endpoint identity guard before every chunk (compute/20261128-23)
+
+Local's stub check (`coord/local` `1a6a2cf5`) found that when the template's own server failed to
+bind, a separate responder on `127.0.0.1:8095` answered `/props` and the template went on to the
+chunk. Readiness alone therefore does not prove which process serves the endpoint.
+
+The production template now calls `r1.c3.d3.endpoint_guard` **after readiness** (so a foreign
+responder is caught before the probe result is trusted) and **immediately before every chunk**. The
+guard fails closed unless all of the following hold:
+
+| Check | Evidence |
+|---|---|
+| listener owner | `ss -ltnp 'sport = :8095'` names exactly the PID the driver started, and no other PID |
+| `/props` model | `model_path` equals the manifest `server_argv` `-m` path |
+| `/props` context | `default_generation_settings.n_ctx` equals the manifest `server_argv` `-c` value |
+| `/props` slots | `total_slots` equals the manifest `server_argv` `-np` value |
+| compute PID | `nvidia-smi --query-compute-apps` lists that PID exactly once |
+| compute card | that PID's GPU UUID equals the manifest `route.gpu_uuid` |
+| canonical lease | the guard's inherited fd 9 and a server fd both point at the manifest
+`route.gpu_lease_path` inode (`~/r1_locks/gpu0.lock`) |
+| leased card | `nvidia-smi -i <lease index> --query-gpu=uuid` equals the manifest UUID |
+| pre-server probe | `observed.json` has the same UUID, `lease: true` and the same lease path |
+
+A mismatch writes `endpoint_check_<tag>.json` (`r1_d3_endpoint_check/v1`), then `STOP.json`
+(`r1_d3_endpoint_stop/v1`), stops the server, seals the capture directory with `SHA256SUMS` and
+exits **90** before `r1.c3.d3.campaign_chunk` is imported. The scene is kept, not deleted. A
+multi-chunk driver may pass `CHUNK_ROWS` (tab-separated launch/out rows); the guard is called for
+each row. The reviewed chunk argv is unchanged.
+
+**Engineering test (no GPU, server process, campaign or label).**
+`endpoint_guard_driver_test.sh` runs the production template with stub host commands and a real
+HTTP `/props`; the guard itself is the repository module and reads `/proc` and the real response.
+
+| Case | Result |
+|---|---|
+| `success` | guard passes after readiness and before the chunk; chunk stub is called; exit 0 |
+| `foreign` | the started PID is alive but another process owns the port; STOP at `listener_pid`; chunk not called; seal OK; exit 90 |
+| `bindfail` | the started server exits and a foreign responder answers `/props`; STOP at `server_alive`; chunk not called; seal OK; exit 90 |
+
+The pytest set `r1/tests/test_d3_endpoint_guard.py` covers every identity check, the foreign-responder
+case, the CLI STOP record and a real `HostProbe` integration against `/proc` and a live `/props`.
+On TASL-2: **23 passed**. Captures are under `captures/endpoint_guard/`.
+
 ## 5. Resource basis
 
 Measured at the exact runtime by the accepted P7 record

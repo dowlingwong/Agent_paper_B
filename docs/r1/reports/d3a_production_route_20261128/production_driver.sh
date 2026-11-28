@@ -33,8 +33,7 @@ PORT="${D3A_PORT:-8095}"
 SCOPE="systemd-run --user --scope -p Delegate=yes -p MemoryMax=20G -p MemorySwapMax=0"
 STOP_RC=90
 
-cleanup() { [ -n "${SPID:-}" ] && kill -TERM "$SPID" 2>/dev/null || true; }
-trap cleanup EXIT
+cleanup() { [ -n "${SPID:-}" ] && kill -TERM "$SPID" 2>/dev/null || true; }trap cleanup EXIT
 
 mkdir -p "$V"
 status() { echo "$(date -u +%FT%TZ) $*" | tee -a "$V/status.log"; }
