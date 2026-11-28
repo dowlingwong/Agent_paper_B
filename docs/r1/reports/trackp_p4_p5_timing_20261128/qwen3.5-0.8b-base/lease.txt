@@ -1,0 +1,7 @@
+lock=/data1/zli538/r1_locks/gpu2.lock
+mode=flock-exclusive
+gpu_index=2
+gpu_uuid=GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154
+started_utc=2026-11-28T13:44:47Z
+finished_utc=2026-11-28T13:46:47Z
+note=derived from started_utc.txt/finished_utc.txt and gpu_before.txt/gpu_after.txt; outer shell held fd 9 on the lock for the whole python process

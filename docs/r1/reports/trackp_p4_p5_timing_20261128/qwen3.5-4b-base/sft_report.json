@@ -1,0 +1,138 @@
+{
+ "cross_split_duplicates": "heldout_excludes_seen",
+ "data_sha256": "f997e7fad6d1a6ff704e68d886433b4980644e28419b79aa2921f5dd563e050e",
+ "heldout_rule": "R1-TRACKP-SFT-DUP: primary = val without training duplicates (early stopping, temperature, selection); secondary = full val (reported only)",
+ "label_status": "ENGINEERING_ONLY (R1-TRACKP-SFT-DEV): readiness only; not used for any evidence, selection or tuning; label seeds 7001-7005 only, never the evaluation block 7006-7010",
+ "lr": 0.0001,
+ "n_train": 593,
+ "n_val": 76,
+ "n_val_secondary_only": 200,
+ "protocol": {
+  "effective_batch": 16,
+  "eval_every_frac": 0.25,
+  "gradient_checkpointing": true,
+  "head_lr": 0.001,
+  "loss": "rps+ce",
+  "lr_grid": [
+   1e-05,
+   3e-05,
+   0.0001
+  ],
+  "max_epochs": 5,
+  "micro_batch": 8,
+  "patience": 2,
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "temperature_scaling": true,
+  "token_lr": 0.0001,
+  "warmup_frac": 0.05
+ },
+ "protocol_deviation": {
+  "max_steps": 50
+ },
+ "schema": "trackp_sft_report/v1",
+ "seed": 0,
+ "selected": {
+  "val_ece_all_bins": 0.008458529340690161,
+  "val_ece_top1": 0.03595978023326987,
+  "val_mean_label_sd": 0.49106777369240007,
+  "val_mean_pred_sd": 1.2434731498706022,
+  "val_nll": 2.1481964588165283,
+  "val_pit_histogram": [
+   0.8842697643778838,
+   0.8336922961316757,
+   0.8722004267545735,
+   0.9556946337134571,
+   1.0512408246583158,
+   1.1466812489588292,
+   1.0341175519835837,
+   0.8860402124232581,
+   1.1805073027168786,
+   1.155555738281544
+  ],
+  "val_rps": 0.0431988969035522,
+  "val_rps_skill": 0.00026855147235271826,
+  "val_width_ratio": 2.5321823513703046
+ },
+ "selected_full_heldout": {
+  "val_full_ece_all_bins": 0.0076235364546777,
+  "val_full_ece_top1": 0.03994548585691107,
+  "val_full_mean_label_sd": 0.501300129990677,
+  "val_full_mean_pred_sd": 1.2408004734695266,
+  "val_full_nll": 2.1507720947265625,
+  "val_full_pit_histogram": [
+   0.8133671592727919,
+   0.8165864368158795,
+   0.8342389257026386,
+   0.8807180569984124,
+   0.9861383803217953,
+   1.1236207085368997,
+   1.1054150320053346,
+   1.0233959257788747,
+   1.2234911388837793,
+   1.193028235683594
+  ],
+  "val_full_rps": 0.043234411985495325,
+  "val_full_rps_skill": -0.0184595979139619,
+  "val_full_width_ratio": 2.475164874767941
+ },
+ "selected_full_heldout_temperature_scaled": {
+  "val_full_ece_all_bins": 0.006744793600387376,
+  "val_full_ece_top1": 0.03713245458084399,
+  "val_full_mean_label_sd": 0.501300129990677,
+  "val_full_mean_pred_sd": 1.2485276471036937,
+  "val_full_nll": 2.150599479675293,
+  "val_full_pit_histogram": [
+   0.8078435047703741,
+   0.8268359657887548,
+   0.8441550488543665,
+   0.8869553246845361,
+   0.9918678940805686,
+   1.1212663668217158,
+   1.098042708124055,
+   1.0222581300075664,
+   1.2306093039341077,
+   1.1701657529339553
+  ],
+  "val_full_rps": 0.04317651698493035,
+  "val_full_rps_skill": -0.017095783390095765,
+  "val_full_width_ratio": 2.4905791409368145
+ },
+ "selected_temperature_scaled": {
+  "val_ece_all_bins": 0.007681798891984083,
+  "val_ece_top1": 0.033155029362552685,
+  "val_mean_label_sd": 0.49106777369240007,
+  "val_mean_pred_sd": 1.251250821631553,
+  "val_nll": 2.148120164871216,
+  "val_pit_histogram": [
+   0.8784972804427799,
+   0.8441601827698763,
+   0.8832304483865817,
+   0.9625202529032056,
+   1.0567655414583956,
+   1.1427373803766354,
+   1.0253332264782293,
+   0.8840419364719614,
+   1.1920018741931717,
+   1.1307118765191637
+  ],
+  "val_rps": 0.04316350839522034,
+  "val_rps_skill": 0.0010875308267290773,
+  "val_width_ratio": 2.548020637198897
+ },
+ "steps_per_epoch": 38,
+ "temperature": 1.020528032842509,
+ "total_steps": 50,
+ "train": {
+  "best_step": 30,
+  "best_value": 0.0431988969035522,
+  "checkpoint": "/data1/zli538/paperb_p4_20261127/p5_timing_20261128/jobs/qwen3.5-4b-base/run/stage_s/ckpt/step_0000050",
+  "completed": true,
+  "early_stopped": false,
+  "stopped_at": 50
+ },
+ "train_config_sha256": "4c8ffef9ce29a9d825e7df3d1dfb463653879cfec7106cec6e51c4cd9b881b97"
+}

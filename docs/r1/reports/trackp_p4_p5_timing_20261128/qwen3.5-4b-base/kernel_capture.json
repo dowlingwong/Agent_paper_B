@@ -1,0 +1,22 @@
+{
+ "capability": [
+  8,
+  9
+ ],
+ "cuda_runtime": "12.4",
+ "device_name": "NVIDIA RTX 6000 Ada Generation",
+ "device_uuid": "f439cca8-bd1d-d5c6-d15e-bbfbc02c8154",
+ "finished_unix": 1795874548.9465675,
+ "kernels_bound": {
+  "causal_conv1d_fn": "causal_conv1d.causal_conv1d_interface.causal_conv1d_fn",
+  "causal_conv1d_update": "causal_conv1d.causal_conv1d_interface.causal_conv1d_update",
+  "torch_chunk_gated_delta_rule": "fla.ops.gated_delta_rule.chunk.chunk_gated_delta_rule",
+  "torch_recurrent_gated_delta_rule": "fla.ops.gated_delta_rule.fused_recurrent.fused_recurrent_gated_delta_rule"
+ },
+ "peak_allocated_mib": 14428.188,
+ "peak_reserved_mib": 15450.0,
+ "started_unix": 1795874111.1303847,
+ "torch": "2.6.0+cu124",
+ "transformers": "5.19.0",
+ "wall_s": 437.816
+}

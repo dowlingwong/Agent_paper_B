@@ -1,0 +1,135 @@
+Current Triton version 3.2.0 is below the recommended 3.3.0 version. Errors may occur and these issues will not be fixed. Please consider upgrading Triton.
+Loading weights:   0%|          | 0/723 [00:00<?, ?it/s]Loading weights:   0%|          | 1/723 [00:03<39:15,  3.26s/it]Loading weights:   1%|          | 8/723 [00:03<03:42,  3.22it/s]Loading weights:   2%|▏         | 12/723 [00:03<02:20,  5.07it/s]Loading weights:   2%|▏         | 16/723 [00:03<01:45,  6.72it/s]Loading weights:   3%|▎         | 23/723 [00:03<00:58, 11.89it/s]Loading weights:   4%|▎         | 27/723 [00:04<01:04, 10.80it/s]Loading weights:   5%|▌         | 38/723 [00:04<00:33, 20.38it/s]Loading weights:   6%|▌         | 44/723 [00:04<00:35, 19.16it/s]Loading weights:   7%|▋         | 49/723 [00:05<00:37, 18.19it/s]Loading weights:   8%|▊         | 61/723 [00:05<00:22, 28.81it/s]Loading weights:   9%|▉         | 66/723 [00:05<00:23, 27.57it/s]Loading weights:  11%|█         | 79/723 [00:05<00:16, 39.42it/s]Loading weights:  12%|█▏        | 85/723 [00:05<00:15, 42.21it/s]Loading weights:  13%|█▎        | 92/723 [00:05<00:14, 44.66it/s]Loading weights:  14%|█▎        | 98/723 [00:06<00:17, 34.79it/s]Loading weights:  14%|█▍        | 103/723 [00:06<00:19, 31.77it/s]Loading weights:  15%|█▌        | 112/723 [00:06<00:15, 39.17it/s]Loading weights:  16%|█▋        | 118/723 [00:06<00:15, 38.62it/s]Loading weights:  17%|█▋        | 123/723 [00:06<00:16, 35.34it/s]Loading weights:  18%|█▊        | 129/723 [00:07<00:15, 38.63it/s]Loading weights:  19%|█▊        | 134/723 [00:07<00:18, 32.09it/s]Loading weights:  20%|█▉        | 143/723 [00:07<00:13, 42.33it/s]Loading weights:  20%|██        | 148/723 [00:07<00:21, 26.85it/s]Loading weights:  21%|██        | 152/723 [00:08<00:25, 22.76it/s]Loading weights:  22%|██▏       | 156/723 [00:08<00:23, 24.47it/s]Loading weights:  23%|██▎       | 165/723 [00:08<00:18, 30.98it/s]Loading weights:  24%|██▎       | 171/723 [00:08<00:16, 33.20it/s]Loading weights:  24%|██▍       | 175/723 [00:08<00:20, 27.10it/s]Loading weights:  25%|██▌       | 184/723 [00:08<00:14, 37.04it/s]Loading weights:  26%|██▌       | 189/723 [00:09<00:20, 26.02it/s]Loading weights:  27%|██▋       | 197/723 [00:09<00:15, 33.84it/s]Loading weights:  28%|██▊       | 202/723 [00:09<00:21, 24.19it/s]Loading weights:  28%|██▊       | 206/723 [00:10<00:27, 19.04it/s]Loading weights:  29%|██▉       | 212/723 [00:10<00:21, 24.08it/s]Loading weights:  30%|███       | 220/723 [00:10<00:15, 31.64it/s]Loading weights:  31%|███       | 225/723 [00:10<00:18, 27.43it/s]Loading weights:  32%|███▏      | 229/723 [00:10<00:17, 28.16it/s]Loading weights:  33%|███▎      | 237/723 [00:10<00:13, 35.74it/s]Loading weights:  33%|███▎      | 242/723 [00:11<00:18, 25.84it/s]Loading weights:  35%|███▍      | 251/723 [00:11<00:13, 35.74it/s]Loading weights:  35%|███▌      | 256/723 [00:11<00:19, 24.50it/s]Loading weights:  36%|███▌      | 260/723 [00:12<00:25, 18.24it/s]Loading weights:  37%|███▋      | 266/723 [00:12<00:19, 23.34it/s]Loading weights:  38%|███▊      | 276/723 [00:12<00:12, 34.40it/s]Loading weights:  39%|███▉      | 282/723 [00:12<00:16, 26.25it/s]Loading weights:  40%|████      | 290/723 [00:12<00:12, 33.73it/s]Loading weights:  41%|████      | 296/723 [00:13<00:16, 25.95it/s]Loading weights:  42%|████▏     | 304/723 [00:13<00:12, 33.58it/s]Loading weights:  43%|████▎     | 310/723 [00:13<00:18, 22.38it/s]Loading weights:  44%|████▎     | 315/723 [00:14<00:18, 21.83it/s]Loading weights:  45%|████▍     | 323/723 [00:14<00:14, 28.08it/s]Loading weights:  46%|████▌     | 330/723 [00:14<00:12, 31.43it/s]Loading weights:  46%|████▋     | 335/723 [00:14<00:13, 28.59it/s]Loading weights:  47%|████▋     | 343/723 [00:14<00:10, 36.61it/s]Loading weights:  48%|████▊     | 348/723 [00:15<00:14, 25.75it/s]Loading weights:  49%|████▉     | 354/723 [00:15<00:15, 23.39it/s]Loading weights:  50%|████▉     | 359/723 [00:15<00:14, 25.38it/s]Loading weights:  50%|█████     | 363/723 [00:15<00:16, 21.72it/s]Loading weights:  51%|█████     | 366/723 [00:16<00:19, 18.62it/s]Loading weights:  51%|█████▏    | 371/723 [00:16<00:16, 21.47it/s]Loading weights:  52%|█████▏    | 378/723 [00:16<00:12, 28.47it/s]Loading weights:  53%|█████▎    | 383/723 [00:16<00:12, 28.07it/s]Loading weights:  54%|█████▎    | 387/723 [00:16<00:14, 23.20it/s]Loading weights:  54%|█████▍    | 394/723 [00:16<00:10, 30.40it/s]Loading weights:  55%|█████▌    | 398/723 [00:17<00:12, 25.28it/s]Loading weights:  57%|█████▋    | 410/723 [00:17<00:07, 41.39it/s]Loading weights:  58%|█████▊    | 416/723 [00:17<00:09, 32.66it/s]Loading weights:  58%|█████▊    | 421/723 [00:17<00:09, 32.52it/s]Loading weights:  60%|█████▉    | 432/723 [00:17<00:06, 46.28it/s]Loading weights:  63%|██████▎   | 454/723 [00:17<00:03, 79.43it/s]Loading weights:  65%|██████▍   | 469/723 [00:18<00:02, 92.57it/s]Loading weights:  68%|██████▊   | 490/723 [00:18<00:01, 117.69it/s]Loading weights:  70%|██████▉   | 504/723 [00:18<00:01, 123.13it/s]Loading weights:  72%|███████▏  | 524/723 [00:18<00:01, 126.76it/s]Loading weights:  75%|███████▍  | 542/723 [00:18<00:01, 139.49it/s]Loading weights:  78%|███████▊  | 564/723 [00:18<00:00, 159.33it/s]Loading weights:  81%|████████  | 586/723 [00:18<00:00, 164.58it/s]Loading weights:  84%|████████▍ | 610/723 [00:18<00:00, 182.15it/s]Loading weights:  87%|████████▋ | 629/723 [00:18<00:00, 174.70it/s]Loading weights:  90%|████████▉ | 648/723 [00:19<00:00, 171.66it/s]Loading weights:  93%|█████████▎| 669/723 [00:19<00:00, 174.46it/s]Loading weights:  95%|█████████▌| 687/723 [00:19<00:00, 166.12it/s]Loading weights:  98%|█████████▊| 706/723 [00:19<00:00, 170.54it/s]Loading weights: 100%|██████████| 723/723 [00:19<00:00, 36.88it/s] 
+[transformers] `use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+{
+ "run_dir": "/data1/zli538/paperb_p4_20261127/p5_timing_20261128/jobs/qwen3.5-4b-base/run",
+ "report": {
+  "schema": "trackp_sft_report/v1",
+  "lr": 0.0001,
+  "seed": 0,
+  "protocol": {
+   "loss": "rps+ce",
+   "effective_batch": 16,
+   "micro_batch": 8,
+   "max_epochs": 5,
+   "warmup_frac": 0.05,
+   "eval_every_frac": 0.25,
+   "patience": 2,
+   "lr_grid": [
+    1e-05,
+    3e-05,
+    0.0001
+   ],
+   "head_lr": 0.001,
+   "token_lr": 0.0001,
+   "temperature_scaling": true,
+   "seeds": [
+    0,
+    1,
+    2
+   ],
+   "gradient_checkpointing": true
+  },
+  "data_sha256": "f997e7fad6d1a6ff704e68d886433b4980644e28419b79aa2921f5dd563e050e",
+  "label_status": "ENGINEERING_ONLY (R1-TRACKP-SFT-DEV): readiness only; not used for any evidence, selection or tuning; label seeds 7001-7005 only, never the evaluation block 7006-7010",
+  "protocol_deviation": {
+   "max_steps": 50
+  },
+  "train_config_sha256": "4c8ffef9ce29a9d825e7df3d1dfb463653879cfec7106cec6e51c4cd9b881b97",
+  "n_train": 593,
+  "n_val": 76,
+  "n_val_secondary_only": 200,
+  "cross_split_duplicates": "heldout_excludes_seen",
+  "heldout_rule": "R1-TRACKP-SFT-DUP: primary = val without training duplicates (early stopping, temperature, selection); secondary = full val (reported only)",
+  "steps_per_epoch": 38,
+  "total_steps": 50,
+  "train": {
+   "stopped_at": 50,
+   "completed": true,
+   "checkpoint": "/data1/zli538/paperb_p4_20261127/p5_timing_20261128/jobs/qwen3.5-4b-base/run/stage_s/ckpt/step_0000050",
+   "best_step": 30,
+   "best_value": 0.0431988969035522,
+   "early_stopped": false
+  },
+  "selected": {
+   "val_rps": 0.0431988969035522,
+   "val_rps_skill": 0.00026855147235271826,
+   "val_nll": 2.1481964588165283,
+   "val_ece_all_bins": 0.008458529340690161,
+   "val_ece_top1": 0.03595978023326987,
+   "val_pit_histogram": [
+    0.8842697643778838,
+    0.8336922961316757,
+    0.8722004267545735,
+    0.9556946337134571,
+    1.0512408246583158,
+    1.1466812489588292,
+    1.0341175519835837,
+    0.8860402124232581,
+    1.1805073027168786,
+    1.155555738281544
+   ],
+   "val_mean_pred_sd": 1.2434731498706022,
+   "val_mean_label_sd": 0.49106777369240007,
+   "val_width_ratio": 2.5321823513703046
+  },
+  "temperature": 1.020528032842509,
+  "selected_temperature_scaled": {
+   "val_rps": 0.04316350839522034,
+   "val_rps_skill": 0.0010875308267290773,
+   "val_nll": 2.148120164871216,
+   "val_ece_all_bins": 0.007681798891984083,
+   "val_ece_top1": 0.033155029362552685,
+   "val_pit_histogram": [
+    0.8784972804427799,
+    0.8441601827698763,
+    0.8832304483865817,
+    0.9625202529032056,
+    1.0567655414583956,
+    1.1427373803766354,
+    1.0253332264782293,
+    0.8840419364719614,
+    1.1920018741931717,
+    1.1307118765191637
+   ],
+   "val_mean_pred_sd": 1.251250821631553,
+   "val_mean_label_sd": 0.49106777369240007,
+   "val_width_ratio": 2.548020637198897
+  },
+  "selected_full_heldout": {
+   "val_full_rps": 0.043234411985495325,
+   "val_full_rps_skill": -0.0184595979139619,
+   "val_full_nll": 2.1507720947265625,
+   "val_full_ece_all_bins": 0.0076235364546777,
+   "val_full_ece_top1": 0.03994548585691107,
+   "val_full_pit_histogram": [
+    0.8133671592727919,
+    0.8165864368158795,
+    0.8342389257026386,
+    0.8807180569984124,
+    0.9861383803217953,
+    1.1236207085368997,
+    1.1054150320053346,
+    1.0233959257788747,
+    1.2234911388837793,
+    1.193028235683594
+   ],
+   "val_full_mean_pred_sd": 1.2408004734695266,
+   "val_full_mean_label_sd": 0.501300129990677,
+   "val_full_width_ratio": 2.475164874767941
+  },
+  "selected_full_heldout_temperature_scaled": {
+   "val_full_rps": 0.04317651698493035,
+   "val_full_rps_skill": -0.017095783390095765,
+   "val_full_nll": 2.150599479675293,
+   "val_full_ece_all_bins": 0.006744793600387376,
+   "val_full_ece_top1": 0.03713245458084399,
+   "val_full_pit_histogram": [
+    0.8078435047703741,
+    0.8268359657887548,
+    0.8441550488543665,
+    0.8869553246845361,
+    0.9918678940805686,
+    1.1212663668217158,
+    1.098042708124055,
+    1.0222581
