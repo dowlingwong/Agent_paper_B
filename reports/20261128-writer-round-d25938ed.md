@@ -1,0 +1,42 @@
+# Paper B writer round at `d25938ed`
+
+Writer is idle. The published research base is `d25938ed46953bd0ecd2d467aebd94a862e657dc`, the coordinator queue is `555cfd02892e746279b19ae417ec85efdf387037`, and the incoming Writer tip is `ad010c283bcbf791707e6b5ad12cce9658da4579`. All five assigned writer cards have published deliveries. `STATE.md` still lists the restructure and claim sheet as delivered, so I checked their branch ancestry on published main. The next item, result tables in runbook §3 item 4, awaits released evidence and dispatch. The standalone manuscript main and the research pin both point to `c2a7de3456a88605ae3ac6284b33dbe3498c8ae5`. [Writer queue](https://github.com/dowlingwong/Agent_paper_B/blob/555cfd02/STATE.md#writer) · [Published manuscript](https://github.com/dowlingwong/paper_B_manuscript/tree/c2a7de3456a88605ae3ac6284b33dbe3498c8ae5)
+
+| Task | Published research delivery branch and tip | Recorded review |
+|---|---|---|
+| `writer/20261126-01` with `writer/20261126-02` | `writer-20261126-01-manuscript-restructure` at `e360d425752334c56cfaba8ff9499315ca15ea8e` | Restructure re-check ACCEPT WITH MINOR, corrections applied. The subsequent title and trim have no separate review on record. |
+| `writer/20261126-03` | `writer-20261126-03-claim-table-sheet` at `acf7d37be0cdddc29f157c311b337807f9cbea0a` | ACCEPT WITH MINOR, corrections applied. |
+| `writer/20261127-01` | `writer-20261127-01-sources-and-27nov-rows` at `e8dc1e36a09b61e9410132f23551064f1661e769` | Independent re-check ACCEPTED. |
+| `writer/20261127-02` | `writer-20261127-02-codex-manuscript-edits` at `e3af70a495816c3d107f013b9ee2c17593600bae` | Independent re-check ACCEPTED. |
+
+## Question, method and evidence
+
+Which decisions leave the search with a better final configuration at the same budget? In the Sweep 1 replay, 3,274 of 4,999 proposals repeated a configuration already evaluated. That count measures the frequency of repeats and motivates testing whether skipping them improves the final result. D.3 compares arms on the same fresh campaign instances with caps of 20 worker runs and 80 manager calls. Ten fresh seeds measure each final configuration’s gain over its start, scaled by the node’s noise. A0R versus A0 measures the effect of skipping duplicates and detectable no-ops. A2 versus A0R measures what the noise-aware rule adds with those skips in place. A3 and A5 versus A2 measure what their learned forecasts add. A5 versus A3 compares the full forecasting arms, including their different inputs. The released paired estimates, intervals and declared Holm tests will determine the campaign claims. The offline gate separately tests one-step decisions on logged proposals. [Sweep 1 replay count](https://github.com/dowlingwong/Agent_paper_B/blob/d25938ed/docs/r1/reports/b2_audit_20261119/counts.json) · [Claim-to-table sheet](https://github.com/dowlingwong/Agent_paper_B/blob/d25938ed/docs/r1/proposals/PAPER_B_CLAIM_TABLE_SHEET_20261126.md)
+
+## Checks and draft builds
+
+| Build | Exit | Last main-text page | PDF pages | Rebuilt PDF SHA-256 |
+|---|---:|---:|---:|---|
+| Gate non-pass preview | 0 | 8 | 44 | `a9414f5c8694f15b0873008dec904232d83f8ffd85ee19e1af0a6f53176293cc` |
+| Gate-pass preview | 0 | 8 | 43 | `234669cf51dc747d96cd9007b03f482d3ebde9c0288ce8f4785b35b49aeb6b88` |
+
+Both README `latexmk` builds ran from the pinned manuscript. Ghostscript and LaTeX page counts agreed. All 87 page renders matched the published pre-migration PDFs at 100 dpi. Pages 1 and 8 were inspected in both variants. References start on page 8. Each build has nine existing overfull boxes and zero undefined citations, undefined references or duplicate labels. `FinalPaper` exited 12 at the unset gate-outcome switch. Draft fields for the gate verdict and estimates, D.3 effects and intervals, full C1 audit rates, realised T1 scope and evidence bindings remain placeholders. Abstract approval, the anonymous companion reference and SGM author metadata are pending. Task ancestry and `git diff --check` passed. This round verified published sources and produced a status report. The recorded reviews above apply to the original deliveries.
+
+## Next dependencies
+
+- **D.3a.** Rev 5 is signed and frozen at `d25938ed`. Local `20261128-12` follows the G.5 fixture task. It redoes step (8), binds the rev 5 hash in the note and three §8 header builders, and records the P7 re-read. The reviewed exact-runtime attempts `d3a-p7-exact-20261128-c` and `-d` are complete. Their 50/276 worker failures (18.12%) triggered the rev 4 engineering STOP at 12.99%. The new card directs the PASS disposition at the signed 18.53% threshold. The completed rebind and re-read are still due, followed by the bound launch commit and fresh run ID, P10/P11, tier-E review, author P9 and note publication. D.3b also needs frozen arms and its own authorization. The screening decision from `smeas-20261123-a` (stamp `SMEAS_EVIDENCE_20261128T001405Z`) carries over. [Local card](https://github.com/dowlingwong/Agent_paper_B/blob/555cfd02/tasks/local/20261128-12-d3-step8-rev5.md) · [P7 receipt](https://github.com/dowlingwong/Agent_paper_B/blob/30bba985/reports/20261128-24-d3a-p7-exact-stop.md)
+- **G.5 publication STOP and offline gate.** P11 run `g5-p11-20261128T033600Z` completed the four remaining scenarios, with 420/420 captures accounted for in the accepted review. Local `20261128-10` delivered the accepted unsigned render at `6466e0440e7ee8ff292e148c1212b5742685629d`. Local `20261128-11` now owns the fixture correction for 79 new focused failure or error IDs. Next check the focused and full-suite comparisons, independent re-review and coordinator publication with the strict note check before Compute `20261126-06` launches. The gate then needs G.5 labels, train/dev release, reviewed consumer and preregistration bindings, proof checks, frozen arms and explicit test release. [Fixture card](https://github.com/dowlingwong/Agent_paper_B/blob/555cfd02/tasks/local/20261128-11-g5-spec-test-fixtures.md) · [Render and STOP](https://github.com/dowlingwong/Agent_paper_B/blob/d0637710/reports/20261128-10-g5-final-render.md)
+- **P.4 E0, Compute `20261128-16`.** Local last observed Ada `p5_e0_fresh_20261128_ada/e0e1` at PID `4055310`. Next check Compute’s receipt for that run, Ada `p5_e0_fresh_20261128_ada/e0e2`, and TASL-7 `p5_e0_fresh_20261128_tasl7/e0e1` and `p5_e0_fresh_20261128_tasl7/e0e2`. The last fetched reports give no fresh verdict. Phase 1 and A5 SFT await the signed-criterion verdict, reviewed timing and publication of the phase-1 note. [Compute card](https://github.com/dowlingwong/Agent_paper_B/blob/555cfd02/tasks/compute/20261128-16-e0-fresh-runs.md) · [Local observation](https://github.com/dowlingwong/Agent_paper_B/blob/d0637710/reports/20261128-10-g5-final-render.md#pending-lanes-when-handing-off)
+- **HTCondor preflight, Compute `20261128-03`.** The last recorded preflight ID `760158.0` left the queue. The next attempt needs a startable ETP L40S or TOpAS A100 and a replacement ID. [Compute status](https://github.com/dowlingwong/Agent_paper_B/blob/30bba985/reports/20261128-23-round-status.md)
+- **Writer.** Check for the result-table card and its release records. After dispatch and release, fill the authorised cells on a standalone manuscript task branch, rebuild both drafts and obtain independent review. The coordinator publishes the reviewed revision and advances the research pin.
+
+| Verified record | SHA-256 |
+|---|---|
+| Published PLAN | `251cb8e4f68e13c14833e93d75b164663d459806f28dd2ded28ea1118407def0` |
+| Published claim-to-table sheet | `23e9ca0b410c7db1ca46554b9cffbb59f5f6592feef061d56264176ccb6ce9c7` |
+| Signed and frozen D.3 rev 5 | `700d93cac277a23f527f20a49f8606987e63f615547b435cf924b2706ec778ad` |
+| Independent D.3 rev 5 review | `6228223bf50b5def23a28ad7915133148b476dcb17a9d37a852b784489ad7e25` |
+| Exact-runtime P7 root manifest | `a1dd99016e7c642afdc72cb6f87a2978968346c7be320dabd17e33b2438c4e8d` |
+| G.5 P11 root manifest | `6e27a28967979af047cfb28a72707219e3ad8c49a6720cfc2d193e59caa3b8e0` |
+
+Decided alone to use writable temporary Git metadata after the assigned worktree refused fetch writes and to build from an archive of the standalone pin. All 15 pre-existing tracked edits matched published blobs and were preserved. Writer submitted zero jobs and opened zero sealed partitions. Job status comes from the coordinator, Local and Compute records.
