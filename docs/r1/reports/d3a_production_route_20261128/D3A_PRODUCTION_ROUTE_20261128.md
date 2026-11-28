@@ -69,9 +69,8 @@ The driver sequence is fixed (the executed proof is the same sequence without st
    `observed.json` while fd 9 is inherited (pre-server, as the chunk requires);
 3. `llama-server` starts on the frozen argv under `taskset -c 16-31` and the same descriptors, and
    the driver waits for `/props`;
-4. `python -m r1.c3.d3.campaign_chunk --launch launch.json --out runs/<chunk> --manifest
-   manifest.json --observed observed.json` runs the chunk with the reviewed `chunk_argv` under the
-   20 GB scope;
+4. the reviewed `chunk_argv` (`python -m r1.c3.d3.campaign_chunk` with `--launch`, `--out`,
+   `--manifest`, `--observed`) runs the chunk under the 20 GB scope;
 5. the server is stopped and both leases are released.
 
 `production_driver.sh` in this directory is that driver. It was **not executed with `RUN_CHUNK=1`**;
