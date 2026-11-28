@@ -3,19 +3,24 @@
 - Date: 2026-11-28 (Europe/Berlin). Independent reviewer, read-only on both hosts: no job, submission, signal,
   edit, delete or host write was made. The only write is this review, on the review branch.
 - Deliverable: `origin/compute-g5-p11-matrix-20261128` at
-  `f4704bf21eb495d5568b2fa06cfaea6c433bcb73` (the follow-up commit on `0a748818`; the
-  earlier tip is superseded). The follow-up adds only the 16 `.log`/`.jsonl` captures that
-  `.gitignore` had skipped; the record text and `SHA256SUMS` are unchanged. `git diff --name-status
-  0a748818..f4704bf2` lists 16 additions and no modifications.
-- Tree: this is one record commit on `origin/main` `914e1cf9` plus the capture commit. The record's
-  stated base `cb20c9fd` is the merge that accepted the tested P11 code; `914e1cf9` is the later
-  main tip the record was cut from. Tested code `b9e195acf3b0494410cbc752568ea920ef1623d6`;
-  pinned harness `cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98`.
+  `ba02dc21d1f7ae29264f290b20e762c32835a100` (parent `f4704bf2`), which applies the two
+  non-blocking findings of the first review pass. The earlier tips `f4704bf2` (captures) and
+  `0a748818` (original record) are superseded.
+- Re-check: `git diff f4704bf2..ba02dc21` touches exactly three paths — the record (two edits: the
+  close-server quote and the `server-span` registration sentence), the regenerated `SHA256SUMS`,
+  and the new `tasl2/server-span-registration.json`. No other content changed; the diff is 32
+  insertions and 3 deletions. `shasum -a 256 -c SHA256SUMS` now returns **50/50 OK, exit 0**.
+- Tree: this is one record commit on `origin/main` `914e1cf9`, the capture commit, and the
+  minor-fix commit. The record's stated base `cb20c9fd` is the merge that accepted the tested P11
+  code; `914e1cf9` is the later main tip the record was cut from. Tested code
+  `b9e195acf3b0494410cbc752568ea920ef1623d6`; pinned harness
+  `cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98`.
 - Task `compute/20261128-09`, PLAN **R1-G5-P11**.
-- Review branch: `compute-g5-p11-matrix-20261128-review`, created from `f4704bf2`; this file is its
-  only commit. The deliverable branch is untouched.
+- Review branch: `compute-g5-p11-matrix-20261128-review`, created from `f4704bf2`; the first
+  commit (`2fa851e6`) reviewed `f4704bf2`, and a second commit updates this file to re-check
+  `ba02dc21`. The deliverable branch is untouched.
 
-**Verdict: ACCEPTED — the STOP is correctly established.**
+**Verdict: ACCEPTED — the STOP is correctly established; the `f4704bf2..ba02dc21` diff is clean and fixes both minors.**
 
 The three STOP facts hold on the files, the pinned code and the host captures. Both synthetic
 campaigns stop at `STOP 6: baseline_failed` because the pinned harness reads the step count from
@@ -23,19 +28,37 @@ the run log while the kit writes it only to the isolated result channel; that is
 interface defect, not a TASL-2/host failure. Both seal CLIs refuse because `processes_mentioning`
 lists the caller's own process; the self-scan diagnostics and the code confirm it. The passing
 items (spec, server record, probe, seal and span) are real, and no sealed or paper test value was
-read. Two non-blocking documentation issues are recorded at the end; neither changes the STOP.
+read. Two non-blocking documentation issues were raised in the first pass; both are fixed in
+`ba02dc21` (see Findings). The STOP remains correctly established.
 
 ## Checks and results
 
 ### 1. Branch, capture set and hashes — PASS
 
-- `git rev-parse origin/compute-g5-p11-matrix-20261128` → `f4704bf21eb495d5568b2fa06cfaea6c433bcb73`.
-- `git diff --name-status 0a748818 f4704bf2` → 16 `A` entries (12 captured logs plus four empty
-  log placeholders), no `M`/`D`; `git diff 0a748818..f4704bf2 -- docs/r1/reports/g5_p11_engineering_20261128/G5_P11_ENGINEERING_20261128.md docs/r1/reports/g5_p11_engineering_20261128/SHA256SUMS`
-  is empty.
-- `shasum -a 256 -c SHA256SUMS` in the record directory: **49/49 OK, exit 0**. At `0a748818` the
-  same command failed on 16 absent `.log`/`.jsonl` paths; the follow-up commit fixes that
-  self-containment defect without changing any recorded byte.
+- `git rev-parse origin/compute-g5-p11-matrix-20261128` → `ba02dc21d1f7ae29264f290b20e762c32835a100`.
+- `git diff --name-status f4704bf2 ba02dc21` → `M` record, `M` `SHA256SUMS`, `A`
+  `tasl2/server-span-registration.json`; no other path. `git diff --stat` is 32 insertions and
+  3 deletions.
+- `shasum -a 256 -c SHA256SUMS` in the record directory at `ba02dc21`: **50/50 OK, exit 0**.
+  The new entry `./tasl2/server-span-registration.json` hashes to `2a76ea7a…`; the record entry is
+  the regenerated `b8358662f42b3869cb53b10c007b5a30eb9205923114622dba45f8855deb4451`.
+  At `f4704bf2` the same check was 49/49; at `0a748818` it failed on 16 absent `.log`/`.jsonl`
+  paths, fixed by the capture commit.
+
+### 1a. Re-check of `ba02dc21` — PASS
+
+- **MINOR-1 is fixed.** The `close-server` code block now ends at
+  `…/proposer/g5-p11-20261128T014000Z-closeserver/server-1`, with no suffix, and the note
+  immediately after it says the `close-attempt` message adds `on their command line` while
+  `close-server` does not. This matches `tasl7/g5-p11-20261128T014000Z-closeserver.close-server.log`
+  and `g5_seal.py:694`.
+- **MINOR-2 is fixed.** `tasl2/server-span-registration.json` is committed and hashes to
+  `2a76ea7a8287fe9f0bf034e940e12e7019b3e8a46446204ff8f11f86aadcc1c3`, byte-identical to the
+  TASL-2 `runs/g5-p11-20261128T014000Z-lease/_server_spans/server-1.json` re-read from the host.
+  The record's seal/span paragraph now names it, and `SHA256SUMS` binds it.
+- **No other content changed.** The diff is limited to the two quote/registration edits and the
+  sums; the A/B/C/D evidence, `run.log`, result channels, ledgers, node logs, self-scans and
+  server records are unchanged from `f4704bf2`.
 
 ### 2. A — both synthetic campaigns stop at `STOP 6: baseline_failed` — PASS
 
@@ -189,26 +212,36 @@ contains `SEAL_RECEIPT.json` and `server.tar`; the tar hash matches the receipt.
   residual display memory); `fuser` reports no holder of `~/r1_locks/gpu0.lock`; `lease_after.txt`
   on both hosts says `gpu0-free`. The TASL-2 CPU locks are also unheld.
 
-## Findings
+## Findings — both resolved at `ba02dc21`
 
-### MINOR-1 (non-blocking) — the `close-server` quote is not verbatim
+### MINOR-1 (was non-blocking) — the `close-server` quote is not verbatim — RESOLVED
 
-The record's second code block ends the refusal with `…/server-1` followed by
+In the first pass the record's second code block ended the refusal with `…/server-1` followed by
 `on their command line`. The captured line
 (`tasl7/g5-p11-20261128T014000Z-closeserver.close-server.log`) ends at `…/server-1`; the suffix
-belongs to `close_attempt` (`g5_job.py:2074`), not `close_server` (`g5_seal.py:694`). The listed
-PID and the self-refusal conclusion are unchanged. Correct the quote, or mark it as a paraphrase,
-before the record is cited as a verbatim capture.
+belongs to `close_attempt` (`g5_job.py:2074`), not `close_server` (`g5_seal.py:694`).
 
-### MINOR-2 (non-blocking) — the `server-span` registration is not in the committed set
+**Resolution at `ba02dc21`:** the code block now ends at `…/server-1`, and a parenthetical states
+that the `close-attempt` message adds `on their command line` while `close-server` does not. The
+quote and the capture now agree verbatim; the listed PID and the self-refusal conclusion are
+unchanged.
 
-The record says the receipt was copied to TASL-2 and `server-span` accepted it, and its file list
-says the set holds "server record/end/seal/span". The committed set holds the seal receipt/log
-(the same bytes that were registered) but not
+### MINOR-2 (was non-blocking) — the `server-span` registration was not in the committed set — RESOLVED
+
+In the first pass the record said the receipt was copied to TASL-2 and `server-span` accepted it,
+and its file list said the set holds "server record/end/seal/span". The committed set held the
+seal receipt/log (the same bytes that were registered) but not
 `runs/g5-p11-20261128T014000Z-lease/_server_spans/server-1.json` or the `server-span` command
 output. I verified the registration directly on TASL-2 (sha256 `2a76ea7a…`, same bytes as the seal
-log; span 112.0 s), so the claim is true; committing the registration (or saying it is host-only)
-would make the record self-contained.
+log; span 112.0 s), so the claim was true but not self-contained.
+
+**Resolution at `ba02dc21`:** `tasl2/server-span-registration.json` is committed, hashes to
+`2a76ea7a8287fe9f0bf034e940e12e7019b3e8a46446204ff8f11f86aadcc1c3`, and is byte-identical to
+the host registration re-read from TASL-2. The record's seal/span paragraph names the file, and
+the regenerated `SHA256SUMS` binds it (50/50 OK).
+
+No new findings. The re-check touches exactly the two requested items — the close-server quote and
+the server-span registration — plus the mechanically regenerated `SHA256SUMS`.
 
 ### Notes, not defects
 
