@@ -188,6 +188,64 @@ the record asked for. This review is against the stated base (rev 4, 12.99 %) an
 the record for not anticipating a later author row, but the coordinator should reconcile rev 5
 before merging this record as a current verdict.
 
-## Verdict
+## Verdict (round 1, `db9fb948`)
 
 **Verdict: CHANGES REQUIRED**
+
+## Second-round re-check (`d0b3b35c`)
+
+**Reviewed tip:** `d0b3b35cb3168539a87f68140f556871a5758dbc` on
+`compute-d3a-p7-exact-20261128` (parent `db9fb948c4edd075ef822805cf5fe5071a541dfe`, one commit).
+**Delta:** 406 files — 404 capture additions plus the record and the report-root `SHA256SUMS`;
+nothing outside `docs/r1/reports/d3a_p7_exact_20261128/`. `captures/SHA256SUMS` is unchanged
+(`8fc4906d…`), so the force-add restored the files the manifest already described rather than
+rewriting the manifest. That is the right fix.
+**Method:** fresh detached worktree at `d0b3b35c`, clean `git status`, no host access.
+
+### Verified from the clean checkout
+
+- **Capture tree.** `shasum -a 256 -c captures/SHA256SUMS` = **944/944 OK** (rc 0); all **28** inner
+  manifests verify. `captures/` has 945 files and `git ls-files captures` returns 945, so none are
+  ignored or untracked.
+- **Root binding.** `shasum -a 256 -c SHA256SUMS` at the report root = **2/2 OK**: record
+  `05d2d6e1…`, `captures/SHA256SUMS` `8fc4906d…`. All §9 hashes still match the delivered bytes,
+  and the §9 sentence "944 entries; all 28 inner sums verify" is now true.
+- **Scripts reproduce.** From the captures root, `worker_gate.py --root .` reproduces
+  `worker_gate.json` **byte-for-byte** (`gate=FAIL`, 276 trials, 50 failures, 0.1811594,
+  harness-only 0.25), and `summarise.py --root .` reproduces `p7_summary.json` **byte-for-byte**.
+  The R1 B1 consequence — the gate was not recomputable — is closed.
+- **Raw evidence.** All 290 trial `run.log`s, the 14 instances of each `runs.jsonl` /
+  `ledger.jsonl` / `events.jsonl`, `server2/server.log` and `attempt-0-partial/run-s6301.log` are
+  delivered and hash-match. The two admitted trials contain
+  `FAILURE_MESSAGE=ParserError: while parsing a flow mapping` with `class_weight: {1`; the
+  A0 6301 `runs.jsonl` shows the 5 `invalid_config` failures and 15 finite-metric successes that
+  the gate row reports.
+- **Arithmetic.** Per seed is now **6301 22/138 = 15.94 %** and **6302 28/138 = 20.29 %**; the
+  50-failure row is **48 plain `invalid_config` + 2 admitted ParserErrors** counted in the same
+  rate; the pooled 50/276 = 18.1159 % is unchanged. R1 M1 and m1 are closed.
+- **Minors.** The lease paths now name the work-root lock files the captured start script actually
+  locks; the causal sentence is explicitly a two-seed sample and says it does not estimate a
+  frequency; the affinity note discloses the single `0-31` reading and relies on
+  `affinity_probe.txt` / `affinity_all.txt`. R1 m1, m4 and m6 are closed; m2, m3 and m5 are
+  partially closed (below).
+- **Tests and scope.** 17 passed again with harness `9bb41680`; the delta is documentation and
+  capture only, with no code, signed file, seed or request changed. The STOP conclusion and the
+  12.99 % gate reading are unchanged.
+
+### Residual minors (not blocking)
+
+- **r1 (§4, m2 residual).** §1 now says "21,638–21,640 MiB at chunk end", but §4 still says "At the
+  end of each chunk … (21,618 MiB)". The latter is the at-load value; replace it with the range.
+- **r2 (`attempt-0-partial/README.txt`, m3 residual).** The record §7 now says "the 6301 run log",
+  but the README still says "both run logs are kept here"; only `run-s6301.log` exists. The README
+  is a hashed capture, so fixing it means re-hashing it and both manifests; the cheaper alternative
+  is a sentence in §7 noting the README's stale wording.
+- **r3 (Affinity note, m5 residual).** The note says the `0-31` worker "had already exited when the
+  PID was re-read", but no re-read is captured; the check had no cwd filter, so a co-tenant is an
+  equally consistent explanation. The disclosure is adequate for the gate, but the mechanism should
+  be stated as unverified or the co-tenant alternative named.
+
+None of these changes a number in the gate, the resource peaks or the STOP. The two round-1
+blocking/major items (B1, M1) and the material minors (m1, m4, m6) are closed.
+
+**Verdict: ACCEPTED**
