@@ -36,7 +36,9 @@ the primary spec sha256 is `a10e5ef8cbb985474473a3e3fec00fd7a71fb9ba787968a13ed8
   `b1-620d222`, model `google_gemma-4-31B-it-Q4_K_M.gguf`; one completion 0.196 s; health median 30.68 ms
   (`g5-p11-20261128T014000Z-lease.probe1.json`).
 - **Server seal and span.** `seal-server` on the stopped `server-1` PASS (procedural seal, span 112 s); the receipt
-  was copied to TASL-2 and `server-span` accepted it. Server ended cleanly (`server_rc 0`, `stop_signal 15`).
+  was copied to TASL-2 and `server-span` accepted it, writing
+  `runs/…/_server_spans/server-1.json` (sha256 `2a76ea7a…`, committed as `tasl2/server-span-registration.json`).
+  Server ended cleanly (`server_rc 0`, `stop_signal 15`).
 
 ## The blocking baseline STOP
 
@@ -86,8 +88,9 @@ on their command line
 
 ```
 STOP: processes [2554947] still name …/proposer/g5-p11-20261128T014000Z-closeserver/server-1
-on their command line
 ```
+
+(The `close-attempt` message adds `on their command line`; `close-server` does not. The mechanism is the same.)
 
 In both cases the listed PID is the calling process itself (or its parent shell), because the attempt/server path is
 part of its command line. A read-only diagnostic reproduces this: with the path passed as `argv[1]`,
