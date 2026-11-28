@@ -1,0 +1,9 @@
+{
+  "tag": "etth1",
+  "rc": 0,
+  "counts": {
+    "passed": 27,
+    "skipped": 1
+  },
+  "tail": "=== pytest_isolation start 2026-11-28T14:48:05Z\ncmd: systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 -- bash -c CG=\\$\\(cut\\ -d:\\ -f3\\ /proc/self/cgroup\\)\\;\\ export\\ AR_TEST_CGROUP_PARENT=/sys/fs/cgroup\\$CG\\;\\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ export\\ PYTHONDONTWRITEBYTECODE=1\\;\\ export\\ PYTHONPATH=\\\"/home/dowling/r1_tracks/t1_tasl_x/harness_etth1_g5/src:/home/dowling/r1_tracks/t1_tasl_x/harness_etth1_g5\\\"\\;\\ cd\\ \\\"/home/dowling/r1_tracks/t1_tasl_x/harness_etth1_g5\\\"\\;\\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ \\ exec\\ timeout\\ 900\\ \\\"/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python\\\"\\ -m\\ pytest\\ tests/trackg/test_trackg_isolation.py\\ -q\\ -p\\ no:cacheprovider\nRunning scope as unit: run-refb616f2fd6d436c8e01ec4d48c6d192.scope\n........................s...                                             [100%]\n27 passed, 1 skipped in 14.91s\n--- pytest_isolation rc=0 end 2026-11-28T14:48:20Z\n"
+}
