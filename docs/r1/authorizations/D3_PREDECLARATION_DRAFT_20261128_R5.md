@@ -1,5 +1,5 @@
 **Revision 5 draft (28 Nov 2026). Prepared with Codex for task `local/20261128-09`.
-Pending author signature and freeze.**
+Signed by the author (R1-D3-PREDECL-R5, 28 Nov 2026) and frozen.**
 
 # D.3 closed loop on T0 — pre-declaration of both stages (D.3a rule arms, D.3b learned arms) — DRAFT, revision 5
 
@@ -887,12 +887,12 @@ into the script before signing, and §9/§14 then re-pin its sha256.
 ## 14. Key block
 
 ```
-frozen: false
-signed_by: pending
-frozen_utc: pending
+frozen: true
+signed_by: the author, R1-D3-PREDECL-R5 (28 Nov 2026, "签 D.3 rev 5"); tier-E review ACCEPTED in docs/r1/reviews/D3_PREDECL_R5_REVIEW_20261128.md
+frozen_utc: 2026-11-28T11:23:20Z
 implements: R1-D3-MIN, R1-MINSUB-CHOICES (4), R1-D3-CHOICES (2), R1-D3B-UNCONDITIONAL, R1-D3-DECOMP, R1-D3-OUTCOMES2, R1-D3-HPO-REF, R1-D3-ORDER, R1-HOST-FREE (2)(c), R1-CARD-SHARE (3), R1-NO-TIMEOUT, R1-STEP-ORDER, R1-D3-REV5
 revision: 5 (28 Nov 2026, over frozen revision 4)
-approved: false
+approved: true
 d3_nodes: digits_mlp, openml_breast_w, openml_climate, openml_credit_approval, openml_ionosphere, openml_sonar, tabular_mlp
 memory_mode: append_only_summary
 W: 20
