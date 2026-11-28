@@ -1,0 +1,32 @@
+== meter before
+{
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g5-p11-20261128T014000Z-closed",
+ "W": 20,
+ "memory": "A",
+ "K": 10,
+ "worker_gpu_hours": 0.0,
+ "proposer": {
+  "seconds": 0,
+  "registered": 0,
+  "open": 0,
+  "open_servers": [],
+  "gaps": []
+ },
+ "threshold_gpu_hours": 425
+}
+== fixture
+{
+ "label": "ENGINEERING_ONLY",
+ "attempt": 1,
+ "path": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T014000Z-closed/mlab_imdb/campaigns-wave1/attempt-1"
+}
+== attempt tree
+/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T014000Z-closed/mlab_imdb/campaigns-wave1/attempt-1
+/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T014000Z-closed/mlab_imdb/campaigns-wave1/attempt-1/attempt.json
+/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T014000Z-closed/mlab_imdb/campaigns-wave1/attempt-1/out
+/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T014000Z-closed/mlab_imdb/campaigns-wave1/attempt-1/out/P11_SYNTHETIC_INTERRUPTION
+== close
+STOP: processes [1021816] still name /home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T014000Z-closed/mlab_imdb/campaigns-wave1/attempt-1 on their command line
+== close
+STOP: processes [1022275] still name /home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T014000Z-closed/mlab_imdb/campaigns-wave1/attempt-1 on their command line
