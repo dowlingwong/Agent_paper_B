@@ -1,0 +1,70 @@
+{
+ "arms": [
+  "A0",
+  "A0R",
+  "A1",
+  "A2",
+  "FIXR3",
+  "EGATE",
+  "LADDER"
+ ],
+ "chunks": {
+  "A0": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6301/chunks/A0",
+  "A0R": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6301/chunks/A0R",
+  "A1": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6301/chunks/A1",
+  "A2": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6301/chunks/A2",
+  "EGATE": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6301/chunks/EGATE",
+  "FIXR3": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6301/chunks/FIXR3",
+  "LADDER": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6301/chunks/LADDER"
+ },
+ "design_deviation": null,
+ "design_node": "openml_climate",
+ "design_note": "The signed smoke fixes openml_climate and says it is never audited for Y; the task card asks for one instance per arm and a G6 audit. Every output here is ENGINEERING_ONLY and is not evidence.",
+ "engineering_only": true,
+ "harness_actual": {
+  "branch": "HEAD",
+  "commit": "9bb416805175149eb87b71f28d77530572aa4bce",
+  "dirty": false
+ },
+ "harness_commit": "9bb416805175149eb87b71f28d77530572aa4bce",
+ "manifest_sha256": "d87602e143d81dcd9a941483b95c1d7e8bf59dd0d7e15e14abf9e96e45959263",
+ "node": "openml_climate",
+ "observed": {
+  "chunk_start_utc": "2026-11-28T05:49:03Z",
+  "driver": "535.309.01",
+  "environment_freeze": {
+   "harness_commit": "9bb416805175149eb87b71f28d77530572aa4bce",
+   "llamacpp": "/home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server",
+   "model": "gemma4_31b Q4_K_M",
+   "python": "/home/dowling/r1_tracks/venv/bin/python",
+   "python_version": "3.11.17+audit-shim(pandas 3.0.3, sklearn 1.8.0, numpy 2.4.4, scipy 1.17.1)"
+  },
+  "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+  "host": "TASL-2",
+  "host_class": null,
+  "lease": true,
+  "lease_path": "/home/dowling/r1_locks/gpu0.lock",
+  "memory_check": "pass",
+  "memory_free": 23830,
+  "memory_total": 24564,
+  "model": "NVIDIA GeForce RTX 4090",
+  "other_processes_end": null,
+  "other_processes_start": {
+   "count": 0,
+   "unknown_memory_count": 0,
+   "used_memory_mib": 0
+  },
+  "proposer_model": "gemma4_31b",
+  "request": null,
+  "required_memory_mib": 22000,
+  "schema": "r1_d3_observed/v1",
+  "scope": "tmux"
+ },
+ "record_sha256": "65b289fbacd324548d5038ccca9c62694dbc8d13f7cca62fe86f35ffb3c3c1ab",
+ "run_id": "d3a-p7-20261128-a",
+ "schema": "r1_d3_smoke/v1",
+ "seed": 6301,
+ "sigma_node": 0.005471612522515804,
+ "stage": "a",
+ "task": "compute/20261127-27"
+}
