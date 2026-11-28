@@ -1,0 +1,56 @@
+{
+ "assembly_copy": "docs/r1/reports/g5_rel_t1_g1b_20261128/x/ASSEMBLY.json",
+ "assembly_sha256": "b4c90ec6a622dcd4c762ff0504751f85dde45fe5421fbb4780a61c5f565af077",
+ "authority": "REL-T1-G1B (R1-SWEEP2-RELEASE-DECISIONS) with its copy list amended by R1-T1-FEAT-DECISIONS D6 A; PRE-DELTA A",
+ "copy": "docs/r1/reports/g5_rel_t1_g1b_20261128/x/summary.json",
+ "d21_verdict": {
+  "gc7rc_etth1": "does_not_qualify",
+  "gc7rc_forestcover": "does_not_qualify",
+  "mlgym_metamaze": "does_not_qualify",
+  "mlgym_titanic": "does_not_qualify"
+ },
+ "g1b_copy": {
+  "assembly_copy": "docs/r1/reports/g5_rel_t1_g1b_20261128/x/ASSEMBLY.json",
+  "assembly_sha256": "b4c90ec6a622dcd4c762ff0504751f85dde45fe5421fbb4780a61c5f565af077",
+  "copy": "docs/r1/reports/g5_rel_t1_g1b_20261128/x/summary.json",
+  "runs_copy": "docs/r1/reports/g5_rel_t1_g1b_20261128/x/runs.jsonl",
+  "runs_sha256": "c23dec91a97cc04f3fb51e15d6248833dfa536a56cf7fda7d75713d82d6808a7",
+  "sealed_path": "/home/dowling/r1_tracks/t1_tasl_x/assembly/g1b-x-tasl-20261126-a/summary.json",
+  "sha256": "67355b668aad1d930814b51e91ccd76620bdad349516d7d630a467d884feaa10"
+ },
+ "g1b_spec_sha256": "d0dce0584b5c1c446e989bd7f8981242b36e30f6008f0c38eb43428524cfd238",
+ "kind": "x",
+ "label": "ENGINEERING_ONLY",
+ "nodes": [
+  "gc7rc_etth1",
+  "gc7rc_forestcover",
+  "mlgym_metamaze",
+  "mlgym_titanic"
+ ],
+ "pre_split_amendment": "docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_SPLIT_V2_20261127.md sha256 970d3e45b5177f0d9f6668e9495905e1878a4ffa8eab3d73c4df6b9292a3bea7",
+ "qualifies_D21": {
+  "gc7rc_etth1": false,
+  "gc7rc_forestcover": false,
+  "mlgym_metamaze": false,
+  "mlgym_titanic": false
+ },
+ "review_must_name": [
+  "docs/r1/reports/g5_rel_t1_g1b_20261128/x/summary.json",
+  "67355b668aad1d930814b51e91ccd76620bdad349516d7d630a467d884feaa10",
+  "/home/dowling/r1_tracks/t1_tasl_x/assembly/g1b-x-tasl-20261126-a/summary.json",
+  "docs/r1/reports/g5_rel_t1_g1b_20261128/x/ASSEMBLY.json",
+  "b4c90ec6a622dcd4c762ff0504751f85dde45fe5421fbb4780a61c5f565af077",
+  "docs/r1/reports/g5_rel_t1_g1b_20261128/x/runs.jsonl",
+  "c23dec91a97cc04f3fb51e15d6248833dfa536a56cf7fda7d75713d82d6808a7",
+  "docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_SPLIT_V2_20261127.md sha256 970d3e45b5177f0d9f6668e9495905e1878a4ffa8eab3d73c4df6b9292a3bea7",
+  "d0dce0584b5c1c446e989bd7f8981242b36e30f6008f0c38eb43428524cfd238"
+ ],
+ "run_id": "g1b-x-tasl-20261126-a",
+ "runs_copy": "docs/r1/reports/g5_rel_t1_g1b_20261128/x/runs.jsonl",
+ "runs_sha256": "c23dec91a97cc04f3fb51e15d6248833dfa536a56cf7fda7d75713d82d6808a7",
+ "schema": "g5_rel_t1_g1b_copy/1",
+ "sealed_assembly_path": "/home/dowling/r1_tracks/t1_tasl_x/assembly/g1b-x-tasl-20261126-a/ASSEMBLY.json",
+ "sealed_path": "/home/dowling/r1_tracks/t1_tasl_x/assembly/g1b-x-tasl-20261126-a/summary.json",
+ "sealed_runs_path": "/home/dowling/r1_tracks/t1_tasl_x/assembly/g1b-x-tasl-20261126-a/runs.jsonl",
+ "sha256": "67355b668aad1d930814b51e91ccd76620bdad349516d7d630a467d884feaa10"
+}
