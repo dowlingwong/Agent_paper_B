@@ -1,6 +1,6 @@
 # Track P P.4 phase 1 on Ada — authorization draft
 
-**Status — unsigned, prerequisites pending (28 November 2026).** This revision applies PLAN §10 to the
+**Status — unsigned, P3 project signature pending (28 November 2026).** This revision applies PLAN §10 to the
 [phase-1 authorization design](TRACKP_P4_SFT_AUTHORIZATION_DRAFT_20261121.md). Phase 1 is ENGINEERING_ONLY
 and uses the receipted sweep-1 train/dev partition. The test evaluator reads synthetic labels. The four
 fitted models, reports and readiness intervals from this phase establish engineering readiness only.
@@ -16,8 +16,8 @@ fitted models, reports and readiness intervals from this phase establish enginee
 
 The P2 disposition, signed choices and exact P3 launch pins are below. The spec-fill commit awaits the
 project SSH signature. The staged smoke and fresh E0 checks passed with published accepted reviews.
-The timing re-check supports carrying forward the original planning estimates. The P5 timing record
-and review await publication on `main`.
+The P5 timing record and independent re-check are published and support carrying forward the original
+planning estimates.
 The phase-1 switch expects a Markdown probe source with full SHA-256 values. The companion
 [Ada probe binding record](../reports/trackp_p4_probe_ada_20261127b/P4_ADA_PROBE_BINDING_20261127.md)
 supplies them from the accepted combined probe JSON. The actual stage is checked after publication
@@ -67,7 +67,7 @@ P1: PASS — signed docs/r1/authorizations/C3_SWEEP1_LABEL_FREEZE_20261124.md wi
 P2: PASS — docs/r1/reports/TRACKP_P4_P2_KEV_DISPOSITION_20261127.md sha256 fa28831701ca0c9b223f265bacefa0692cbbc97468d0ae68d09c84c98ba53903, independent review docs/r1/reviews/P4_P2_KEV_DISPOSITION_REVIEW_20261127.md. Both Kev bases passed P.3a E0 and have no recorded E4 hard-limit failure.
 P3: PENDING — the runner review is docs/r1/reviews/P4_P3_ADA_LAUNCH_REVIEW_20261127.md. The spec-only candidate befb58c8b3f5b222a2cf8973e513b252235453fc has the exact pinned code parent and awaits the project SSH signature.
 P4: PASS — R1-P4-PHASE1-SIGNATURE (2) satisfies per-suite logging for the single T0 suite. Per-suite logging is required for the evidence phase.
-P5: PENDING — staged Track P smoke under R1-QTORCH-AMEND and fresh E0 under R1-P4-E0-CRITERION passed with published accepted reviews. The timing re-check under R1-P4-PHASE1-SIGNATURE (4) supports the carry-forward below and awaits publication. R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B describe the container reference.
+P5: PASS — staged Track P smoke under R1-QTORCH-AMEND and fresh E0 under R1-P4-E0-CRITERION passed with published accepted reviews. The published timing record docs/r1/reports/trackp_p4_p5_timing_20261128/P4_P5_TIMING_20261128.md and its independent review docs/r1/reviews/P4_P5_TIMING_REVIEW_20261128.md support the carry-forward under R1-P4-PHASE1-SIGNATURE (4). R1-TRACKP-IMAGE-V21, R1-TRACKP-IMAGE-V22 and R1-TRACKP-IMAGE-V22-B describe the container reference.
 P6: PASS — R1-TRACKP-P4-DECISIONS (all eight phase-1 choices) and R1-P4-4B-CHECKPOINT
 P7: PASS — --check-config for the filled Ada host config, docs/r1/reports/trackp_p4_20261127/ADA_HOST_FILL_20261127/check_config.json sha256 34748cebb7438f87724a5c23cf2becbea68f1388faf729e94bd9b0a36889e1d8, accepted in docs/r1/reviews/P4_ADA_HOST_FILL_REVIEW_20261127.md. Check the native freeze again in each stage.
 P8: PASS — R1-HOST-FREE governs placement and R1-T1-HOST-TASL records the earlier H200 route. R1-P4-D3-GPU-PREFLIGHT covered the Ada probe. R1-P4-PHASE1-SIGNATURE (1) admits Ada only through the reviewed zli538 venv.
@@ -98,9 +98,9 @@ times after the first step were 1.0230, 5.4855, 1.0528 and 5.6378 s in arm order
 the original probe's training-step measurements. The rerun used staged weights and synthetic data.
 Use the original per-arm projections of 2.52, 6.79, 2.51 and 6.75 GPU-h as planning estimates.
 
-The [timing capture](https://github.com/dowlingwong/Agent_paper_B/blob/902ef2c67c2d7f487b951fefde6e0dc9e5cfa02f/docs/r1/reports/trackp_p4_p5_timing_20261128/P4_P5_TIMING_20261128.md)
+The published [timing capture](../reports/trackp_p4_p5_timing_20261128/P4_P5_TIMING_20261128.md)
 has SHA-256 `24e0d7137ec29421966d70541e0448e96e6d269287d3ac1baf1f91d634e86bbc`.
-The [independent re-check](https://github.com/dowlingwong/Agent_paper_B/blob/8a5316f1004b17300388e7885b1e2f6754d5493e/docs/r1/reviews/P4_P5_TIMING_REVIEW_20261128.md)
+The published [independent re-check](../reviews/P4_P5_TIMING_REVIEW_20261128.md)
 accepted it with documentation minors and has SHA-256 `37d4b6dd3f09b0b4e94d9f8cab9a4daac09db0a81bd3e03e3ec40b11996817b5`.
 The additional timing runs consumed 0.3233 GPU-h. Report that use alongside the formal 3.10 GPU-h
 probe charge and the 20.57 GPU-h phase-1 projection, about 23.99 GPU-h together against the 40 GPU-h
