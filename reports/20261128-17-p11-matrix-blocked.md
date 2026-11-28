@@ -7,7 +7,8 @@ TASL-7 GPU. No P11 PASS is claimed for those four.
 
 - Task: `compute/20261128-10` (reissue of `compute/20261128-09`), PLAN R1-G5-P11, ENGINEERING_ONLY.
 - Base `origin/main` `f7dc4945` (repair `2f110e26` published); clean checkout of `f7dc4945` on both hosts.
-- Branch `compute-g5-p11-matrix-rerun-20261128` @ `15ec39887e0b370603ae794fa2653a9ff584a547`.
+- Branch `compute-g5-p11-matrix-rerun-20261128` @ `f963b1bb5f407004510ef9421a5354c258234e46` (the
+  ignored log/JSONL captures are force-added; the record set is complete in a clean checkout).
 - Record `docs/r1/reports/g5_p11_engineering_20261128_rerun/G5_P11_ENGINEERING_RERUN_20261128.md`, sha256
   `910a1395f6598aabf344b7f60e095ee18a8f104ed7a56952f80a4259deaa9c8c`; `SHA256SUMS` sha256
   `a78f4e7c3ec25b373a33f44c717a2ee5c149ae9f48702ef26935c3f885b3b657`, 289 files verified.
