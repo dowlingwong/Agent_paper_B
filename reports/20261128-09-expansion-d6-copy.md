@@ -1,7 +1,7 @@
 # compute/20261127-36 — expansion D6 copy delivered (review running)
 
 **Result: the expansion `g1b-x-tasl-20261126-a` copy was produced and the three hashes match the sealed source
-byte for byte (1,840 rows). Review in progress.**
+byte for byte (1,840 rows). Source-to-copy review ACCEPTED, no findings.**
 
 - Task: `compute/20261127-36` with the reviewed handoff `local/20261128-01`; code `35849909` published on
   `origin/main` `73524055`.
@@ -17,5 +17,8 @@ byte for byte (1,840 rows). Review in progress.**
   `does_not_qualify` (reported, not a selector).
 - Source and copy kept; no label/test/evaluation value read.
 
-**Next:** the fresh source-to-copy review on `compute-relcopy-x-20261128-review`; then the coordinator publishes
-the accepted copy, and local's expansion P10 step uses it.
+- Review branch: `compute-relcopy-x-20261128-review` @ `c257c58f7a6e05cbc9e94741f4b2f5f5d533a521`;
+  `Verdict: ACCEPTED` in `docs/r1/reviews/G5_EXPANSION_RELCOPY_SOURCE_REVIEW_20261128.md`, sha256
+  `4b7ef4e818579b38e96aa1af84c4b9fe30f4700ca3be96cca1b9ae5bed9eb234`.
+
+**Next:** the coordinator publishes the accepted copy; local's expansion P10 step uses it.
