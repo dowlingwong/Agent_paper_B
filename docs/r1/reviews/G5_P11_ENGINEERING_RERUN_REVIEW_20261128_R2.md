@@ -3,8 +3,9 @@
 - Date: 2026-11-28 (Europe/Berlin). Independent reviewer, read-only. This is a review of the committed
   record only: no host was touched, no job, signal, edit or delete was made, and no host workload was run.
   The only write is this file, on the review branch.
-- Deliverable: `origin/compute-g5-p11-matrix-complete-20261128` at
-  `b31b42feee724b682e11254bb0a95369d1c84e2d` (parent and base of the capture set `f963b1bb`;
+- Deliverable: `origin/compute-g5-p11-matrix-complete-20261128`, round 1 at
+  `b31b42feee724b682e11254bb0a95369d1c84e2d`, round 2 at
+  `0ce1e664b9ef836f83c7f147bd24334184d896c5` (parent `b31b42fe`; base of the capture set `f963b1bb`;
   base code `f7dc4945`, harness `cbf7a003`). Record
   `docs/r1/reports/g5_p11_engineering_20261128_rerun/G5_P11_ENGINEERING_RERUN_20261128.md`, captures in
   `tasl2/` and `tasl7/`, `SHA256SUMS` at the record root.
@@ -12,16 +13,100 @@
   `-closeserver` — and the coverage rows they move. The primary `-lease` matrix, `-infra`, `-closed` and
   the C11/TASL-7 chunk were accepted on the earlier record and were not re-opened; the only primary text
   changes are the result paragraph, the Files paragraph and the coverage/hash rows.
-- Review branch: `compute-g5-p11-matrix-complete-20261128-review`, created from `b31b42fe`. The
-  deliverable branch is untouched.
+- Review branch: `compute-g5-p11-matrix-complete-20261128-review`, created from `b31b42fe`; the round-2
+  commit updates this file only. The deliverable branch is untouched.
 
-**Verdict: CHANGES REQUIRED**
+## Round 2 — re-check at `0ce1e664` (28 November 2026)
+
+The fix commit is one commit after the reviewed tip. `git diff --name-status b31b42fe 0ce1e664` touches
+exactly 20 paths: the record (`M`, +19/−6 lines), `SHA256SUMS` (`M`, one line — the record's own hash) and
+the 18 force-added logs (`A`). No other content changed; no test, spec, seal or number was altered.
+
+### Capture integrity — resolved
+
+- In a fresh worktree checked out at `0ce1e664`, `git status --porcelain` is empty and
+  `shasum -a 256 -c SHA256SUMS` returns **420/420 OK, exit 0**. The set is exactly closed: 420 payload
+  files, 420 entries, **no unsummed file, no missing entry, no duplicate path**. The only sums line that
+  changed is `./G5_P11_ENGINEERING_RERUN_20261128.md` (`37cc4014…`), which matches the edited record.
+- The 18 added files are exactly the 18 round-1 misses: the 12 scenario node logs (538–742 bytes) and the
+  6 `llama-server.log` files, and each hash equals the entry that was already in the round-1 sums.
+- I re-extracted the six server logs from the captured `server-N.server.tar` files: the committed
+  `*.llama-server.log` files are byte-identical to the tar members (determinism `c21576c6…`,
+  restart-1 `cac45ec8…`, restart-2 `747c8b92…`, tar `730ccd24…`, closeserver-1 `fb6b7f08…`,
+  closeserver-2 `ac77fdcb…`). No divergent copy was introduced.
+- The newly committed node logs also corroborate the scenario timeline rather than merely hashing:
+  the ten determinism campaign/chunk logs all end `NODE_EXIT=0` at the times the repeat records carry
+  (09:10:52, 09:23:07, 09:34:02, 09:34:36, 09:12:06, 09:45:42, 09:56:42, 09:57:16); the restart log has
+  `STOP 12 … Connection refused`, `NODE_EXIT=2`, end 10:02:40Z; the tar log has
+  `STOP: out.tar could not be written; out/ kept for the seal`, `NODE_EXIT=2`, end 10:06:05Z.
+
+### M1 — resolved, with the evidence now present
+
+The two 08:37 logs read, in both nodes:
+
+```
+STOP: foreign compute processes on the leased GPU before the job:
+      [{'pid': 1302930, 'used_memory': '21640 MiB'}] (no shared card)
+NODE_EXIT=2
+# end=2026-11-28T08:37:25Z
+```
+
+That is exactly the "refused before a job record" state the record now describes: no attempt directory,
+no job record, no campaign rows; the sealed determinism campaigns start later with `NODE_EXIT=0` at
+09:09:37/09:10:52. The record's new paragraph is accurate as to the refusal and the "no campaign from them
+entered the run" claim. One small residual: the record attributes the holder to "the P7 server", while the
+captured log names only PID 1302930 and 21,640 MiB. The attribution is consistent with the record's own
+note that a P7 server ran on TASL-2, but it is not itself evidenced in this record; a one-line citation to
+the P7 server record would close it. That is a note, not a blocker.
+
+### Minors from round 1
+
+- **m1 (server-1 wording) — fixed.** The record now says server-1 "was ended by the first kill attempt and
+  its wrapper wrote an end record with `server_rc: -9`" and that it is the ordinary seal path, with the
+  `close-server` receipt only on server-2. That matches `closeserver.server-1.server_end.json`.
+- **m2 (C5 determinism deadline) — fixed.** The clause is gone; C5 now reads `PASS (primary)`, which is
+  what the ten captured primary chunk `deadline_epoch` rows support.
+- **m3 (probe/server-span stdout) — disclosed.** The Files paragraph now states that the `p11-probe` and
+  `server-span` outputs were printed to the console and not saved, and points to the server records, seal
+  receipts and the 0-open meter. The limitation is accepted and no longer an implied capture. Residual:
+  the `-closeserver` lease/process checks ("lease free before, `gpu0.lock` free after") are still stated
+  without a committed check file.
+- **m4 (repeat-record `label: EVIDENCE`) — explained.** The record now says these are the synthetic
+  engine's internal wire value and that the record and every seal are ENGINEERING_ONLY. This matches the
+  code: `g5_p11_engine.py` re-labels only the primary `chunk_record.json`, not the replay record.
+- **m5 (C15 REL-T1-G1B) — partly fixed.** The C15 row now names "the reviewed REL-T1-G1B copy in the
+  primary record". The copy does exist on `main` (`docs/r1/reports/g5_rel_t1_g1b_20261126/seven/`, with
+  `COPY_RECORD.json` hashes), but the row binds no digest and "in the primary record" is imprecise — the
+  copy is in its own record, not in either P11 engineering record. Naming it is enough for the scope
+  disclaimer; binding `COPY_RECORD.json`'s sha256 would finish the runbook instruction.
+
+### Correction to round 1, and one residual
+
+Round 1 said the missing `-restart` node log was "the only source of the `09:59:11Z` / `10:01:29Z` marker
+times". That was an expectation, not a check: the now-committed restart node log carries only the job
+start (09:59:07Z), the STOP 12 line and the end (10:02:40Z). The two marker times still appear nowhere in
+the committed set — the marker files themselves are in the sealed `out.tar`, and `restart_markers.txt`
+records only the names. The ordering and the STOP time are verified; the two marker timestamps remain
+uncited prose. This is a residual minor, not a blocker; a `stat` capture of the two marker files or a
+drop of the exact times would close it.
+
+**Verdict: ACCEPTED**
+
+The blocker and the major are closed on the files: the capture set is complete and hash-clean from a fresh
+checkout (420/420), the 18 files are the right ones, and the 08:37 refusal is now both explained and
+captured. No scenario number, PASS/PARTIAL status or seal changes. The residual items are documentation
+precision only — the restart marker timestamps, the REL copy digest, the closeserver lease check files and
+the P7 PID attribution — and none of them affects a reviewed claim.
+
+## Round 1 (record at `b31b42fe`) — findings as raised
+
+**Round-1 verdict: CHANGES REQUIRED**
 
 The four new scenarios are real and, apart from the items below, their numbers reproduce exactly. The
-blocker is capture integrity: `shasum -a 256 -c SHA256SUMS` fails on 18 listed paths, including every
-node log of the four new scenarios and the only source of the `-restart` marker times.
+blocker was capture integrity: `shasum -a 256 -c SHA256SUMS` failed on 18 listed paths, including every
+node log of the four new scenarios and (as it turned out in round 2) not the marker times themselves.
 
-## Verified items
+## Round-1 verified items
 
 All checks below were made in the committed record set at `b31b42fe`.
 
@@ -101,7 +186,7 @@ All checks below were made in the committed record set at `b31b42fe`.
 - Pins are consistent: every new job record has `engineering_paper_commit f7dc4945…`,
   `harness commit cbf7a003…`, `label ENGINEERING_ONLY`.
 
-## Findings
+## Round-1 findings
 
 ### B1 (blocking) — `SHA256SUMS` fails: 18 listed captures are absent
 
@@ -124,8 +209,9 @@ This is a regression against the parent record, whose sums were 289/289 OK at `f
 `.gitignore:3 (*.log)`: the new commit did not force-add the logs. The earlier capture commit
 (`f963b1bb`) explicitly force-added its ignored logs; this one did not.
 
-**Fix:** force-add the 12 node logs (which also makes the marker times and the receipt-bound hashes
-checkable), either force-add the six `llama-server.log` files or drop their lines from the sums, account
+**Fix:** force-add the 12 node logs (which makes the receipt-bound hashes checkable; the round-2 re-check
+shows they do not carry the marker times), either force-add the six `llama-server.log` files or drop their
+lines from the sums, account
 for or exclude the two 08:37 logs, then regenerate `SHA256SUMS` and re-run `shasum -c` to exit 0.
 
 ### M1 (major) — the determinism campaign has an unexplained 32-minute gap before the sealed attempt
@@ -199,9 +285,10 @@ to the earlier records it relies on.
 - `-tar` diagnostics show `inert: 40` with `kept: 40`; the record makes no count claim for that scenario,
   so this is only a fixture observation.
 
-## What would clear this
+## Round-1 closing ask (met in `0ce1e664`)
 
 Force-add the 12 scenario node logs (and the six server logs, or drop their sums lines), regenerate
 `SHA256SUMS` so `shasum -a 256 -c` exits 0, and answer the 08:37 gap. The m1/m2 wording fixes and the
 m3–m5 capture/citation gaps can be handled in the same pass; none of them changes a scenario's PASS/PARTIAL
-status or any number already in the record.
+status or any number already in the record. All of this was done in the round-2 commit; only the residual
+notes above remain.
