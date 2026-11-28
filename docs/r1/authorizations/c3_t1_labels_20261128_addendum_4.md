@@ -6,7 +6,7 @@ Under R1-G5-S9 (2), Forest Cover supplies a separate descriptive node output. SF
 the primary gate exclude this output.
 
 ```text
-approved: false
+approved: true
 run_id: c3_t1_labels_20261128_addendum_4
 node: gc7rc_forestcover
 paper_commit: f532176f3f0241909c9fb8df63a58e6fbefaefbd
