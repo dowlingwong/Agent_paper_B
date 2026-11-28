@@ -42,3 +42,12 @@ LaTeX and Ghostscript agree on the page counts. I rendered and inspected pages 1
 | G.5 launch spec, as bound in the authorization | `7dcc581573f84044495006865ff3e6966dab3b0e49ad53afff873b7e41dfaa4e` |
 
 Decided alone to use temporary writable Git metadata for the fetch and report when the assigned worktree's linked Git directory refused writes, build from an archive of the published pin and inspect the pages with Ghostscript. Ancestry and `git diff --check` passed. Writer submitted zero jobs and opened zero sealed partitions. Job state comes from Compute's recorded observations.
+
+## Queue re-fetch after reporting
+
+Research main advanced to `9b044b59f58109b3d1e4eb1822623160958b1d95`, the queue to `d47cab4301f4dfe19da6c21e8e8c6e2b1c50006a`, and Local reports to `b89bc899d7a7d2b4abcc21aa2b590dd12134432f`. PLAN, runbook, canon, manuscript pin and Writer cards are identical at the new tips. The published draft checks above still apply. [Updated queue](https://github.com/dowlingwong/Agent_paper_B/blob/d47cab43/STATE.md#writer)
+
+- The coordinator merged the reviewed Titanic and MetaMaze host checks (`48462367`, `600713db`). Local can fill the two addenda while ETTh1 and Forest Cover await their handoffs. The G.5 primary launch decision remains open. [Research main](https://github.com/dowlingwong/Agent_paper_B/tree/9b044b59) · [Current decisions](https://github.com/dowlingwong/Agent_paper_B/blob/d47cab43/AUTHOR.md)
+- The coordinator merged the P5 timing capture and review. Local's timing carry-forward already has an independent tier-E ACCEPTED verdict at draft `f1c94030`. P3 awaits the authorized signature on the reviewed one-file spec, SHA-256 `d9ab62698828adc459c8084c17e2ffd4ae000df71957a155d9e0cb83bf6d5ca6`. Local then completes the P3/P5 fields and final review before publication. [Local handoff](https://github.com/dowlingwong/Agent_paper_B/blob/b89bc899/reports/20261128-13-p4-timing-carry-forward-stop.md) · [Current decisions](https://github.com/dowlingwong/Agent_paper_B/blob/d47cab43/AUTHOR.md)
+
+The queue re-fetch found no runnable Writer card and no direct handoff to Writer. The next round checks runbook §3.4 dispatch, evidence releases and the job receipts above.
