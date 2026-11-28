@@ -25,6 +25,56 @@ K = {"_K": 10, "_K_row": None, "_freeze": "2027-12-31"}
 G1B = json.loads((ROOT / A.G1B_SPEC).read_text())
 MLGYM = "mlgym_metamaze"
 EXTRA = "gc7rc_forestcover"
+PLAN = "docs/r1/PLAN.md"
+DECLARED_TAILS = [
+    ("gc7rc_etth1", {"tails": "gaussian"}),
+    (EXTRA, {"tails": "gaussian"}),
+    (MLGYM, {"tails": "student_t", "tails_nu": 5}),
+    ("mlgym_titanic", {"tails": "gaussian"}),
+]
+
+
+@pytest.mark.parametrize(("node", "expected"), DECLARED_TAILS)
+def test_signed_p10_draft_fields(node, expected):
+    published_plan = {PLAN: (ROOT / PLAN).read_bytes()}
+    stem = ROOT / "docs/r1/proposals" / f"G5_EXPANSION_ADDENDUM_{node.upper()}"
+    draft = stem.with_name(stem.name + "_DRAFT_20261127.md").read_text(encoding="utf-8")
+    spec = stem.with_name(stem.name + "_P10_SPEC_DRAFT_20261128.json")
+    fragment = json.loads(spec.read_bytes())
+    assert fragment == {"node": node, "tail": {**expected, "authority": A.P10_ROW}}
+    assert A.check_tail(node, fragment["tail"], published_plan.get) == expected
+    assert f"label_tail: {S.tails_text(expected)}" in draft
+    assert f"({spec.name})" in draft
+    assert "approved: false" in draft
+
+
+@pytest.mark.parametrize(("node", "tail"), [
+    (MLGYM, {"tails": "gaussian"}),
+    (MLGYM, {"tails": "student_t", "tails_nu": 6}),
+    (EXTRA, {"tails": "student_t", "tails_nu": 5}),
+])
+def test_signed_p10_refuses_another_nodes_law_or_wrong_degrees_of_freedom(node, tail):
+    published_plan = {PLAN: (ROOT / PLAN).read_bytes()}
+    with pytest.raises(S.Stop, match="differ from R1-G5-TAILS-EXPANSION"):
+        A.check_tail(node, {**tail, "authority": A.P10_ROW}, published_plan.get)
+
+
+@pytest.mark.parametrize("hidden", [True, False])
+def test_signed_p10_uses_one_visible_author_declaration(hidden):
+    plan = (ROOT / PLAN).read_text(encoding="utf-8")
+    declaration = "`mlgym_metamaze` is declared Student-t with ν = 5"
+    alternate = ("`gc7rc_etth1` is declared Student-t with ν = 4; "
+                 "`mlgym_metamaze`, `gc7rc_forestcover` and `mlgym_titanic` Gaussian.")
+    inserted = f"<!-- {alternate} -->" if hidden else alternate
+    assert plan.count(declaration) == 1
+    published_plan = {PLAN: plan.replace(declaration, f"{inserted} {declaration}").encode("utf-8")}
+    tail = {"tails": "student_t", "tails_nu": 4, "authority": A.P10_ROW}
+    match = "differ from R1-G5-TAILS-EXPANSION" if hidden else "exactly one set"
+    with pytest.raises(S.Stop, match=match):
+        A.check_tail("gc7rc_etth1", tail, published_plan.get)
+    if hidden:
+        good = {"tails": "student_t", "tails_nu": 5}
+        assert A.check_tail(MLGYM, {**good, "authority": A.P10_ROW}, published_plan.get) == good
 
 
 @pytest.mark.parametrize(("node", "cpus", "mode", "env"), [
@@ -114,16 +164,14 @@ def filled(tmp_path, monkeypatch):
     files[isolation] = "".join(f"{key}: {value}\n" for key, value in context.items()).encode()
     amendment = A.release.SPLIT_AMENDMENT_PATH
     files[amendment] = b"synthetic PRE-SPLIT amendment\n"
-    files["docs/r1/PLAN.md"] = (ROOT / "docs/r1/PLAN.md").read_bytes().replace(
-        b"## 11. Relation to Paper A",
-        b"### 27 November 2026 (fixture) (author)\n\n| ID | Decision |\n|---|---|\n"
-        b"| R1-G5-TEST-P10 | mlgym_metamaze gaussian |\n\n## 11. Relation to Paper A")
+    files[PLAN] = (ROOT / PLAN).read_bytes()
     citation = lambda path: f"{path} sha256 {S._sha_bytes(files[path])}"
     config = {"schema": A.SCHEMA, "run_id": RUN, "node": MLGYM, "supply": p3_split.role_of(MLGYM),
               "paper": dict(base["paper"], commit="c" * 40), "base_g5_spec": citation(BASE_SPEC),
               "base_g5_note": citation(BASE_NOTE), "pre_split_amendment": citation(amendment),
               "g1b_note": "fixture", "g1b_spec": "fixture", "g1b_receipt": "fixture", "g1b_copy": {},
-              "instance_split": dict(p3_split.SPLIT_FILES[2]), "tail": {"tails": "gaussian", "authority": "R1-G5-TEST-P10"},
+              "instance_split": dict(p3_split.SPLIT_FILES[2]),
+              "tail": {"tails": "student_t", "tails_nu": 5, "authority": A.P10_ROW},
               "harness": {"g1b_pin": A.deployment(G1B, MLGYM)["harness_pin"], "g5_commit": "b" * 40,
                           "harness_dir": "/test/addendum-harness",
                           "isolation_host_check": {"record": isolation, "sha256": S._sha_bytes(files[isolation])}}}
@@ -139,7 +187,7 @@ def filled(tmp_path, monkeypatch):
     spec_path = tmp_path / "addendum.json"
     note_path = tmp_path / ADD_NOTE
 
-    def render(*, approved="true", publish=True, fields=None):
+    def render(*, approved="true", publish=True, fields=None, draft=False):
         spec_path.write_text(json.dumps(config))
         bind = {key: config[key] for key in ("run_id", "node", "base_g5_note", "base_g5_spec", "pre_split_amendment", "supply")}
         sha = S._sha_bytes(spec_path.read_bytes())
@@ -153,7 +201,7 @@ def filled(tmp_path, monkeypatch):
             files[ADD_NOTE] = note_path.read_bytes()
         else:
             files.pop(ADD_NOTE, None)
-        return A.bind(spec_path, note_path, root=tmp_path, read_main=files.get)
+        return A.bind(spec_path, note_path, draft=draft, root=tmp_path, read_main=files.get)
 
     return config, base, render
 
@@ -166,6 +214,16 @@ def test_addendum_uses_own_pin_and_inherits_settings(filled):
         assert spec[key] == base[key]
     assert spec["_addendum"]["_K"] == 10
     assert spec["nodes"][0]["env"] == "venv_jax"
+
+
+@pytest.mark.parametrize(("node", "tail"), DECLARED_TAILS)
+def test_addendum_draft_check_with_synthetic_launch_prerequisites(filled, node, tail):
+    config, _, render = filled
+    config.update(node=node, supply=p3_split.role_of(node), tail={**tail, "authority": A.P10_ROW})
+    config["harness"]["g1b_pin"] = A.deployment(G1B, node)["harness_pin"]
+    runtime = render(approved="false", publish=False, draft=True)
+    assert runtime["nodes"][0]["node"] == node
+    assert {key: runtime["nodes"][0][key] for key in tail} == tail
 
 
 @pytest.mark.parametrize(("kwargs", "match"), [

@@ -1,0 +1,7 @@
+{
+  "node": "mlgym_titanic",
+  "tail": {
+    "tails": "gaussian",
+    "authority": "R1-G5-TAILS-EXPANSION"
+  }
+}

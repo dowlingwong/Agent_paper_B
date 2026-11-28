@@ -18,13 +18,19 @@ g1b_noise_floor: PENDING independently reviewed REL-T1-G1B and D6 copies of summ
 node_spec_entry: PENDING reviewed G.5 spec entry path and SHA-256
 node_bindings: G.1b inputs below; PENDING G.5 harness commit, isolation check and environment binding
 execution_layout: G.1b reference TASL-2 CPU-only, CPUs 12-15; PENDING G.5 placement and lease binding
-label_tail: PENDING node-specific P10 law and provenance before G.5 label assembly. For Student-t bind nu and use scale = sd * sqrt((nu - 2) / nu)
+label_tail: gaussian under R1-G5-TAILS-EXPANSION (`3013ddf0`), reviewed P10 basis `9e3426ef`
 instance_split: r1/c3/splits/c3_p3_split_v2.json sha256 4dd46796e50ec188b5f89ebc8f4c04e6ab60a5056f124538936dd1bb5d6ae53a
 pre_split_amendment: PENDING published PRE-SPLIT amendment path and SHA-256
 supply: T1 suite MLGym; arms and primary gate after the signed releases
 gpu_hour_projection: PENDING G.5 estimate for this node under R1-NO-TIMEOUT (3)
 review: PENDING independent acceptance of the filled addendum and its launch checks
 ```
+
+## P10 declaration
+
+Use the [P10 spec fields](G5_EXPANSION_ADDENDUM_MLGYM_TITANIC_P10_SPEC_DRAFT_20261128.json) in this node’s final addendum spec. The author declared this law in
+[R1-G5-TAILS-EXPANSION](../PLAN.md#28-november-2026-b--g5-p10-for-the-four-expansion-nodes-author)
+(`3013ddf0`) using the [reviewed paired-kurtosis table](../reports/g5_p10_expansion_20261128/P10_EXPANSION_KURTOSIS_20261128.md) (`9e3426ef`).
 
 ## Published G.1b bindings
 
