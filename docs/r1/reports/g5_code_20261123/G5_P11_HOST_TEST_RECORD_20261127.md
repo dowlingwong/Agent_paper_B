@@ -63,3 +63,35 @@ Code and plan read at this base:
 **Decided alone:** the conservative statuses above (a predecessor record is `PARTIAL`/`COVERED` only for the
 mechanism it actually exercised), and citing only files already on published `main`. No pin, note or evidence file was changed; the run uses only an
 ENGINEERING copy of the spec with its `run_id` changed, and this branch adds captures.
+
+## 28 November 2026 re-check (`compute/20261127-32`, disposition `compute/20261128-05` item 1)
+
+Base `origin/main` `a98d2eff`. Checkout on TASL-2: `paperB_cpuset_20261128T001400Z` (detached at `a98d2eff`, clean).
+The committed spec is still the unsigned draft: `run_id = "PENDING: c3_t1_labels_YYYYMMDD (the signed note's date)"`
+and `paper.commit = "PENDING: ..."`. The disposition says **not** to call `validate --launch` as a host test; run each
+item by its own host-test command. Each seal/server command was invoked directly and refused at the same launch
+gate. Exact refusals (captured in `P11_REFUSALS_20261128/`, one file per command, with `rc`):
+
+| Command | Exact refusal | rc |
+|---|---|---:|
+| `g5_tasl.py seal-attempt … <nonexistent attempt>` | `STOP: run_id must be c3_t1_labels_<YYYYMMDD>` | 2 |
+| `g5_tasl.py seal-node … --node mlgym_houseprice` | `STOP: run_id must be c3_t1_labels_<YYYYMMDD>` | 2 |
+| `g5_tasl.py seal-run …` | `STOP: run_id must be c3_t1_labels_<YYYYMMDD>` | 2 |
+| `g5_tasl.py seal-server … <nonexistent server dir>` | `STOP: run_id must be c3_t1_labels_<YYYYMMDD>` | 2 |
+| `g5_tasl.py close-server … <nonexistent server dir>` | `STOP: run_id must be c3_t1_labels_<YYYYMMDD>` | 2 |
+| `g5_tasl.py server-span … <nonexistent receipt>` | `STOP: run_id must be c3_t1_labels_<YYYYMMDD>` | 2 |
+| `g5_tasl.py validate … --launch` (control only, not a host test) | `STOP: run_id must be c3_t1_labels_<YYYYMMDD>` | 2 |
+
+Each command refuses **before** reading or writing any path (the nonexistent paths were never touched), so no smoke
+attempt, no sealed file, no label or evaluation value was created or read. Under the disposition these items are
+recorded as **checked at publication**: the strict `check-note` and the first real command after the signed G.5 note
+and filled spec are their check.
+
+**Still gate-blocked, so not run:** C2 (G.5 audit runner on a smoke chunk), C4 (per-wave/chunk diagnostics), C5
+(K = 10 imdb/Breakout audit deadlines), C9 (G.5 GPU-hour meter with a closed attempt), C14 (real-engine harness
+smoke), C16 (first TASL-7 chunk). They need either the published note and real spec or a purpose-built synthetic
+smoke spec that the current spec validation does not provide; none was fabricated. C10's hours-long span and the
+audit-chunk side of C11 also remain for the table itself (STOP 12), as the sheet records.
+
+The earlier TASL-7 server/restart/identity/lease evidence (`P11_HOST_TEST_RUN_20261127/`) is unchanged and still
+stands for C7 and the server side of C11.
