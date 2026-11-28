@@ -81,8 +81,7 @@ The engineering planner limits transfer chunks to 200 rows. The production chunk
 rule and the per-chunk deadline formula are unchanged. After registering any
 TASL-7 work, finish the remaining TASL-2 chunks for each node. The final chunk has
 the E5 diagnostics over the label-seed block. Run `g5 wave-checks "$SPEC" --node "$node"
---wave 1 --engineering` and record its result. Repeat the campaign and audit commands
-with `wave2` to finish either node that has no recorded node STOP.
+--wave 1 --engineering` and record its result. Use the new server record and wave-2 commands below to finish each node that has no recorded node STOP.
 For C14 rerun the IMDb campaign and its first audit under `-infra`. The built-in test
 runner injects a pre-start RunnerError for one unit at seed 7001, through all retries.
 Verify the real audit engine's infrastructure row and the job's STOP 7. Retain it
@@ -136,6 +135,25 @@ g5 finalize-remote "$SPEC" --access-log "$IN/_access_log.jsonl" --engineering
 g5 seal-attempt "$SPEC" "$RUN/mlab_imdb/audits-wave1/chunk-1/attempt-1" --engineering
 ```
 
+After the TASL-7 chunk and its lease have ended, restart the primary scenario's proposer.
+Copy its new same-spec record into `$IN/server-2.json` on TASL-2. Probe the new server
+and use only this record for wave 2. First complete wave-1 audits and wave checks for
+the node. While the server is up, run both eligible wave-2 campaigns. Then finish their
+audit chunks on TASL-2.
+
+```sh
+# TASL-7, after the lease is free
+g5 serve "$SPEC" --engineering
+# TASL-2, once server-2 is ready and its record is staged
+g5 p11-probe "$SPEC"
+for node in mlab_imdb mlgym_breakout_minatar; do
+  bash "$T1/t1_tasl_node.sh" g5 "$SPEC" "$node" - campaigns-wave2 "$IN/server-2.json" --engineering
+done
+# Repeat per node for each remaining wave-2 audit chunk.
+bash "$T1/t1_tasl_node.sh" g5 "$SPEC" mlab_imdb - audits-wave2 - --engineering
+bash "$T1/t1_tasl_node.sh" g5 "$SPEC" mlgym_breakout_minatar - audits-wave2 - --engineering
+```
+
 ## C6, C9 and the pre-run checks of C15
 
 Capture the meter before and after a synthetic closed attempt. Close it in a
@@ -165,7 +183,7 @@ g5 seal-run "$SPEC" --engineering
 g5 p11-table-marker "$SPEC"
 ```
 
-For C15 seal a normally stopped server using the first command below. To exercise
+For C15 seal the normally stopped servers in the primary scenario. In a separate scenario, to exercise
 `close-server`, start an engineering server in its own terminal and record its
 PID plus the wrapper PID. End the engineering child and wrapper without letting
 the wrapper write the normal end record. Confirm both are gone and the lease is
@@ -176,8 +194,10 @@ the spans.
 ```sh
 # TASL-7
 g5 seal-server "$SPEC" "$SERVER/server-1" --engineering
-g5 close-server "$SPEC" "$SERVER/server-2" --reason "P11 engineering server interruption" --engineering
 g5 seal-server "$SPEC" "$SERVER/server-2" --engineering
+# Separate scenario with its own ID, SPEC and SERVER
+g5 close-server "$SPEC" "$SERVER/server-1" --reason "P11 engineering server interruption" --engineering
+g5 seal-server "$SPEC" "$SERVER/server-1" --engineering
 # TASL-2 after transfer
 g5 server-span "$SPEC" "$IN/server-1-receipt.json" --engineering
 g5 server-span "$SPEC" "$IN/server-2-receipt.json" --engineering
