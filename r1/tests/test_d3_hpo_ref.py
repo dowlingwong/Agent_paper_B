@@ -315,7 +315,7 @@ def synthetic_table_from_runs():
                 c = (H.run_rs(s, st, seed, 0, ev) if arm == "RS"
                      else H.run_smac3(s, st, seed, 0, ev, backend_factory=FakeSmac))
                 rows.append(H.build_row(c, lambda cfg, n=node, st=st: metric_of(n, cfg) - metric_of(n, st)))
-    return H.build_table(rows, predeclaration_sha256="a" * 64, sigma_node={n: 0.01 for n in D3.NODES})
+    return H.build_table(rows, predeclaration_sha256=H.PREDECLARATION_SHA256, sigma_node={n: 0.01 for n in D3.NODES})
 
 
 class EndToEndTest(unittest.TestCase):
