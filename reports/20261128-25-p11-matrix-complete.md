@@ -10,10 +10,11 @@ run; ENGINEERING_ONLY throughout.
 - Base code `origin/main` `f7dc4945f63e09d1a7b66207bbbc43f76997aa29`; the deliverable branch descends from
   the partial record branch `compute-g5-p11-matrix-rerun-20261128` @ `f963b1bb`.
 - Deliverable branch `compute-g5-p11-matrix-complete-20261128` @
-  **`b31b42feee724b682e11254bb0a95369d1c84e2d`**; record
+  **`0ce1e664b9ef836f83c7f147bd24334184d896c5`**; record
   `docs/r1/reports/g5_p11_engineering_20261128_rerun/G5_P11_ENGINEERING_RERUN_20261128.md`.
-- Review branch `compute-g5-p11-matrix-complete-20261128-review`: **pending** at the time of this report;
-  one fresh review of the complete item table is requested.
+- Review branch `compute-g5-p11-matrix-complete-20261128-review` @ `b186d017e179988416aa3af75b0c2fd5106eb0eb`:
+  **ACCEPTED**. Round 1 found 18 ignored logs and an unexplained 08:37 refusal pair; both are closed in the
+  re-check (420/420 captures; the 08:37 logs are the first refused campaigns).
 - No code changed; no unit test applies to a host record. `SHA256SUMS` at the record root verifies.
 
 ## The four scenarios
