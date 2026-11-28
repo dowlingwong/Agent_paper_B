@@ -3,14 +3,15 @@ Verdict: ACCEPTED WITH MINORS
 # Independent review (re-check) — P.4 P3 signature STOP and P5 timing capture (compute/20261128-19)
 
 Re-reviewed the corrected deliverable `compute-p4-p5-timing-20261128` at
-`05e627099080bcbeba9083e418bf9fc344b07d87`, from a clean worktree at that tip. The prior review at
-`6a301af6` (of `dc725f89`) is superseded by this re-check. No blocking or major finding remains; the
-deliverable is accepted. This review was read-only: no GPU job or host workload, no private key, and no
-sealed label or test value was read.
+`902ef2c67c2d7f487b951fefde6e0dc9e5cfa02f` (final), from a clean worktree at that tip. The earlier re-check
+at `b17e7ff8` (of `05e62709`) is retained below; the only delta at `902ef2c6` is the timing-summary pin update,
+checked in the addendum. The original review at `6a301af6` (of `dc725f89`) is superseded by this re-check. No
+blocking or major finding remains; the deliverable is accepted. This review was read-only: no GPU job or host
+workload, no private key, and no sealed label or test value was read.
 
-The new tip adds 14 files under `docs/r1/reports/trackp_p4_p5_timing_20261128/`: the four `metrics.jsonl`, four
-`run.log`, four `lease.txt`, the revised record and the revised `SHA256SUMS`. It touches nothing outside that
-directory.
+The `05e62709` correction added 14 files under `docs/r1/reports/trackp_p4_p5_timing_20261128/`: the four
+`metrics.jsonl`, four `run.log`, four `lease.txt`, the revised record and the revised `SHA256SUMS`. `902ef2c6`
+adds only the timing-summary pin update and its sums line. Nothing outside that directory is touched.
 
 ## Prior findings closed
 
@@ -86,6 +87,14 @@ Still passes. The record does not claim a new formal probe run; it leaves the ac
 3.10 GPU-h and the 40 GPU-h threshold unchanged; it does not claim P3 is resolved; and it keeps
 ENGINEERING_ONLY with synthetic labels only, no SFT evidence run, no label/test/evaluation read.
 
+## Addendum — `902ef2c6` (final)
+
+`git diff 05e62709..902ef2c6 --name-only` is exactly `timing_summary.json` and `SHA256SUMS`. The summary now
+records `base_commit: 66aa4e10`, adds per-arm `paper_commit` and `sft_data_sha256`, and drops the old
+top-level `paper_commit`. All four paper/data values match the arms' `report.json` files and manifests:
+0.8B `91cfd48a` / `0088f559…` and `9b6552b4…`; 4B `e92f3c73` / `1d39f1ba…` and `f997e7fa…`. The regenerated
+`SHA256SUMS` verifies **43/43 OK** from a clean checkout, and no raw capture changed. The verdict is unchanged.
+
 ## Findings
 
 - **Blocking:** none.
@@ -103,20 +112,21 @@ ENGINEERING_ONLY with synthetic labels only, no SFT evidence run, no label/test/
 
 ## Verdict
 
-**ACCEPTED WITH MINORS.** The prior blocking and major findings are closed: the capture is complete and
-self-consistent, the raw files are byte-identical to the previously recorded and host hashes, the identity
-paragraph is correct, and the P3 STOP wording is accurate. The remaining items are documentation precision, not
-evidence defects.
+**ACCEPTED WITH MINORS.** At final tip `902ef2c6`, the prior blocking and major findings are closed: the
+capture is complete and self-consistent, the raw files are byte-identical to the previously recorded and host
+hashes, the identity pins are correct, the timing summary now carries the per-arm pins, and the P3 STOP wording
+is accurate. The remaining items are documentation precision, not evidence defects.
 
 ## Commands used (representative)
 
 ```
 git fetch origin refs/heads/compute-p4-p5-timing-20261128
-git worktree add --detach <tmp> 05e627099080bcbeba9083e418bf9fc344b07d87
+git worktree add --detach <tmp> 902ef2c67c2d7f487b951fefde6e0dc9e5cfa02f
 cd docs/r1/reports/trackp_p4_p5_timing_20261128 && shasum -a 256 -c SHA256SUMS
 git show dc725f89:docs/r1/reports/trackp_p4_p5_timing_20261128/SHA256SUMS
-git diff --check 66aa4e10..05e62709
-git merge-base origin/main 05e62709
+git diff 05e62709..902ef2c6 --name-only
+git diff --check 66aa4e10..902ef2c6
+git merge-base origin/main 902ef2c6
 git cat-file commit befb58c8; git verify-commit befb58c8; echo $?
 python3  # recompute median/mean/max from the four metrics.jsonl
 ```
