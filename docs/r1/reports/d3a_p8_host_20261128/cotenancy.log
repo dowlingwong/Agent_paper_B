@@ -1,0 +1,14 @@
+{"utc": "2026-11-28T05:02:50Z", "phase": "pre", "cpus": 40, "workers_running": 0, "load1": 5.93, "free_for_others": 34.07, "ok": true}
+{"utc": "2026-11-28T05:02:55Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 6.82, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:00Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 7.63, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:05Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 8.79, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:10Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 10.0, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:15Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 10.96, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:20Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 11.85, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:25Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 12.66, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:30Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 13.41, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:35Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 14.1, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:40Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 14.73, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:45Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 15.31, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:50Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 15.45, "free_for_others": 40.0, "ok": true}
+{"utc": "2026-11-28T05:03:55Z", "phase": "during", "cpus": 40, "workers_running": 16, "load1": 15.65, "free_for_others": 40.0, "ok": true}
