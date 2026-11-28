@@ -11,7 +11,8 @@
 #      20G scope from the decimal 1.4x basis.  Not used unchanged.
 #
 # Explicit 20G call:
-#   launch(out_dir="/tmp/d3a_prod_dryrun2/out",
+#   launch(launch_path="/home/dowling/r1_tracks/work/d3a_prod_20261128/record/launch_A0_digits_mlp_r0.json",
+#          out_dir="/tmp/d3a_prod_dryrun2/out",
 #          manifest_path="/home/dowling/r1_tracks/work/d3a_prod_20261128/record/manifest.json",
 #          host="TASL-2", lease_path="/home/dowling/r1_locks/gpu0.lock", dry_run=True,
 #          scope="systemd-run --user --scope -p Delegate=yes -p MemoryMax=20G -p MemorySwapMax=0")

@@ -1,3 +1,5 @@
+# capture provenance: generated during the 19:27-19:34Z route preparation on TASL-2;
+# the staging command line was not retained, so this header records the recorded checks only.
 cache_manifest_sha256 1987cc004aba9ead9705788d98cf05720855c5c0977be5c8eb3404f375382c21
 root_tree 3843b53cddca6c32f00f5a1eeb96f34a78ca2871720900f4e6b8c0f724130d07
 digits_mlp prepare=OK openml_cache False

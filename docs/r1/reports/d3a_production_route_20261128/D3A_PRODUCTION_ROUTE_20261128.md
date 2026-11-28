@@ -156,7 +156,8 @@ the P7 audit shim, not in the v1 image.
 
 The deepthought audit side is P8 (`D3A_P8_HOST_20261128`, re-check ACCEPTED at `b70cfa01`); this
 record changes neither that host nor `r1/tests`. The environment capture's base sample header is
-19:27:58Z; its Python/shim/docker block was appended at 19:34Z.
+19:27:58Z; its Python/shim/docker block was appended at 19:33:44Z (the file mtime; the first
+draft rounded this to 19:34Z).
 
 **Adjacent observation.** `r1/c3/d3/launch.py` still carries
 `D3_IMAGE = ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900…` (the v2.2 digest), while rev 5 §2 binds
