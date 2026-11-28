@@ -26,3 +26,10 @@ singularity=absent
 交换： 2147479552      786432  2146693120
 文件系统         1024的块       已用      可用 容量 挂载点
 /dev/nvme0n1p2 1967357936 1517460620 349887284  82% /
+--- python executable and audit shim tree ---
+/home/dowling/.local/share/uv/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11
+ff9b2ac4362b81c68622ffb1730f7138eb269177d9846399c521a44c5daffb0e  /home/dowling/.local/share/uv/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11
+1737028cdd5868c30d331e6f80133e5ec3b1c76f3d4f95df9de960d67370ef07  -
+--- docker access ---
+no docker group
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock

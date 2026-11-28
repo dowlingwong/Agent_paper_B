@@ -1,0 +1,21 @@
+# Reviewed SSH launcher dry run against the production launch record (no SSH, no job)
+# Host: TASL-2, repo c3a48405, harness 9bb41680
+# Command: r1.c3.d3.launch_ssh.launch(..., dry_run=True)
+#
+# Default call (scope omitted):
+#   launch record scope becomes the reviewed DEFAULT_SCOPE:
+#   systemd-run --user --scope -p Delegate=yes -p MemoryMax=16G -p MemorySwapMax=0
+#   rendered script calls: python3 -m r1.c3.d3.probe ...
+#                         systemd-run ... python3 -m r1.c3.d3.campaign_chunk ...
+#   -> TASL-2 python3 is 3.10.12, not the 3.11.17 audit venv; the 16G default is below the
+#      20G 1.4x basis.  Not used unchanged.
+#
+# Explicit 20G call:
+#   scope = systemd-run --user --scope -p Delegate=yes -p MemoryMax=20G -p MemorySwapMax=0
+#   rendered script still calls python3 (the reviewed launch() helper has no python argument).
+#   Rendered script sha256: 536b1192746885ea35adb985e9c5be34a5960056b7a769da8bbc8cdcc2b3d887
+#   ssh_launch_record.json sha256: 03758a2d9f6a35fc5bf9aeea0b932f611bcbc7ab9eced473cd582909d3381962
+#
+# Consequence recorded in the main record: the direct driver must set PATH/PYTHONPATH/
+# AR_HARNESS_ROOT and pass the 20G scope itself; it uses the same reviewed chunk argv and
+# the reviewed probe/chunk modules.  The launcher code is not edited here.

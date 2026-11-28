@@ -61,9 +61,38 @@ environment freeze, the canonical leases, the 20 GB scope, and a `r1_d3_retry_le
 `run_id = d3a-prod-20261128-a`, one current attempt `a01`, and the chunk identity. It passes
 `validate_deployment_launch`; output in `captures/validation.txt`.
 
+The driver sequence is fixed (the executed proof is the same sequence without step 4):
+
+1. a bash wrapper takes `flock -n` on `/home/dowling/r1_locks/cpus-16-31.lock` (fd 8) and
+   `/home/dowling/r1_locks/gpu0.lock` (fd 9);
+2. `python -m r1.c3.d3.probe --launch … --manifest … --observed … --lease-path …` writes
+   `observed.json` while fd 9 is inherited (pre-server, as the chunk requires);
+3. `llama-server` starts on the frozen argv under `taskset -c 16-31` and the same descriptors, and
+   the driver waits for `/props`;
+4. `python -m r1.c3.d3.campaign_chunk --launch launch.json --out runs/<chunk> --manifest
+   manifest.json --observed observed.json` runs the chunk with the reviewed `chunk_argv` under the
+   20 GB scope;
+5. the server is stopped and both leases are released.
+
+`production_driver.sh` in this directory is that driver. It was **not executed with `RUN_CHUNK=1`**;
+it is a template for the launch, and its probe/server path is the one exercised by
+`endpoint_run.sh`. The chunk branch is gated and was not run.
+
+The reviewed `launch_ssh.launch` helper is **not used unchanged** on this host. A dry run
+(`captures/launch_ssh_dryrun.txt`) shows two integration facts: its default scope is 16 GB, below the
+20 GB 1.4× basis, and its rendered remote script calls `python3`, which on TASL-2 is 3.10.12, not the
+3.11.17 audit venv; it also does not set `PYTHONPATH`/`AR_HARNESS_ROOT`. The driver supplies those
+explicitly and passes the 20 GB scope; the chunk/probe modules and their argv are unchanged. The
+launcher code is not edited in this record.
+
 `chunk_matrix.json` declares all 49 `(node, arm)` chunks at repetition 0, each with the same run id,
 manifest sha256, 18 instance seeds 6201–6218, GPU model/UUID and canonical leases. It is a routing
 record, not a claim that any chunk ran.
+
+The exemplar's `hardware.environment_freeze.repo_commit` names the code base
+`c3a48405` used for this engineering proof. At launch the record names the published launch commit
+(a docs-only descendant whose code tree outside `docs/` and the spec is identical); the chunk's
+runtime `observed.json` is generated on the host, not copied from this directory.
 
 `run_id_ledger.json` records `d3a-prod-20261128-a` as **allocated and unused**. Before allocation no
 host directory, report, record or branch used it; no Paper B job was running on TASL-2, TASL-7, Ada
@@ -73,8 +102,9 @@ or deepthought, and `condor_q -submitter dwong` held zero jobs at 19:28Z
 
 ## 3. Endpoint-to-lease proof
 
-The engineering start ran 2026-11-28T19:27:30Z–19:27:37Z on TASL-2 (`captures/status.log`). One
-wrapper held the canonical GPU lease on fd 9 and CPU lease on fd 8, ran the chunk-side probe **before**
+The engineering start ran 2026-11-28T19:27:30Z–19:27:37Z on TASL-2 (`captures/status.log`); the
+executed script is `endpoint_run.sh`. One wrapper held the canonical GPU lease on fd 9 and CPU lease
+on fd 8, ran the chunk-side probe **before**
 loading the server, started the rev 5 server on the same descriptors, captured the chain, and stopped
 the server. The probe must precede the server: `required_memory_mib = 22000` is free only on an empty
 card, and the production chunk's `observed.json` is a pre-load record.
@@ -124,12 +154,20 @@ the P7 audit shim, not in the v1 image.
 | CPU / GPU | i9-14900KF, CPUs 16–31; RTX 4090 24,564 MiB, driver 535.309.01 | RTX 4090 for every node; driver recorded per job |
 | Container | none for the chunk; host process in a 20 GB user scope | v1 image digest for the HTCondor route |
 
+The deepthought audit side is P8 (`D3A_P8_HOST_20261128`, re-check ACCEPTED at `b70cfa01`); this
+record changes neither that host nor `r1/tests`.
+
 This is a **disclosed substitution**, not a silent one: the direct route does not use the §2 image,
-and Python differs from both the image and the audit basis. The package set, harness code and card
-match the engineering basis that produced the accepted P7 result. `pyproject.toml` declares
-`requires-python = ">=3.11"`. Local and the author must accept this disposition in the note's `image:`
-line, or the route needs a container runtime that TASL-2 does not currently provide. No evidence run
-has started, so this is a binding decision, not a STOP of existing evidence.
+and Python differs from both the image and the audit basis. It reproduces the environment frozen by
+the accepted P7 exact-runtime record itself (Python 3.11.17 and the same four package versions), so the
+runtime gate was measured in this environment. The executable and shim are pinned:
+`/home/dowling/.local/share/uv/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11` sha256
+`ff9b2ac4362b81c68622ffb1730f7138eb269177d9846399c521a44c5daffb0e`, and the audit shim tree
+sha256 `1737028cdd5868c30d331e6f80133e5ec3b1c76f3d4f95df9de960d67370ef07` (regular files, no
+`__pycache__`). `pyproject.toml` declares `requires-python = ">=3.11"`. Local and the author must
+accept this disposition in the note's `image:` line, or the route needs a container runtime that
+TASL-2 does not currently provide. No evidence run has started, so this is a binding decision, not a
+STOP of existing evidence.
 
 ## 5. Resource basis
 
@@ -140,7 +178,7 @@ endpoint start:
 | Item | Value | Production bound |
 |---|---|---|
 | GPU memory peak | 21,999 MiB used; 2,184 MiB free minimum; 21,977 MiB at load | `required_memory_mib = 22000`; the empty-card probe read 23,830 MiB free |
-| Host RAM peak | 14.27 GB of 67.12 GB total | 20 GB user scope = 1.4 × peak; `MemorySwapMax=0` |
+| Host RAM peak | 14.27 GB of 67.12 GB total | 20 GB user scope = 1.4 × peak; `MemorySwapMax=0`; the endpoint proof did **not** exercise the cgroup, so this is a derived bound, not a measured scope |
 | Scratch, one campaign | largest observed 858,382 B (A2, `openml_climate__s6301`); other arms 266–630 kB | 18 instances × largest = 15,450,876 B ≈ 14.7 MiB |
 | Scratch, one chunk | run tree + OpenML cache (123,531 B) | ≈ 14.9 MiB measured basis; 32 MiB design floor, 1 GiB free-space check |
 | Wall time | no scheduler on the direct route | no wall-clock limit (R1-NO-TIMEOUT); per-arm 1.5× requests, if a scheduler is ever used: A0 3,268 s; A0R/A1 3,424 s; A2 7,470 s; FIXR3 1,089 s; EGATE 467 s; LADDER 3,113 s |
@@ -150,6 +188,14 @@ The 49 chunks are serial on one RTX 4090 by the reviewed per-node placement: exp
 ≈ 28.85 h, 32.91 h in the A0R sensitivity, plus gaps. A second RTX 4090 (TASL-7) is the same GPU
 model and may serve a node only after that node's own host check; it does not change the per-instance
 model rule. Disk free at the production root was 349,887,284 KB (≈ 334 GiB) at start.
+
+For the D.3a note's pending fields, the values this basis supports are: `layout_request_walltime_s`
+= none (direct SSH; if a scheduler is used, 7,470 s for the A2 arm and the per-arm rows above);
+`layout_request_disk_kb` = 22,000 if a scheduler requests disk (15,450,876 B × 1.4 ≈ 21,631 KB,
+rounded), otherwise none with a 32 MiB design floor and a 1 GiB free-space check;
+`layout_request_memory_mb` = 20,000 (14.27 GB × 1.4 ≈ 19,978 MB); `layout_wall_hours` = 28.85
+(32.91 sensitivity). The reviewed HTCondor request's fixed 150,000,000 KB disk and 3,600 s walltime
+are for the HTCondor route and are not edited or used here.
 
 ## 6. What remains before an evidence launch
 
@@ -192,11 +238,14 @@ launcher/chunk/adapter/accounting set that consumes these files passes, and P10/
 | `run_id_ledger.json` | `62becc147a2b321cd5c1b082ac451bedd0941662bff93d3cfb06374639cd9d38` |
 | `observed.json` | `da07e83499a821c229c509d9bd4aefb0087f242d8c600e8fe0b911c79370a42f` |
 | `endpoint_run.sh` | `d2b088d652bb5f1604f30fb9515af0d32eb44e8583bbe465ecbf7894e39ae3ad` |
+| `production_driver.sh` | `113bc5c022cfad5dfee7ba7d2443a49d461c9555c5f7e7f74c050c3b2a2d5c94` |
 | `captures/server_argv.txt` | `9ed9d647a7e2c9ededf14f12a170271577a3f12c2eb5abf8239756bc4f436ab6` |
 | `captures/props.json` | `92fc6b976fe98a295033ac162beabdddc6ebd0b5af691de16fd524155b6f57da` |
 | `captures/models.json` | `2ff596bf1be4a6c9354949f8ff6e8d4342b252b7c98d3f1ce7cc8a0f1ef420e4` |
-| `captures/environment_20261128.txt` | `ed2c6b47e12d58b56fb198fcc8eee91509715f137beb7241b4fa48051fb0bbd6` |
-| `captures/SHA256SUMS` | bind below; covers every capture and record file |
+| `captures/environment_20261128.txt` | `3637c4c615d96da8b7aaf18fd2bc51bdb941c42f95fc957bf65b22e006152d21` |
+| `captures/launch_ssh_dryrun.txt` | `f63344562a0fd3afea4bf394006e15c3a42f14f9b7387a7ac25a4b1605888d24` |
+| `captures/SHA256SUMS` | `72e4fc3c9b96602da7c6ad0dfa95c83d356366be00189c161f36c5172a9d5b71` (covers every capture file) |
+| `SHA256SUMS` (record root) | binds this record and `captures/SHA256SUMS`; its hash is stated in the `coord/compute` report |
 
 ## 9. Decided alone
 
