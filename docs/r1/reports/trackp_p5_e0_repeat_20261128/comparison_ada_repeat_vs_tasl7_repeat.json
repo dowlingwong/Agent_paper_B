@@ -1,0 +1,123 @@
+{
+ "candidate": "Ada RTX 6000 Ada Generation (sm_89)",
+ "comparator": "TASL-7 reference",
+ "criteria": [
+  {
+   "ada": 0.8829868573365167,
+   "delta": 0.011917422370644193,
+   "metric": "width_slope_vs_label",
+   "pass": true,
+   "reference": 0.8710694349658725,
+   "tol_abs": 0.05
+  },
+  {
+   "ada": 1.0175211609686832,
+   "delta": -0.0032010978106773447,
+   "metric": "mean_slope",
+   "pass": true,
+   "reference": 1.0207222587793605,
+   "tol_abs": 0.05
+  },
+  {
+   "ada": 0.00015773274589363082,
+   "metric": "rps",
+   "pass": true,
+   "reference": 0.00014677868356986312,
+   "rel_diff": 0.07462978994871443,
+   "tol_rel": 0.1
+  }
+ ],
+ "descriptive": {
+  "head_fit.best_step": {
+   "ada": null,
+   "reference": null
+  },
+  "head_fit.early_stopped": {
+   "ada": null,
+   "reference": null
+  },
+  "head_fit.stopped_at": {
+   "ada": null,
+   "reference": null
+  },
+  "head_fit.test": {
+   "ada": {
+    "label_mean_slope_vs_m": 1.0290607441508008,
+    "label_width_slope_vs_s": 0.9253971715455148,
+    "mean_slope": 0.8757186033754527,
+    "mean_slope_vs_label": 0.8502823970304811,
+    "n": 1000,
+    "primary_width": "width_slope_vs_label",
+    "rps": 0.01691933993296356,
+    "rps_extrap": 0.017419659791645163,
+    "rps_interp": 0.016603477314187407,
+    "width_ratio": 0.9326408302090063,
+    "width_slope": 0.13152661934496826,
+    "width_slope_vs_label": 0.13865856018091965,
+    "width_slope_vs_label_lb95": 0.08023474002780244,
+    "width_slope_vs_label_ub95": 0.20142547080268114
+   },
+   "reference": {
+    "label_mean_slope_vs_m": 1.0290607441508008,
+    "label_width_slope_vs_s": 0.9253971715455148,
+    "mean_slope": 0.7653320292720234,
+    "mean_slope_vs_label": 0.7440485505396811,
+    "n": 1000,
+    "primary_width": "width_slope_vs_label",
+    "rps": 0.018457123720147385,
+    "rps_extrap": 0.02380852587006362,
+    "rps_interp": 0.015078669181782661,
+    "width_ratio": 0.7099040037085068,
+    "width_slope": 0.013997763203881946,
+    "width_slope_vs_label": 0.014820147054394939,
+    "width_slope_vs_label_lb95": -0.027536725891899524,
+    "width_slope_vs_label_ub95": 0.057461843330219246
+   }
+  },
+  "label_mean_slope_vs_m": {
+   "ada": 1.0290607441508008,
+   "reference": 1.0290607441508008
+  },
+  "label_width_slope_vs_s": {
+   "ada": 0.9253971715455148,
+   "reference": 0.9253971715455148
+  },
+  "lora.best_step": {
+   "ada": 1900,
+   "reference": 2000
+  },
+  "lora.early_stopped": {
+   "ada": false,
+   "reference": false
+  },
+  "lora.stopped_at": {
+   "ada": 2000,
+   "reference": 2000
+  },
+  "mean_slope_vs_label": {
+   "ada": 0.9884718623874583,
+   "reference": 0.9915669928852049
+  },
+  "n": {
+   "ada": 1000,
+   "reference": 1000
+  },
+  "rps_extrap": {
+   "ada": 0.0003393685192885824,
+   "reference": 0.00032569810574217654
+  },
+  "rps_interp": {
+   "ada": 4.306220053662229e-05,
+   "reference": 3.382302878897363e-05
+  },
+  "width_ratio": {
+   "ada": 1.083971494169583,
+   "reference": 1.0789048498178437
+  },
+  "width_slope": {
+   "ada": 0.8249607677423927,
+   "reference": 0.8137618516437326
+  }
+ },
+ "equivalent": true
+}
