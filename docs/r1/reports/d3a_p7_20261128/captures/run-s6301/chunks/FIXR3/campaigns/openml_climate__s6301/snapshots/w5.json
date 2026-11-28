@@ -1,0 +1,38 @@
+{
+ "arm": "FIXR3",
+ "config_sha256": "0e163b8ae087bcba7d04d8f1723d441b8e527283e55b7d699721af767f2d0b0a",
+ "controller_state_sha256": "ddb048292b11e5167a516dc4f95c4c2f33c5d54b15552af29d7317b6e515fc48",
+ "ended": false,
+ "incumbent_config": {
+  "config.yaml": "model_type: logistic_regression\nC: 0.01\nmax_depth: 5\nn_estimators: 100\nlearning_rate: 0.05\nclass_weight: balanced\nscaler: standard\nimputer: most_frequent\nmax_iter: 1000\n"
+ },
+ "instance_id": "openml_climate__s6301",
+ "last_kept_trial_index": 0,
+ "llm_calls": 2,
+ "llm_calls_basis": "budget_observed_at_run",
+ "node": "openml_climate",
+ "pending": {
+  "candidate_metrics": [
+   0.8861,
+   0.911197
+  ],
+  "diffs": [],
+  "incumbent_metrics": [],
+  "j": 1,
+  "step": 1
+ },
+ "pending_action": "fixr3_step",
+ "repetition": 0,
+ "run_kind": "replicate",
+ "schema": "r1_d3_snapshot/v1",
+ "stage": "a",
+ "start_config": {
+  "config.yaml": "model_type: logistic_regression\nC: 0.15\nmax_depth: 5\nn_estimators: 100\nlearning_rate: 0.05\nclass_weight: balanced\nscaler: standard\nimputer: most_frequent\nmax_iter: 1000\n"
+ },
+ "step_index": 1,
+ "timestamp_utc": "2026-11-28T06:58:17Z",
+ "trial_id": "openml_climate__s6301__t1",
+ "w": 5,
+ "w_actual": 5,
+ "worker_runs": 5
+}

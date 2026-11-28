@@ -1,0 +1,40 @@
+{
+ "arm": "FIXR3",
+ "campaign_kind": "replicate",
+ "campaigns": 1,
+ "campaigns_detail": [
+  {
+   "arm": "FIXR3",
+   "campaign_id": "openml_climate__s6301",
+   "campaign_kind": "replicate",
+   "ended_on": "no_fundable_candidate",
+   "final_sha256": "0bda7c8c359211ae1dfe5c6caf19d9c2221bb3d98ee121df9fcdc175a0916b5c",
+   "instance_id": "openml_climate__s6301",
+   "instance_seed": 6301,
+   "llm_calls": 7,
+   "node": "openml_climate",
+   "pre_decision_snapshots": {},
+   "record_name": "a__FIXR3__openml_climate__s6301__r0",
+   "repetition": 0,
+   "schema": "r1_d3_campaign/v1",
+   "snapshot_schema": "r1_d3_snapshot/v1",
+   "snapshots": {
+    "w10.json": "53e2ddacd11db9ea01db031393c2d3ca5b48e35ee892eabdd43325b643d22969",
+    "w15.json": "25baf29c10a125487f1985882a6be6c025c7c934f44b1d73b54e61e2a7bbbd4c",
+    "w5.json": "6029d3f762cd29c75f39ad29e3d951a144026655c6b40c322a82aaf54825ad2e"
+   },
+   "stage": "a",
+   "worker_runs": 18,
+   "zero_variance_cases": 0
+  }
+ ],
+ "ended_on": {
+  "no_fundable_candidate": 1
+ },
+ "llm_calls": 7,
+ "node": "openml_climate",
+ "repetition": 0,
+ "schema": "r1_d3_chunk_summary/v1",
+ "stage": "a",
+ "worker_runs": 18
+}

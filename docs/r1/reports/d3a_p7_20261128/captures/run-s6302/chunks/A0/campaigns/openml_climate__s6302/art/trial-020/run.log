@@ -1,0 +1,6 @@
+NODE=openml_climate
+MODEL=random_forest
+VAL_AUC=0.899614
+VAL_ACC=0.938272
+STATUS=success
+

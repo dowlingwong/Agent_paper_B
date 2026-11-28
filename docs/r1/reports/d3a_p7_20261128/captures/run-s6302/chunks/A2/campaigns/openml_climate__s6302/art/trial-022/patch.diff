@@ -1,0 +1,9 @@
+--- a/config.yaml
++++ b/config.yaml
+@@ -1,5 +1,5 @@
+ model_type: logistic_regression
+-C: 0.002
++C: 0.0021
+ max_depth: 5
+ n_estimators: 100
+ learning_rate: 0.05
