@@ -43,6 +43,11 @@ status() { echo "$(date -u +%FT%TZ) $*" | tee -a "$V/status.log"; }
 # STOP.json stay for the infrastructure attempt record.
 seal_scene() {
   local tag="$1" rc="$2" detail="$3"
+  status "STOP endpoint_identity check=$tag rc=$rc scene=$V"
+  # Quiesce the started server before hashing: its log must not change after the seal.
+  kill -TERM "${SPID:-0}" 2>/dev/null || true
+  wait "${SPID:-0}" 2>/dev/null || true
+  sleep 1
   {
     echo "{"
     echo "  \"schema\": \"r1_d3_endpoint_stop/v1\","
@@ -61,7 +66,6 @@ seal_scene() {
   } > "$V/STOP.json"
   ( cd "$V" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS ) 2>/dev/null \
     || ( cd "$V" && find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 shasum -a 256 > SHA256SUMS )
-  status "STOP endpoint_identity check=$tag rc=$rc scene=$V"
   exit "$STOP_RC"
 }
 

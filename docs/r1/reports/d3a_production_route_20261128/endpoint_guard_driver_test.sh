@@ -36,6 +36,7 @@ done
 cleanup() {
   [ -n "${FOREIGN_PID:-}" ] && kill -TERM "$FOREIGN_PID" 2>/dev/null
   [ -f "$ROOT/driver/server.pid" ] && kill -TERM "$(cat "$ROOT/driver/server.pid")" 2>/dev/null
+  [ -f "$ROOT/ss_pid" ] && kill -TERM "$(cat "$ROOT/ss_pid")" 2>/dev/null
   wait 2>/dev/null
 }
 trap cleanup EXIT
