@@ -1,0 +1,19 @@
+stamp_utc=2026-11-28T17:37:42Z
+repo=/home/dowling/r1_tracks/t1_tasl_x/harness_repo
+worktree=/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover_g5
+head=3f7b09febf401a83f3aa881f00eecdd032024416
+symbolic_ref_rc=1
+status_start
+?? nodes/gc7rc_forestcover/data
+status_end
+ancestor_rc=0
+worktree_list
+/home/dowling/r1_tracks/t1_tasl_x/harness_repo            3c80b53 [main]
+/home/dowling/r1_tracks/t1_tasl_x/harness_etth1           3a06d86 (detached HEAD)
+/home/dowling/r1_tracks/t1_tasl_x/harness_etth1_g5        6fc553d (detached HEAD)
+/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover     8585166 (detached HEAD)
+/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover_g5  3f7b09f (detached HEAD)
+/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze        aa35448 (detached HEAD)
+/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze_g5     3f92d3c (detached HEAD)
+/home/dowling/r1_tracks/t1_tasl_x/harness_titanic         3a67042 (detached HEAD)
+/home/dowling/r1_tracks/t1_tasl_x/harness_titanic_g5      d2ce470 (detached HEAD)

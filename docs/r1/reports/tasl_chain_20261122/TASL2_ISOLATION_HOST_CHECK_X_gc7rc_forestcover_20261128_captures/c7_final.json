@@ -1,0 +1,353 @@
+{
+  "condition_7_pass": true,
+  "data": {
+    "exists": true,
+    "link": {
+      "is_symlink": false,
+      "path": "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover_g5/nodes/gc7rc_forestcover",
+      "readlink": null,
+      "resolves_to": "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover_g5/nodes/gc7rc_forestcover"
+    },
+    "manifest": "/home/dowling/r1_tracks/t1_tasl_x/data/gc7rc_forestcover/data_manifest.json",
+    "manifest_sha256": "2b5cfb15f3c91e865df0e42c37099a335360df457005d455f6127b217c62c66d",
+    "root": "/home/dowling/r1_tracks/t1_tasl_x/data/gc7rc_forestcover"
+  },
+  "disk": {
+    "/": {
+      "free_bytes": 358456438784,
+      "free_gib": 333.8,
+      "path": "/",
+      "total_bytes": 2014574526464
+    },
+    "/home/dowling/r1_engineering/t1_tasl_x_hostcheck_g5_20261128_forestcover": {
+      "free_bytes": 358456438784,
+      "free_gib": 333.8,
+      "path": "/home/dowling/r1_engineering/t1_tasl_x_hostcheck_g5_20261128_forestcover",
+      "total_bytes": 2014574526464
+    }
+  },
+  "euid": 1008,
+  "expected": {
+    "harness_head": "3f7b09febf401a83f3aa881f00eecdd032024416",
+    "seven_node_head": "c025f89aeafc2199bf3487b4bcaa16678273c702"
+  },
+  "gpu_after": {
+    "compute_apps": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "nvidia_smi_L": {
+      "cmd": [
+        "nvidia-smi",
+        "-L"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-4d623e76-7587-ee15-a633-46f60d220d94)"
+    },
+    "nvidia_smi_query": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-gpu=index,uuid,driver_version,memory.total,memory.used,memory.free,utilization.gpu",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 535.309.01, 24564 MiB, 353 MiB, 23830 MiB, 0 %"
+    }
+  },
+  "gpu_before": {
+    "compute_apps": {
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "lease_lock_exists": true,
+    "nv_driver": "NVRM version: NVIDIA UNIX x86_64 Kernel Module  535.309.01  Wed Mar 25 15:26:15 UTC 2026\nGCC version:  gcc version 12.3.0 (Ubuntu 12.3.0-1ubuntu1~22.04.3)",
+    "nvidia_smi_query": {
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, 535.309.01, 24564 MiB, 353 MiB, 23830 MiB, 0 %"
+    },
+    "trackx_marker": false,
+    "utc": "2026-11-28T17:37:33Z"
+  },
+  "host": {
+    "boot_id": "86c613a9-b90c-48be-9bd5-a0f99c940dae",
+    "hostname": "TASL-2",
+    "kernel_release": "6.8.0-149-generic",
+    "os_release": "PRETTY_NAME=\"Ubuntu 22.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"22.04\"\nVERSION=\"22.04.5 LTS (Jammy Jellyfish)\"\nVERSION_CODENAME=jammy\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=jammy\n",
+    "uname": "Linux version 6.8.0-149-generic (buildd@lcy02-amd64-103) (x86_64-linux-gnu-gcc-12 (Ubuntu 12.3.0-1ubuntu1~22.04.3) 12.3.0, GNU ld (GNU Binutils for Ubuntu) 2.38) #149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC"
+  },
+  "interpreter_evidence": {
+    "interpreter_bytes": 31028464,
+    "interpreter_sha256": "23bc148d2b48964b621c5561ff2b81c1d9c7b717967a7491efbf12f4304882b5",
+    "links": {
+      "python": {
+        "exists": true,
+        "readlink": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+        "resolved": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12"
+      },
+      "python3": {
+        "exists": true,
+        "readlink": "python",
+        "resolved": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12"
+      },
+      "python3.12": {
+        "exists": true,
+        "readlink": "python",
+        "resolved": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12"
+      }
+    },
+    "pyvenv_cfg": "home = /home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin\nimplementation = CPython\nuv = 0.13.6\nversion_info = 3.12.16\ninclude-system-site-packages = false\n",
+    "resolved_interpreter": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+    "utc": "2026-11-28T17:37:35Z",
+    "venv": "/home/dowling/r1_tracks/t1_tasl/envs/torch312",
+    "version": "Python 3.12.16"
+  },
+  "lease": {
+    "lock": "/home/dowling/r1_locks/gpu0.lock",
+    "state": "lease_free"
+  },
+  "leftovers": {
+    "cgroup_leftovers": [],
+    "cgroup_other": [],
+    "dev_shm": [],
+    "run_related_processes": [],
+    "sleep_leftovers": [],
+    "tmp_g0_userns_dirs": []
+  },
+  "no_leftovers": true,
+  "node": "gc7rc_forestcover",
+  "repo": {
+    "exists": true,
+    "head": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover_g5",
+        "rev-parse",
+        "HEAD"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "3f7b09febf401a83f3aa881f00eecdd032024416"
+    },
+    "log_oneline_2": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover_g5",
+        "log",
+        "--oneline",
+        "-2"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "3f7b09f Bind the reviewed G.5 engines for gc7rc_forestcover\n8585166 trackg T1 expansion kit: isolated node gc7rc_forestcover (1GC-7RC Task 5, Forest Cover Type 7-class)"
+    },
+    "path": "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover_g5",
+    "stash": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover_g5",
+        "stash",
+        "list"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "status_porcelain": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover_g5",
+        "status",
+        "--porcelain"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "?? nodes/gc7rc_forestcover/data"
+    },
+    "status_porcelain_untracked_all": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover_g5",
+        "status",
+        "--porcelain",
+        "--untracked-files=all"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "?? nodes/gc7rc_forestcover/data"
+    },
+    "symbolic_ref_rc": 1
+  },
+  "repo_checks": {
+    "data_link_is_only_untracked": true,
+    "disk_above_20_gib": true,
+    "gpu_before_present": true,
+    "gpu_idle_after": true,
+    "harness_head_matches_pin": true,
+    "harness_untracked_all": "?? nodes/gc7rc_forestcover/data",
+    "lease_free": true,
+    "seven_node_head_matches_pin": true,
+    "seven_node_untracked_all": "?? nodes/mlab_cifar10/data\n?? nodes/mlab_imdb/data\n?? nodes/mlab_ogbn_arxiv/data\n?? third_party/mlgym/nodes/mlgym_cifar10/data\n?? third_party/mlgym/nodes/mlgym_fmnist/data\n?? third_party/mlgym/nodes/mlgym_houseprice/data",
+    "trackp_harness_tracked_clean": true
+  },
+  "seven_node": {
+    "exists": true,
+    "head": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "rev-parse",
+        "HEAD"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "c025f89aeafc2199bf3487b4bcaa16678273c702"
+    },
+    "log_oneline_2": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "log",
+        "--oneline",
+        "-2"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes\naf48080 trackg pilot_g4: --gpu-uuid for the worker on a direct host run (R1-T1-HOST-TASL)"
+    },
+    "path": "/home/dowling/r1_tracks/t1_tasl/harness",
+    "stash": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "stash",
+        "list"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "status_porcelain": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "status",
+        "--porcelain"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "?? nodes/mlab_cifar10/data\n?? nodes/mlab_imdb/data\n?? nodes/mlab_ogbn_arxiv/data\n?? third_party/mlgym/nodes/mlgym_cifar10/data\n?? third_party/mlgym/nodes/mlgym_fmnist/data\n?? third_party/mlgym/nodes/mlgym_houseprice/data"
+    },
+    "status_porcelain_untracked_all": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "status",
+        "--porcelain",
+        "--untracked-files=all"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "?? nodes/mlab_cifar10/data\n?? nodes/mlab_imdb/data\n?? nodes/mlab_ogbn_arxiv/data\n?? third_party/mlgym/nodes/mlgym_cifar10/data\n?? third_party/mlgym/nodes/mlgym_fmnist/data\n?? third_party/mlgym/nodes/mlgym_houseprice/data"
+    },
+    "symbolic_ref_rc": 1
+  },
+  "tools": {
+    "flock": {
+      "cmd": [
+        "flock",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "flock from util-linux 2.37.2"
+    },
+    "git": {
+      "cmd": [
+        "git",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "git version 2.34.1"
+    },
+    "python3": {
+      "cmd": [
+        "/usr/bin/python3",
+        "-VV"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "Python 3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]"
+    },
+    "systemd_run": {
+      "cmd": [
+        "systemd-run",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "systemd 249 (249.11-0ubuntu3.23)\n+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY -P11KIT -QRENCODE +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified"
+    }
+  },
+  "trackp_harness_readonly": {
+    "exists": true,
+    "head": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_trackp/autoresearch_harness",
+        "rev-parse",
+        "HEAD"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "897d83c8efa364ec2fdd37288241cc42e01d7274"
+    },
+    "path": "/home/dowling/r1_trackp/autoresearch_harness",
+    "stat": {
+      "cmd": [
+        "stat",
+        "-c",
+        "%n %y %s",
+        "/home/dowling/r1_trackp/autoresearch_harness"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/r1_trackp/autoresearch_harness 2026-10-25 18:26:52.528713273 -0700 4096"
+    },
+    "status_porcelain_tracked": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_trackp/autoresearch_harness",
+        "status",
+        "--porcelain",
+        "--untracked-files=no"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  "utc": "2026-11-28T17:37:35Z"
+}
