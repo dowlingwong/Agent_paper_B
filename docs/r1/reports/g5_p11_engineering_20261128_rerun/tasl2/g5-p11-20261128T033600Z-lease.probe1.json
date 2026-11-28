@@ -1,0 +1,26 @@
+{
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "utc": "2026-11-28T03:32:54.152168+00:00",
+ "identity": {
+  "n_ctx": 32768,
+  "total_slots": 1,
+  "build_info": "b1-620d222",
+  "model_file": "google_gemma-4-31B-it-Q4_K_M.gguf"
+ },
+ "completion_seconds": 0.2023409861139953,
+ "usage": {
+  "completion_tokens": 2,
+  "prompt_tokens": 19,
+  "total_tokens": 21,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  }
+ },
+ "health": {
+  "n": 20,
+  "median_ms": 29.15,
+  "p95_ms": 47.68,
+  "max_ms": 55.28
+ }
+}

@@ -1,0 +1,27 @@
+{
+ "schema": "g5_tasl_job_record/1",
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g5-p11-20261128T033600Z-closed",
+ "node": "mlab_imdb",
+ "family": "G5-7",
+ "job": "campaigns-wave1",
+ "wave": 1,
+ "chunk": null,
+ "attempt": 1,
+ "spec_sha256": "8349e77f731392653c889137f31009ce5e3f8288b5e57563e1ce1ae7fc093559",
+ "owner": {
+  "attempt": 1,
+  "pid": 1098880,
+  "hostname": "TASL-2",
+  "started_utc": "2026-11-28T03:51:57Z"
+ },
+ "started_utc": "2026-11-28T03:51:57Z",
+ "finished_utc": "2026-11-28T03:52:03Z",
+ "closed_utc": "2026-11-28T03:52:03Z",
+ "latest_mtime_utc": "2026-11-28T03:51:57Z",
+ "gpu_seconds": 6.0,
+ "gpu_seconds_to_latest_mtime": 0.9,
+ "end_basis": "closed",
+ "stop": "STOP: closed without a job record: P11 synthetic interrupted attempt",
+ "stop_class": "infrastructure"
+}

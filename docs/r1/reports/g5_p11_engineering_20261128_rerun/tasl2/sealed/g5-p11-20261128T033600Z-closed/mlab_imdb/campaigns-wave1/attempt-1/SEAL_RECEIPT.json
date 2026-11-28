@@ -1,0 +1,28 @@
+{
+ "attempt": 1,
+ "chunk": null,
+ "copied": [
+  "job_record.json"
+ ],
+ "files": {
+  "job_record.json": "fc3f024828ea45715d24d8753f34c902c985716eba46e516c39176b97641f542",
+  "out_clear.tar": "01a642e93ae9479dc33c1c4d6b7f5761c44c7367d00fb31f96726104b73337f3"
+ },
+ "host": "TASL-2",
+ "job": "campaigns-wave1",
+ "job_record_sha256": "fc3f024828ea45715d24d8753f34c902c985716eba46e516c39176b97641f542",
+ "kind": "attempt",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlab_imdb",
+ "node_log": null,
+ "out_clear_files": 1,
+ "run_id": "g5-p11-20261128T033600Z-closed",
+ "schema": "g5_tasl_seal_receipt/1",
+ "seal_mode": "procedural",
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed/g5-p11-20261128T033600Z-closed/mlab_imdb/campaigns-wave1/attempt-1",
+ "sealed_utc": "2026-11-28T03:52:07Z",
+ "source": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-closed/mlab_imdb/campaigns-wave1/attempt-1",
+ "stop": "STOP: closed without a job record: P11 synthetic interrupted attempt",
+ "stop_class": "infrastructure",
+ "who": "g5_seal"
+}

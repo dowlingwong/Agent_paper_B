@@ -1,0 +1,43 @@
+{
+ "description": "P11 synthetic deterministic CUDA arithmetic on four generated integers",
+ "editable_paths": [
+  "train.py"
+ ],
+ "frozen_paths": [
+  "parent.py",
+  "worker.py",
+  "ar_isolated.py"
+ ],
+ "isolation": {
+  "args": [
+   "{budget}"
+  ],
+  "entry": "parent.py",
+  "env": {}
+ },
+ "metric": {
+  "loss_regex": "^step\\s+\\d+\\s+loss:\\s*(\\S+)",
+  "metric_regex": "^val_accuracy: *([0-9.]+)",
+  "steps_regex": "^step\\s+(\\d+)\\b",
+  "test_metric_regex": "^test_accuracy: *([0-9.]+)"
+ },
+ "metric_direction": "maximize",
+ "metric_name": "val_accuracy",
+ "name": "mlab_imdb",
+ "run_budget": {
+  "kind": "steps",
+  "value": 5
+ },
+ "run_command": "python3 parent.py {budget}",
+ "schema": "trackg_node/v1",
+ "selection": {
+  "selection_split": "validation",
+  "test_metric_name": "test_accuracy",
+  "test_scored": true
+ },
+ "suite": "test",
+ "workers": {
+  "dataloader_workers": 0,
+  "threads": 1
+ }
+}

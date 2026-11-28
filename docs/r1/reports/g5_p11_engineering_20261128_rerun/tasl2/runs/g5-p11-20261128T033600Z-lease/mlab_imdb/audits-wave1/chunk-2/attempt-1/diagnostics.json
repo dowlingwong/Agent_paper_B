@@ -1,0 +1,46 @@
+{
+ "K": 10,
+ "attempt": 1,
+ "chunk": 2,
+ "chunks": 3,
+ "gpu_seconds": 17.0,
+ "job": "audits-wave1",
+ "label": "ENGINEERING_ONLY",
+ "label_seed_runs": {
+  "divergent": 0,
+  "infrastructure": 0,
+  "ok": 5
+ },
+ "node": "mlab_imdb",
+ "plan_sha256": "b58240949fe2b6569990b9fa10cb92c9ff73b156450d57d66009d964665935d7",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "runs_planned_evaluation": 5,
+ "runs_planned_label": 5,
+ "schema": "g5_tasl_diagnostics_audit/1",
+ "seeds_planned": [
+  7001,
+  7002,
+  7003,
+  7004,
+  7005,
+  7006,
+  7007,
+  7008,
+  7009,
+  7010
+ ],
+ "spec_sha256": "f5365e84ae6147c3a24e0f8169332286fae0ed6a192826ce459a282c3c2eddc5",
+ "stop": null,
+ "stop_class": null,
+ "wave": 1,
+ "wave_e5": {
+  "audited": 40,
+  "baseline_label_divergent_other": 0,
+  "baseline_label_timeouts": 0,
+  "complete_label": 40,
+  "divergent_label": 0,
+  "members": 40,
+  "parent_divergent_seeds": 0,
+  "partial_label": 0
+ }
+}

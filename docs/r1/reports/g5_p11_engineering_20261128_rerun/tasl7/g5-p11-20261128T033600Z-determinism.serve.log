@@ -1,0 +1,1 @@
+STOP: foreign compute processes on the leased GPU before the server: [{'pid': 2624911, 'used_memory': '386 MiB'}] (no shared card)

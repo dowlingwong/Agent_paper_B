@@ -1,0 +1,13 @@
+{
+ "K": 10,
+ "campaign_attempt": 1,
+ "campaign_out_tar_sha256": "970292e4f4e494bc3042f0ecf0f5e4bb08c29d40d06baacc8bf3106c55028814",
+ "chunks": 2,
+ "groups": 40,
+ "node": "mlgym_breakout_minatar",
+ "plan_json_sha256": "9089cc35d22936032fbb29e8e9c73b964bdc6e6330842e5e5378985c13b8bc35",
+ "plan_tar_sha256": "75549c7ee2bb813940254287f6153f7d751578af1692f8a04828f2ad226c9f98",
+ "schema": "g5_tasl_audit_plan_index/1",
+ "units": 40,
+ "wave": 2
+}

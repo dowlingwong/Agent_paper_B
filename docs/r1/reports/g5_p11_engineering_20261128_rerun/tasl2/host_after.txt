@@ -1,0 +1,8 @@
+2026-11-28T04:51:37Z
+TASL-2
+32
+NVIDIA GeForce RTX 4090, 353 MiB, 24564 MiB, 0 %, 535.309.01
+/dev/nvme0n1p2 1967357936 1517309100 350038804  82% /
+/home/dowling/r1_locks/gpu0.lock free
+/home/dowling/r1_locks/cpus-0-3.lock free
+/home/dowling/r1_locks/cpus-4-7.lock free

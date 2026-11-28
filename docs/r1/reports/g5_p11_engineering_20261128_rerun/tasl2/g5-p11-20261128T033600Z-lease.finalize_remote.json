@@ -1,0 +1,11 @@
+{
+ "final": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/_remote/TASL-7/final.json",
+ "schema": "g5_tasl_remote_final/1",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "host": "TASL-7",
+ "access_log": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/_remote/TASL-7/access_log-1.jsonl",
+ "access_log_sha256": "063c4bbeab2815dc09437bd51410b20badae69c02f9c9f07ca9d2990c30172fd",
+ "registered_attempts": 1,
+ "spec_sha256": "f5365e84ae6147c3a24e0f8169332286fae0ed6a192826ce459a282c3c2eddc5",
+ "utc": "2026-11-28T03:56:00Z"
+}

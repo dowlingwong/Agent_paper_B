@@ -1,0 +1,11 @@
+{
+ "host": "TASL-7",
+ "hostname": "TASL-7",
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "schema": "g4_tasl_server_record/1",
+ "server_url": "http://tasl-7.tail119748.ts.net:8095",
+ "spec_sha256": "f5365e84ae6147c3a24e0f8169332286fae0ed6a192826ce459a282c3c2eddc5",
+ "stop": "STOP: the GPU lease /home/dowling/r1_locks/gpu0.lock is held by another job (no shared card)",
+ "stop_class": "refused_before_run"
+}

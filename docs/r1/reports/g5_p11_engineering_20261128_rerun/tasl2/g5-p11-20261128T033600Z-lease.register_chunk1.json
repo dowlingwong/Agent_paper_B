@@ -1,0 +1,42 @@
+{
+ "registration": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/_remote/registrations/mlab_imdb/audits-wave1/chunk-1/attempt-1.json",
+ "schema": "g5_tasl_remote_registration/1",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "node": "mlab_imdb",
+ "job": "audits-wave1",
+ "chunk": 1,
+ "attempt": 1,
+ "host": "TASL-7",
+ "source": "/home/dowling/r1_engineering/g5-p11/incoming/g5-p11-20261128T033600Z-lease/attempt-1",
+ "claim_sha256": "13f0d5062280a7b452b1a26ebb51c9b0b46afb4546ac9ed568cd37a3bc571c28",
+ "files": {
+  "SHA256SUMS": "2ed2ff48e069bfd2bcb53119d3d67e649790159b55ff46c396efbfbd0df3f525",
+  "attempt.json": "27a99eec285caa01b865ea80ed4b0cffe36b6ac299f7760cea65089bff27a4c9",
+  "diagnostics.json": "1082f8adc8a3ceca2561a1ff5b55edc20acc13812ef411370713781459cc4e19",
+  "job_record.json": "05b298ad42808c1ae09019c59b4b1e3b8b575bb6b6cd4a5993286a2f3eb257ec",
+  "out.tar": "33a4764458eadfb27f4626b7c90714c2d4f82b26d9bfcad63866e5edc5390730"
+ },
+ "stop": null,
+ "stop_class": null,
+ "access_log": {
+  "path": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/_remote/TASL-7/access_log-1.jsonl",
+  "sha256": "063c4bbeab2815dc09437bd51410b20badae69c02f9c9f07ca9d2990c30172fd",
+  "entries": 1
+ },
+ "node_log": {
+  "path": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/_remote/TASL-7/logs/mlab_imdb-20261128T034702Z-2589722.node.log",
+  "sha256": "92285e76ac3622249215c53339981e20f025eafcdd88ab23a9478965ef1072e4"
+ },
+ "crosshost_pass": {
+  "same_as_claim": true,
+  "records": [
+   {
+    "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json",
+    "sha256": "9cce90640315f5de6a8ce0ce1de9456eada82fc25214950fc8a18ce4ff515920",
+    "mode": "short",
+    "crosscheck_run_id": "g1b-tasl-20261121-b-xc3-a"
+   }
+  ]
+ },
+ "utc": "2026-11-28T03:56:00Z"
+}

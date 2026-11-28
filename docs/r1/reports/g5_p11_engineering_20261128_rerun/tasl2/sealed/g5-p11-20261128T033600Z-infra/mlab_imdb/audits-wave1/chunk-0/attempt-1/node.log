@@ -1,0 +1,7 @@
+# t1_tasl g5 node=mlab_imdb spec=/home/dowling/r1_engineering/g5-p11/g5-p11-20261128T033600Z-infra.json start=2026-11-28T04:32:57Z host=TASL-2 cpus=0-7
+Running scope as unit: run-r9032a5ea9769427e8bcba08465f4a6bd.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r9032a5ea9769427e8bcba08465f4a6bd.scope
+STOP 7: final infrastructure failures in the audit chunk after the engine's reruns (a new attempt after diagnosis)
+NODE_EXIT=2
+systemd_run_rc=2
+# end=2026-11-28T04:38:23Z

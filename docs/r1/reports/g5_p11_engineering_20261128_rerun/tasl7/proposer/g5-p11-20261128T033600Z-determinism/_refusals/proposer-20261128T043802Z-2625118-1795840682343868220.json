@@ -1,0 +1,21 @@
+{
+ "gpu": {
+  "driver": "580.178.04",
+  "memory_total": "24564 MiB",
+  "name": "NVIDIA GeForce RTX 4090",
+  "uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+ },
+ "host": "TASL-7",
+ "hostname": "TASL-7",
+ "label": "ENGINEERING_ONLY",
+ "lease": {
+  "lease": "/home/dowling/r1_locks/gpu0.lock",
+  "pid": 2625118
+ },
+ "run_id": "g5-p11-20261128T033600Z-determinism",
+ "schema": "g4_tasl_server_record/1",
+ "server_url": "http://tasl-7.tail119748.ts.net:8095",
+ "spec_sha256": "1cc9f4d4e91fec02d7ef1ad257ee20065180babeb491217201e55c016cc865dc",
+ "stop": "STOP: foreign compute processes on the leased GPU before the server: [{'pid': 2624911, 'used_memory': '386 MiB'}] (no shared card)",
+ "stop_class": "refused_before_run"
+}

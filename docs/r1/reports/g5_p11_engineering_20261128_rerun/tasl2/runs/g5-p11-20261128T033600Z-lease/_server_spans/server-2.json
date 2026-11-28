@@ -1,0 +1,25 @@
+{
+ "closed": false,
+ "files": {
+  "server.tar": "b7d2e44a0c595332d0a790131f1a76bbf1f6df03f144e3387257041a6fe37280"
+ },
+ "host": "TASL-7",
+ "kind": "server",
+ "label": "ENGINEERING_ONLY",
+ "latest_log_mtime_utc": null,
+ "pid": 2595232,
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "schema": "g5_tasl_server_seal_receipt/1",
+ "seal_mode": "procedural",
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed-proposer/g5-p11-20261128T033600Z-lease/server-2",
+ "sealed_utc": "2026-11-28T04:30:11Z",
+ "server": "server-2",
+ "server_end_sha256": "959829cad24bd2baf38dd833957e05945ef1af632c4d707a22f118c269b1539d",
+ "server_log_sha256": "163fe27f9d1e9de3701aaf310d7dc3d6c9b8b13994f4fd3addef9d0b761e7b7f",
+ "server_record_sha256": "5a4e34eec084a510200c348405dd2e35baa3cfbd5495a9f3d1e835937f50389e",
+ "source": "/home/dowling/r1_engineering/g5-p11/proposer/g5-p11-20261128T033600Z-lease/server-2",
+ "span_seconds": 2071.0,
+ "started_utc": "2026-11-28T03:55:39Z",
+ "stopped_utc": "2026-11-28T04:30:10Z",
+ "who": "g5_seal"
+}

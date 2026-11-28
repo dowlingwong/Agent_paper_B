@@ -1,0 +1,19 @@
+{
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "W": 20,
+ "memory": "A",
+ "K": 10,
+ "worker_gpu_hours": 0.885,
+ "proposer": {
+  "seconds": 5672.4,
+  "registered": 0,
+  "open": 2,
+  "open_servers": [
+   "27174cf70d6bf3215c2258430f166aee26a9867761ff0cc8ffe457731f2adb72",
+   "5a4e34eec084a510200c348405dd2e35baa3cfbd5495a9f3d1e835937f50389e"
+  ],
+  "gaps": []
+ },
+ "threshold_gpu_hours": 425
+}
