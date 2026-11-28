@@ -25,9 +25,9 @@ relative tolerance. This is a STOP for the phase-1 note's `ada_smoke_e0` line.**
   `4f47048dd37bb53b4ced22404d749253dd80d96a5c91f3750ab031d01aa35993`, canonical
   `config_sha256 31dd5776887df8e03c7f6e360f460c47f43c5d3bafc04a22c17f595c3b99b3d4`. Its `host` descriptor still
   says "TASL-2 (zhixu portal)" because it is inherited from `trackp_portal.json` — a stale label, not a different
-  host; the manifest and the lease record TASL-7. The E0-relevant blocks (`e0`, `head_lr`, `lora`, `lr_grid`,
-  `token_lr`, Kev base revision) are **identical** to the Ada config; the other differing fields are host/runtime
-  and directory fields (`sft`, `venv`, `image`, `direct`, lease, paths), not the E0 recipe.
+  host; the manifest records hostname TASL-7 and the lease the same card UUID. The E0-relevant blocks (`e0`, `head_lr`, `lora`, `lr_grid`,
+  `token_lr`, Kev base revision) are **identical** to the Ada config; the other differing fields are host/launcher/runtime
+  and directory fields (`venv`, `image`, `direct`, lease, paths), plus the unused `sft` block, not the E0 recipe.
 - **Run outcome:** `pass: true`; `lora.best_step 1800`, `stopped_at 2000`, `early_stopped false`; head fit is
   descriptive (L-BFGS) and the fresh head is restored before LoRA.
 
@@ -69,7 +69,7 @@ scope; (c) re-scope the Ada P5 check. The phase-1 note and A5 SFT remain gated.
 `7df24070ee8a3a0838b3e2b3e71bf264fcbc6d8fa5a531fac2d28c16d8b9e817`), `e0_config_ref_tasl7.json`,
 `gpu_before.txt`/`gpu_after.txt`, `gpu_lease.jsonl` (the two lease events), `p5_compare_ada.py`,
 `comparison_existing_comparator.json` (the comparator's own output, `e85aa003…`), `comparison_e0e.json`
-(same numbers, reference/candidate labels corrected, `46805e6c…`). `SHA256SUMS` binds them.
+(same numbers, reference/candidate labels corrected, `715248d7…`). `SHA256SUMS` binds them.
 
 Decided alone: kept the run and the comparator's miss as a STOP scene, added no relaxation, and did not resume or
 overwrite anything.
