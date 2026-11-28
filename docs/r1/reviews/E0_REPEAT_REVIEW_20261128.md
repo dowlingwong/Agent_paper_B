@@ -1,6 +1,6 @@
 # Independent review of the P.4 E0 same-code repeatability record
 
-**Verdict: ACCEPTED**
+Verdict: ACCEPTED
 
 Reviewed deliverable tip `2cd0bd88a236b7025c32f8301a8309036b42667a` on
 `compute-p5-e0-repeat-20261128`, against `origin/main` `914e1cf9` (PLAN row
