@@ -42,5 +42,6 @@ def draft_spec():
 @pytest.fixture
 def draft_spec_path(tmp_path):
     path = tmp_path / "g5_draft_spec.json"
-    path.write_text(json.dumps(draft_spec()), encoding="utf-8")
+    # The draft note's rendered spec_sha256 binds this JSON's exact bytes.
+    path.write_text(json.dumps(draft_spec(), indent=1) + "\n", encoding="utf-8")
     return path
