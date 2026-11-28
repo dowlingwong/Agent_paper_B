@@ -1,0 +1,137 @@
+{
+ "cross_split_duplicates": "heldout_excludes_seen",
+ "data_sha256": "0088f5595775e3a0341714a833a07ae5dfc137f911a7e60c3794136b5e5160b6",
+ "heldout_rule": "R1-TRACKP-SFT-DUP: primary = val without training duplicates (early stopping, temperature, selection); secondary = full val (reported only)",
+ "label_status": "ENGINEERING_ONLY (R1-TRACKP-SFT-DEV): readiness only; not used for any evidence, selection or tuning; label seeds 7001-7005 only, never the evaluation block 7006-7010",
+ "lr": 1e-05,
+ "n_train": 593,
+ "n_val": 76,
+ "n_val_secondary_only": 200,
+ "protocol": {
+  "effective_batch": 16,
+  "eval_every_frac": 0.25,
+  "head_lr": 0.001,
+  "loss": "rps+ce",
+  "lr_grid": [
+   1e-05,
+   3e-05,
+   0.0001
+  ],
+  "max_epochs": 5,
+  "micro_batch": 8,
+  "patience": 2,
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "temperature_scaling": true,
+  "token_lr": 0.0001,
+  "warmup_frac": 0.05
+ },
+ "protocol_deviation": {
+  "max_steps": 50
+ },
+ "schema": "trackp_sft_report/v1",
+ "seed": 0,
+ "selected": {
+  "val_ece_all_bins": 0.0016371008108608614,
+  "val_ece_top1": 0.04910588981115693,
+  "val_mean_label_sd": 0.49106777369240007,
+  "val_mean_pred_sd": 1.169504803801104,
+  "val_nll": 2.136726140975952,
+  "val_pit_histogram": [
+   1.054945460912096,
+   1.0916104903612505,
+   0.9101621842626357,
+   0.9128374717063221,
+   0.9444517491295183,
+   0.9968482007398133,
+   0.9357487331454597,
+   0.9160684904046402,
+   1.1038602778207587,
+   1.1334669415175052
+  ],
+  "val_rps": 0.04309264260006844,
+  "val_rps_skill": 0.002727544093652279,
+  "val_width_ratio": 2.3815547801222037
+ },
+ "selected_full_heldout": {
+  "val_full_ece_all_bins": 0.0020491646034958354,
+  "val_full_ece_top1": 0.02596268815814295,
+  "val_full_mean_label_sd": 0.501300129990677,
+  "val_full_mean_pred_sd": 1.1971300082314504,
+  "val_full_nll": 2.1358611583709717,
+  "val_full_pit_histogram": [
+   0.9489558805983223,
+   1.1020380769376832,
+   0.9078791782635607,
+   0.8879133929342022,
+   0.9140426663768622,
+   1.0010004751247097,
+   1.0076212166857463,
+   1.05603488562436,
+   1.0745119067640096,
+   1.1000023206905434
+  ],
+  "val_full_rps": 0.04240452344461665,
+  "val_full_rps_skill": 0.0010898283611140425,
+  "val_full_width_ratio": 2.38805046440685
+ },
+ "selected_full_heldout_temperature_scaled": {
+  "val_full_ece_all_bins": 0.0031123835509089255,
+  "val_full_ece_top1": 0.021922991888865786,
+  "val_full_mean_label_sd": 0.501300129990677,
+  "val_full_mean_pred_sd": 1.218752250969456,
+  "val_full_nll": 2.136828899383545,
+  "val_full_pit_histogram": [
+   0.9204159728869801,
+   1.1247716254063085,
+   0.9280556209021935,
+   0.9046065618574335,
+   0.9200019840087788,
+   0.9952761514101125,
+   1.002531139677267,
+   1.0571777861749911,
+   1.0831042112449734,
+   1.0640589464309615
+  ],
+  "val_full_rps": 0.04237599712015689,
+  "val_full_rps_skill": 0.0017618141151702904,
+  "val_full_width_ratio": 2.4311827946107294
+ },
+ "selected_temperature_scaled": {
+  "val_ece_all_bins": 0.0022405790806354314,
+  "val_ece_top1": 0.04443841556011247,
+  "val_mean_label_sd": 0.49106777369240007,
+  "val_mean_pred_sd": 1.1904079279874908,
+  "val_nll": 2.136143207550049,
+  "val_pit_histogram": [
+   1.027250623050773,
+   1.114586575308349,
+   0.933459678899728,
+   0.9319549014660076,
+   0.951776341930652,
+   0.9897110942377662,
+   0.9261271200997685,
+   0.9133583505539712,
+   1.1168234462759838,
+   1.0949518681770005
+  ],
+  "val_rps": 0.04305251457603169,
+  "val_rps_skill": 0.003656207797412603,
+  "val_width_ratio": 2.42412145891119
+ },
+ "steps_per_epoch": 38,
+ "temperature": 1.0635270586922705,
+ "total_steps": 50,
+ "train": {
+  "best_step": 30,
+  "best_value": 0.04309264260006844,
+  "checkpoint": "/data1/zli538/paperb_p4_20261127/p5_timing_20261128/jobs/kev-0.8b/run/stage_s/ckpt/step_0000050",
+  "completed": true,
+  "early_stopped": false,
+  "stopped_at": 50
+ },
+ "train_config_sha256": "1b9d7f5d26064ed53f86e2f4de2151df46b78ca1eea7424cfbbc6055da918f6f"
+}

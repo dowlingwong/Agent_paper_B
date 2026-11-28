@@ -1,0 +1,137 @@
+{
+ "cross_split_duplicates": "heldout_excludes_seen",
+ "data_sha256": "9b6552b47e26bf112d1892d1f71b4aac7ac53d7927d3ecc31df632e1b9d44146",
+ "heldout_rule": "R1-TRACKP-SFT-DUP: primary = val without training duplicates (early stopping, temperature, selection); secondary = full val (reported only)",
+ "label_status": "ENGINEERING_ONLY (R1-TRACKP-SFT-DEV): readiness only; not used for any evidence, selection or tuning; label seeds 7001-7005 only, never the evaluation block 7006-7010",
+ "lr": 0.0001,
+ "n_train": 593,
+ "n_val": 76,
+ "n_val_secondary_only": 200,
+ "protocol": {
+  "effective_batch": 16,
+  "eval_every_frac": 0.25,
+  "head_lr": 0.001,
+  "loss": "rps+ce",
+  "lr_grid": [
+   1e-05,
+   3e-05,
+   0.0001
+  ],
+  "max_epochs": 5,
+  "micro_batch": 8,
+  "patience": 2,
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "temperature_scaling": true,
+  "token_lr": 0.0001,
+  "warmup_frac": 0.05
+ },
+ "protocol_deviation": {
+  "max_steps": 50
+ },
+ "schema": "trackp_sft_report/v1",
+ "seed": 0,
+ "selected": {
+  "val_ece_all_bins": 0.0031828510794987552,
+  "val_ece_top1": 0.0016256790176069347,
+  "val_mean_label_sd": 0.49106777369240007,
+  "val_mean_pred_sd": 1.2134484386306679,
+  "val_nll": 2.134007215499878,
+  "val_pit_histogram": [
+   1.0652552085284122,
+   1.0102535119013523,
+   0.928544920367677,
+   0.903555567816333,
+   1.033050905735756,
+   1.0342937838601753,
+   0.9464383611821837,
+   0.9326491209878872,
+   1.223141396776012,
+   0.9228172228442117
+  ],
+  "val_rps": 0.04285932658055844,
+  "val_rps_skill": 0.008127065351572593,
+  "val_width_ratio": 2.471040666152041
+ },
+ "selected_full_heldout": {
+  "val_full_ece_all_bins": 0.002403350077246031,
+  "val_full_ece_top1": 0.00657449043754893,
+  "val_full_mean_label_sd": 0.501300129990677,
+  "val_full_mean_pred_sd": 1.2129212135997598,
+  "val_full_nll": 2.1371874809265137,
+  "val_full_pit_histogram": [
+   0.9888711499171475,
+   0.9946159886776316,
+   0.8655560032517362,
+   0.8323186907562765,
+   0.9762415226152777,
+   1.0309317581866215,
+   1.0327581877666137,
+   1.089844616291967,
+   1.21210733349073,
+   0.9767547490459985
+  ],
+  "val_full_rps": 0.04260086333975788,
+  "val_full_rps_skill": -0.0035352894900801957,
+  "val_full_width_ratio": 2.419550965650692
+ },
+ "selected_full_heldout_temperature_scaled": {
+  "val_full_ece_all_bins": 0.001832843591269213,
+  "val_full_ece_top1": 0.008568277359084664,
+  "val_full_mean_label_sd": 0.501300129990677,
+  "val_full_mean_pred_sd": 1.2051069094274132,
+  "val_full_nll": 2.137181043624878,
+  "val_full_pit_histogram": [
+   0.9961117080472625,
+   0.9841001624579695,
+   0.8574950683729687,
+   0.8235807613335949,
+   0.9728342237123129,
+   1.0341504795667555,
+   1.0368335481227704,
+   1.0899711993426382,
+   1.2105743781914162,
+   0.9943484708523108
+  ],
+  "val_full_rps": 0.04262839805003874,
+  "val_full_rps_skill": -0.004183916097300733,
+  "val_full_width_ratio": 2.4039628903543777
+ },
+ "selected_temperature_scaled": {
+  "val_ece_all_bins": 0.002611577502809952,
+  "val_ece_top1": 0.0036319264611951174,
+  "val_mean_label_sd": 0.49106777369240007,
+  "val_mean_pred_sd": 1.2056246785720037,
+  "val_nll": 2.133920669555664,
+  "val_pit_histogram": [
+   1.0725987815916644,
+   0.9994983613044778,
+   0.9196153823781164,
+   0.8942224717518712,
+   1.0297888337832966,
+   1.0389365368855021,
+   0.9519545016285631,
+   0.9338027213138539,
+   1.2176728079226276,
+   0.9419096014400273
+  ],
+  "val_rps": 0.0428656401014613,
+  "val_rps_skill": 0.007980954551298658,
+  "val_width_ratio": 2.455108527091405
+ },
+ "steps_per_epoch": 38,
+ "temperature": 0.9757245188749164,
+ "total_steps": 50,
+ "train": {
+  "best_step": 30,
+  "best_value": 0.04285932658055844,
+  "checkpoint": "/data1/zli538/paperb_p4_20261127/p5_timing_20261128/jobs/qwen3.5-0.8b-base/run/stage_s/ckpt/step_0000050",
+  "completed": true,
+  "early_stopped": false,
+  "stopped_at": 50
+ },
+ "train_config_sha256": "48519a413fe2fc3a561007641e6b83cc2d990be2a1443550b8ffc902c1e377bf"
+}
