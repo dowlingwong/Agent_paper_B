@@ -1,0 +1,7 @@
+# t1_tasl g5t7 node=mlab_imdb spec=/home/dowling/r1_engineering/g5-p11/g5-p11-20261128T033600Z-lease.json start=2026-11-28T03:46:38Z host=TASL-7 cpus=0-7
+Running scope as unit: run-r15b277bb09784cdcaaad9ba6eb0bb842.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1011.slice/user@1011.service/app.slice/run-r15b277bb09784cdcaaad9ba6eb0bb842.scope
+STOP: the GPU lease /home/dowling/r1_locks/gpu0.lock is held by another job (no shared card)
+NODE_EXIT=2
+systemd_run_rc=2
+# end=2026-11-28T03:46:39Z

@@ -1,0 +1,18 @@
+# t1_tasl g5 node=mlgym_breakout_minatar spec=/home/dowling/r1_engineering/g5-p11/g5-p11-20261128T033600Z-lease.json start=2026-11-28T04:02:40Z host=TASL-2 cpus=0-7
+Running scope as unit: run-r8cc40c9f8d094a5caea9b0b1c68389c6.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r8cc40c9f8d094a5caea9b0b1c68389c6.scope
+{
+ "ok": true,
+ "node": "mlgym_breakout_minatar",
+ "job": "audits-wave1",
+ "label": "ENGINEERING_ONLY",
+ "noise_precheck": {
+  "node": "mlgym_breakout_minatar",
+  "sigma_node": 8.438601792785187,
+  "delta_n": 2.2300544113856704,
+  "runs_sha256": "1f56c0681d3a6cbd8005b3ee45da4ef2680d9354c869a0d16433b72afc971385"
+ }
+}
+NODE_EXIT=0
+systemd_run_rc=0
+# end=2026-11-28T04:02:57Z

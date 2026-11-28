@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/dowling/r1_engineering/g5-p11/repo/r1/c3/release.py", line 943, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/dowling/r1_engineering/g5-p11/repo/r1/c3/release.py", line 936, in main
+    receipt = release(a.stage, source=a.source, table_dir=a.table, audit_dir=a.audit, out_root=a.out,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dowling/r1_engineering/g5-p11/repo/r1/c3/release.py", line 686, in release
+    refuse_g5_engineering(table_dir, audit_dir, out_root)
+  File "/home/dowling/r1_engineering/g5-p11/repo/r1/c3/release.py", line 666, in refuse_g5_engineering
+    raise ReleaseStop("STOP: P11 engineering outputs cannot enter a G.5 release")
+ReleaseStop: STOP: P11 engineering outputs cannot enter a G.5 release

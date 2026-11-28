@@ -1,0 +1,7 @@
+# t1_tasl g5 node=mlab_imdb spec=/home/dowling/r1_engineering/g5-p11/g5-p11-20261128T033600Z-lease.json start=2026-11-28T04:18:59Z host=TASL-2 cpus=0-7
+Running scope as unit: run-r49bc0040e5074a748ca6132c5b8d1dcd.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r49bc0040e5074a748ca6132c5b8d1dcd.scope
+STOP: mlab_imdb audits-wave2: every chunk is complete
+NODE_EXIT=2
+systemd_run_rc=2
+# end=2026-11-28T04:18:59Z
