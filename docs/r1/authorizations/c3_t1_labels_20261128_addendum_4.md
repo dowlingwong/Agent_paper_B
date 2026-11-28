@@ -16,7 +16,7 @@ base_g5_spec: sweep2/t1_tasl/g5_tasl_spec.json sha256 7dcc581573f84044495006865f
 instance_split: r1/c3/splits/c3_p3_split_v2.json sha256 4dd46796e50ec188b5f89ebc8f4c04e6ab60a5056f124538936dd1bb5d6ae53a
 pre_split_amendment: docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_SPLIT_V2_20261127.md sha256 970d3e45b5177f0d9f6668e9495905e1878a4ffa8eab3d73c4df6b9292a3bea7
 supply: g5_addendum_extra_task
-review: PENDING
+review: docs/r1/reviews/G5_EXPANSION_ADDENDUM_FORESTCOVER_LAUNCH_REVIEW_20261128.md sha256 b50fbfc491d98e9b304a3cfc5cee6747455a1693255b9fbef41855394a201f9f
 ```
 
 ## Eligibility and deployment
