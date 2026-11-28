@@ -167,7 +167,7 @@ widening, re-running for a better value, or changing the reference without the a
 
 2. **Required (small) — `comparison_e0e.json` does not fully "correct" the reference/candidate labels, contrary
    to the record's description.** The record says the file is "same numbers, reference/candidate labels
-   corrected" (line 68). The top-level `candidate`/`reference` strings and the `criteria` keys are corrected, but
+   corrected" (lines 68–69). The top-level `candidate`/`reference` strings and the `criteria` keys are corrected, but
    the `descriptive` block still uses the comparator's original keys, and those keys are inverted: in
    `comparison_e0e.json`, `descriptive["lora.best_step"] = {"ada": 1800, "reference": 1900}`, where 1800 is
    TASL-7 and 1900 is Ada; likewise `descriptive["head_fit.test"]["ada"]["rps"] = 0.017788…` is the TASL-7 value
