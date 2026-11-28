@@ -1,4 +1,4 @@
-# Waiting on the author — 28 Nov 2026, 00:10 CET (`main` `15fe05b0`). Resolved 27–28 Nov: R1-SCREEN-DEEPTHOUGHT2 (`0bb81e26`); R1-P4-E0-SAME-CODE-REFERENCE with the corrected hash and R1-MAC-WORKFLOW-APPROVAL with the four Mac documents (`15fe05b0`). Resolved 28 Nov: HTCondor — 759624/759625 removed after an Idle check with records kept, 760065 treated as withdrawn, P.4 stays on Ada (`compute/20261128-04`).
+# Waiting on the author — 28 Nov 2026, 00:10 CET (`main` `a98d2eff`). Resolved 27–28 Nov: R1-SCREEN-DEEPTHOUGHT2 (`0bb81e26`); R1-P4-E0-SAME-CODE-REFERENCE with the corrected hash and R1-MAC-WORKFLOW-APPROVAL with the four Mac documents (`15fe05b0`). Resolved 28 Nov: HTCondor — 759624/759625 removed after an Idle check with records kept, 760065 treated as withdrawn, P.4 stays on Ada (`compute/20261128-04`).
 
 Answered on 26 Nov: D1 (rows (f)(g), TIMEOUT A, the three additions) → published `95249de3`. D2 (this tmux session
 coordinates; Codex does not push `main`; `canon/README.md` rule 1 stands, so no row is needed) → recorded. D3 (P.4 on Ada:
