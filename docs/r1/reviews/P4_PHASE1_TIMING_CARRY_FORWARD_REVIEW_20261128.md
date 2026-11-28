@@ -26,3 +26,11 @@ and publication of the P5 timing record and review.
   `d9ab62698828adc459c8084c17e2ffd4ae000df71957a155d9e0cb83bf6d5ca6`. The draft retains `approved: false`.
 
 The review used published engineering records, pending Compute branch artifacts and synthetic timing captures.
+
+## Publication re-check
+
+**Verdict: ACCEPTED** for the P5 publication update in `c585aa098e797945970530fadaaf3c249a8a67f2`.
+The P5 PASS line and both links bind the same timing record and review bytes on published `main` `9b044b59`.
+Only the unsigned note changed at that commit. Its signed choices, P1–P4, P6–P8 and other key fields match
+merge parent `98edbf6235cc6a30343ace07b316b7826502b7d1`, including P3 PENDING and `approved: false`.
+`git diff --check` passed. Final note review follows the project signature.
