@@ -48,7 +48,7 @@ OBSERVED = {
     "memory_check": "pass",
     "lease": True,
 }
-PREDECLARATION = "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261122.md"
+PREDECLARATION = "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261128_R5.md"
 
 
 class ScriptedManager(ToggleBackend):

@@ -1,6 +1,6 @@
 """D.3 outcome-table builder (gap G7): campaign summaries + audit rows -> ``r1_d3_outcome/v2``. AI-assisted (Claude).
 
-ENGINEERING_ONLY until a signed D.3 note cites the reviewed unit.  Source: the D.3 pre-declaration revision 4 §8 (the
+ENGINEERING_ONLY until a signed D.3 note cites the reviewed unit.  Source: the D.3 pre-declaration revision 5 §8 (the
 schema), §7.1 (Y), §7.5 (secondary outcomes), §12 G7; the G1/G6 design on ``main``
 (``docs/r1/proposals/d3_design_20261126/``) §2.2, §3.1, §3.3, as revision 4 amends it (G7 writes v2).  The table the
 builder writes is validated by the pinned analysis's own ``d3_analysis.validate_table`` before it is written, so a
@@ -38,8 +38,9 @@ from r1.c3.accounting import replicate_entries, table_ended_on
 
 SUMMARY_SCHEMA = "r1_d3_campaign_summary/v1"
 AUDIT_ROW_SCHEMA = "r1_d3_audit_row/v1"
-# Step (8): R1-D3-STEP8-HOLD (3), released by the reviewed screening record at bf4e0083.
-PREDECLARATION_SHA256 = "e091b1b59fafd29ca2f5950d48641611491082a62252268cca2f5c19146b9745"
+# Step (8): R1-D3-PREDECL-R5 carries forward the reviewed screening record at bf4e0083.
+PREDECLARATION_PATH = "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261128_R5.md"
+PREDECLARATION_SHA256 = "700d93cac277a23f527f20a49f8606987e63f615547b435cf924b2706ec778ad"
 SUMMARY_KEYS = frozenset({"schema", "stage", "arm", "node", "instance_seed", "repetition", "status", "gpu_model",
                           "infra_attempts", "worker_runs", "llm_calls", "unfundable", "start_config_hash",
                           "final_config_hash", "last_keep_run", *D3.COMPUTE_INT_KEYS, *D3.COMPUTE_SECONDS_KEYS,
@@ -270,11 +271,12 @@ def sigma_from_noise_source(summary_path=None) -> dict:
     return {node: float(table[node]["sigma_node"]) for node in D3.NODES}
 
 
-def build_table(stage: str, summaries: Iterable[dict], audits: Iterable[dict], *, predeclaration_path,
+def build_table(stage: str, summaries: Iterable[dict], audits: Iterable[dict], *,
+                predeclaration_path=PREDECLARATION_PATH,
                 d3b_note=None, repetitions: int = D3.REPETITIONS, noise_summary_path=None) -> dict:
     """The validated ``r1_d3_outcome/v2`` table of one stage.  D.3b reads ``a6_entered`` from the signed D.3b note
     (``d3_analysis.read_a6_declaration``); D.3a and HPO-REF take no note. The pre-declaration must match
-    the published frozen revision 4."""
+    the published frozen revision 5."""
     if stage not in D3.STAGES:
         raise OutcomeTableError(f"stage must be one of {D3.STAGES}")
     pre = D3.refuse_input_path(predeclaration_path)
@@ -284,7 +286,7 @@ def build_table(stage: str, summaries: Iterable[dict], audits: Iterable[dict], *
     refuse_sealed(pre)
     pre_sha = hashlib.sha256(pre.read_bytes()).hexdigest()
     if pre_sha != PREDECLARATION_SHA256:
-        raise OutcomeTableError("the pre-declaration sha256 differs from frozen revision 4")
+        raise OutcomeTableError("the pre-declaration sha256 differs from frozen revision 5")
     if stage == "D.3b":
         if d3b_note is None:
             raise OutcomeTableError("a D.3b table needs the signed D.3b note (a6_entered)")
@@ -318,7 +320,7 @@ def write_table(table: dict, out_path) -> Path:
         raise OutcomeTableError("an outcome table is a .json file")
     D3.validate_table(table, table.get("stage"))
     if table["predeclaration_sha256"] != PREDECLARATION_SHA256:
-        raise OutcomeTableError("the pre-declaration sha256 differs from frozen revision 4")
+        raise OutcomeTableError("the pre-declaration sha256 differs from frozen revision 5")
     data = (json.dumps(table, indent=1, sort_keys=True) + "\n").encode()
     if len(data) > D3.MAX_TABLE_BYTES:
         raise OutcomeTableError(f"outcome table larger than {D3.MAX_TABLE_BYTES} bytes")
