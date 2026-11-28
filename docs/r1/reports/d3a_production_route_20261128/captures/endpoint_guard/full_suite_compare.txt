@@ -1,0 +1,14 @@
+# full r1/tests suite: published base c66603ae vs tip 0354083d (TASL-2, harness 9bb41680)
+# ignored identically at both tips: test_trackp_p4_runner.py, test_trackp_sft_select_stop.py (collection errors)
+
+## base c66603ae
+53 failed, 4888 passed, 162 skipped, 2 warnings, 3 errors, 71 subtests passed in 208.89s (0:03:28)
+
+## tip 0354083d
+52 failed, 4912 passed, 162 skipped, 2 warnings, 3 errors, 71 subtests passed in 209.68s (0:03:29)
+
+## sorted FAILED/ERROR ID diff
+base_only:
+FAILED r1/tests/test_t1_tasl_crosscheck.py::test_default_part_on_both_hosts_seal_and_compare
+tip_only:
+(none above means no new failure at the tip)

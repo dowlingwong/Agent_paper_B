@@ -1,0 +1,7 @@
+mode=foreign rc=90 root=/tmp/d3a_guard_test.DK61aP
+chunk_called=no
+stop_json=yes
+stop_check=ready rc=90
+endpoint_check_ready.json: ok=False failed=guard reason=listener_pid: the endpoint port must be served by exactly the started server PID
+seal=OK
+result=PASS

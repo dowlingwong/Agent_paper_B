@@ -371,14 +371,22 @@ P10/P11 pass at the base.
 | `run_id_ledger.json` | `62becc147a2b321cd5c1b082ac451bedd0941662bff93d3cfb06374639cd9d38` |
 | `observed.json` | `da07e83499a821c229c509d9bd4aefb0087f242d8c600e8fe0b911c79370a42f` |
 | `endpoint_run.sh` | `d2b088d652bb5f1604f30fb9515af0d32eb44e8583bbe465ecbf7894e39ae3ad` |
-| `production_driver.sh` | `bd027076cf71f205c059df481b1d0e4f0e0712cdb0a9b762880edf4c726cc7a5` |
+| `production_driver.sh` | `c446c56fc3864e4d52e5decae10cd24b090e017637529c5248d9b4883eb5aa4e` |
+| `endpoint_guard_driver_test.sh` | `0d6b2d84a519467bddbab1ae38fd417afabbe9404d3e1942b51f7aff9a2c7b6d` |
+| `r1/c3/d3/endpoint_guard.py` | `a1ef4184ad680bf37d5d2b1632b18b50e7706811da18266930b933423129ed92` |
+| `r1/tests/test_d3_endpoint_guard.py` | `6f23da54ad09aa94999e20504a324debb99a97261cc6d2fdb52b0cbfe1e17615` |
 | `captures/server_argv.txt` | `9ed9d647a7e2c9ededf14f12a170271577a3f12c2eb5abf8239756bc4f436ab6` |
 | `captures/props.json` | `92fc6b976fe98a295033ac162beabdddc6ebd0b5af691de16fd524155b6f57da` |
 | `captures/models.json` | `2ff596bf1be4a6c9354949f8ff6e8d4342b252b7c98d3f1ce7cc8a0f1ef420e4` |
 | `captures/environment_20261128.txt` | `3637c4c615d96da8b7aaf18fd2bc51bdb941c42f95fc957bf65b22e006152d21` |
-| `captures/launch_ssh_dryrun.txt` | `f2b902f0a84af085615be2bec9e1d5cc54131e6ff180bb32e922bd11a6e513d5` |
-| `captures/cache_staging.txt` | `ced91811c19d6cd70d0d8e0b90db5d1d99c192ee862cd909554e38f06e0f2253` |
-| `captures/SHA256SUMS` | `6690c5f2a3db6e462da109ae71b01c26d8d4c396e7ddc360057dc03f5365ebf9` (covers every capture file, including `server.log` and `status.log`) |
+| `captures/launch_ssh_dryrun.txt` | `a0d0b662dcd1bc7614ff2c7ba431eebd378c1ecd0488852df6ee71c2c10a6ad8` |
+| `captures/cache_staging.txt` | `2dedbbc2d7983aaec3203e70f12477fed30ff0c5f14fbd1deb0186d6ed9a0dfb` |
+| `captures/endpoint_guard/driver_success.txt` | `1693bfd63ef58db7c319fa057324d57bd7adb907b2cb4f7fb5ead7bcc1f34c21` |
+| `captures/endpoint_guard/driver_foreign.txt` | `54fca5a25691db7535e2728d22e551080094861093583f6d5e73211250f7ffea` |
+| `captures/endpoint_guard/driver_bindfail.txt` | `9d7fa49f750c7147c727806fa3989db8d32f4d7ec1f985015c3f11e0755174fc` |
+| `captures/endpoint_guard/pytest_endpoint_guard.txt` | `e8dadd7e0388988b572b2c3977b6dda1c1c1b78b9368282b9e4eb8a229ba4245` |
+| `captures/endpoint_guard/full_suite_compare.txt` | `eea0984e958a4a1fb97cf17368c4643bbcb6cd6b763b4bd24f040945ba0a1715` |
+| `captures/SHA256SUMS` | `8d922f4064dd477276bb8ffdd3ed7772d59c21c6f72efb6841696c4fd13b4365` (covers every capture file, including `server.log`, `status.log` and the endpoint-guard runs) |
 | `SHA256SUMS` (record root) | binds this record and `captures/SHA256SUMS`; its hash is stated in the `coord/compute` report |
 
 ## 9. Decided alone
