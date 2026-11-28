@@ -77,9 +77,10 @@ def _note(tmp_path, a6):
     return p
 
 
-def test_full_d3a_table_is_accepted_by_the_pinned_analysis_and_written_once(tmp_path, pre):
+def test_full_d3a_table_is_accepted_by_the_pinned_analysis_and_written_once(tmp_path, pre, monkeypatch):
+    monkeypatch.chdir(REPO)
     sums, auds = _design()
-    table = T.build_table("D.3a", sums, auds, predeclaration_path=pre)
+    table = T.build_table("D.3a", sums, auds)
     assert len(table["rows"]) == 7 * 7 * 18 and table["schema"] == "r1_d3_outcome/v2"
     assert table["predeclaration_sha256"] == hashlib.sha256(pre.read_bytes()).hexdigest()
     row = table["rows"][0]

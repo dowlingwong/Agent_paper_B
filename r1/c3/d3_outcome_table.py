@@ -271,7 +271,8 @@ def sigma_from_noise_source(summary_path=None) -> dict:
     return {node: float(table[node]["sigma_node"]) for node in D3.NODES}
 
 
-def build_table(stage: str, summaries: Iterable[dict], audits: Iterable[dict], *, predeclaration_path,
+def build_table(stage: str, summaries: Iterable[dict], audits: Iterable[dict], *,
+                predeclaration_path=PREDECLARATION_PATH,
                 d3b_note=None, repetitions: int = D3.REPETITIONS, noise_summary_path=None) -> dict:
     """The validated ``r1_d3_outcome/v2`` table of one stage.  D.3b reads ``a6_entered`` from the signed D.3b note
     (``d3_analysis.read_a6_declaration``); D.3a and HPO-REF take no note. The pre-declaration must match

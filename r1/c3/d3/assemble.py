@@ -50,7 +50,7 @@ def load_audits(audit_dirs: Iterable[str | Path]) -> list[dict[str, Any]]:
 
 
 def build(stage: str, chunk_dirs: Iterable[str | Path], audit_dirs: Iterable[str | Path], *,
-          predeclaration_path: str | Path, d3b_note: str | Path | None = None,
+          predeclaration_path: str | Path = table.PREDECLARATION_PATH, d3b_note: str | Path | None = None,
           repetitions: int = D3.REPETITIONS,
           noise_summary_path: str | Path | None = None) -> dict[str, Any]:
     summaries = load_summaries(chunk_dirs)
@@ -65,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--stage", required=True, choices=list(D3.STAGES))
     ap.add_argument("--chunk", action="append", required=True)
     ap.add_argument("--audit", action="append", required=True)
-    ap.add_argument("--predeclaration", required=True)
+    ap.add_argument("--predeclaration", default=table.PREDECLARATION_PATH)
     ap.add_argument("--d3b-note", default=None)
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
