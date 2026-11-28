@@ -1,4 +1,4 @@
-# State — 28 Nov 2026, 17:00 CET, `main` at `7cd65cfa`
+# State — 28 Nov 2026, 18:55 CET, `main` at `f532176f`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
