@@ -23,7 +23,7 @@ the actual set). Full details in reports `20261128-32` and `20261128-33`.
 | `compute/20261128-18` G.5 launch | author's **"G.5 启动 A"** (merge `compute-g5-launch-base-20261128` @ `2178bc6e`, then launch from its tip, not the merge) | author → coordinator → compute | none |
 | `compute/20261128-20` ETTh1 / Forest Cover | Local's per-node handoffs (full suite at `6fc553df` / `3f7b09fe`, tier E); worktrees, run roots, data links and patched node rows are prepared | local → compute | none |
 | `compute/20261127-28` E-INT census | published `docs/r1/authorizations/paperc_eint_census_20261127.md` (absent) and a signed spec | author/design → compute | none |
-| D.3 batch proposer preflight (`compute/20261128-03`) | a `Start=true` ETP L40S or TOpAS A100 on the exact request; read-only re-read at 14:09Z still showed the ETP L40S `Start=false` and no named A100 listed | compute, re-read each round | none |
+| D.3 batch proposer preflight (`compute/20261128-03`) | a `Start=true` ETP L40S or TOpAS A100 on the exact request; the 14:09Z read showed the ETP L40S still `Start=false`, and recheck 4 (12:59Z) remains the current A100 record (`c03-001-175`, `Start=false`); no `dwong` job | compute, re-read each round | none |
 | P.4 phase-1 note | author signing `befb58c8`; Local's P3 fill and P5 carry-forward; final tier-E review | author/local | none |
 
 ## Hosts at 14:09–14:12Z
