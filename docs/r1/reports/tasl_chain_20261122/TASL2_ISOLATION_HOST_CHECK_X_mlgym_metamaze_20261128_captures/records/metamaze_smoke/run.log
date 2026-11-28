@@ -1,0 +1,9 @@
+parent dumpable-off; starting worker
+step 1 loss: 1.0
+step 2 loss: 0.5
+step 3 loss: 0.3333333333333333
+step 4 loss: 0.25
+step 5 loss: 0.2
+parent shared buffer sum=10
+
+AR_RUNNER result_channel_sha256=4ffec570b33e852a82e6d95b1e209a6246365a8a8bb8aedf969c2a05ea1117c0 bytes=43
