@@ -812,7 +812,7 @@ def build_table(rows: Sequence[dict], *, predeclaration_sha256: str, sigma_node:
                 repetitions: int = D3.REPETITIONS) -> dict:
     """The HPO-REF table, validated by the pinned analysis (``d3_analysis.validate_table``) before it is returned."""
     if predeclaration_sha256 != PREDECLARATION_SHA256:
-        raise HpoRefError("the pre-declaration sha256 differs from frozen revision 4")
+        raise HpoRefError("the pre-declaration sha256 differs from frozen revision 5")
     table = {"schema": D3.SCHEMA, "stage": STAGE, "predeclaration_sha256": predeclaration_sha256,
              "noise_source_sha256": D3.NOISE_SOURCE_SHA256, "sigma_node": dict(sigma_node), "arms": list(ARMS),
              "a6_entered": None, "repetitions": repetitions,

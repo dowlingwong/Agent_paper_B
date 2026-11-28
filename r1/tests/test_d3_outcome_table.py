@@ -68,7 +68,7 @@ def _design(stage="D.3a", arms=None):
 
 @pytest.fixture
 def pre():
-    return REPO / "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261122.md"
+    return REPO / "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261128_R5.md"
 
 
 def _note(tmp_path, a6):
@@ -77,9 +77,10 @@ def _note(tmp_path, a6):
     return p
 
 
-def test_full_d3a_table_is_accepted_by_the_pinned_analysis_and_written_once(tmp_path, pre):
+def test_full_d3a_table_is_accepted_by_the_pinned_analysis_and_written_once(tmp_path, pre, monkeypatch):
+    monkeypatch.chdir(REPO)
     sums, auds = _design()
-    table = T.build_table("D.3a", sums, auds, predeclaration_path=pre)
+    table = T.build_table("D.3a", sums, auds)
     assert len(table["rows"]) == 7 * 7 * 18 and table["schema"] == "r1_d3_outcome/v2"
     assert table["predeclaration_sha256"] == hashlib.sha256(pre.read_bytes()).hexdigest()
     row = table["rows"][0]
@@ -97,10 +98,12 @@ def test_full_d3a_table_is_accepted_by_the_pinned_analysis_and_written_once(tmp_
 
 @pytest.mark.parametrize("stage", D3.STAGES)
 def test_each_stage_refuses_changed_predeclaration_bytes(tmp_path, pre, stage):
+    old = REPO / "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261122.md"
     changed = tmp_path / pre.name
     changed.write_bytes(pre.read_bytes() + b"\n")
-    with pytest.raises(T.OutcomeTableError, match="sha256 differs from frozen revision 4"):
-        T.build_table(stage, [], [], predeclaration_path=changed)
+    for wrong in (changed, old):
+        with pytest.raises(T.OutcomeTableError, match="sha256 differs from frozen revision 5"):
+            T.build_table(stage, [], [], predeclaration_path=wrong)
 
 
 def test_write_refuses_a_table_with_a_changed_predeclaration_hash(tmp_path, pre):
@@ -108,7 +111,7 @@ def test_write_refuses_a_table_with_a_changed_predeclaration_hash(tmp_path, pre)
     table = T.build_table("D.3a", sums, auds, predeclaration_path=pre)
     table["predeclaration_sha256"] = "0" * 64
     out = tmp_path / "table.json"
-    with pytest.raises(T.OutcomeTableError, match="sha256 differs from frozen revision 4"):
+    with pytest.raises(T.OutcomeTableError, match="sha256 differs from frozen revision 5"):
         T.write_table(table, out)
     assert not out.exists()
 
@@ -240,8 +243,10 @@ def test_hpo_ref_rows(pre):
     assert table["predeclaration_sha256"] == digest
     assert HPO.build_table(table["rows"], predeclaration_sha256=digest,
                            sigma_node=table["sigma_node"])["predeclaration_sha256"] == digest
-    with pytest.raises(HPO.HpoRefError, match="sha256 differs from frozen revision 4"):
-        HPO.build_table(table["rows"], predeclaration_sha256="0" * 64, sigma_node=table["sigma_node"])
+    old = REPO / "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261122.md"
+    for wrong in ("0" * 64, hashlib.sha256(old.read_bytes()).hexdigest()):
+        with pytest.raises(HPO.HpoRefError, match="sha256 differs from frozen revision 5"):
+            HPO.build_table(table["rows"], predeclaration_sha256=wrong, sigma_node=table["sigma_node"])
     r0 = next(r for r in table["rows"] if r["campaign_id"] == _cid_of(s0))
     assert r0["ended_on"] == "proposal_cap" and r0["gpu_model"] is None and r0["memory_mode"] == "not_applicable"
     smac = next(s for s in sums if s["arm"] == "SMAC3")
