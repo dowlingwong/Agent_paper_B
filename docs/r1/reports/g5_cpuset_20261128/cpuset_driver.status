@@ -1,0 +1,18 @@
+driver_start=2026-11-28T00:14:01Z
+run=tasl2-cpuset-mlgym_houseprice-20261128
+cpuset_spec_rc=0
+leases_held=2026-11-28T00:14:01Z
+try_1_rc=0 attempt=1 log=/home/dowling/r1_tracks/t1_tasl/runs/tasl2-cpuset-mlgym_houseprice-20261128/_logs/mlgym_houseprice-20261128T001401Z-982152.node.log
+attempt_1_stop_class=None
+seal_1_rc=0
+try_2_rc=0 attempt=2 log=/home/dowling/r1_tracks/t1_tasl/runs/tasl2-cpuset-mlgym_houseprice-20261128/_logs/mlgym_houseprice-20261128T001432Z-982152.node.log
+attempt_2_stop_class=None
+seal_2_rc=0
+try_3_rc=0 attempt=3 log=/home/dowling/r1_tracks/t1_tasl/runs/tasl2-cpuset-mlgym_houseprice-20261128/_logs/mlgym_houseprice-20261128T001503Z-982152.node.log
+attempt_3_stop_class=None
+seal_3_rc=0
+leases_released=2026-11-28T00:15:34Z sealed=3
+verdict_rc=0
+2447e4363976b6d5565f4b49efa079d35989f8cf8a284bb8190f6a43e4665c61  /home/dowling/r1_tracks/t1_tasl/captures/g5_cpuset_check_20261128T001400Z/G5_TASL2_CPUSET_CHECK_mlgym_houseprice_20261128.json
+verdict=PASS reason=None
+driver_end=2026-11-28T00:15:34Z
