@@ -1,0 +1,8 @@
+{
+  "node": "mlgym_metamaze",
+  "tail": {
+    "tails": "student_t",
+    "tails_nu": 5,
+    "authority": "R1-G5-TAILS-EXPANSION"
+  }
+}
