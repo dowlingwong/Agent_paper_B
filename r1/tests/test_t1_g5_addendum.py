@@ -59,6 +59,24 @@ def test_signed_p10_refuses_another_nodes_law_or_wrong_degrees_of_freedom(node, 
         A.check_tail(node, {**tail, "authority": A.P10_ROW}, published_plan.get)
 
 
+@pytest.mark.parametrize("hidden", [True, False])
+def test_signed_p10_uses_one_visible_author_declaration(hidden):
+    plan = (ROOT / PLAN).read_text(encoding="utf-8")
+    declaration = "`mlgym_metamaze` is declared Student-t with ν = 5"
+    alternate = ("`gc7rc_etth1` is declared Student-t with ν = 4; "
+                 "`mlgym_metamaze`, `gc7rc_forestcover` and `mlgym_titanic` Gaussian.")
+    inserted = f"<!-- {alternate} -->" if hidden else alternate
+    assert plan.count(declaration) == 1
+    published_plan = {PLAN: plan.replace(declaration, f"{inserted} {declaration}").encode("utf-8")}
+    tail = {"tails": "student_t", "tails_nu": 4, "authority": A.P10_ROW}
+    match = "differ from R1-G5-TAILS-EXPANSION" if hidden else "exactly one set"
+    with pytest.raises(S.Stop, match=match):
+        A.check_tail("gc7rc_etth1", tail, published_plan.get)
+    if hidden:
+        good = {"tails": "student_t", "tails_nu": 5}
+        assert A.check_tail(MLGYM, {**good, "authority": A.P10_ROW}, published_plan.get) == good
+
+
 @pytest.mark.parametrize(("node", "cpus", "mode", "env"), [
     ("mlgym_titanic", "12-15", "harness_list", "torch312"),
     (MLGYM, "0-3", "census_override", "venv_jax"),

@@ -166,13 +166,15 @@ def check_tail(name: str, tail: dict, read_main) -> dict:
     S.check_tails_nu(node)
     if tail.get("authority") != P10_ROW:
         raise S.Stop(f"STOP: {name}'s P10 declaration must cite {P10_ROW}")
-    row = S.plan_row(P10_ROW, read_main)
-    plan = read_main("docs/r1/PLAN.md").decode("utf-8")
-    if sum(author_row == P10_ROW for author_row, _ in release.author_rows(plan)) != 1:
+    plan = read_main("docs/r1/PLAN.md") or b""
+    S.plan_row(P10_ROW, lambda _: plan)
+    decisions = [text for row, text in release.author_rows(plan.decode("utf-8")) if row == P10_ROW]
+    if len(decisions) != 1:
         raise S.Stop(f"STOP: {name}'s P10 declaration must be an author row on published main")
-    match = P10_DECLARATION.search(row)
-    if match is None:
-        raise S.Stop(f"STOP: {P10_ROW} must name the signed expansion tail laws")
+    declarations = list(P10_DECLARATION.finditer(decisions[0]))
+    if len(declarations) != 1:
+        raise S.Stop(f"STOP: {P10_ROW} must name exactly one set of signed expansion tail laws")
+    match = declarations[0]
     declared = {gaussian: "gaussian" for gaussian in re.findall(r"`([a-z0-9_]+)`", match["gaussians"])}
     declared[match["student"]] = f"student_t (nu = {match['nu']})"
     if set(declared) != {*p3_split.T1_EXPANSION_MLGYM, *p3_split.T1_EXTRA_TASKS} or S.tails_text(node) != declared.get(name):
