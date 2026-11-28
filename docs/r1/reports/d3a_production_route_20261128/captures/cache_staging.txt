@@ -1,0 +1,10 @@
+cache_manifest_sha256 1987cc004aba9ead9705788d98cf05720855c5c0977be5c8eb3404f375382c21
+root_tree 3843b53cddca6c32f00f5a1eeb96f34a78ca2871720900f4e6b8c0f724130d07
+digits_mlp prepare=OK openml_cache False
+openml_breast_w prepare=OK data_files 4 expected 4 arff 1 data_match True
+openml_climate prepare=OK data_files 4 expected 4 arff 1 data_match True
+openml_credit_approval prepare=OK data_files 4 expected 4 arff 1 data_match True
+openml_ionosphere prepare=OK data_files 4 expected 4 arff 1 data_match True
+openml_sonar prepare=OK data_files 4 expected 4 arff 1 data_match True
+tabular_mlp prepare=OK openml_cache False
+all_openml_data_match True

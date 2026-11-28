@@ -6,7 +6,8 @@
 # environment, the canonical CPU lease beside the GPU lease, the server lifetime, and the
 # 20 GB chunk scope.  It starts no campaign unless RUN_CHUNK=1.
 #
-# Executed evidence in this record used RUN_CHUNK=0; the chunk branch was not run.
+# TEMPLATE: this file was not executed.  The executed endpoint proof is endpoint_run.sh
+# (same probe/server sequence); the chunk branch below was not run.
 set -uo pipefail
 
 cleanup() { [ -n "${SPID:-}" ] && kill -TERM "$SPID" 2>/dev/null || true; }
@@ -23,10 +24,16 @@ CPU_LEASE=/home/dowling/r1_locks/cpus-16-31.lock
 PYTHON=/home/dowling/r1_tracks/venv/bin/python
 AUDIT_SHIM=/home/dowling/r1_tracks/work/d3p7_20261128/pydeps_audit
 HARNESS=/home/dowling/r1_tracks/work/harness_9bb_20261127
+DATA_CACHE="$B/data_cache"
 SCOPE="systemd-run --user --scope -p Delegate=yes -p MemoryMax=20G -p MemorySwapMax=0"
 
 mkdir -p "$V"
 cd "$REPO"
+
+# The reviewed screening cache must be staged for every OpenML node before a campaign.
+for n in openml_breast_w openml_climate openml_credit_approval openml_ionosphere openml_sonar; do
+  [ -d "$DATA_CACHE/$n/data_cache" ] || { status "data_cache missing for $n"; exit 81; }
+done
 status() { echo "$(date -u +%FT%TZ) $*" | tee -a "$V/status.log"; }
 
 # Canonical leases: fd 8 = CPUs 16-31, fd 9 = the GPU card the probe checks by inheritance.
@@ -82,7 +89,6 @@ if [ "${RUN_CHUNK:-0}" = "1" ]; then
   $SCOPE "$PYTHON" -B -m r1.c3.d3.campaign_chunk \
     --launch "$CHUNK_LAUNCH" --out "$CHUNK_OUT" \
     --manifest "$R/manifest.json" --observed "$R/observed.json" \
-    --repo-root "$REPO" --harness-root "$HARNESS" \
     > "$V/chunk_stdout.txt" 2> "$V/chunk_stderr.txt"
   CHUNK_RC=$?
   status "chunk_rc=$CHUNK_RC"

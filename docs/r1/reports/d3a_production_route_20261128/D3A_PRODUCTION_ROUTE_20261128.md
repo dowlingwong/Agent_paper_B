@@ -156,6 +156,42 @@ the P7 audit shim, not in the v1 image.
 The deepthought audit side is P8 (`D3A_P8_HOST_20261128`, re-check ACCEPTED at `b70cfa01`); this
 record changes neither that host nor `r1/tests`.
 
+### Data cache staging
+
+`manifest.json`'s `data_cache_root` is
+`/home/dowling/r1_tracks/work/d3a_prod_20261128/data_cache`. It did not exist when the first draft was
+written; three OpenML nodes failed `prepare_node_dir` and `openml_climate`/`openml_sonar` received the
+harness's empty placeholder cache. The reviewed screening cache was staged there and the production
+host now passes `prepare_node_dir` for all seven nodes.
+
+| Item | Value |
+|---|---|
+| Source | `docs/r1/reports/screen_cache_rebuild_20261127/` (ENGINEERING_ONLY; built under screening harness `6adf3859`, package set pandas 3.0.3 / scikit-learn 1.8.0 / numpy 2.4.4 / scipy 1.17.1) |
+| Cache MANIFEST | `1987cc004aba9ead9705788d98cf05720855c5c0977be5c8eb3404f375382c21` |
+| Cache tree | `3843b53cddca6c32f00f5a1eeb96f34a78ca2871720900f4e6b8c0f724130d07` |
+| Staged root | `data_cache/<node>/data_cache`; six nodes including `openml_wdbc` (unused by D.3) |
+
+Per-node tree hashes (all match the reviewed MANIFEST; each node has four data files and one ARFF):
+
+| Node | tree_sha256 |
+|---|---|
+| `openml_breast_w` | `058343f9759365d02c51eee9c52489ba84097a5428d0e2cf2e95a4456dbe9c94` |
+| `openml_climate` | `3dc7f6bb3b80f5cebe63bc2eb187279ce204ca57137d6f24da80f5fee411cebd` |
+| `openml_credit_approval` | `1dc25c439ca26164d3b47584d8ee70fe4427c95d224edc6bc5184546c1bc7c40` |
+| `openml_ionosphere` | `97951b0b5341d5a44c6e0f367c0d9cab4d46949dbd898dfc92005569725d1c6f` |
+| `openml_sonar` | `36d193ed8aa2be9f8d12ea9233da83b5698bdc285b3061af52e3d215370f2253` |
+
+Two harness node trees (`openml_climate`, `openml_sonar`) carry an ignored
+`data_cache/.gitignore` + `.gitkeep` placeholder; `prepare_node_dir` treats the directory as present
+and would skip the root cache. The reviewed cache files were therefore also installed into those two
+ignored node `data_cache` directories on TASL-2. The harness checkout remains clean
+(`git status --porcelain` empty; the files are ignored), and the prepared campaign caches contain
+exactly the four expected data files and one ARFF per node. `captures/cache_staging.txt` records the
+verification; the placeholder files are the only extra entries and the node loader ignores them. A
+clean harness checkout on another host needs the same two-dir install before a campaign.
+
+This is a host staging condition, not a manifest change: the manifest hash above is unchanged.
+
 This is a **disclosed substitution**, not a silent one: the direct route does not use the §2 image,
 and Python differs from both the image and the audit basis. It reproduces the environment frozen by
 the accepted P7 exact-runtime record itself (Python 3.11.17 and the same four package versions), so the
@@ -163,10 +199,22 @@ runtime gate was measured in this environment. The executable and shim are pinne
 `/home/dowling/.local/share/uv/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11` sha256
 `ff9b2ac4362b81c68622ffb1730f7138eb269177d9846399c521a44c5daffb0e`, and the audit shim tree
 sha256 `1737028cdd5868c30d331e6f80133e5ec3b1c76f3d4f95df9de960d67370ef07` (regular files, no
-`__pycache__`). `pyproject.toml` declares `requires-python = ">=3.11"`. Local and the author must
-accept this disposition in the note's `image:` line, or the route needs a container runtime that
-TASL-2 does not currently provide. No evidence run has started, so this is a binding decision, not a
-STOP of existing evidence.
+`__pycache__`). `pyproject.toml` declares `requires-python = ">=3.11"`.
+
+**This is a Level 2 binding, not a Local edit.** The note's §2 image pin is signed; changing the
+`image:` line locally would itself leave the job record differing from a signed pin under §10. The
+author needs one PLAN §10 row (or note amendment) that binds the direct-route environment, for
+example:
+
+```
+image: none — direct SSH on TASL-2; host venv Python 3.11.17 + audit shim tree 1737028c…
+       (v1 digest 69b06b35… remains the HTCondor-route image and is not used here)
+```
+
+Python 3.11.17 also has no field in the current key block, so the same row must bind it (or add an
+`environment_sha256` field). The alternative is a container runtime on TASL-2 that can run the v1
+image; none is currently available. Until that row exists, no D.3a campaign starts. No evidence run
+has started, so this is a binding decision, not a STOP of existing evidence.
 
 ## 5. Resource basis
 
@@ -198,15 +246,20 @@ are for the HTCondor route and are not edited or used here.
 
 ## 6. What remains before an evidence launch
 
-1. Local binds `paper_commit` to the published launch commit (a docs-only descendant of `c3a48405`
+1. The author (via the coordinator) records the Level 2 image/environment row described in §4; the
+   signed note must bind the direct-route Python 3.11.17 environment or the route needs a container
+   runtime. A Local edit of the signed `image:` line alone is not sufficient.
+2. Local binds `paper_commit` to the published launch commit (a docs-only descendant of `c3a48405`
    with the same code tree outside `docs/` and the spec) and `run_id = d3a-prod-20261128-a` in the
-   D.3a note, and fills the pending layout request fields from §5.
-2. Local re-runs P10 and P11 at that exact launch SHA. At the base they already pass: P10 returns
+   D.3a note, fills the pending layout request fields from §5, and confirms the reviewed cache is
+   staged for the five OpenML nodes (the production host already has it; a fresh harness needs the
+   two-dir install from §4).
+3. Local re-runs P10 and P11 at that exact launch SHA. At the base they already pass: P10 returns
    `PASS` for 160 seeds 20010–20801 (`captures/p10_verify_namespaces.txt`); P11's analysis sha256 is
    `c0be039905e682e8b1702542e16607f09daf30a59be3363bbdf5a85c64a484ce` and
    `r1/tests/test_d3_analysis.py` passes 53 tests (`captures/p11_analysis_pin.txt`).
-3. The author signs P9; the coordinator publishes the note byte-identically on `main`.
-4. Only then does a chunk launch, after `validate --launch`, the strict note check, the canonical
+4. The author signs P9; the coordinator publishes the note byte-identically on `main`.
+5. Only then does a chunk launch, after `validate --launch`, the strict note check, the canonical
    lease and the empty-card/foreign-process check. G.5 has the TASL pair first; D.3a waits for it.
 
 No campaign, audit, G6/G7 step, label read or outcome was produced here. This record does not change
@@ -223,9 +276,12 @@ python -B -m pytest -q -p no:cacheprovider -rfE \
 97 passed in 2.74s
 ```
 
-No repository code changed in this unit; it is records, one manifest, JSON launch/ledger data and a
-capture script. The full `r1/tests` suite is not required for a docs-only record, but the focused
-launcher/chunk/adapter/accounting set that consumes these files passes, and P10/P11 pass at the base.
+Cache staging: `read_data_cache` returns the reviewed tree `3843b53c…` and all five OpenML
+`prepare_node_dir` data maps equal the MANIFEST (four files, one ARFF each);
+`captures/cache_staging.txt` has the output. No repository code changed in this unit; it is records,
+one manifest, JSON launch/ledger data and capture scripts. The full `r1/tests` suite is not required
+for a docs-only record, but the focused launcher/chunk/adapter/accounting set that consumes these
+files passes, and P10/P11 pass at the base.
 
 ## 8. Hashes
 
@@ -237,13 +293,14 @@ launcher/chunk/adapter/accounting set that consumes these files passes, and P10/
 | `run_id_ledger.json` | `62becc147a2b321cd5c1b082ac451bedd0941662bff93d3cfb06374639cd9d38` |
 | `observed.json` | `da07e83499a821c229c509d9bd4aefb0087f242d8c600e8fe0b911c79370a42f` |
 | `endpoint_run.sh` | `d2b088d652bb5f1604f30fb9515af0d32eb44e8583bbe465ecbf7894e39ae3ad` |
-| `production_driver.sh` | `113bc5c022cfad5dfee7ba7d2443a49d461c9555c5f7e7f74c050c3b2a2d5c94` |
+| `production_driver.sh` | `c7ab489bf901c61ec4e4c87d1c7fef2497d1d219ff09b87420f46733848ee0f7` |
 | `captures/server_argv.txt` | `9ed9d647a7e2c9ededf14f12a170271577a3f12c2eb5abf8239756bc4f436ab6` |
 | `captures/props.json` | `92fc6b976fe98a295033ac162beabdddc6ebd0b5af691de16fd524155b6f57da` |
 | `captures/models.json` | `2ff596bf1be4a6c9354949f8ff6e8d4342b252b7c98d3f1ce7cc8a0f1ef420e4` |
 | `captures/environment_20261128.txt` | `3637c4c615d96da8b7aaf18fd2bc51bdb941c42f95fc957bf65b22e006152d21` |
 | `captures/launch_ssh_dryrun.txt` | `f63344562a0fd3afea4bf394006e15c3a42f14f9b7387a7ac25a4b1605888d24` |
-| `captures/SHA256SUMS` | `72e4fc3c9b96602da7c6ad0dfa95c83d356366be00189c161f36c5172a9d5b71` (covers every capture file) |
+| `captures/cache_staging.txt` | `ced91811c19d6cd70d0d8e0b90db5d1d99c192ee862cd909554e38f06e0f2253` |
+| `captures/SHA256SUMS` | `a24016a511b36d9fbe7a392ec92393ad75496ea7a97ef704df89948b2b26af42` (covers every capture file, including `server.log` and `status.log`) |
 | `SHA256SUMS` (record root) | binds this record and `captures/SHA256SUMS`; its hash is stated in the `coord/compute` report |
 
 ## 9. Decided alone
