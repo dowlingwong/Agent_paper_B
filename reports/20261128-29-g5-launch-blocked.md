@@ -51,7 +51,9 @@ proposed here.
 
 ## What happens next
 
-1. The coordinator verifies and merges `compute-g5-launch-base-20261128` into `main`.
+1. The coordinator verifies and merges `compute-g5-launch-base-20261128` into `main` with a **merge commit**
+   (`--no-ff`; the canon forbids squash/rebase/cherry-pick). The note and spec are already on `main`, so the
+   merge adds only the six record files; the branch tip must remain the second parent.
 2. Compute launches from that branch's **tip** `2178bc6e`, not from the merge commit: a merge into current
    `main` keeps the later D.3 code and would fail the same check. At the tip, HEAD is published (an ancestor of
    `origin/main`), tracked-clean, holds the committed spec and the signed note on `main`, and equals `a70c8872`
