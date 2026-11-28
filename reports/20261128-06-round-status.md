@@ -22,7 +22,7 @@ deepthought stop record, deepthought2 screening launch.
 | Task | What | ID / stamp | State |
 |---|---|---|---|
 | `compute/20261128-01` TASL-7 E0 same-code reference | `trackp.py e0 --stage final` on paper `c80f83bc`, config `e0_config_ref_tasl7.json`, `--evidence DRYRUN`, seed 0, lr 1e-4, card UUID `GPU-ab72fb4a…` | run `/home/dowling/r1_trackp/runs/p5_e0_ref_20261128/e0e`; lease 00:11:43–00:40:07Z | **STOP: NOT equivalent on RPS** — width +0.002179 (pass), mean −0.001491 (pass), RPS 1.1638e-4 vs Ada 1.4384e-4 = −19.09 % (tol 10 %, fail); record `d4b9f02c…`; review `compute-p5-tasl7-e0-20261128-review` @ `7b1c697e`, **ACCEPTED** (`f14321d3…`) |
-| `compute/20261128-06` screening on deepthought2 | third re-issue, code `a7c2f8fb`, cache `3843b53c…`, 64 workers | launch script PID 3697711; checkout `paper_dt2_20261128T001405Z`; OUT `SMEAS_EVIDENCE_20261128T001405Z` | **launched 00:27:01Z**; strict preflight passed (co-tenancy ok, 119.82 cores free); 6,170/10,164 rows at 00:42, 0 failed, guard ok; analysis on completion |
+| `compute/20261128-06` screening on deepthought2 | third re-issue, code `a7c2f8fb`, cache `3843b53c…`, 64 workers | checkout `paper_dt2_20261128T001405Z`; OUT `SMEAS_EVIDENCE_20261128T001405Z`; deliverable `compute-screen-dt2-20261128` @ `fa0707da` | **complete**: 10,164/10,164, 0 failed, 1,468.2 s; `digits_mlp` and `openml_climate` INCONCLUSIVE, six NOT_TESTED; decision `R1_THEORY_RHO_2_FINAL`; analysis review running |
 
 ## Blocked / not started
 
