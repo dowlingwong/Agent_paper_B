@@ -18,6 +18,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from g5_spec_fixtures import draft_spec_path
 
 ROOT =Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "sweep2" / "t1_tasl"))
@@ -1318,10 +1319,10 @@ def test_rel_t1_g1b_copy_leaves_no_partial_dest_and_writes_checked_bytes(tmp_pat
 
 
 # =============================================================================================== the CLI gates
-def test_cli_commands_are_behind_the_gates(tmp_path, capsys):
+def test_cli_commands_are_behind_the_gates(tmp_path, capsys, draft_spec_path):
     """The draft spec is unsigned: every seal and assembly command refuses at the launch validation; the copy step
     (before the signature) validates without launch and then refuses the missing summary."""
-    sp = str(ROOT / "sweep2" / "t1_tasl" / "g5_tasl_spec.json")
+    sp = str(draft_spec_path)
     for argv in (["seal-attempt", sp, str(tmp_path)], ["seal-node", sp, "--node", NODE], ["seal-run", sp],
                  ["seal-server", sp, str(tmp_path)], ["server-span", sp, str(tmp_path / "r.json")],
                  ["assemble", sp, "--stage", "traindev", "--table", str(tmp_path / "t"), "--evidence",
