@@ -260,9 +260,18 @@ CUDA_C12_HOSTS = {"TASL-2": ("c12_record", "c12_sha256", "c12_review"),
 
 
 # =============================================================================================== small helpers
-def load_spec(path: Path, *, note_path: Path | None = None, draft: bool = False, read_main=G._read_main) -> dict:
+def load_spec(path: Path, *, note_path: Path | None = None, draft: bool = False, read_main=G._read_main,
+              engineering: bool = False) -> dict:
     path = Path(path)
     raw = json.loads(path.read_text())
+    if engineering:
+        import g5_p11
+        if note_path is not None or not isinstance(raw, dict) or raw.get("schema") != g5_p11.SCHEMA:
+            raise Stop("STOP: P11 engineering mode requires its synthetic recipe and takes no authorization note")
+        check_import_sources()
+        return g5_p11.load(path, raw)
+    if raw.get("schema") == "g5_p11_smoke/v1":
+        raise Stop("STOP: the P11 synthetic recipe requires explicit engineering mode")
     if raw.get("schema") == ADDENDUM_SCHEMA:
         import g5_addendum
 
@@ -271,6 +280,14 @@ def load_spec(path: Path, *, note_path: Path | None = None, draft: bool = False,
     if "_addendum" in raw:
         raise Stop("STOP: expansion bindings must come from a signed G.5 addendum")
     return raw
+
+
+def engineering_spec(spec: dict) -> bool:
+    return spec.get("schema") == "g5_p11_smoke/v1"
+
+
+def output_label(spec: dict) -> str:
+    return "ENGINEERING_ONLY" if engineering_spec(spec) else EVIDENCE
 
 
 def _get(spec: dict, path: tuple):
@@ -2792,7 +2809,7 @@ IMPORT_SOURCES = {**T4.IMPORT_SOURCES, "g4_tasl": "sweep2/t1_tasl/g4_tasl.py",
                   "g5_job": "sweep2/t1_tasl/g5_job.py", "g5_seal": "sweep2/t1_tasl/g5_seal.py",
                   "g5_assemble": "sweep2/t1_tasl/g5_assemble.py", "g5_relcopy": "sweep2/t1_tasl/g5_relcopy.py",
                   "g5_features": "sweep2/t1_tasl/g5_features.py", "g5_noise": "sweep2/t1_tasl/g5_noise.py",
-                  "g5_addendum": "sweep2/t1_tasl/g5_addendum.py"}
+                  "g5_addendum": "sweep2/t1_tasl/g5_addendum.py", "g5_p11": "sweep2/t1_tasl/g5_p11.py"}
 
 
 def check_import_sources(repo: Path = None) -> dict:
@@ -2879,7 +2896,8 @@ def launch_addendum(spec_path: Path, spec: dict, node: dict, *, job: str, today:
 def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable: bool, today: date,
            on_main=G._note_on_main, read_main=G._read_main, list_main=list_main, pin_check=None, mpath_check=None,
            checkout=None, launch_binding=None, runner=None, server_record: Path | None = None,
-           host: str = WORKER_HOST, chunk: int | None = None, pilot_check=None, pilot_main_check=None) -> dict:
+           host: str = WORKER_HOST, chunk: int | None = None, pilot_check=None, pilot_main_check=None,
+           engineering: bool = False) -> dict:
     """The G.5 switch at every job start (§9). Off unless both keys are given; every check below must pass before the
     runner is called (the default runner is ``g5_job.run_job``, part 3b-1). ``server_record``: the proposer's
     ``server_record.json`` copied from TASL-7, for campaign jobs. ``host``: TASL-2, or TASL-7 for an audit chunk under
@@ -2897,6 +2915,20 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
                    f"({TWO_CARDS_ROW})")
     if (host == AUDIT_HOST) != (chunk is not None):
         raise Stop(f"STOP: a {AUDIT_HOST} audit job names its claimed chunk; a {WORKER_HOST} job takes none")
+    if engineering:
+        import g5_p11
+        if enable or note_path is not None:
+            raise Stop("STOP: P11 engineering jobs take neither --enable nor --note")
+        check_import_sources()
+        spec = load_spec(spec_path, engineering=True)
+        node_entry(spec, node_name)
+        if server_record is not None:
+            g5_p11.incoming(spec, server_record)
+        context = g5_p11.context(spec, node_name, host, read_main, list_main)
+        context.update(chunk=chunk, server_record=server_record)
+        return (runner or job_runner)(spec_path, node_name, job, context) | {"context": context}
+    if note_path is None:
+        raise Stop("STOP: evidence launch requires --note")
     spec = load_spec(spec_path, note_path=note_path, read_main=read_main)
     validate_spec(spec, launch=True)
     node = node_entry(spec, node_name)
@@ -3014,6 +3046,13 @@ def launch(spec_path: Path, note_path: Path, node_name: str, *, job: str, enable
 
 
 # =============================================================================================== CLI
+def operational_spec(path: Path, *, engineering: bool = False, launch: bool = True) -> dict:
+    spec = load_spec(path, engineering=engineering)
+    if not engineering:
+        validate_spec(spec, launch=launch)
+    return spec
+
+
 def part_3b2(a) -> dict:
     """The part 3b-2 commands behind the same gates as ``close-attempt``: the spec validated for launch (the copy step,
     which precedes the signature, without launch) and the import-source check after the lazy imports."""
@@ -3021,8 +3060,8 @@ def part_3b2(a) -> dict:
     import g5_relcopy                                        # noqa: PLC0415
     check_import_sources()
     spec_path = Path(a.spec)
-    spec = load_spec(spec_path)
-    validate_spec(spec, launch=a.cmd != "rel-copy")
+    engineering = getattr(a, "engineering", False)
+    spec = operational_spec(spec_path, engineering=engineering, launch=a.cmd != "rel-copy")
     SE = g5_assemble.SE
     if a.cmd == "seal-attempt":
         return SE.seal_attempt(spec, Path(a.attempt_dir))
@@ -3072,7 +3111,7 @@ def main(argv=None) -> int:
                     help="with --tasl7-audits: the nodes eligible for TASL-7 audit chunks (default: the G5-7 nodes whose "
                          "cross-host PASS is on origin/main: the xc2 and the xc3 short verdicts)")
     pbc = sub.add_parser("pilot-basis"); pbc.add_argument("spec")
-    r = sub.add_parser("run"); r.add_argument("spec"); r.add_argument("--note", required=True)
+    r = sub.add_parser("run"); r.add_argument("spec"); r.add_argument("--note")
     r.add_argument("--node", required=True); r.add_argument("--job", required=True, choices=JOBS)
     r.add_argument("--enable", action="store_true"); r.add_argument("--server-record")
     r.add_argument("--host", default=WORKER_HOST, choices=JOB_HOSTS)
@@ -3088,7 +3127,7 @@ def main(argv=None) -> int:
     ab.add_argument("--wave", type=int, required=True, choices=(1, 2)); ab.add_argument("--chunk", type=int, required=True)
     ab.add_argument("--reason", required=True); ab.add_argument("--access-log", required=True)
     fr = sub.add_parser("finalize-remote"); fr.add_argument("spec"); fr.add_argument("--access-log", required=True)
-    sv = sub.add_parser("serve"); sv.add_argument("spec"); sv.add_argument("--note", required=True)
+    sv = sub.add_parser("serve"); sv.add_argument("spec"); sv.add_argument("--note")
     sv.add_argument("--enable", action="store_true")
     for name in ("cpus", "logdir"):
         q = sub.add_parser(name); q.add_argument("spec"); q.add_argument("--node", required=True)
@@ -3122,9 +3161,31 @@ def main(argv=None) -> int:
     asm.add_argument("--addendum-spec", action="append", default=[], help="one published expansion spec, repeatable")
     asm.add_argument("--note", help="the signed note docs/r1/authorizations/<run_id>.md (its t1_table_readings line); "
                                     "without it only the refuse reading applies")
+    init = sub.add_parser("p11-init")
+    init.add_argument("run_id")
+    for name in ("p11-meter", "p11-table-marker", "p11-closed-fixture", "p11-probe"):
+        cmd = sub.add_parser(name)
+        cmd.add_argument("spec")
+    for name in ("validate", "run", "serve", "cpus", "logdir", "seal-attempt", "seal-node", "seal-run",
+                 "seal-server", "close-server", "server-span", "close-attempt", "claim-chunk",
+                 "register-chunk", "abandon-claim", "finalize-remote", "wave-checks"):
+        sub.choices[name].add_argument("--engineering", action="store_true")
     a = ap.parse_args(argv)
     try:
-        if a.cmd == "validate":
+        if a.cmd in ("p11-init", "p11-meter", "p11-table-marker", "p11-closed-fixture", "p11-probe"):
+            import g5_p11
+            if a.cmd == "p11-init":
+                out = g5_p11.create(a.run_id)
+            else:
+                spec = load_spec(Path(a.spec), engineering=True)
+                actions = {"p11-meter": g5_p11.metrics, "p11-table-marker": g5_p11.table_marker,
+                           "p11-closed-fixture": g5_p11.closed_fixture, "p11-probe": g5_p11.probe}
+                out = actions[a.cmd](spec)
+            print(json.dumps(out, indent=1))
+        elif a.cmd == "validate" and a.engineering:
+            spec = load_spec(Path(a.spec), engineering=True)
+            print(json.dumps({"ok": True, "run_id": spec["run_id"], "label": output_label(spec)}))
+        elif a.cmd == "validate":
             out = validate_spec(load_spec(Path(a.spec)), launch=a.launch)
             out.pop("spec")
             print(json.dumps({"ok": True, **out}, indent=1))
@@ -3157,11 +3218,17 @@ def main(argv=None) -> int:
         elif a.cmd == "serve":
             import g5_job                                    # noqa: PLC0415
             check_import_sources()
-            print(json.dumps(g5_job.serve_launch(Path(a.spec), Path(a.note), enable=a.enable), indent=1,
-                             default=str))
+            if a.engineering:
+                if a.note is not None or a.enable:
+                    raise Stop("STOP: P11 engineering serve takes neither --enable nor --note")
+                out = T4.serve_spec(load_spec(Path(a.spec), engineering=True), Path(a.spec))
+            else:
+                if a.note is None:
+                    raise Stop("STOP: evidence server requires --note")
+                out = g5_job.serve_launch(Path(a.spec), Path(a.note), enable=a.enable)
+            print(json.dumps(out, indent=1, default=str))
         elif a.cmd in ("cpus", "logdir"):
-            spec = load_spec(Path(a.spec))
-            validate_spec(spec)
+            spec = operational_spec(Path(a.spec), engineering=a.engineering, launch=False)
             node = node_entry(spec, a.node)
             w = spec["worker"] if a.host == WORKER_HOST else spec["tasl7_audits"]        # g5t7: TASL-7's own values
             cpus = tasl2_node_cpus(spec, a.node) if a.host == WORKER_HOST else (node.get("cpus") or w["cpus"])
@@ -3184,16 +3251,20 @@ def main(argv=None) -> int:
         elif a.cmd == "close-attempt":
             import g5_job                                    # noqa: PLC0415
             check_import_sources()
-            spec = load_spec(Path(a.spec))
-            validate_spec(spec, launch=True)
+            spec = operational_spec(Path(a.spec), engineering=a.engineering)
             print(json.dumps(g5_job.close_attempt(spec, Path(a.spec), a.node, a.job, Path(a.attempt_dir), a.reason,
                                                   chunk=a.chunk), indent=1))
         elif a.cmd in ("claim-chunk", "register-chunk", "abandon-claim", "finalize-remote"):   # TWO-CARDS, TASL-2
             import g5_job                                    # noqa: PLC0415
             check_import_sources()
-            spec = load_spec(Path(a.spec))
-            validate_spec(spec, launch=True)
+            spec = operational_spec(Path(a.spec), engineering=a.engineering)
             sp = Path(a.spec)
+            if a.engineering and a.cmd != "claim-chunk":
+                import g5_p11
+                for source in ("access_log", "attempt_dir", "node_log"):
+                    path = getattr(a, source, None)
+                    if path:
+                        g5_p11.incoming(spec, Path(path))
             if a.cmd == "claim-chunk":
                 out = g5_job.claim_chunk(spec, sp, a.node, a.wave, a.chunk)
             elif a.cmd == "register-chunk":
@@ -3206,8 +3277,7 @@ def main(argv=None) -> int:
             print(json.dumps(out, indent=1))
         elif a.cmd == "wave-checks":
             import g5_job                                    # noqa: PLC0415
-            spec = load_spec(Path(a.spec))
-            validate_spec(spec, launch=True)
+            spec = operational_spec(Path(a.spec), engineering=a.engineering)
             print(json.dumps(g5_job.wave_checks(spec, a.node, a.wave), indent=1))
         elif a.cmd in ("seal-attempt", "seal-node", "seal-run", "seal-server", "close-server", "server-span",
                        "rel-copy", "assemble"):
@@ -3237,10 +3307,13 @@ def main(argv=None) -> int:
             validate_spec(spec)
             print(json.dumps(pilot_basis_check(spec, G._read_main), indent=1))
         else:
-            out = launch(Path(a.spec), Path(a.note), a.node, job=a.job, enable=a.enable, today=date.today(),
-                         server_record=Path(a.server_record) if a.server_record else None, host=a.host,
-                         chunk=a.chunk)
-            print(json.dumps({"ok": True, "node": a.node, "job": a.job}, indent=1, default=str))
+            out = launch(Path(a.spec), Path(a.note) if a.note else None, a.node, job=a.job, enable=a.enable,
+                         today=date.today(), server_record=Path(a.server_record) if a.server_record else None,
+                         host=a.host, chunk=a.chunk, engineering=a.engineering)
+            result = {"ok": True, "node": a.node, "job": a.job}
+            if a.engineering:
+                result.update(label=out["label"], noise_precheck=out["noise_precheck"])
+            print(json.dumps(result, indent=1, default=str))
     except Stop as exc:
         print(str(exc), file=sys.stderr)
         return 2
