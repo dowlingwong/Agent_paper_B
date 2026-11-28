@@ -49,6 +49,7 @@ from r1.c3.d3 import adapter as A
 from r1.c3.d3 import assemble as AS
 from r1.c3.d3.audit import AuditStop, Cache, audit_chunk, harness_runner
 from r1.c3.d3.campaign_chunk import ChunkSpec, ChunkStop, _sample_compute_apps, run_chunk
+from r1.c3.d3_outcome_table import PREDECLARATION_PATH
 from r1.harness import harness_commit
 
 DESIGN_NODE = "openml_climate"          # the design's smoke node
@@ -408,8 +409,7 @@ def main(argv: list[str] | None = None) -> int:
     m.add_argument("--proposer-sha256", required=True)
     m.add_argument("--base-url", default="http://127.0.0.1:8095/v1")
     m.add_argument("--repo-root", required=True)
-    m.add_argument("--predeclaration",
-                   default="docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261122.md")
+    m.add_argument("--predeclaration", default=PREDECLARATION_PATH)
     m.add_argument("--constants", default="docs/r1/reports/d3_g2_20261127/d3_constants.json")
     m.add_argument("--noise", default="results/r1/noise/D28_REPAIR_20261027/summary.json")
     m.add_argument("--split", default="r1/c3/splits/c3_p3_split_v1.json")
