@@ -1,0 +1,2 @@
+{"event": "start", "gpu_index": 0, "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1", "job": "trackp e0 kev-0.8b", "other_processes": {"count": 0, "memory_mib": 0}, "pid": 2289540, "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active", "utc": "2026-11-28T00:11:43Z"}
+{"event": "end", "gpu_index": 0, "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1", "job": "trackp e0 kev-0.8b", "other_processes": {"count": 0, "memory_mib": 0}, "pid": 2289540, "utc": "2026-11-28T00:40:07Z"}
