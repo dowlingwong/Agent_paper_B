@@ -1,7 +1,7 @@
 {
  "arm": "A1",
  "config_sha256": "faaefd02be2453bf7c7e3505cb6818ec2d4f5428c376f18e3e879976b8f4722f",
- "controller_state_sha256": "a67f1cc31e0670652abc6b3fcea58f9839d31e62474dedc191b08b951e8e83f8",
+ "controller_state_sha256": "19ab8a37f9f68292e0a9463d1eb128602713bc6cec5c1ba05e74cdde93d8e33e",
  "ended": false,
  "incumbent_config": {
   "config.yaml": "model_type: logistic_regression\nC: 0.002\nmax_depth: 5\nn_estimators: 100\nlearning_rate: 0.05\nclass_weight: balanced\nscaler: standard\nimputer: most_frequent\nmax_iter: 1000\n"
@@ -20,7 +20,7 @@
   "config.yaml": "model_type: logistic_regression\nC: 0.15\nmax_depth: 5\nn_estimators: 100\nlearning_rate: 0.05\nclass_weight: balanced\nscaler: standard\nimputer: most_frequent\nmax_iter: 1000\n"
  },
  "step_index": null,
- "timestamp_utc": "2026-11-28T06:14:45Z",
+ "timestamp_utc": "2026-11-28T07:07:39Z",
  "trial_id": "openml_climate__s6302-trial-010",
  "w": 10,
  "w_actual": 10,

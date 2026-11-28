@@ -8,7 +8,7 @@
    "campaign_id": "openml_climate__s6301",
    "campaign_kind": "replicate",
    "ended_on": "no_fundable_candidate",
-   "final_sha256": "91a2f097d4c5e5b02950c8b8087fb03f61a21f9ba52810b381b2a19f463ab833",
+   "final_sha256": "0bda7c8c359211ae1dfe5c6caf19d9c2221bb3d98ee121df9fcdc175a0916b5c",
    "instance_id": "openml_climate__s6301",
    "instance_seed": 6301,
    "llm_calls": 7,
@@ -19,9 +19,9 @@
    "schema": "r1_d3_campaign/v1",
    "snapshot_schema": "r1_d3_snapshot/v1",
    "snapshots": {
-    "w10.json": "653ed521064dcad9aee56718930f1c50925ca9e0b7e829a99a45bb79ef3892f9",
-    "w15.json": "d5617594094d394e434746a3b23137677c11ba5a1fdfd36bbef06c61b7870e98",
-    "w5.json": "257276d2c27ca172d53bef8e5157b53dd28fec605aaea73ba62513997d6c5291"
+    "w10.json": "53e2ddacd11db9ea01db031393c2d3ca5b48e35ee892eabdd43325b643d22969",
+    "w15.json": "25baf29c10a125487f1985882a6be6c025c7c934f44b1d73b54e61e2a7bbbd4c",
+    "w5.json": "6029d3f762cd29c75f39ad29e3d951a144026655c6b40c322a82aaf54825ad2e"
    },
    "stage": "a",
    "worker_runs": 18,

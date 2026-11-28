@@ -1,7 +1,8 @@
 {
- "chunk_start_utc": "2026-11-28T05:49:03Z",
+ "chunk_start_utc": "2026-11-28T06:41:11Z",
  "driver": "535.309.01",
  "environment_freeze": {
+  "cpu_affinity": "16-31 (driver, workers, server)",
   "harness_commit": "9bb416805175149eb87b71f28d77530572aa4bce",
   "llamacpp": "/home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server",
   "model": "gemma4_31b Q4_K_M",
@@ -27,5 +28,5 @@
  "request": null,
  "required_memory_mib": 22000,
  "schema": "r1_d3_observed/v1",
- "scope": "tmux"
+ "scope": "tmux+taskset"
 }

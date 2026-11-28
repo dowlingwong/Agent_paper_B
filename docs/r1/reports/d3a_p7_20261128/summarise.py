@@ -35,6 +35,7 @@ def campaign_row(campaign: Path) -> dict:
         "wall_seconds": round(float(summary.get("wall_seconds") or 0.0), 3),
         "worker_seconds": round(float(summary.get("worker_seconds") or 0.0), 3),
         "call_latency_s_sum": round(sum(latencies) / 1000.0, 3),
+        "call_latency_s_mean": round(sum(latencies) / 1000.0 / len(latencies), 3) if latencies else None,
         "call_latency_s_max": round(max(latencies) / 1000.0, 3) if latencies else None,
         "calls_with_latency": len(latencies),
     }
@@ -81,12 +82,37 @@ def main() -> int:
             campaign = root / f"run-s{seed}" / "chunks" / arm / "campaigns" / f"openml_climate__s{seed}"
             if campaign.is_dir():
                 rows.append(campaign_row(campaign))
+    latency_values = []
+    for seed in SEEDS:
+        for arm in ARMS:
+            campaign = root / f"run-s{seed}" / "chunks" / arm / "campaigns" / f"openml_climate__s{seed}"
+            if not campaign.is_dir():
+                continue
+            for line in (campaign / "runs.jsonl").read_text().splitlines():
+                if not line.strip():
+                    continue
+                rec = json.loads(line)["record"]
+                call = ((rec.get("extra") or {}).get("manager") or {}).get("llm_call") or {}
+                if call.get("latency_ms") is not None:
+                    latency_values.append(float(call["latency_ms"]) / 1000.0)
+    campaign_means = [r["call_latency_s_mean"] for r in rows if r.get("call_latency_s_mean") is not None]
     payload = {
         "schema": "r1_d3_p7_summary/v1",
         "engineering_only": True,
         "campaigns": len(rows),
         "rows": rows,
         "gpu_peaks": gpu_peaks(root / "gpu_samples.csv"),
+        "call_latency": {
+            "calls_with_latency": len(latency_values),
+            "mean_s": (sum(latency_values) / len(latency_values)) if latency_values else None,
+            "max_s": max(latency_values) if latency_values else None,
+            "max_campaign_mean_s": max(campaign_means) if campaign_means else None,
+            "llm_calls_total": sum(int(r.get("llm_calls") or 0) for r in rows),
+        },
+        "totals": {
+            "wall_seconds": sum(float(r.get("wall_seconds") or 0.0) for r in rows),
+            "worker_seconds": sum(float(r.get("worker_seconds") or 0.0) for r in rows),
+        },
     }
     Path(args.out).write_text(json.dumps(payload, indent=1, sort_keys=True) + "\n")
     print(json.dumps({"campaigns": len(rows), "gpu_peaks": payload["gpu_peaks"]}, sort_keys=True))

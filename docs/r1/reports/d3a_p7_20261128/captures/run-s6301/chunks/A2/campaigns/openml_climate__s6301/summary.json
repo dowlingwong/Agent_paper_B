@@ -1,6 +1,6 @@
 {
  "arm": "A2",
- "controller_seconds": 0.0016483513172715902,
+ "controller_seconds": 0.00175959849730134,
  "distinct_configs_executed": 13,
  "duplicates_executed": 0,
  "duplicates_proposed": 5,
@@ -24,7 +24,7 @@
  "status": "complete",
  "unfundable": false,
  "value_skips": 59,
- "wall_seconds": 511.91760375,
+ "wall_seconds": 513.022520687,
  "worker_runs": 15,
- "worker_seconds": 14.150624531786889
+ "worker_seconds": 18.268927294993773
 }

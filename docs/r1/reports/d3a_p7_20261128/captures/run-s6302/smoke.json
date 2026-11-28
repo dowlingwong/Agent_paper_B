@@ -9,13 +9,13 @@
   "LADDER"
  ],
  "chunks": {
-  "A0": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6302/chunks/A0",
-  "A0R": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6302/chunks/A0R",
-  "A1": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6302/chunks/A1",
-  "A2": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6302/chunks/A2",
-  "EGATE": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6302/chunks/EGATE",
-  "FIXR3": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6302/chunks/FIXR3",
-  "LADDER": "/home/dowling/r1_tracks/work/d3p7_20261128/run-s6302/chunks/LADDER"
+  "A0": "/home/dowling/r1_tracks/work/d3p7b_20261128/run-s6302/chunks/A0",
+  "A0R": "/home/dowling/r1_tracks/work/d3p7b_20261128/run-s6302/chunks/A0R",
+  "A1": "/home/dowling/r1_tracks/work/d3p7b_20261128/run-s6302/chunks/A1",
+  "A2": "/home/dowling/r1_tracks/work/d3p7b_20261128/run-s6302/chunks/A2",
+  "EGATE": "/home/dowling/r1_tracks/work/d3p7b_20261128/run-s6302/chunks/EGATE",
+  "FIXR3": "/home/dowling/r1_tracks/work/d3p7b_20261128/run-s6302/chunks/FIXR3",
+  "LADDER": "/home/dowling/r1_tracks/work/d3p7b_20261128/run-s6302/chunks/LADDER"
  },
  "design_deviation": null,
  "design_node": "openml_climate",
@@ -27,12 +27,13 @@
   "dirty": false
  },
  "harness_commit": "9bb416805175149eb87b71f28d77530572aa4bce",
- "manifest_sha256": "d87602e143d81dcd9a941483b95c1d7e8bf59dd0d7e15e14abf9e96e45959263",
+ "manifest_sha256": "a13824068fa54239bdcf88890c68b73114888c1742c0ac0a2b6e50bbc8b5289e",
  "node": "openml_climate",
  "observed": {
-  "chunk_start_utc": "2026-11-28T05:49:03Z",
+  "chunk_start_utc": "2026-11-28T06:41:11Z",
   "driver": "535.309.01",
   "environment_freeze": {
+   "cpu_affinity": "16-31 (driver, workers, server)",
    "harness_commit": "9bb416805175149eb87b71f28d77530572aa4bce",
    "llamacpp": "/home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server",
    "model": "gemma4_31b Q4_K_M",
@@ -58,10 +59,10 @@
   "request": null,
   "required_memory_mib": 22000,
   "schema": "r1_d3_observed/v1",
-  "scope": "tmux"
+  "scope": "tmux+taskset"
  },
- "record_sha256": "36ba4409ad07b508133ac4ba1ee0927c5c23a4f47d1bfea65002cc036f64b20f",
- "run_id": "d3a-p7-20261128-b",
+ "record_sha256": "7f76312762cf2a6ef313d6cbd6ae99de70a2edc5f1e3082510fbe30345028c3c",
+ "run_id": "d3a-p7-20261128-d",
  "schema": "r1_d3_smoke/v1",
  "seed": 6302,
  "sigma_node": 0.005471612522515804,

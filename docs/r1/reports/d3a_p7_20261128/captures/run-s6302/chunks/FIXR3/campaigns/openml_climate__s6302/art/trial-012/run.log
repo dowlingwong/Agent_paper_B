@@ -1,0 +1,6 @@
+NODE=openml_climate
+MODEL=logistic_regression
+VAL_AUC=0.936293
+VAL_ACC=0.629630
+STATUS=success
+

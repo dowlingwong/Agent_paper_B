@@ -50,7 +50,7 @@
   "config.yaml": "model_type: logistic_regression\nC: 0.15\nmax_depth: 5\nn_estimators: 100\nlearning_rate: 0.05\nclass_weight: balanced\nscaler: standard\nimputer: most_frequent\nmax_iter: 1000\n"
  },
  "step_index": 1,
- "timestamp_utc": "2026-11-28T06:19:39Z",
+ "timestamp_utc": "2026-11-28T07:12:48Z",
  "trial_id": "openml_climate__s6302__t1",
  "w": 15,
  "w_actual": 15,
