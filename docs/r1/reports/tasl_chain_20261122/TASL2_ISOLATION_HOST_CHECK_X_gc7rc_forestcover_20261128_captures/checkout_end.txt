@@ -1,0 +1,7 @@
+=== checkout end state 2026-11-28T17:37:35Z node=gc7rc_forestcover expected_pin=3f7b09febf401a83f3aa881f00eecdd032024416
+head=3f7b09febf401a83f3aa881f00eecdd032024416
+detached_rc=1
+status_porcelain_untracked_all_start
+?? nodes/gc7rc_forestcover/data
+end
+stash=
