@@ -56,3 +56,24 @@ formula. The assigned linked Git directory denied writes to `FETCH_HEAD`, so the
 worktrees backed by the existing writable nested repository in the assigned workspace. All 16
 existing project changes in the linked checkout match historical published `1afa7d62` byte
 for byte and were preserved. Local submitted zero jobs and opened zero sealed partitions.
+
+## Round close
+
+After sending both delivery branches and the report, Local fetched main
+`4ceb5099b65245f10b4c10eab22c7201325799c9`, queue `3a2bdef8dda5846a736d9179ba50b66954e79969`,
+Compute `d48047c7d3041da92cbf170edf8af8ea803e52d3` and Writer
+`268f45f0ae196df55215d740c4629871dc212632`. Main advanced by the D.3 pool record only.
+Local has no runnable card. Compute's 18:16 UTC sample found zero Paper B jobs running or queued
+across TASL-2, TASL-7, Ada and HTCondor. Held IDs `5045947.0`, `5045949.0` and `5045952.0`
+belong to Paper A. Writer is idle pending released evidence and the results-table card.
+[Compute ledger](https://github.com/dowlingwong/Agent_paper_B/blob/d48047c7/reports/20261128-39-round-status.md) ·
+[Writer ledger](https://github.com/dowlingwong/Agent_paper_B/blob/268f45f0/reports/20261128-writer-round-f532176f.md)
+
+| Lane | State and next check |
+|---|---|
+| Forest Cover `local/20261128-16` | Coordinator publishes the review and checks the unsigned note. After approved publication, Local prepares the clean launch base. |
+| Primary G.5 and addenda 1–3 | Author's G.5 launch-base decision and coordinator signing and publication disposition for `2178bc6e`, `88edb84f`, `4ee43037`, and `e9441f03`. No campaign job IDs. [Clean bases](20261128-15-g5-clean-launch-bases.md) · [ETTh1](20261128-15-g5-etth1-clean-launch-base.md) |
+| Houseprice `local/20261126-01` and `local/20261127-27` | Closed. Signed three-attempt CPU-set PASS on TASL-2 for `tasl2-cpuset-mlgym_houseprice-20261128`, checkout `paperB_cpuset_20261128T001400Z`. [Reviewed exact rerun handoff](20261127-27-houseprice-two-attempts.md#compute-handoff) · [Compute receipt](https://github.com/dowlingwong/Agent_paper_B/blob/d48047c7/reports/20261128-04-houseprice-cpuset-pass.md) |
+| P.4 `local/20261128-13` | P5 timing PASS. P3 awaits the project signature on the exact spec bytes from `befb58c8` with parent `0b465954`. No phase-1 job ID. [P.4 STOP](20261128-13-p4-timing-carry-forward-stop.md) |
+| D.3a and HTCondor | Exact P7 engineering runs `d3a-p7-exact-20261128-c` and `-d` are closed. Production waits for manifest, image or environment binding, endpoint-to-card proof, fresh run ID, P10/P11 review and P9. Previous batch job `760158.0` left the queue. Recheck 6 saw `Start=false` on ETP L40S and TOpAS A100, so no replacement ID. Compute follows the new pool cadence in `compute/20261128-21`. |
+| Other blocked work | G.5 shared repeat awaits the author disposition. Additional audit hosts await placement and authorization. Paper C CPU work awaits operator pins and authorization, and E-INT needs a signed spec and fitting lease. The gate awaits G.5 labels, train/dev release, consumer and proof checks, arms freeze and explicit test release. |
