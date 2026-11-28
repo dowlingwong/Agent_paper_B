@@ -1,0 +1,136 @@
+Current Triton version 3.2.0 is below the recommended 3.3.0 version. Errors may occur and these issues will not be fixed. Please consider upgrading Triton.
+Loading weights:   0%|          | 0/426 [00:00<?, ?it/s]Loading weights:  69%|██████▉   | 293/426 [00:00<00:00, 2911.57it/s]Loading weights: 100%|██████████| 426/426 [00:00<00:00, 3367.89it/s]
+[transformers] `use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+{
+ "run_dir": "/data1/zli538/paperb_p4_20261127/p5_timing_20261128/jobs/kev-4b/run",
+ "report": {
+  "schema": "trackp_sft_report/v1",
+  "lr": 1e-05,
+  "seed": 0,
+  "protocol": {
+   "loss": "rps+ce",
+   "effective_batch": 16,
+   "micro_batch": 8,
+   "max_epochs": 5,
+   "warmup_frac": 0.05,
+   "eval_every_frac": 0.25,
+   "patience": 2,
+   "lr_grid": [
+    1e-05,
+    3e-05,
+    0.0001
+   ],
+   "head_lr": 0.001,
+   "token_lr": 0.0001,
+   "temperature_scaling": true,
+   "seeds": [
+    0,
+    1,
+    2
+   ],
+   "gradient_checkpointing": true
+  },
+  "data_sha256": "1d39f1ba6eb6cf1a042658571c15d5809a947c0bdd26a7aa61fb913985cfd37c",
+  "label_status": "ENGINEERING_ONLY (R1-TRACKP-SFT-DEV): readiness only; not used for any evidence, selection or tuning; label seeds 7001-7005 only, never the evaluation block 7006-7010",
+  "protocol_deviation": {
+   "max_steps": 50
+  },
+  "train_config_sha256": "8207e2c2b26b3d614978770819b211aa1edbd772e3cc78cd00759e4d9b57fe23",
+  "n_train": 593,
+  "n_val": 76,
+  "n_val_secondary_only": 200,
+  "cross_split_duplicates": "heldout_excludes_seen",
+  "heldout_rule": "R1-TRACKP-SFT-DUP: primary = val without training duplicates (early stopping, temperature, selection); secondary = full val (reported only)",
+  "steps_per_epoch": 38,
+  "total_steps": 50,
+  "train": {
+   "stopped_at": 50,
+   "completed": true,
+   "checkpoint": "/data1/zli538/paperb_p4_20261127/p5_timing_20261128/jobs/kev-4b/run/stage_s/ckpt/step_0000050",
+   "best_step": 50,
+   "best_value": 0.04331549187730574,
+   "early_stopped": false
+  },
+  "selected": {
+   "val_rps": 0.04331549187730574,
+   "val_rps_skill": -0.002429750344518089,
+   "val_nll": 2.134521484375,
+   "val_ece_all_bins": 0.0034244146321990377,
+   "val_ece_top1": 0.006629141265061989,
+   "val_pit_histogram": [
+    1.130507209729081,
+    1.0807636292795963,
+    0.9517734248838641,
+    0.9684914783142472,
+    0.9531526682599611,
+    0.8963096120842541,
+    0.9091910152338727,
+    0.8893503022731153,
+    1.2057349173199388,
+    1.01472574262207
+   ],
+   "val_mean_pred_sd": 1.1816798972697133,
+   "val_mean_label_sd": 0.49106777369240007,
+   "val_width_ratio": 2.4063478822577062
+  },
+  "temperature": 1.0153466453462823,
+  "selected_temperature_scaled": {
+   "val_rps": 0.04330954015410414,
+   "val_rps_skill": -0.0022920124557277433,
+   "val_nll": 2.1344919204711914,
+   "val_ece_all_bins": 0.003155465414931735,
+   "val_ece_top1": 0.005603873927564096,
+   "val_pit_histogram": [
+    1.1247308559441986,
+    1.0869645628930578,
+    0.9569121542357485,
+    0.9716029215233635,
+    0.9542088396843595,
+    0.8957923419911815,
+    0.9079093385015408,
+    0.8888611904958228,
+    1.210141546332246,
+    1.0028762483984808
+   ],
+   "val_mean_pred_sd": 1.1870377999819557,
+   "val_mean_label_sd": 0.49106777369240007,
+   "val_width_ratio": 2.417258601712896
+  },
+  "selected_full_heldout": {
+   "val_full_rps": 0.042631420256318185,
+   "val_full_rps_skill": -0.004255109270766555,
+   "val_full_nll": 2.132868766784668,
+   "val_full_ece_all_bins": 0.0018164220565683794,
+   "val_full_ece_top1": 0.01645677672759332,
+   "val_full_pit_histogram": [
+    1.0973390490899024,
+    1.0932367832581744,
+    0.9371744355706728,
+    0.9405019642802558,
+    0.957435804619794,
+    0.9426939925735482,
+    0.975732184653356,
+    0.9738327084368665,
+    1.1054866421518252,
+    0.9765664353656043
+   ],
+   "val_full_mean_pred_sd": 1.1978452145049587,
+   "val_full_mean_label_sd": 0.501300129990677,
+   "val_full_width_ratio": 2.3894771671558033
+  },
+  "selected_full_heldout_temperature_scaled": {
+   "val_full_rps": 0.04262619017231249,
+   "val_full_rps_skill": -0.004131905808319125,
+   "val_full_nll": 2.1330087184906006,
+   "val_full_ece_all_bins": 0.001823012784381433,
+   "val_full_ece_top1": 0.01587218273751128,
+   "val_full_pit_histogram": [
+    1.0912736214862442,
+    1.0990130870443593,
+    0.9415053509018534,
+    0.9432841697584367,
+    0.957412278092269,
+    0.9417646146502794,
+    0.9752579440932201,
+    0.9751245214059194,
+   
