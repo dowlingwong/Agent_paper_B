@@ -1,0 +1,13 @@
+2026年 11月 28日 星期六 00:14:01 UTC
+--- load
+ 16:14:01 up 12 days,  3:22,  0 users,  load average: 0.28, 0.14, 0.10
+--- relevant processes
+--- locks
+总计 8
+drwxrwxr-x 2 dowling dowling 4096 11月 17 15:42 bin
+-rw-rw-r-- 1 dowling dowling    0 11月 26 02:21 cpus-0-3.lock
+-rw------- 1 dowling dowling    0 11月 26 02:21 cpus-12-15.lock
+-rw-rw-r-- 1 dowling dowling    0 11月 26 14:53 cpus-16-31.lock
+-rw-rw-r-- 1 dowling dowling    0 11月 26 02:21 cpus-4-7.lock
+-rw-rw-r-- 1 dowling dowling    0 11月 26 02:22 gpu0.lock
+drwx------ 2 dowling dowling 4096 11月 16 01:54 _to_delete

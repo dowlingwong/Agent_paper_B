@@ -1,0 +1,99 @@
+{
+ "attempts": [
+  {
+   "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "affinity_ok": true,
+   "attempt": 1,
+   "c0_median_wall_s": 2.878,
+   "complete": true,
+   "deterministic": true,
+   "identical_to_reference": true,
+   "job_record_sha256": "042f227a613d8e9b548eff92e142469c414d7538fa9f5d6ff2220253eda82edb",
+   "max_wall_s": 3.81,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/tasl2-cpuset-mlgym_houseprice-20261128/mlgym_houseprice/attempt-1",
+   "within_budget": true
+  },
+  {
+   "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "affinity_ok": true,
+   "attempt": 2,
+   "c0_median_wall_s": 2.856,
+   "complete": true,
+   "deterministic": true,
+   "identical_to_reference": true,
+   "job_record_sha256": "a686578e3fbc9481311056f193fea6d259c4f14cfb04c493f116c6a2f35c9eec",
+   "max_wall_s": 3.858,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/tasl2-cpuset-mlgym_houseprice-20261128/mlgym_houseprice/attempt-2",
+   "within_budget": true
+  },
+  {
+   "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "affinity_ok": true,
+   "attempt": 3,
+   "c0_median_wall_s": 2.86,
+   "complete": true,
+   "deterministic": true,
+   "identical_to_reference": true,
+   "job_record_sha256": "dd69b01e5f9d9f4d6e102946394bf45fb2d38856305574722720c14790ebdd1b",
+   "max_wall_s": 3.848,
+   "sealed": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/tasl2-cpuset-mlgym_houseprice-20261128/mlgym_houseprice/attempt-3",
+   "within_budget": true
+  }
+ ],
+ "budget_s": 9.486,
+ "check_run_id": "tasl2-cpuset-mlgym_houseprice-20261128",
+ "check_spec_sha256": "323434a3d597f4a2900816ffff1d32cadbc7f3b6848b4c2bfad00da22334652d",
+ "complete": true,
+ "configs": [
+  "c0",
+  "c1",
+  "c2",
+  "c3",
+  "c4"
+ ],
+ "cpus": "0-7",
+ "g1b_cpus": "8-15",
+ "g1b_run_id": "g1b-tasl-20261121-b",
+ "g1b_spec_sha256": "7ff3c95b963a2f1690461ca58dc98bec7ad79e31ccbbe159c57004716a8cc5f7",
+ "harness_commit": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+ "host": "TASL-2",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlgym_houseprice",
+ "reason": null,
+ "reference": {
+  "attempt": 1,
+  "job_record_sha256": "15b7beea61f7829d396a9aa0415462e80c3aabd6c62c9c3327b2528af2a690aa",
+  "sealed": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/g1b-tasl-20261121-b/mlgym_houseprice/attempt-1"
+ },
+ "repeats": 3,
+ "rule": "R1-TASL2-CPU",
+ "schema": "g5_tasl2_cpuset_check/1",
+ "verdict": "PASS"
+}

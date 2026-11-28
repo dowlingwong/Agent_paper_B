@@ -1,0 +1,9 @@
+2026年 11月 28日 星期六 00:15:34 UTC
+ 16:15:34 up 12 days,  3:24,  0 users,  load average: 1.64, 0.63, 0.28
+--- sealed
+总计 20
+drwxrwxr-x 5 dowling dowling 4096 11月 27 16:15 .
+drwxrwxr-x 3 dowling dowling 4096 11月 27 16:14 ..
+drwx------ 2 dowling dowling 4096 11月 27 16:14 attempt-1
+drwx------ 2 dowling dowling 4096 11月 27 16:15 attempt-2
+drwx------ 2 dowling dowling 4096 11月 27 16:15 attempt-3
