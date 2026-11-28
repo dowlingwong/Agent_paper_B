@@ -112,6 +112,20 @@ def validate_launch(record: Mapping[str, Any]) -> dict[str, Any]:
     return dict(record)
 
 
+def validate_deployment_launch(record: Mapping[str, Any]) -> dict[str, Any]:
+    """Require the live reservation and retry ledger on the deployment path."""
+    from r1.c3.d3.evidence_accounting import AccountingStop, check_retry_ledger
+
+    launch = validate_launch(record)
+    if launch["launcher"] not in ("htcondor", "ssh") or launch["observed"].get("probe") is not True:
+        raise LaunchStop("deployment accounting needs the live HTCondor or SSH reservation probe")
+    try:
+        check_retry_ledger(launch)
+    except AccountingStop as exc:
+        raise LaunchStop(str(exc)) from exc
+    return launch
+
+
 def check_pin(path: str | Path, pin: Mapping[str, Any], what: str) -> str:
     """Hash a launch input and refuse a mismatch with its recorded pin."""
     if not isinstance(pin, Mapping) or not pin.get("sha256"):

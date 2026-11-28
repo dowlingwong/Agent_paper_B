@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
+from r1.c3.d3.evidence_accounting import AccountingStop, CampaignAccounting
 from r1.c3.d3.snapshots import (
     ENDED_ON,
     SnapshotRecorder,
@@ -182,11 +183,24 @@ def _validate_kwargs(kwargs: Mapping[str, Any]) -> None:
         raise ChunkStop(f"campaign factory did not return run_real_campaign kwargs; missing {missing}")
 
 
+def _record_accounting(record: dict[str, Any], accounting: CampaignAccounting | None,
+                       start_ns: int, end_ns: int) -> dict[str, Any]:
+    if accounting is None:
+        return {}  # The in-process engineering fixtures have no proposer reservation.
+    receipt = accounting.receipt(start_ns, end_ns)
+    record["accounting"] = receipt
+    return {
+        "infra_attempts": receipt["infra_attempts"],
+        "proposer_gpu_seconds": receipt["elapsed_ns"] / 1_000_000_000,
+    }
+
+
 def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = None, *,
               manifest: Mapping[str, Any] | None = None,
               observed: Mapping[str, Any] | None = None,
               replicate_factory: "ReplicateFactory | None" = None,
-              end_sampler: Callable[[], Mapping[str, Any]] | None = None) -> dict[str, Any]:
+              end_sampler: Callable[[], Mapping[str, Any]] | None = None,
+              accounting: CampaignAccounting | None = None) -> dict[str, Any]:
     """Run one chunk and write its records.  The output directory must be absent.
 
     ``replicate_factory`` selects the FIXR3/EGATE branch (design revision 6c); the
@@ -194,6 +208,7 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
     (optional) is called after the last campaign and before ``chunk.json`` is written; its
     value becomes ``other_processes_end`` (the launcher samples the card's other compute
     processes; the chunk never invents them).
+    Deployment supplies validated reservation and retry provenance through ``accounting``.
     """
     out = Path(out_dir)
     if out.exists():
@@ -206,7 +221,7 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
         if observed is None:
             raise ChunkStop("a chunk needs the observed hardware record (revision 6b)")
         return _run_replicate_chunk(spec, out, replicate_factory, manifest=manifest, observed=observed,
-                                    end_sampler=end_sampler)
+                                    end_sampler=end_sampler, accounting=accounting)
     if factory is None:
         raise ChunkStop("the harness-arm chunk needs a campaign factory")
     if spec.arm in ("FIXR3", "EGATE"):
@@ -221,6 +236,8 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
     if str(manifest["campaign_model_source_sha256"]) != sha256_json(dict(spec.campaign_model_source)):
         raise ChunkStop("the campaign manifest's model source does not match this launch")
     out.mkdir(parents=True)
+    if accounting is not None:
+        _write_json(out / "retry_ledger.json", accounting.ledger)
     campaigns: list[dict[str, Any]] = []
     from autoresearch.control_plane.campaign import run_real_campaign  # local import: no run on import
 
@@ -241,9 +258,10 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
             resolver = None
         else:
             raise ChunkStop(f"unknown ended_on {ended_on!r}")
-        started = time.monotonic()
+        started = time.monotonic_ns()
         run_real_campaign(**kwargs)
-        wall_seconds = time.monotonic() - started
+        ended = time.monotonic_ns()
+        wall_seconds = (ended - started) / 1_000_000_000
         if resolver is not None:
             ended_on = resolver(recorder)
         if ended_on not in ENDED_ON:
@@ -302,7 +320,7 @@ def run_chunk(spec: ChunkSpec, out_dir: Path, factory: CampaignFactory | None = 
             records=run_rows, events=events, config_by_trial=config_by_trial,
             start_config=recorder.start_config or {}, final_config=final_config,
             worker_runs=w_final, llm_calls=llm_calls, ended_on=ended_on,
-            wall_seconds=wall_seconds,
+            wall_seconds=wall_seconds, **_record_accounting(record, accounting, started, ended),
         )
         _write_json(cdir / "summary.json", campaign_summary)
         _write_json(cdir / "campaign.json", record)
@@ -365,7 +383,8 @@ ReplicateFactory = Callable[[ChunkSpec, int, Path, SnapshotRecorder], Any]
 
 def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, *,
                          manifest: Mapping[str, Any], observed: Mapping[str, Any],
-                         end_sampler: Callable[[], Mapping[str, Any]] | None = None) -> dict[str, Any]:
+                         end_sampler: Callable[[], Mapping[str, Any]] | None,
+                         accounting: CampaignAccounting | None) -> dict[str, Any]:
     from r1.c3.d3.replicate_campaign import run_replicate_campaign
 
     if spec.arm not in ("FIXR3", "EGATE"):
@@ -376,6 +395,8 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
     if str(manifest["campaign_model_source_sha256"]) != sha256_json(dict(spec.campaign_model_source)):
         raise ChunkStop("the campaign manifest's model source does not match this launch")
     out.mkdir(parents=True)
+    if accounting is not None:
+        _write_json(out / "retry_ledger.json", accounting.ledger)
     campaigns: list[dict[str, Any]] = []
     for seed in spec.instance_seeds:
         inst = spec.instance_id(seed)
@@ -385,12 +406,13 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
         unit = factory(spec, seed, cdir, recorder)
         if str(getattr(unit.engine, "arm", "")) != spec.arm:
             raise ChunkStop(f"the replicate engine is {getattr(unit.engine, 'arm', None)!r}, not {spec.arm!r}")
-        started = time.monotonic()
+        started = time.monotonic_ns()
         summary = run_replicate_campaign(
             instance_id=inst, repetition=spec.repetition, unit=unit, recorder=recorder,
             stage=spec.stage, node=spec.node, W=spec.W, llm_cap=spec.llm_cap,
         )
-        wall_seconds = time.monotonic() - started
+        ended = time.monotonic_ns()
+        wall_seconds = (ended - started) / 1_000_000_000
         record = {
             "schema": CAMPAIGN_SCHEMA,
             "campaign_kind": "replicate",
@@ -424,6 +446,7 @@ def _run_replicate_chunk(spec: ChunkSpec, out: Path, factory: ReplicateFactory, 
             worker_runs=int(summary["worker_runs"]), llm_calls=int(summary["llm_calls"]),
             ended_on=summary["ended_on"], wall_seconds=wall_seconds,
             attempts=summary["attempts"],
+            **_record_accounting(record, accounting, started, ended),
         )
         _write_json(cdir / "summary.json", campaign_summary)
         _write_json(cdir / "campaign.json", record)
@@ -505,8 +528,9 @@ def main(argv: list[str] | None = None) -> int:
     The chunk is the only implementation of the campaign; a launcher only supplies the record.
     """
     import argparse
+    import socket
 
-    from r1.c3.d3.launch import LaunchStop, read_json, validate_launch
+    from r1.c3.d3.launch import LaunchStop, check_pin, read_json, validate_deployment_launch
 
     ap = argparse.ArgumentParser(description="D.3 G1 one-chunk entry (ENGINEERING)")
     ap.add_argument("--launch", required=True)
@@ -521,21 +545,31 @@ def main(argv: list[str] | None = None) -> int:
                     help="do not sample the card after the chunk (default: sample when the probe names a card)")
     args = ap.parse_args(argv)
 
-    launch = validate_launch(read_json(args.launch))
+    try:
+        launch = validate_deployment_launch(read_json(args.launch))
+        check_pin(args.manifest, launch["manifest"], "manifest")
+        observed = read_json(args.observed)
+        if observed.get("host") != socket.gethostname():
+            raise ChunkStop("the proposer reservation probe was not taken on this host")
+        accounting = CampaignAccounting.from_job(launch, observed)
+    except LaunchStop as exc:
+        raise ChunkStop(str(exc)) from exc
     spec = ChunkSpec.from_launch(launch)
-    observed = read_json(args.observed)
     from r1.c3.d3.adapter import (load_constants, load_manifest, make_campaign_factory,
                                   make_replicate_factory)
 
     manifest = load_manifest(args.manifest, repo_root=args.repo_root)
     constants = load_constants(manifest, repo_root=args.repo_root)
-    kwargs: dict[str, Any] = {"manifest": manifest.chunk_manifest(), "observed": observed}
+    kwargs: dict[str, Any] = {"manifest": manifest.chunk_manifest(), "observed": observed,
+                              "accounting": accounting}
     if spec.arm in ("FIXR3", "EGATE"):
         kwargs["replicate_factory"] = make_replicate_factory(
             manifest, constants, harness=args.harness_root)
     else:
         kwargs["factory"] = make_campaign_factory(manifest, constants, harness=args.harness_root)
     gpu_uuid = args.gpu_uuid or observed.get("gpu_uuid")
+    if gpu_uuid != accounting.gpu_uuid:
+        raise ChunkStop("the end sampler must use the accounting GPU UUID")
     if gpu_uuid and not args.no_end_sample:
         kwargs["end_sampler"] = lambda: _sample_compute_apps(str(gpu_uuid))
     summary = run_chunk(spec, Path(args.out), **kwargs)
@@ -548,6 +582,6 @@ def main(argv: list[str] | None = None) -> int:
 if __name__ == "__main__":  # pragma: no cover - exercised by the launcher tests
     try:
         raise SystemExit(main())
-    except ChunkStop as exc:
+    except (ChunkStop, AccountingStop) as exc:
         print(f"STOP: {exc}", flush=True)
         raise SystemExit(2)

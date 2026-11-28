@@ -12,6 +12,7 @@ runner; no GPU job, server, label or evaluation value is read here.
 from __future__ import annotations
 
 import argparse
+import os
 import json
 import socket
 import subprocess
@@ -60,7 +61,28 @@ def gpu_index_from_lease(lease_path: str | None) -> int:
     return int(match.group(1)) if match else 0
 
 
-def probe(*, gpu_index: int = 0, required_memory_mib: int,
+def assigned_cuda_uuid() -> str:
+    """Resolve the single CUDA-visible HTCondor assignment to the NVML device UUID."""
+    import ctypes
+    from uuid import UUID
+
+    visible = os.environ.get("CUDA_VISIBLE_DEVICES", "").strip()
+    if not visible or "," in visible:
+        raise LaunchStop("the HTCondor job needs one CUDA_VISIBLE_DEVICES entry")
+    try:
+        driver = ctypes.CDLL("libcuda.so.1")
+        count, device = ctypes.c_int(), ctypes.c_int()
+        if driver.cuInit(0) != 0 or driver.cuDeviceGetCount(ctypes.byref(count)) != 0 or count.value != 1:
+            raise LaunchStop("CUDA cannot confirm exactly one assigned proposer device")
+        uuid_bytes = ctypes.create_string_buffer(16)
+        if driver.cuDeviceGet(ctypes.byref(device), 0) != 0 or driver.cuDeviceGetUuid(uuid_bytes, device) != 0:
+            raise LaunchStop("CUDA cannot resolve the assigned proposer device UUID")
+    except (OSError, AttributeError) as exc:
+        raise LaunchStop("the HTCondor job cannot load the CUDA device identity") from exc
+    return f"GPU-{UUID(bytes=uuid_bytes.raw)}"
+
+
+def probe(*, gpu_index: int | str = 0, required_memory_mib: int,
           proposer_model: str = "gemma4_31b", host: str | None = None,
           lease: bool = True, lease_path: str | None = None, lease_kind: str = "ssh",
           request: Mapping[str, Any] | None = None, scope: str | None = None,
@@ -114,11 +136,18 @@ def probe_from_records(launch: Mapping[str, Any], manifest: Mapping[str, Any], *
     # Record the host the probe actually runs on, for every launcher; HTCondor chooses it and
     # SSH/direct target one host, which check_hardware then compares with the launch record.
     lease_kind = "htcondor" if launcher == "htcondor" else "lease"
-    index = gpu_index if gpu_index is not None else gpu_index_from_lease(lease_path)
-    return probe(gpu_index=index, required_memory_mib=required, proposer_model=proposer,
-                 host=None, lease=True, lease_path=lease_path, lease_kind=lease_kind,
-                 request=launch.get("request"), scope=launch.get("scope"),
-                 environment_freeze=hardware.get("environment_freeze"), runner=runner)
+    selector: int | str = gpu_index if gpu_index is not None else gpu_index_from_lease(lease_path)
+    if launcher == "htcondor" and "retry_ledger" in launch:
+        if gpu_index is not None:
+            raise LaunchStop("deployment HTCondor probes the assigned card without an index override")
+        selector = assigned_cuda_uuid()
+    record = probe(gpu_index=selector, required_memory_mib=required, proposer_model=proposer,
+                   host=None, lease=True, lease_path=lease_path, lease_kind=lease_kind,
+                   request=launch.get("request"), scope=launch.get("scope"),
+                   environment_freeze=hardware.get("environment_freeze"), runner=runner)
+    if isinstance(selector, str) and record["gpu_uuid"] != selector:
+        raise LaunchStop("the assigned CUDA device and observed GPU UUID differ")
+    return record
 
 
 def main(argv: list[str] | None = None) -> int:

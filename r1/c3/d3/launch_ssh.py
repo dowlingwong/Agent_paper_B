@@ -19,7 +19,8 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from r1.c3.d3.launch import (
-    LaunchStop, check_pin, chunk_argv, read_json, shell_join, utc_now, validate_launch, write_json,
+    LaunchStop, check_pin, chunk_argv, read_json, shell_join, utc_now, validate_deployment_launch,
+    validate_launch, write_json,
 )
 
 DEFAULT_SCOPE = ("systemd-run --user --scope -p Delegate=yes -p MemoryMax=16G "
@@ -106,19 +107,30 @@ def launch(launch_path: str | Path, out_dir: str | Path, *, manifest_path: str |
     if not lease:
         raise LaunchStop("an SSH launch needs a lease path")
     launch_record["lease_path"] = lease
+    if not dry_run:
+        validate_deployment_launch(launch_record)
     if not probe:
         observed = read_json(observed_path)
         check_observed(observed, lease_path=lease)
     out = Path(out_dir)
     if out.exists():
         raise LaunchStop(f"refusing an existing chunk directory {out}")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    claim = out.parent / "ssh_attempt_claim"
+    claim_id = "dry-run" if dry_run else launch_record["retry_ledger"]["attempts"][-1]["attempt_id"]
+    try:
+        with claim.open("x", encoding="utf-8") as fh:
+            fh.write(claim_id + "\n")
+    except FileExistsError as exc:
+        raise LaunchStop(f"the SSH attempt directory was already claimed: {out.parent}") from exc
     write_json(out.parent / "launch.json", launch_record)
     remote_dir = str(launch_record.get("remote_dir") or out.parent)
     manifest_text = Path(manifest_path).read_text(encoding="utf-8")
     observed_text = None if probe else Path(observed_path).read_text(encoding="utf-8")
     script = render_remote_script(
         launch_record, launch_text=json.dumps(launch_record, indent=1, sort_keys=True) + "\n",
-        manifest_text=manifest_text, observed_text=observed_text, probe=probe, out_dir=str(out),
+        manifest_text=manifest_text, observed_text=observed_text, probe=probe,
+        out_dir=str(out) if dry_run else out.name,
         lease_path=lease, scope=scope)
     record = {
         "schema": "r1_d3_launch_submit/v1",
@@ -136,7 +148,10 @@ def launch(launch_path: str | Path, out_dir: str | Path, *, manifest_path: str |
         record["script"] = script
         return record
     run = runner or subprocess.run
-    proc = run([ssh, host, f"mkdir -p {remote_dir} && cd {remote_dir} && bash -s"], input=script,
+    remote_parent = shell_join([str(Path(remote_dir).parent)])
+    remote_attempt = shell_join([remote_dir])
+    proc = run([ssh, host, f"mkdir -p -- {remote_parent} && mkdir -- {remote_attempt} "
+                f"&& cd -- {remote_attempt} && bash -s"], input=script,
                capture_output=True, text=True)
     record["ssh_rc"] = int(getattr(proc, "returncode", 1))
     record["ssh_stdout"] = str(getattr(proc, "stdout", ""))

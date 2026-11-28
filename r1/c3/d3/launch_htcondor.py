@@ -17,7 +17,7 @@ from typing import Any, Callable, Mapping, Sequence
 
 from r1.c3.d3.launch import (
     D3_IMAGE, D3_REQUEST, LaunchStop, check_pin, check_request, chunk_argv, read_json,
-    sha256_file, shell_join, utc_now, validate_launch, write_json,
+    sha256_file, shell_join, utc_now, validate_deployment_launch, validate_launch, write_json,
 )
 
 SUBMIT_NAME = "d3_chunk.sub"
@@ -130,13 +130,18 @@ def submit(launch_path: str | Path, out_dir: str | Path, *, submit_dir: str | Pa
         raise LaunchStop("the launch record must name its manifest and observed files")
     check_pin(manifest_path, manifest, "manifest")
     probe = observed.get("probe") is True
+    if not dry_run:
+        validate_deployment_launch(launch)
     if not probe:
         check_pin(observed_path, observed, "observed")
     out = Path(out_dir)
     if out.exists():
         raise LaunchStop(f"refusing an existing chunk directory {out}")
     submit_dir = Path(submit_dir) if submit_dir is not None else out.parent / "submit"
-    submit_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        submit_dir.mkdir(parents=True)
+    except FileExistsError as exc:
+        raise LaunchStop(f"the attempt submit directory already exists: {submit_dir}") from exc
     # The job sees these at its own relative names; the launch record's pins stay intact.
     (submit_dir / "manifest.json").write_bytes(Path(manifest_path).read_bytes())
     if not probe:
@@ -162,7 +167,7 @@ def submit(launch_path: str | Path, out_dir: str | Path, *, submit_dir: str | Pa
     if dry_run:
         return result
     run = runner or subprocess.run
-    proc = run([condor_submit, str(submit_file)], capture_output=True, text=True, cwd=submit_dir)
+    proc = run([condor_submit, submit_file.name], capture_output=True, text=True, cwd=submit_dir)
     result["condor_submit_rc"] = int(getattr(proc, "returncode", 1))
     result["condor_submit_stdout"] = str(getattr(proc, "stdout", ""))
     result["condor_submit_stderr"] = str(getattr(proc, "stderr", ""))

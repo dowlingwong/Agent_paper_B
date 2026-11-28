@@ -164,7 +164,6 @@ def compute_fields(records: Iterable[dict], events: Iterable[dict], *,
         "llm_tokens_prompt": int(prompt),
         "llm_tokens_completion": int(completion),
         "worker_seconds": float(worker_seconds),
-        "proposer_gpu_seconds": 0.0,
         "controller_seconds": float(controller_seconds),
     }
 
@@ -176,7 +175,7 @@ def build_campaign_summary(*, stage: str, arm: str, node: str, instance_seed: in
                            start_config: Mapping[str, Any], final_config: Mapping[str, Any],
                            worker_runs: int, llm_calls: int, ended_on: str,
                            wall_seconds: float, attempts: Iterable[dict] | None = None,
-                           infra_attempts: int = 1) -> dict[str, Any]:
+                           infra_attempts: int = 1, proposer_gpu_seconds: float = 0.0) -> dict[str, Any]:
     """The exact ``SUMMARY_KEYS`` record G7's ``build_row`` reads."""
     records = [dict(r) for r in records]
     events = [dict(e) for e in events]
@@ -187,6 +186,7 @@ def build_campaign_summary(*, stage: str, arm: str, node: str, instance_seed: in
         "instance_seed": int(instance_seed), "repetition": int(repetition),
         "status": status, "gpu_model": str(gpu_model),
         "infra_attempts": int(infra_attempts), "worker_runs": int(worker_runs),
+        "proposer_gpu_seconds": proposer_gpu_seconds,
         "llm_calls": int(llm_calls), "unfundable": ended_on == "no_fundable_candidate",
         "start_config_hash": config_sha256(dict(start_config)),
         "final_config_hash": config_sha256(dict(final_config)),
