@@ -12,8 +12,11 @@ node, so the note's "otherwise R1-THEORY-RHO (2) is final and D.3 step (8) proce
 - **Host:** deepthought2, CPU only, 64 workers on logical CPUs 0-63.
 - **Run id:** `smeas-20261123-a`; stamp `SMEAS_EVIDENCE_20261128T001405Z`; checkout
   `paper_dt2_20261128T001405Z` at `a7c2f8fb`; run directory
-  `results/r1/screen_measure/SMEAS_EVIDENCE_20261128T001405Z` (preserved).
-- **Launch / finish:** `2026-11-28T00:26:06Z` / `00:51:29Z`; elapsed **1,468.2 s (24 min 28 s)**.
+  `results/r1/screen_measure/SMEAS_EVIDENCE_20261128T001405Z` (preserved). The stamp is the checkout/worktree
+  name; `manifest.started_utc` is `20261128T002606Z`, i.e. the measurement started after the worktree checkout
+  and preflight.
+- **Launch / finish:** `2026-11-28T00:26:06Z` / `00:51:29Z` (1,523 s span); manifest `elapsed_seconds`
+  **1,468.2 s (24 min 28 s)**, the measurement loop after preflight.
 - **Counts:** planned 10,164 / written 10,164 / failed 0; `stop: null`. Co-tenancy guard ok at every 60 s sample
   (last `free_for_others 119.97`, `our_workers 63`).
 - **Environment:** manifest `host.python 3.13.15`, e1 replay batch env; data cache tree
@@ -30,8 +33,8 @@ node, so the note's "otherwise R1-THEORY-RHO (2) is final and D.3 step (8) proce
 | `openml_climate` | 2 | 0.05962 | [−0.09447, 0.21440] | [−0.11874, 0.23965] | **INCONCLUSIVE** |
 | `openml_breast_w`, `openml_credit_approval`, `openml_ionosphere`, `openml_sonar`, `openml_wdbc`, `tabular_mlp` | — | — | — | — | `NOT_TESTED` (by design) |
 
-- `threshold` 0.975, `level` 0.95; `n_boot`/`boot_seed` as in `analysis.json`; no bootstrap dropouts on the
-  primary estimator (`bootstrap_dropped_cells: 0` for both nodes).
+- `threshold` 0.1, `level` 0.95, `bonferroni_level` 0.975; `n_boot` 2,000, `boot_seed` 20261123; no bootstrap
+  dropouts on the primary estimator (`bootstrap_dropped_cells: 0` for both nodes).
 - `verdicts_bonferroni` is identical; `decision = decision_seven_nodes = decision_bonferroni =
   R1_THEORY_RHO_2_FINAL`.
 - `digits_mlp` complete seeds 120/120; `openml_climate` 120/120; no dropped configurations or seeds.
