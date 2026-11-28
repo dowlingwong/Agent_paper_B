@@ -19,8 +19,8 @@ state is unchanged and the interval has not elapsed.
 
 | Host | GPU / card | State | Load / memory | Paper B job |
 |---|---|---|---|---|
-| TASL-2 | RTX 4090, 353 MiB used / 24,564 MiB, 0 % | no compute apps; no lease held (lock files present, unheld) | load 0.23; 58 GiB available; `/home` 335 G free | none |
-| TASL-7 | RTX 4090, 44 MiB used / 24,564 MiB, 0 % | no compute apps | load 0.08 | none |
+| TASL-2 | RTX 4090, 353 MiB used / 24,564 MiB, 0 % | no compute apps; `gpu0`, `cpus-0-3`, `cpus-4-7` leases all free | load 0.2–0.4; 58 GiB available; `/home` 335 G free | none |
+| TASL-7 | RTX 4090, 44 MiB used / 24,564 MiB, 0 % | no compute apps; `gpu0` lease free | load 0.05 | none |
 | Ada | 8 × RTX 6000 Ada 48 GB | cards 2, 5, 6, 7 empty (~5 MiB); cards 0, 1, 3, 4 busy with other users' `vla-reasoning` processes | load 13.97; `/data1` 1.9 T free | none |
 | deepthought | — | 5 users | load 0.51; 457 GiB available; `/work` 904 G free, `/ceph` 332 T free | none |
 | deepthought2 | — | 15 users (other users' load) | load 13.90; 905 GiB available | none |
