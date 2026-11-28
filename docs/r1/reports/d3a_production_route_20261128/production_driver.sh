@@ -68,7 +68,8 @@ seal_scene() {
 # The one pre-chunk identity check.  It is called after readiness (so a foreign responder is
 # caught before the probe result is trusted) and again immediately before every chunk.
 verify_endpoint() {
-  local tag="$1" out="$V/endpoint_check_${tag}.json" rc
+  local tag="$1" out rc
+  out="$V/endpoint_check_${tag}.json"
   status "endpoint_check_start tag=$tag pid=${SPID:-0} port=$PORT"
   "$PYTHON" -B -m r1.c3.d3.endpoint_guard \
     --manifest "$R/manifest.json" --observed "$R/observed.json" \
