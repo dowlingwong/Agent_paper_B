@@ -1,0 +1,5 @@
+lease_file=/home/dowling/r1_locks/gpu0.lock
+lease_mode=flock-exclusive, fd 9, no lease-log write
+gpu_uuid=GPU-4d623e76-7587-ee15-a633-46f60d220d94
+acquired_utc=2026-11-28T14:48:20Z
+released_utc=2026-11-28T14:48:22Z rc=0

@@ -1,0 +1,7 @@
+=== checkout end state 2026-11-28T14:48:22Z node=gc7rc_etth1 expected_pin=6fc553dfb1f8c368023b61c9f5b0b7ac55a0b53c
+head=6fc553dfb1f8c368023b61c9f5b0b7ac55a0b53c
+detached_rc=1
+status_porcelain_untracked_all_start
+?? nodes/gc7rc_etth1/data
+end
+stash=

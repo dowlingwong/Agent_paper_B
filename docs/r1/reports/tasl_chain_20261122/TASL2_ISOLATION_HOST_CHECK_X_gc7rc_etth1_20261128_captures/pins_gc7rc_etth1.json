@@ -1,0 +1,65 @@
+{
+  "checks": {
+    "committed_pin_sha256": true,
+    "edits_manifest_sha256": true,
+    "node_spec_sha256": true
+  },
+  "condition_pass": true,
+  "data": {
+    "file_count": 1,
+    "files": {
+      "series.npy": {
+        "match": true,
+        "sha256": "32a0ad070e7536e7099725098b24b74c775bc897d58f3c5868399a6f86c8d850"
+      }
+    },
+    "files_all_match": true,
+    "link_present": true,
+    "link_target": "/home/dowling/r1_tracks/t1_tasl_x/data/gc7rc_etth1",
+    "manifest_node": "gc7rc_etth1",
+    "manifest_schema": "trackg_node_data/v1",
+    "manifest_sha256": "eacc7e69f45fed3e7eb0c9bb76cf5c18387bcae4ba226a24812dc409c0b51e1b"
+  },
+  "expected": {
+    "committed_pin_sha256": "818b8f6e8ec6473f15c33ed58393e7cee8b8e8b0a71645576439929efb20bf27",
+    "edits_manifest_sha256": "ba31fed3bb67c0d78825a0d026058cbeb3a0261971fe8a4766f138687b232306",
+    "node_spec_sha256": "8f874c50f66273e0655bfc9ccdad24a50c0fdb629f88ba7d4d60b13f2fcf2e0c"
+  },
+  "frozen_entries": 16,
+  "frozen_paths": [
+    "run_fixed_budget.py",
+    "ar_worker.py",
+    "ar_parent.py",
+    "ar_isolated.py",
+    "ar_fixed_loop.py",
+    "ar_data.py",
+    "prepare_data.py",
+    "requirements.txt",
+    "LICENCES.md",
+    "README.md",
+    "data/",
+    "representative_edits/"
+  ],
+  "got": {
+    "committed_pin_sha256": "818b8f6e8ec6473f15c33ed58393e7cee8b8e8b0a71645576439929efb20bf27",
+    "data_manifest_sha256": "eacc7e69f45fed3e7eb0c9bb76cf5c18387bcae4ba226a24812dc409c0b51e1b",
+    "deployed_pin_sha256": "9c750f9e939e0b9f40dd25ff78cae2f46b218614fe190e7eccf6a311002a2542",
+    "edits_manifest_sha256": "ba31fed3bb67c0d78825a0d026058cbeb3a0261971fe8a4766f138687b232306",
+    "master_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "node_ar_isolated_sha256": "37d99ab092c73d885b95daa443d0b145148f0b02a6ff464e055704c39e48b610",
+    "node_spec_sha256": "8f874c50f66273e0655bfc9ccdad24a50c0fdb629f88ba7d4d60b13f2fcf2e0c",
+    "spec_file_sha256": "9391f718bd7669438189f45b48a920786a6ca5a51854bd861b0f945ea3d00c22"
+  },
+  "host": "TASL-2",
+  "interpreter": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+  "node_dir": "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1_g5/nodes/gc7rc_etth1",
+  "python": "3.12.16",
+  "root": "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1_g5",
+  "run_budget": {
+    "kind": "steps",
+    "value": 2000
+  },
+  "spec_name": "gc7rc_etth1",
+  "spec_path": "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1_g5/configs/trackg/nodes/gc7rc_etth1.yaml",
+  "utc": "2026-11-28T14:50:03Z"
+}
