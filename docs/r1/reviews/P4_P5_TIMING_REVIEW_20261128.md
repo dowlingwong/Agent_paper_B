@@ -1,153 +1,122 @@
-Verdict: CHANGES REQUIRED
+Verdict: ACCEPTED WITH MINORS
 
-# Independent review — P.4 P3 signature STOP and P5 timing capture (compute/20261128-19)
+# Independent review (re-check) — P.4 P3 signature STOP and P5 timing capture (compute/20261128-19)
 
-Reviewed deliverable `compute-p4-p5-timing-20261128` at
-`dc725f894fb342f4062f815999e849a522953661` from a clean worktree at that tip. The task card is
-`compute/20261128-19`, the accepted P5 smoke review is `f422df34`, the accepted E0 fresh record is
-`c22ba021`, and local's STOP is `7f6db2c0`. This review was read-only: I ran no GPU job or host workload, read no
-private key, and read no sealed label or test value. Host checks were `git config`/file-hash/`ls` reads only.
+Re-reviewed the corrected deliverable `compute-p4-p5-timing-20261128` at
+`05e627099080bcbeba9083e418bf9fc344b07d87`, from a clean worktree at that tip. The prior review at
+`6a301af6` (of `dc725f89`) is superseded by this re-check. No blocking or major finding remains; the
+deliverable is accepted. This review was read-only: no GPU job or host workload, no private key, and no
+sealed label or test value was read.
 
-The deliverable commit itself adds exactly the 32 files under
-`docs/r1/reports/trackp_p4_p5_timing_20261128/`; no code, config, spec, seed or micro-batch is touched.
-`git diff --check 57e6d1ed..dc725f89` exits 0. The branch tip's parent is `66aa4e10`, not the record's stated
-`57e6d1ed`; the two intervening commits are already on `origin/main`.
+The new tip adds 14 files under `docs/r1/reports/trackp_p4_p5_timing_20261128/`: the four `metrics.jsonl`, four
+`run.log`, four `lease.txt`, the revised record and the revised `SHA256SUMS`. It touches nothing outside that
+directory.
 
-## P3 — confirmed STOP
+## Prior findings closed
 
-| Check | Independent result |
+| Prior finding | Re-check |
 |---|---|
-| `git cat-file commit befb58c8` | one file, parent `0b46595418bb21dc0e8e5b234b30f2a84ac5082c`, no `gpgsig` header |
-| `git show --stat befb58c8` | `r1/scripts/htcondor/trackp_p4/p4_spec_ada_phase1_20261127.json`, +128 lines |
-| spec sha256 | `d9ab62698828adc459c8084c17e2ffd4ae000df71957a155d9e0cb83bf6d5ca6` |
-| `git verify-commit befb58c8` | exit 1; no signature |
-| Mac repo/global config | `user.signingkey`, `gpg.format`, `commit.gpgsign` all unset; repo-local config has no signing entry |
-| Mac agent | `ssh-add -l` = "The agent has no identities" |
-| TASL-2, TASL-7, deepthought, deepthought2, Ada | all three settings empty on all five; no agent identities |
-| earlier launch key | embedded key in `7d0279d8` has fingerprint `SHA256:32dP45eSMmVSt/G/CGvcxl/P+MO3Nwj9xeTh/GSA2wc` |
-| other public keys | Mac `SHA256:tDYAl/Xs8oqsvpNGqdNgyX8JsZwPauBPWrivkxJZ2w8`; TASL-2 `jy66…`; deepthought/2 `hxhO…`; Ada `EuLn…`, `OFqw…`, `V4xq…`; TASL-7 has no `~/.ssh/*.pub` |
+| **B1** eight ignored raw files missing; `SHA256SUMS` failed | **closed**: all eight are committed; clean-checkout `shasum -a 256 -c SHA256SUMS` is **43/43 OK** (exit 0) |
+| **M1** paper pin generalised to all arms | **closed**: record now states 0.8B `91cfd48a…` and 4B `e92f3c73…` |
+| **M2** single data hash `1d39f1ba…` | **closed**: all four per-arm `sft_data.json` hashes are listed (`0088f559…`, `9b6552b4…`, `1d39f1ba…`, `f997e7fa…`) |
+| **m1** `kev-4b` median `5.4800` | **closed**: record table now says `5.4855`, matching the raw metrics and `timing_summary.json` |
+| **m3** unsigned wording | **closed**: record now says no `gpgsig` and `git verify-commit` exits 1 because there is no signature |
+| **m4** base `57e6d1ed` | **closed in value**: record now says `66aa4e10`; see minor m2 below for the parenthetical wording |
 
-No key with the `32dP45…` fingerprint is configured or present on any host reached. P3 is correctly left as a STOP
-for the author, not resolved and not re-signed with a non-project key. One wording nit: for the unsigned
-`befb58c8`, this git prints no `No signature` line; the unsigned fact is established by the missing `gpgsig` and
-`verify-commit` exit 1.
-
-## P5 — numbers reproduce, but the committed capture is incomplete
-
-From the four committed `kernel_capture.json` files the walls and GPU-hours reproduce exactly:
-
-| Arm | Wall s | GPU-h | Step median (ex first) | Step mean (ex first) | Step max (ex first) |
-|---|---:|---:|---:|---:|---:|
-| `kev-0.8b` | 120.242 | 0.0334 | 1.0230 | 1.1640 | 7.9047 |
-| `qwen3.5-0.8b-base` | 117.882 | 0.0327 | 1.0528 | 1.1718 | 6.9628 |
-| `kev-4b` | 488.017 | 0.1356 | 5.4855 | 5.5843 | 10.9226 |
-| `qwen3.5-4b-base` | 437.816 | 0.1216 | 5.6378 | 5.8007 | 11.1622 |
-
-Total `1163.957 s / 3600 = 0.3233 GPU-h`; the arm-rounded total is also 0.3233. All four captures bound
-`causal_conv1d.causal_conv1d_interface.causal_conv1d_fn`,
-`causal_conv1d.causal_conv1d_interface.causal_conv1d_update`,
-`fla.ops.gated_delta_rule.chunk.chunk_gated_delta_rule` and
-`fla.ops.gated_delta_rule.fused_recurrent.fused_recurrent_gated_delta_rule`; no capture contains the
-`(torch path)` fallback. The accepted smoke review's mapping is the same.
-
-The step statistics were recomputed from the raw `metrics.jsonl` on Ada
-(`/data1/zli538/paperb_p4_20261127/p5_timing_20261128/jobs/<arm>/run/stage_s/metrics.jsonl`, read-only). The
-record table matches the recomputation except the `kev-4b` median: the table says **5.4800**, while the raw data
-and `timing_summary.json` say **5.4855**. The `timing_summary.json` values for median/mean/max all match the raw
-data.
-
-Card/runtime claims check out: all four captures and manifests show card 2
-`GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154`, RTX 6000 Ada, `CUDA_VISIBLE_DEVICES=2`, torch `2.6.0+cu124`, CUDA
-12.4, transformers `5.19.0`; the Ada venv Python is `3.12.10`; `/data1/zli538/paperb_p4_20261127/freeze.txt` is
-121 lines, sha256 `50238e5a07ca259c0dede08adfc42cc3473d29c222157994b6f284dabe0b9a08`. `gpu_before/after` are card
-2 at 5 MiB / 8 MiB resident; the manifests show one visible card. All four manifests are `dirty: false`.
-
-The paper-checkout claim is **not** correct as written. The record says all arms ran from `e92f3c73`; the manifests
-show `91cfd48a67f8d62d4e20826976cbdbdbcfcaf505` for `kev-0.8b` and `qwen3.5-0.8b-base`, and `e92f3c73` only for
-the two 4B arms. The two checkouts have identical `r1/c3/train/run.py`; `r1/scripts/trackp.py` differs only by the
-4B gradient-checkpointing flag, which the 0.8B commands do not pass. The timing result is therefore not affected,
-but the identity sentence is wrong.
-
-The data-hash claim is also singular where the run is per-arm. `1d39f1ba6eb6cf1a042658571c15d5809a947c0bdd26a7aa61fb913985cfd37c`
-is the `kev-4b` `sft_data.json`; the four per-arm values are `0088f559…` (`kev-0.8b`), `9b6552b4…`
-(`qwen3.5-0.8b-base`), `1d39f1ba…` (`kev-4b`) and `f997e7fa…` (`qwen3.5-4b-base`), each matching that arm's
-`report.json`. All four are accepted-probe synthetic data; only the record's blanket hash is wrong.
-
-The per-card lease statement is plausible but not self-contained in the export. The host `/data1/zli538/r1_locks/gpu2.lock`
-exists with mtime `2026-11-28 13:55:11Z` (the last arm's start), and each job directory has its job-local
-`gpu0.lock`. The manifests' `gpu_lease` events carry PID and start/end but omit `gpu_index`/`gpu_uuid`, because the
-direct path sets `_lease(..., check_processes=False)`; the exported capture therefore does not itself show the
-outer `gpu2.lock` event. Citing or including the launcher's lease log would close this.
-
-## Capture integrity — blocking
+## Integrity and raw-file provenance
 
 From a clean checkout of the tip, in the record directory:
 
 ```
 $ shasum -a 256 -c SHA256SUMS
-... 31 lines OK ...
-shasum: ./kev-0.8b/metrics.jsonl: No such file or directory
-... 8 listed files could not be read
-WARNING: 8 listed files could not be read
-EXIT=1
+... all 43 lines OK ...
+EXIT=0
 ```
 
-`SHA256SUMS` has 39 entries, but the commit contains no per-arm `metrics.jsonl` or `run.log`:
-`.gitignore:3` excludes `*.log` and `.gitignore:49` excludes `*.jsonl`, so they were silently left out. The eight
-missing files do exist on Ada, and their host sha256 values equal the `SHA256SUMS` lines exactly (metrics:
-`49942e87…`, `ad1f8442…`, `4e1c169f…`, `a459e37d…`; logs: `88e42b5c…`, `c9c438ea…`, `16a78ba6…`, `bd3d0645…`).
-They must still be committed (force-add, or add a negation for this directory) because the record's own statement
-that `SHA256SUMS` binds them and that "all captures are the raw job files" is false as delivered, and the required
-step-statistic recomputation is impossible from a clean checkout without `metrics.jsonl`.
+The eight newly committed raw files are **not** content-edited. Their sha256 values are identical to the
+eight `metrics.jsonl`/`run.log` lines in the previous `SHA256SUMS` at `dc725f89` and to the files on Ada:
+
+| Arm | `metrics.jsonl` | `run.log` |
+|---|---|---|
+| `kev-0.8b` | `49942e87…` | `88e42b5c…` |
+| `qwen3.5-0.8b-base` | `ad1f8442…` | `c9c438ea…` |
+| `kev-4b` | `4e1c169f…` | `16a78ba6…` |
+| `qwen3.5-4b-base` | `a459e37d…` | `bd3d0645…` |
+
+The old 39-line sums plus the four new `lease.txt` entries give the new 43 lines. The record's own hash was
+updated in the new `SHA256SUMS` and verifies.
+
+`git diff --check 66aa4e10..05e62709` reports trailing whitespace in `kev-4b/run.log` and
+`qwen3.5-4b-base/run.log`. Those are raw captured console lines; the bytes must **not** be cleaned, or the
+hashes above break. This is expected, not a defect.
+
+## Record content
+
+- **Base:** `git merge-base origin/main 05e62709` = `66aa4e10b107d81d6abc305fb1fa16879ff737d7`; record states
+  `66aa4e10`. (The new tip's immediate parent is `dc725f89`; see minor m2.)
+- **Paper pins:** record now splits 0.8B `91cfd48a67f8d62d4e20826976cbdbdbcfcaf505` and 4B
+  `e92f3c7389e06347a0ff78f5f68971024133c670`. These match the four manifests.
+- **Data:** the four per-arm `sft_data.json` hashes in the record match the four `report.json` files and the
+  accepted probe data.
+- **Median:** `kev-4b` median is `5.4855`; all four median/mean/max values recompute from the now-committed
+  `metrics.jsonl`.
+- **P3 wording:** `git cat-file commit befb58c8` has no `gpgsig`; `git verify-commit befb58c8` exits 1 with no
+  signature. The record's sentence matches this. The P3 STOP is still correctly flagged for the author; it is
+  not claimed resolved.
+
+The P5 numbers are otherwise unchanged and still reproduce: walls `120.242 / 117.882 / 488.017 / 437.816 s`,
+total `0.3233 GPU-h`, all four kernel mappings fast, no `(torch path)` fallback, card 2
+`GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154`, torch `2.6.0+cu124`, CUDA 12.4, transformers `5.19.0`, Python
+`3.12.10`, freeze sha256 `50238e5a…` (121 lines).
+
+## Lease files
+
+The four `lease.txt` files use the same card/times as the captures: `gpu_index=2`, UUID
+`GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154`, and start/finish times equal to `started_utc.txt`/`finished_utc.txt`.
+`lock=/data1/zli538/r1_locks/gpu2.lock` follows from the reviewed Ada config (`lock_dir` plus card 2), and the
+host `gpu2.lock` exists with mtime `2026-11-28T13:55:11Z`, the last arm's start. The `mode=flock-exclusive`
+description matches the direct-launch design. The final clause, "outer shell held fd 9 on the lock for the
+whole python process", is an assertion about the launch wrapper and is not derivable from the named raw files;
+no launcher log is in the commit. This is documentation-only (minor m1), not a contradiction of the captured
+lease facts.
 
 ## Overclaim check
 
-Pass. The record explicitly says the timing run is a manual re-run, not a new formal probe; it leaves the accepted
-probe charges at 3.10 GPU-h and the 40 GPU-h phase-1 threshold unchanged; it does not claim P3 is resolved; it
-flags P3 for the author; it labels the work ENGINEERING_ONLY, synthetic labels only, no SFT evidence run. The
-per-arm `report.json` files carry the same ENGINEERING_ONLY label and per-arm synthetic data hashes.
+Still passes. The record does not claim a new formal probe run; it leaves the accepted probe charge at
+3.10 GPU-h and the 40 GPU-h threshold unchanged; it does not claim P3 is resolved; and it keeps
+ENGINEERING_ONLY with synthetic labels only, no SFT evidence run, no label/test/evaluation read.
 
 ## Findings
 
-- **Blocking B1.** The commit omits all four `metrics.jsonl` and all four `run.log` files that `SHA256SUMS` lists.
-  `shasum -a 256 -c SHA256SUMS` is 31 OK / 8 FAILED (exit 1), and the raw step data cannot be verified from the
-  deliverable. Fix by force-adding the eight files and re-running the check to 39/39.
-- **Major M1.** The record generalises the 4B arm's paper checkout `e92f3c73` to all four arms. The manifests show
-  `91cfd48a` for both 0.8B arms and `e92f3c73` for both 4B arms. State the per-arm commits; the effective runner
-  path is otherwise identical.
-- **Major M2.** The record gives `1d39f1ba…` as the run's `sft_data.json` hash, but that is only `kev-4b`. Give the
-  four per-arm hashes (or point to the per-arm `report.json` values).
-- **Minor m1.** The `kev-4b` step median in the record table is `5.4800`; the raw metrics and
-  `timing_summary.json` give `5.4855`. Correct the table.
-- **Minor m2.** The per-card lease is inferred from the host `gpu2.lock` and job-local `gpu0.lock`; the exported
-  manifest events do not include the outer lease's card index/UUID. Add the launcher lease log or cite it.
-- **Minor m3.** `git log --show-signature` on the unsigned `befb58c8` does not print `No signature` in this git;
-  the unsigned conclusion is still correct by `cat-file`/`verify-commit`.
-- **Minor m4.** The record says base `origin/main` `57e6d1ed`, but the tip's parent is `66aa4e10`; the deliverable
-  commit still adds only its record directory.
+- **Blocking:** none.
+- **Major:** none.
+- **Minor m1.** `lease.txt`'s "outer shell held fd 9" clause is not derived from the listed raw captures and
+  has no launcher artifact in the commit. Cite the exact launcher command/log, or drop the fd/`outer shell`
+  detail and keep the captured card/times/lock path. The lease conclusion itself is supported.
+- **Minor m2.** The record says `66aa4e10` is "the branch parent"; it is the branch's merge base with `main`.
+  The new tip's parent is `dc725f89`. Say "branch base" or "the main commit the branch is based on".
+- **Minor m3.** "The Track P runner path is identical between them" is too broad: the SFT training path
+  `r1/c3/train/run.py` is identical, but `r1/scripts/trackp.py` differs by the 4B gradient-checkpointing flag
+  (not passed by the 0.8B arms). State that qualification; the result is unaffected.
+- **Note, not a finding.** `git diff --check` flags trailing whitespace in two raw `run.log` files. Preserve
+  the raw bytes; do not clean them.
 
-## What remains
+## Verdict
 
-Re-commit the eight ignored raw files and regenerate/verify `SHA256SUMS` (39/39 OK), fix the paper/data identity
-paragraph and the `kev-4b` median, then re-review. P3 remains a STOP for the author: sign the exact `befb58c8`
-bytes with the project identity, or configure that identity for compute. No new formal probe run and no change to
-the 3.10 GPU-h probe charge is needed.
+**ACCEPTED WITH MINORS.** The prior blocking and major findings are closed: the capture is complete and
+self-consistent, the raw files are byte-identical to the previously recorded and host hashes, the identity
+paragraph is correct, and the P3 STOP wording is accurate. The remaining items are documentation precision, not
+evidence defects.
 
 ## Commands used (representative)
 
 ```
-git fetch origin --prune
-git worktree add --detach <tmp> dc725f894fb342f4062f815999e849a522953661
-git cat-file commit befb58c8
-git show --stat befb58c8
-git rev-parse befb58c8^
-git show befb58c8:r1/scripts/htcondor/trackp_p4/p4_spec_ada_phase1_20261127.json | shasum -a 256
-git verify-commit befb58c8; echo $?
-git log -1 --show-signature 7d0279d8
-ssh-keygen -lf ~/.ssh/id_ed25519.pub
-ssh -o BatchMode=yes <host> 'git config --global --get user.signingkey; ...; ssh-add -l'
-git diff --check 57e6d1ed..dc725f89
-git show --name-only --format= dc725f89
+git fetch origin refs/heads/compute-p4-p5-timing-20261128
+git worktree add --detach <tmp> 05e627099080bcbeba9083e418bf9fc344b07d87
 cd docs/r1/reports/trackp_p4_p5_timing_20261128 && shasum -a 256 -c SHA256SUMS
-python3  # recompute step median/mean/max from metrics.jsonl, excluding step 1
+git show dc725f89:docs/r1/reports/trackp_p4_p5_timing_20261128/SHA256SUMS
+git diff --check 66aa4e10..05e62709
+git merge-base origin/main 05e62709
+git cat-file commit befb58c8; git verify-commit befb58c8; echo $?
+python3  # recompute median/mean/max from the four metrics.jsonl
 ```
