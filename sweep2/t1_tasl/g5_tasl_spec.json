@@ -1,7 +1,7 @@
 {
  "schema": "g5_tasl_labels/v1",
  "label": "EVIDENCE",
- "run_id": "PENDING: c3_t1_labels_YYYYMMDD (the signed note's date)",
+ "run_id": "c3_t1_labels_20261128",
  "comment": "G.5 T1 label runs on the TASL pair (G.5 authorization draft revision 8, section 9; part 3a of the G.5 code unit). Every section 11 decision is an explicit field with the recommended option A as default; none is signed. PENDING fields are filled at signature (or, under G5-ARPEND A, read by the switch from autoresearch's completion record). Values marked proposed are the draft's proposals that the signed note fixes.",
  "draft": {
   "path": "docs/r1/proposals/T1_G5_AUTHORIZATION_DRAFT_20261120.md",
@@ -10,7 +10,7 @@
  },
  "paper": {
   "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
-  "commit": "PENDING: the commit that publishes the signed G.5 note and this spec"
+  "commit": "a70c8872ead621696b8f8f14134319009f0fa3e6"
  },
  "harness": {
   "repo": "https://github.com/dowlingwong/autoresearch_harness.git"
@@ -247,7 +247,7 @@
  "decisions": {
   "G5-W": {
    "option": "A",
-   "signed": false,
+   "signed": true,
    "recommended": "A",
    "options": [
     "A",
@@ -256,7 +256,7 @@
   },
   "G5-TEMP": {
    "option": "A",
-   "signed": false,
+   "signed": true,
    "recommended": "A",
    "options": [
     "A",
@@ -265,7 +265,7 @@
   },
   "G5-MEM": {
    "option": "A",
-   "signed": false,
+   "signed": true,
    "recommended": "A",
    "options": [
     "A",
@@ -276,7 +276,7 @@
   },
   "G5-AUDIT": {
    "option": "A",
-   "signed": false,
+   "signed": true,
    "recommended": "A",
    "options": [
     "A",
@@ -285,7 +285,7 @@
   },
   "G5-DIV": {
    "option": "A",
-   "signed": false,
+   "signed": true,
    "recommended": "A",
    "options": [
     "A",
@@ -295,7 +295,7 @@
   },
   "G5-TASL-GPUH": {
    "option": "A",
-   "signed": false,
+   "signed": true,
    "recommended": "A",
    "options": [
     "A",
@@ -304,7 +304,7 @@
   },
   "G5-SLOT": {
    "option": "A",
-   "signed": false,
+   "signed": true,
    "recommended": "A",
    "options": [
     "A",
@@ -313,7 +313,7 @@
   },
   "G5-ARPEND": {
    "option": "A",
-   "signed": false,
+   "signed": true,
    "recommended": "A",
    "options": [
     "A",
@@ -321,8 +321,8 @@
    ]
   }
  },
- "decisions_row": "PENDING: the author's PLAN row signing the section 11 decisions",
- "e4_amendment_row": "PENDING: G5-MEM A needs the author's PLAN row amending E4's 'both memory modes'",
+ "decisions_row": "R1-G5-DECISIONS-2",
+ "e4_amendment_row": "R1-G5-MEM-E4",
  "recorded": {
   "G5-AR": "A (R1-G5-DECISIONS)",
   "G5-PIN": "B (R1-G5-DECISIONS)",
@@ -418,18 +418,18 @@
  "noise_floor": {
   "t1_sigma_node": "t0_definition",
   "seven": {
-   "copy": "PENDING: the reviewed REL-T1-G1B copy of the g1b-tasl-20261121-b summary (joined under G1B-JOIN)",
-   "sha256": "PENDING",
-   "review": "PENDING",
+   "copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/summary.json",
+   "sha256": "945abc0a7ced28a7ffa27905c3282b7ad4b25ed6f9c49de01ca7c595491e7a67",
+   "review": "docs/r1/reviews/REL_T1_G1B_COPY_REVIEW_20261126.md",
    "run_id": "g1b-tasl-20261121-b",
    "schema": "g1b_tasl_summary/1",
-   "sealed_path": "PENDING: the sealed summary.json the copy was taken from",
-   "gate_copy": "PENDING: the copy of crosscheck_gate.json, beside the summary copy",
-   "gate_sha256": "PENDING",
-   "assembly_copy": "PENDING: the copy of the run's ASSEMBLY.json, beside the summary copy (D6 A, R1-T1-FEAT-DECISIONS)",
-   "assembly_sha256": "PENDING",
-   "runs_copy": "PENDING: the copy of the run's runs.jsonl, beside the summary copy (D6 A, R1-T1-FEAT-DECISIONS)",
-   "runs_sha256": "PENDING",
+   "sealed_path": "/home/dowling/r1_tracks/t1_tasl/sealed_g1b/joined_seven_official_20261125/summary.json",
+   "gate_copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/crosscheck_gate.json",
+   "gate_sha256": "00ee68c28aa2f9fcebd0b858d85df21a1baa3175b492eb5bfef0b074b073c8e2",
+   "assembly_copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/ASSEMBLY.json",
+   "assembly_sha256": "e4056710beff92b4e0628372831632c9a54d070be1c41497e990eb45924236dd",
+   "runs_copy": "docs/r1/reports/g5_rel_t1_g1b_20261126/seven/runs.jsonl",
+   "runs_sha256": "1f56c0681d3a6cbd8005b3ee45da4ef2680d9354c869a0d16433b72afc971385",
    "crosscheck_spec": {
     "path": "sweep2/t1_tasl/g1b_crosscheck_spec.json",
     "sha256": "a9e6b4633a8cbe3f8356aab748ac61b09f410475b33b0c6191826adfd926d164"
@@ -558,7 +558,7 @@
    100,
    200
   ],
-  "freeze_wait_release_date": "2026-12-18",
+  "freeze_wait_release_date": "2027-12-31",
   "seal_mode": "procedural",
   "t1_table_readings": {
    "campaign_divergent_delta_hat": "refuse",
@@ -570,7 +570,7 @@
   },
   "server_log": "a",
   "cuda_ipc": {
-   "mode": "PENDING: c12 | acceptance",
+   "mode": "acceptance",
    "c12_record": null,
    "c12_sha256": null,
    "c12_review": null,
@@ -611,7 +611,7 @@
    "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_cifar10_20261119T033747Z/",
    "device": "gpu",
    "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
-   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+   "tails": "gaussian"
   },
   {
    "node": "mlab_imdb",
@@ -627,7 +627,7 @@
    "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_imdb_20261119T034107Z/",
    "device": "gpu",
    "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
-   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+   "tails": "gaussian"
   },
   {
    "node": "mlab_ogbn_arxiv",
@@ -643,7 +643,8 @@
    "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlab_ogbn_arxiv_20261119T035109Z/",
    "device": "gpu",
    "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
-   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+   "tails": "student_t",
+   "tails_nu": 5
   },
   {
    "node": "mlgym_cifar10",
@@ -659,7 +660,7 @@
    "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_cifar10_20261119T035326Z/",
    "device": "gpu",
    "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
-   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+   "tails": "gaussian"
   },
   {
    "node": "mlgym_fmnist",
@@ -675,7 +676,7 @@
    "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_fmnist_20261119T035842Z/",
    "device": "gpu",
    "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
-   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+   "tails": "gaussian"
   },
   {
    "node": "mlgym_breakout_minatar",
@@ -691,7 +692,8 @@
    "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_breakout_minatar_20261119T045751Z/",
    "device": "gpu",
    "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
-   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)"
+   "tails": "student_t",
+   "tails_nu": 5
   },
   {
    "node": "mlgym_houseprice",
@@ -707,7 +709,7 @@
    "census_record": "docs/r1/reports/trackg_g0_20261117/u2_iso_mlgym_houseprice_20261120T215244Z/",
    "device": "cpu",
    "census_gpu_model": "NVIDIA RTX 6000 Ada Generation",
-   "tails": "PENDING: P10 (Gaussian or Student-t from the seven-node G.1b summary)",
+   "tails": "gaussian",
    "cpus": "8-15"
   },
   {

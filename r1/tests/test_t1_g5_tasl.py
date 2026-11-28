@@ -16,14 +16,14 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+from g5_spec_fixtures import G5_SPEC_PATH, draft_spec, draft_spec_path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "sweep2" / "t1_tasl"))
 import g5_tasl as T  # noqa: E402
 import g5_pin_check as PC  # noqa: E402
 
-SPEC_PATH = ROOT / "sweep2" / "t1_tasl" / "g5_tasl_spec.json"
-SPEC = json.loads(SPEC_PATH.read_text())
+SPEC = draft_spec()
 DRAFT = (ROOT / "docs" / "r1" / "proposals" / "T1_G5_AUTHORIZATION_DRAFT_20261120.md").read_text()
 ALL_A = {d: "A" for d in T.DECISIONS}
 TODAY = date(2026, 12, 1)
@@ -35,8 +35,8 @@ def stop(match, fn, *a, **kw):
         fn(*a, **kw)
 
 
-# =============================================================================================== the shipped spec
-def test_shipped_spec_is_all_a_unsigned_and_matches_the_draft():
+# =============================================================================================== the draft fixture
+def test_draft_spec_is_all_a_unsigned_and_matches_the_draft():
     out = T.validate_spec(copy.deepcopy(SPEC))
     assert out["options"] == ALL_A and out["unsigned"] == list(T.DECISIONS) and out["launch_blockers"] == []
     p = out["projection"]
@@ -74,7 +74,7 @@ def test_spec_carries_nodes_families_seeds_markers_and_key_values():
     assert s["ar_prerequisites"]["proposed_environment"]["sha256"].startswith("11def6ad")
     assert all(not d["signed"] and d["recommended"] == "A" for d in s["decisions"].values())
     assert s["e4_amendment_row"].startswith("PENDING") and "E4" in s["e4_amendment_row"]
-    assert T.apply_options(SPEC, ALL_A) == SPEC                         # the shipped spec is the all-A spec
+    assert T.apply_options(SPEC, ALL_A) == SPEC                         # the draft fixture is the all-A spec
 
 
 def test_split_and_seed_rules():
@@ -1027,7 +1027,7 @@ def _g4b_pilot(tmp_path: Path, **pilot) -> Path:
     return path
 
 
-def test_dates_reads_the_g4b_pilot_spec_only_with_g4_settings(tmp_path, capsys):
+def test_dates_reads_the_g4b_pilot_spec_only_with_g4_settings(tmp_path, capsys, draft_spec_path):
     """R1-G5-DIFF-RECOUNT: ``dates --pilot-spec`` reads the G.4b re-pilot's sealed attempts against the G.4b spec; the
     default stays g4_tasl_spec.json; a spec that is not G.4b, or runs other pilot settings than P3 reads, is refused."""
     g4, g4sha = T.dates_pilot_spec(None)
@@ -1039,9 +1039,9 @@ def test_dates_reads_the_g4b_pilot_spec_only_with_g4_settings(tmp_path, capsys):
     plain.write_text(json.dumps(g4))
     stop("--pilot-spec is for the G.4b re-pilot spec", T.dates_pilot_spec, plain)
     stop("must run the G.4 pilot's settings", T.dates_pilot_spec, _g4b_pilot(tmp_path, memory_mode="none"))
-    assert T.main(["dates", str(SPEC_PATH), "--today", "2026-11-25", "--pilot-spec", str(p)]) == 0
+    assert T.main(["dates", str(draft_spec_path), "--today", "2026-11-25", "--pilot-spec", str(p)]) == 0
     assert json.loads(capsys.readouterr().out)["g5_total_gpu_hours"] == 305.3        # pre-pilot: no sealed attempt
-    assert T.main(["dates", str(SPEC_PATH), "--today", "2026-11-25", "--pilot-spec", str(plain)]) == 2
+    assert T.main(["dates", str(draft_spec_path), "--today", "2026-11-25", "--pilot-spec", str(plain)]) == 2
 
 
 # =============================================================================================== P3: the G.4b re-pilot
@@ -1332,7 +1332,7 @@ def test_p3_pilot_basis_check_refusals(g4b_world):
     assert T.pilot_basis_check(s, m.read)["run_id"] == "g4b-tasl-20261124-a"
 
 
-def test_pilot_basis_cli_reads_main(monkeypatch, capsys):
+def test_pilot_basis_cli_reads_main(monkeypatch, capsys, draft_spec_path):
     """``g5_tasl.py pilot-basis <spec>`` runs the P3 check against published main (a ``Main`` fake holding this
     checkout's files, review m7): the sealed attempts are not on this desk, so it refuses at the first sealed attempt,
     after the files on main passed; with the result report missing from main it refuses there."""
@@ -1340,13 +1340,13 @@ def test_pilot_basis_cli_reads_main(monkeypatch, capsys):
                                                           G4B_NOTE)})
     reads = []
     monkeypatch.setattr(T.G, "_read_main", lambda rel: reads.append(rel) or m.read(rel))
-    assert T.main(["pilot-basis", str(SPEC_PATH)]) == 2
+    assert T.main(["pilot-basis", str(draft_spec_path)]) == 2
     err = capsys.readouterr().err
     assert "SEAL_RECEIPT.json" in err and "g4b-tasl-20261124-a" in err
     assert {G4B_REPORT, G4B_CORR, G4B_REVIEW, G4B_NOTE, "docs/r1/PLAN.md"} <= set(reads)
     assert T.pilot_basis_main_check(copy.deepcopy(SPEC), m.read)[1] == SPEC["pilot_basis"]["spec"]["sha256"]
     m.pop(G4B_REPORT)
-    assert T.main(["pilot-basis", str(SPEC_PATH)]) == 2
+    assert T.main(["pilot-basis", str(draft_spec_path)]) == 2
     assert "must be on published main" in capsys.readouterr().err
 
 
@@ -1405,9 +1405,9 @@ def test_recount_tips_pass_the_desk_harness_checks():
         assert T.T4.RECOUNT_NEEDLE in src
 
 
-def test_draft_section5_block_is_the_key_lines_render(capsys):
-    """The G.5 draft's §5 block is ``key-lines`` on the shipped spec, line for line (revision 12)."""
-    assert T.main(["key-lines", str(SPEC_PATH)]) == 0
+def test_draft_section5_block_is_the_key_lines_render(capsys, draft_spec_path):
+    """The G.5 draft's §5 block is ``key-lines`` on the draft fixture, line for line (revision 12)."""
+    assert T.main(["key-lines", str(draft_spec_path)]) == 0
     block = capsys.readouterr().out.strip().splitlines()
     assert len(block) > 40
     section5 = DRAFT.split("\n## 5. ", 1)[1].split("\n## 6. ", 1)[0]
@@ -1507,7 +1507,7 @@ def test_tasl7_dates_follow_the_schedule_rules():
     assert out2["gpu_hours_counted"] == total and "inside the cap" in out2["gpu_hours_reading"]
 
 
-def test_tasl7_dates_refusals_and_default_nodes(tmp_path):
+def test_tasl7_dates_refusals_and_default_nodes(tmp_path, draft_spec_path):
     rec = _rec()
     stop("cannot run audit chunks on TASL-7", T.tasl7_dates, rec, SPEC, [T.AR])
     stop("cannot run audit chunks on TASL-7", T.tasl7_dates, rec, SPEC, ["not_a_node"])
@@ -1530,7 +1530,7 @@ def test_tasl7_dates_refusals_and_default_nodes(tmp_path):
     out = T.tasl7_dates(rec, SPEC, ["mlab_cifar10", "mlab_imdb"], read_main=m.read, list_main=m.ls)
     assert out["per_node"]["mlab_cifar10"]["crosshost"] == "no cross-host PASS on main (a scenario)"
     assert out["per_node"]["mlab_imdb"]["crosshost"] == "cross-host PASS on main"
-    assert T.main(["dates", str(SPEC_PATH), "--today", "2026-11-25", "--tasl7-nodes", "mlab_cifar10"]) == 2
+    assert T.main(["dates", str(draft_spec_path), "--today", "2026-11-25", "--tasl7-nodes", "mlab_cifar10"]) == 2
 
 
 def test_tasl7_dates_on_the_g4b_captures_eight_nodes():
@@ -1545,19 +1545,30 @@ def test_tasl7_dates_on_the_g4b_captures_eight_nodes():
         assert max(w["chunks"] for v in out["per_node"].values() for w in v["waves"].values()) == 2
 
 
-def test_cli(tmp_path, capsys):
-    assert T.main(["validate", str(SPEC_PATH)]) == 0
+def test_cli(tmp_path, capsys, draft_spec_path):
+    assert T.main(["validate", str(draft_spec_path)]) == 0
     assert json.loads(capsys.readouterr().out)["options"] == ALL_A
-    assert T.main(["validate", str(SPEC_PATH), "--launch"]) == 2
+    assert T.main(["validate", str(draft_spec_path), "--launch"]) == 2
     capsys.readouterr()
-    assert T.main(["options", str(SPEC_PATH), "--set", "G5-SLOT=B"]) == 0
+    assert T.main(["options", str(draft_spec_path), "--set", "G5-SLOT=B"]) == 0
     slot_b = tmp_path / "slot_b.json"
     slot_b.write_text(capsys.readouterr().out)
     assert T.main(["validate", str(slot_b)]) == 2 and "not built" in capsys.readouterr().err
-    assert T.main(["key-lines", str(SPEC_PATH)]) == 0
+    assert T.main(["key-lines", str(draft_spec_path)]) == 0
     out = capsys.readouterr().out
     assert "audit_K: 10 (R1-G5-DECISIONS;" in out and "freeze_wait:" in out and "cap_gpu_hours: 425," in out
-    assert T.main(["freeze-wait", str(SPEC_PATH), "--today", "2026-12-18"]) == 2
+    assert T.main(["freeze-wait", str(draft_spec_path), "--today", "2026-12-18"]) == 2
+    capsys.readouterr()
+
+    def declare_tails(spec):
+        for node in spec["nodes"]:
+            if node["node"] in ("mlab_ogbn_arxiv", "mlgym_breakout_minatar"):
+                node.update(tails="student_t", tails_nu=5)
+
+    _, filled_path, _, _ = ready(tmp_path, spec_edit=declare_tails)
+    assert T.main(["validate", str(filled_path), "--launch"]) == 0
+    filled = json.loads(capsys.readouterr().out)
+    assert filled["unsigned"] == [] and filled["launch_blockers"] == []
 
 
 # =============================================================================================== review round 1
@@ -1874,7 +1885,7 @@ XC3_REAL = {n: f"{SHORT_DIR}/G1B_XC3_SHORT_VERDICT_{n}_20261125.json"
 
 
 def _markers(s):
-    """The four xc3 nodes back on the marker (the shipped spec lists their verdicts since revision 13): the marker
+    """The four xc3 nodes back on the marker (the draft fixture lists their verdicts since revision 13): the marker
     path, where the switch finds the PASS on main by its file pattern, stays accepted and is tested on synthetic
     verdicts."""
     for n in XC3_REAL:
@@ -1888,7 +1899,7 @@ def test_two_cards_spec_block_and_xc3_records():
     assert t["families"] == ["G5-7"] and T.AR not in t["crosshost_pass"] and t["lease"] == SPEC["proposer"]["lease"]
     assert t["gpu_uuid"] == SPEC["proposer"]["gpu_uuid"] and t["runs_root"] == SPEC["worker"]["runs_root"]
     assert T.validate_spec(copy.deepcopy(SPEC))["tasl7_pending_crosshost"] == []
-    assert "PENDING short cross-check" not in SPEC_PATH.read_text()
+    assert "PENDING short cross-check" not in G5_SPEC_PATH.read_text()
     for n, rel in XC3_REAL.items():
         assert t["crosshost_pass"][n] == [{"record": rel, "sha256": sha((ROOT / rel).read_bytes()), "mode": "short",
                                            "crosscheck_run_id": XC3_RUN}]
@@ -2362,12 +2373,12 @@ def test_tasl2_cpu_set_containing_8_11_is_refused(edit, match):
     stop(match, T.validate_spec, s)
 
 
-def test_tasl2_cpus_query_and_affinity_per_host():
+def test_tasl2_cpus_query_and_affinity_per_host(draft_spec_path):
     """The wrapper's ``cpus`` query: houseprice gets 0-7 on TASL-2 and keeps its G.1b set 8-15 on TASL-7 (xc3 ran it
     there on 8-15); GPU nodes get each host's set. ``g5_job.worker_shim`` gives the affinity check the same TASL-2
     set."""
     import g5_job  # noqa: PLC0415
-    run = lambda *a: subprocess.run([sys.executable, str(ROOT / "sweep2/t1_tasl/g5_tasl.py"), "cpus", str(SPEC_PATH),
+    run = lambda *a: subprocess.run([sys.executable, str(ROOT / "sweep2/t1_tasl/g5_tasl.py"), "cpus", str(draft_spec_path),
                                      *a], capture_output=True, text=True)   # noqa: E731
     assert run("--node", HP).stdout.strip() == "0-7"
     assert run("--node", HP, "--host", "TASL-2").stdout.strip() == "0-7"
@@ -2458,7 +2469,7 @@ def test_tasl2_cpu_row_is_required_at_launch(tmp_path, keys):
     assert all(re_term in UNIT_ROWS["R1-TASL2-CPU"] for re_term in T.TASL2_CPU_TERMS)   # the terms are the row's own
 
 
-def test_cpuset_spec_derives_the_signed_g1b_spec(tmp_path):
+def test_cpuset_spec_derives_the_signed_g1b_spec(tmp_path, draft_spec_path):
     """``cpuset-spec``: the signed G.1b spec with its own run id, houseprice on the replacement set (its own cpus dropped
     so that it takes TASL-2's 0-7), a ``cpuset_check`` block, and nothing else changed; G.1b's launch validation passes."""
     import g1b_tasl as G1  # noqa: PLC0415
@@ -2481,9 +2492,9 @@ def test_cpuset_spec_derives_the_signed_g1b_spec(tmp_path):
     s["tasl2_cpus"]["replacements"][HP]["cpus"] = "4-7,12-15"         # overlapping G.1b's GPU set: G.1b refuses
     stop("overlaps the cpus of TASL-2's GPU jobs", T.cpuset_spec, s, HP, run_id)
     out = tmp_path / "derived.json"
-    assert T.main(["cpuset-spec", str(SPEC_PATH), "--node", HP, "--run-id", run_id, "--out", str(out)]) == 0
+    assert T.main(["cpuset-spec", str(draft_spec_path), "--node", HP, "--run-id", run_id, "--out", str(out)]) == 0
     assert out.read_bytes() == T._derived_bytes(d)
-    assert T.main(["cpuset-spec", str(SPEC_PATH), "--node", HP, "--run-id", run_id, "--out", str(out)]) == 2
+    assert T.main(["cpuset-spec", str(draft_spec_path), "--node", HP, "--run-id", run_id, "--out", str(out)]) == 2
 
 
 _GATE_ISO = {"effective": True, "waivers": {}, "exceptions": [], "log_intact": True, "parent_traced_by": None,
@@ -2593,8 +2604,8 @@ def _declared(nu=5):
     return s
 
 
-def test_tails_constants_and_the_shipped_spec():
-    """The spec on main still carries PENDING tails and no tails_nu (the render fills them, not this unit)."""
+def test_tails_constants_and_the_draft_spec():
+    """The unsigned fixture has PENDING tails and no tails_nu."""
     import g5_assemble as A  # noqa: PLC0415
     sys.path.insert(0, str(ROOT))
     from r1.c3 import labels as LB  # noqa: PLC0415
