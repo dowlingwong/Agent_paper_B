@@ -1,0 +1,14 @@
+Args = "hk mae_repaired --loss fixed --placeholder sentinel --seed 9002 --micro-batch 8 --data-kind lucid_v1 --data staged/data/lucid_v1/hk_lucid_v1.h5 --memory-fraction 0.9"
+ClusterId = 760158
+Cmd = "/work/dwong/r2_sparse_sk/batch_jobs/sksk_train_HC2_s9002/20261127T130005Z/lucid_torch_job.sh"
+Iwd = "/work/dwong/r2_sparse_sk/batch_jobs/sksk_train_HC2_s9002/20261127T130005Z"
+JobStartDate = 1795784490
+JobStatus = 2
+Owner = "dwong"
+ProcId = 0
+RemoteHost = "slot1_4@c03-001-179.gridka.de"
+RequestCpus = 4
+RequestDisk = 20000000
+RequestDisk_RAW = 20000000
+RequestMemory = 32000
+RequestMemory_RAW = 32000

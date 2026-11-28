@@ -1,0 +1,10 @@
+
+
+-- Schedd: deepthought.etp.kit.edu : <129.13.101.137:9618?... @ 11/28/26 02:32:04
+ ID        OWNER            SUBMITTED     RUN_TIME ST PRI SIZE   CMD
+760158.0   dwong          11/27 14:00   0+12:30:34 R  0   4636.0 lucid_torch_job.sh hk mae_repaired --loss fixed --placeholder sentinel --seed 9002 --micro-batch 8 --data-kind lucid_v1 --data staged/data/lucid_v1/hk_lucid_v1.h5 --memory-fraction 0.9
+
+Total for query: 1 jobs; 0 completed, 0 removed, 0 idle, 1 running, 0 held, 0 suspended 
+Total for dwong: 1 jobs; 0 completed, 0 removed, 0 idle, 1 running, 0 held, 0 suspended 
+Total for all users: 4 jobs; 0 completed, 0 removed, 0 idle, 4 running, 0 held, 0 suspended
+

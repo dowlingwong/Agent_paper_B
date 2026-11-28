@@ -1,0 +1,1 @@
+deepthought2.etp.kit.edu slot1@deepthought2.etp.kit.edu Unclaimed 1 NVIDIA L40S false
