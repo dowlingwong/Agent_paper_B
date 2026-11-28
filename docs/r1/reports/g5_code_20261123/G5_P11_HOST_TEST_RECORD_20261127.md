@@ -82,7 +82,7 @@ gate. Exact refusals (captured in `P11_REFUSALS_20261128/`, one file per command
 | `g5_tasl.py server-span … <nonexistent receipt>` | `STOP: run_id must be c3_t1_labels_<YYYYMMDD>` | 2 |
 | `g5_tasl.py validate … --launch` (control only, not a host test) | `STOP: run_id must be c3_t1_labels_<YYYYMMDD>` | 2 |
 
-Each command refuses **before** reading or writing any path (the nonexistent paths were never touched), so no smoke
+Each command refuses **before** reading or writing any of the item paths (the nonexistent item paths were never touched; the spec itself is read first), so no smoke
 attempt, no sealed file, no label or evaluation value was created or read. Under the disposition these items are
 recorded as **checked at publication**: the strict `check-note` and the first real command after the signed G.5 note
 and filled spec are their check.
