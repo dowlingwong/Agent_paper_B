@@ -1,0 +1,3 @@
+=== close-server ===
+STOP: run_id must be c3_t1_labels_<YYYYMMDD>
+rc=2
