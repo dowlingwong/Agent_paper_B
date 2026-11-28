@@ -1,0 +1,16 @@
+read_utc 2026-11-28T05:45:55Z host deepthought
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+deepthought
+40
+              total        used        free      shared  buff/cache   available
+Mem:            503          38         153           4         310         456
+ 06:45:58 up 101 days, 5 min,  5 users,  load average: 5.97, 6.10, 6.04
+condor
+Name                           State      Activities Start
+slot1@c03-001-101              Unclaimed  undefined  undefined
+slot1_1@c03-001-101.gridka.de  Claimed    undefined  undefined
+slot1_2@c03-001-101.gridka.de  Claimed    undefined  undefined
+slot1_3@c03-001-101.gridka.de  Claimed    undefined  undefined
+q_dwong
