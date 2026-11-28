@@ -65,7 +65,8 @@ def render_remote_script(launch: Mapping[str, Any], *,
         parts.append(f"python3 -m r1.c3.d3.probe --launch launch.json --manifest manifest.json "
                      f"--out observed.json --lease-path \"$lease\"")
     parts += [
-        f"exec {scope} {shell_join(argv)}",
+        f"{scope} {shell_join(argv)}",
+        "exit 0",
         "",
     ]
     return "\n".join(parts)
@@ -107,8 +108,11 @@ def launch(launch_path: str | Path, out_dir: str | Path, *, manifest_path: str |
     if not lease:
         raise LaunchStop("an SSH launch needs a lease path")
     launch_record["lease_path"] = lease
-    if not dry_run:
-        validate_deployment_launch(launch_record)
+    if not dry_run or "retry_ledger" in launch_record:
+        launch_record = validate_deployment_launch(launch_record, source_dir=Path(launch_path).parent)
+        from r1.c3.d3.probe import gpu_selector_from_lease
+
+        gpu_selector_from_lease(str(lease), (launch_record.get("hardware") or {}).get("proposer_gpu_uuid"))
     if not probe:
         observed = read_json(observed_path)
         check_observed(observed, lease_path=lease)

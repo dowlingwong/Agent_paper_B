@@ -1,6 +1,7 @@
 """Tests for the D.3 G1 campaign chunk record/layout unit (synthetic, CPU only)."""
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 
@@ -14,7 +15,7 @@ from r1.c3.d3.campaign_chunk import (
     run_chunk,
     sha256sums,
 )
-from r1.c3.d3.evidence_accounting import CampaignAccounting, RETRY_SCHEMA
+from r1.c3.d3.evidence_accounting import CampaignAccounting, LOSS_SCHEMA, RETRY_SCHEMA
 from r1.c3.d3.snapshots import SnapshotRecorder, sha256_json, wrap
 from r1.harness import import_harness
 
@@ -276,18 +277,20 @@ def test_deployment_campaigns_record_the_current_lease_and_chunk_retry_history(
     observed = {**_observed(), "schema": "r1_d3_observed/v1", "lease_kind": "lease"}
     launch = {key: getattr(spec, key) for key in ("stage", "node", "arm", "repetition", "launcher")}
     launch.update(instance_seeds=list(spec.instance_seeds), manifest={"sha256": "a" * 64},
-                  lease_path=observed["lease_path"])
+                  lease_path=observed["lease_path"], hardware={"proposer_gpu_uuid": observed["gpu_uuid"]})
     ledger = {
         "schema": RETRY_SCHEMA, "run_id": "d3a-fixture",
         "chunk": {key: launch[key] for key in ("stage", "node", "arm", "repetition", "instance_seeds")}
                  | {"manifest_sha256": "a" * 64, "gpu_model": observed["model"]},
-        "attempts": [
-            {"attempt_id": f"attempt-{index}", "state": "infrastructure_lost",
-             "gpu_model": observed["model"], "job_id": f"job-{index}",
-             "receipt_sha256": str(index) * 64}
-            for index in range(prior_attempts)
-        ] + [{"attempt_id": f"attempt-{prior_attempts}", "state": "current"}],
+        "attempts": [],
     }
+    for index in range(prior_attempts):
+        attempt = {"attempt_id": f"attempt-{index}", "state": "infrastructure_lost", "job_id": f"job-{index}"}
+        receipt = json.dumps({**attempt, "schema": LOSS_SCHEMA, "job_record_sha256": str(index) * 64,
+                              "run_id": ledger["run_id"], "chunk": ledger["chunk"]})
+        ledger["attempts"].append({**attempt, "receipt": receipt,
+                                   "receipt_sha256": hashlib.sha256(receipt.encode()).hexdigest()})
+    ledger["attempts"].append({"attempt_id": f"attempt-{prior_attempts}", "state": "current"})
     accounting = CampaignAccounting.from_job(launch | {"retry_ledger": ledger}, observed)
     # The inter-campaign gap is excluded from both campaign intervals.
     class Clock:

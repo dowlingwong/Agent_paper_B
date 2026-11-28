@@ -1,11 +1,15 @@
 """D.3 §3.1 retry provenance and §8 proposer reservation time."""
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Mapping
 
 RETRY_SCHEMA = "r1_d3_retry_ledger/v1"
+LOSS_SCHEMA = "r1_d3_infrastructure_loss/v1"
 _ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 _SHA = re.compile(r"[0-9a-f]{64}")
 
@@ -16,6 +20,56 @@ class AccountingStop(ValueError):
 
 def _matches(value: Any, pattern: re.Pattern[str]) -> bool:
     return isinstance(value, str) and pattern.fullmatch(value) is not None
+
+
+def stage_retry_receipts(launch: dict[str, Any], *, source_dir: Path) -> None:
+    """Embed the exact UTF-8 receipt bytes so the job can recheck them without shared storage."""
+    ledger = launch.get("retry_ledger")
+    attempts = ledger.get("attempts") if isinstance(ledger, dict) else None
+    if not isinstance(attempts, list) or not attempts:
+        return  # The structured validator reports the missing or invalid ledger.
+    from r1.c3.analysis_guard import refuse_sealed
+
+    staged = []
+    for entry in attempts[:-1]:
+        if isinstance(entry, dict) and "receipt_path" in entry:
+            source = entry["receipt_path"]
+            if (set(entry) != {"attempt_id", "state", "job_id", "receipt_sha256", "receipt_path"}
+                    or entry["state"] != "infrastructure_lost" or not _matches(entry["receipt_sha256"], _SHA)
+                    or not isinstance(source, str) or not source):
+                raise AccountingStop("each prior loss receipt must name one source file and its SHA-256")
+            path = source_dir / source
+            refuse_sealed(path)
+            try:
+                receipt = path.read_bytes().decode("utf-8")
+            except (OSError, UnicodeError) as exc:
+                raise AccountingStop(f"cannot stage the loss receipt for {entry.get('attempt_id')!r}") from exc
+            entry = {key: value for key, value in entry.items() if key != "receipt_path"}
+            entry["receipt"] = receipt
+        staged.append(entry)
+    launch["retry_ledger"] = {**ledger, "attempts": [*staged, attempts[-1]]}
+
+
+def _check_loss_receipt(entry: dict[str, Any], ledger: dict[str, Any]) -> None:
+    text = entry["receipt"]
+    if not isinstance(text, str):
+        raise AccountingStop("prior attempt loss receipt must contain UTF-8 text")
+    try:
+        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    except UnicodeError as exc:
+        raise AccountingStop("prior attempt loss receipt must contain UTF-8 text") from exc
+    if digest != entry["receipt_sha256"]:
+        raise AccountingStop("prior attempt loss receipt SHA-256 differs")
+    try:
+        receipt = json.loads(text)
+    except ValueError as exc:
+        raise AccountingStop("prior attempt loss receipt is not JSON") from exc
+    identity = {key: entry[key] for key in ("attempt_id", "job_id", "state")}
+    identity.update(schema=LOSS_SCHEMA, run_id=ledger["run_id"], chunk=ledger["chunk"])
+    if (not isinstance(receipt, dict) or set(receipt) != {*identity, "job_record_sha256"}
+            or any(receipt[key] != value for key, value in identity.items())
+            or not _matches(receipt["job_record_sha256"], _SHA)):
+        raise AccountingStop("prior attempt loss receipt identity differs from the retry ledger")
 
 
 def check_retry_ledger(launch: Mapping[str, Any]) -> dict[str, Any]:
@@ -48,13 +102,13 @@ def check_retry_ledger(launch: Mapping[str, Any]) -> dict[str, Any]:
             raise AccountingStop("retry ledger repeats an attempt ID")
         ids.add(entry["attempt_id"])
     for entry in attempts[:-1]:
-        if (set(entry) != {"attempt_id", "state", "job_id", "receipt_sha256", "gpu_model"}
+        if (set(entry) != {"attempt_id", "state", "job_id", "receipt_sha256", "receipt"}
                 or entry["state"] != "infrastructure_lost"
-                or entry["gpu_model"] != chunk["gpu_model"]
                 or not _matches(entry["job_id"], _ID)
                 or not _matches(entry["receipt_sha256"], _SHA)
                 or entry["job_id"] in jobs or entry["receipt_sha256"] in receipts):
             raise AccountingStop("each prior attempt needs a distinct sealed infrastructure-loss receipt and job ID")
+        _check_loss_receipt(entry, ledger)
         jobs.add(entry["job_id"])
         receipts.add(entry["receipt_sha256"])
     current = attempts[-1]
@@ -82,6 +136,10 @@ class CampaignAccounting:
                 or not isinstance(gpu_uuid, str) or not gpu_uuid.startswith("GPU-")
                 or len(gpu_uuid) <= 4 or observed.get("model") != ledger["chunk"]["gpu_model"]):
             raise AccountingStop("retry ledger and live proposer reservation do not name the same GPU model")
+        if launch["launcher"] == "ssh":
+            expected_uuid = (launch.get("hardware") or {}).get("proposer_gpu_uuid")
+            if expected_uuid != gpu_uuid:
+                raise AccountingStop("the live SSH reservation differs from the bound proposer GPU UUID")
         return cls(ledger, gpu_uuid, lease_kind)
 
     @property

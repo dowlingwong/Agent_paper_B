@@ -130,8 +130,8 @@ def submit(launch_path: str | Path, out_dir: str | Path, *, submit_dir: str | Pa
         raise LaunchStop("the launch record must name its manifest and observed files")
     check_pin(manifest_path, manifest, "manifest")
     probe = observed.get("probe") is True
-    if not dry_run:
-        validate_deployment_launch(launch)
+    if not dry_run or "retry_ledger" in launch:
+        launch = validate_deployment_launch(launch, source_dir=Path(launch_path).parent)
     if not probe:
         check_pin(observed_path, observed, "observed")
     out = Path(out_dir)

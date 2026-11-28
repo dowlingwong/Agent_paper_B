@@ -545,6 +545,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="do not sample the card after the chunk (default: sample when the probe names a card)")
     args = ap.parse_args(argv)
 
+    if args.no_end_sample:
+        raise ChunkStop("deployment accounting requires the end-of-chunk card sample")
     try:
         launch = validate_deployment_launch(read_json(args.launch))
         check_pin(args.manifest, launch["manifest"], "manifest")

@@ -112,14 +112,16 @@ def validate_launch(record: Mapping[str, Any]) -> dict[str, Any]:
     return dict(record)
 
 
-def validate_deployment_launch(record: Mapping[str, Any]) -> dict[str, Any]:
+def validate_deployment_launch(record: Mapping[str, Any], *, source_dir: Path | None = None) -> dict[str, Any]:
     """Require the live reservation and retry ledger on the deployment path."""
-    from r1.c3.d3.evidence_accounting import AccountingStop, check_retry_ledger
+    from r1.c3.d3.evidence_accounting import AccountingStop, check_retry_ledger, stage_retry_receipts
 
     launch = validate_launch(record)
     if launch["launcher"] not in ("htcondor", "ssh") or launch["observed"].get("probe") is not True:
         raise LaunchStop("deployment accounting needs the live HTCondor or SSH reservation probe")
     try:
+        if source_dir is not None:
+            stage_retry_receipts(launch, source_dir=source_dir)
         check_retry_ledger(launch)
     except AccountingStop as exc:
         raise LaunchStop(str(exc)) from exc
