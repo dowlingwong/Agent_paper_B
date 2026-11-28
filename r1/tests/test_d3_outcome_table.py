@@ -8,9 +8,11 @@ import json
 import pytest
 
 from r1.c3 import d3_analysis as D3
+from r1.c3 import d3_hpo_ref as HPO
 from r1.c3 import d3_outcome_table as T
 from r1.c3.accounting import campaign_usage
 from r1.c3.d3_controllers import a0r_controller
+from r1.harness import REPO
 from r1.tests.c3_campaign_fixtures import SequenceBackend, node_context, run_campaign
 
 START, FINAL, MID = "b" * 64, "c" * 64, "d" * 64
@@ -65,10 +67,8 @@ def _design(stage="D.3a", arms=None):
 
 
 @pytest.fixture
-def pre(tmp_path):
-    p = tmp_path / "D3_PREDECLARATION_SIGNED.md"
-    p.write_text("frozen: true\n")
-    return p
+def pre():
+    return REPO / "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261122.md"
 
 
 def _note(tmp_path, a6):
@@ -93,6 +93,24 @@ def test_full_d3a_table_is_accepted_by_the_pinned_analysis_and_written_once(tmp_
     D3.verify_sigma_against_noise_source(loaded["sigma_node"])
     report = D3.analyse(loaded, d3b_not_run="not_started")  # the pinned analysis runs end to end on it
     assert report["families"]["D.3b"]["status"] == "not_run" and "D.3a" in report["secondary"]
+
+
+@pytest.mark.parametrize("stage", D3.STAGES)
+def test_each_stage_refuses_changed_predeclaration_bytes(tmp_path, pre, stage):
+    changed = tmp_path / pre.name
+    changed.write_bytes(pre.read_bytes() + b"\n")
+    with pytest.raises(T.OutcomeTableError, match="sha256 differs from frozen revision 4"):
+        T.build_table(stage, [], [], predeclaration_path=changed)
+
+
+def test_write_refuses_a_table_with_a_changed_predeclaration_hash(tmp_path, pre):
+    sums, auds = _design()
+    table = T.build_table("D.3a", sums, auds, predeclaration_path=pre)
+    table["predeclaration_sha256"] = "0" * 64
+    out = tmp_path / "table.json"
+    with pytest.raises(T.OutcomeTableError, match="sha256 differs from frozen revision 4"):
+        T.write_table(table, out)
+    assert not out.exists()
 
 
 def _one(stage="D.3a", arm="A0", **over):
@@ -205,6 +223,7 @@ def test_d3b_arms_follow_the_signed_note(tmp_path, pre, a6, arms):
     sums, auds = _design("D.3b", arms)
     table = T.build_table("D.3b", sums, auds, predeclaration_path=pre, d3b_note=_note(tmp_path, a6))
     assert table["arms"] == arms and table["a6_entered"] is a6
+    assert table["predeclaration_sha256"] == hashlib.sha256(pre.read_bytes()).hexdigest()
     with pytest.raises(T.OutcomeTableError, match="needs the signed D.3b note"):
         T.build_table("D.3b", sums, auds, predeclaration_path=pre)
     with pytest.raises(T.OutcomeTableError, match="only a D.3b table"):
@@ -217,6 +236,12 @@ def test_hpo_ref_rows(pre):
     s0.update(worker_runs=17, proposals=80, last_keep_run=9)
     auds = [a for a in auds if not (a["campaign_id"] == _cid_of(s0) and a["point"] == "20")]
     table = T.build_table("HPO-REF", sums, auds, predeclaration_path=pre)
+    digest = hashlib.sha256(pre.read_bytes()).hexdigest()
+    assert table["predeclaration_sha256"] == digest
+    assert HPO.build_table(table["rows"], predeclaration_sha256=digest,
+                           sigma_node=table["sigma_node"])["predeclaration_sha256"] == digest
+    with pytest.raises(HPO.HpoRefError, match="sha256 differs from frozen revision 4"):
+        HPO.build_table(table["rows"], predeclaration_sha256="0" * 64, sigma_node=table["sigma_node"])
     r0 = next(r for r in table["rows"] if r["campaign_id"] == _cid_of(s0))
     assert r0["ended_on"] == "proposal_cap" and r0["gpu_model"] is None and r0["memory_mode"] == "not_applicable"
     smac = next(s for s in sums if s["arm"] == "SMAC3")
