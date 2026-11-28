@@ -1,0 +1,58 @@
+{
+ "attempt": 1,
+ "checks": {
+  "requests_without_cache_prompt_false": 0,
+  "run_median_over_basis": 0
+ },
+ "completion_tokens": {
+  "max": null,
+  "p50": null,
+  "p95": null
+ },
+ "counts": {
+  "divergent_in_campaign": 0,
+  "duplicate": 0,
+  "inert": 0,
+  "infrastructure_final": 0,
+  "invalid": 0,
+  "kept": 0,
+  "manager_calls": 0,
+  "prompt_overflow": 0,
+  "proposals": 0,
+  "ran": 0,
+  "refused": 0,
+  "timed_out": 0,
+  "truncated": 0,
+  "truncated_not_invalid": 0
+ },
+ "cross_instance_duplicate_groups": 0,
+ "gpu_seconds": 3.2,
+ "job": "campaigns-wave1",
+ "label": "ENGINEERING_ONLY",
+ "ledger_stops": {
+  "baseline_failed": 1,
+  "baseline_timeout": 0,
+  "stop_integrity": 0,
+  "stop_transport": 0,
+  "stop_unisolated": 0
+ },
+ "ledgers": 1,
+ "node": "mlab_imdb",
+ "prompt_tokens": {
+  "max": null,
+  "p50": null,
+  "p95": null
+ },
+ "run_id": "g5-p11-20261128T014000Z-lease",
+ "schema": "g5_tasl_diagnostics_campaign/1",
+ "shares": {
+  "infrastructure_final_of_proposals": null,
+  "invalid_of_calls": null,
+  "ran_of_valid": null,
+  "single_seed_divergent_of_proposals": null
+ },
+ "spec_sha256": "a10e5ef8cbb985474473a3e3fec00fd7a71fb9ba787968a13ed8f2eb5a5fc560",
+ "stop": "STOP 6: baseline_failed",
+ "stop_class": "node",
+ "wave": 1
+}

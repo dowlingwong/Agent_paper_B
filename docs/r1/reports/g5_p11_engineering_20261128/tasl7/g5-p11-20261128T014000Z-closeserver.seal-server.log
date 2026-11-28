@@ -1,0 +1,1 @@
+STOP: /home/dowling/r1_engineering/g5-p11/proposer/g5-p11-20261128T014000Z-closeserver/server-1 has no server_end.json (a running server is sealed after it stops; a crashed one after close-server)

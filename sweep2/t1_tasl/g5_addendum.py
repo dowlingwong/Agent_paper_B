@@ -23,6 +23,11 @@ FAMILY = "G5-X"
 ROWS = ("R1-G5-EXPANSION-JOIN", "R1-G5-S9", "R1-STEP-ORDER", S.TASL2_CPU_ROW)
 RUN_ID = re.compile(r"c3_t1_labels_\d{8}_addendum_[1-9]\d*")
 G1B_SPEC = "sweep2/t1_tasl/g1b_tasl_x_spec.json"
+P10_ROW = "R1-G5-TAILS-EXPANSION"
+P10_DECLARATION = re.compile(
+    r"`(?P<student>[a-z0-9_]+)` is declared Student-t with ν = (?P<nu>[0-9]+); "
+    r"(?P<gaussians>`[a-z0-9_]+`, `[a-z0-9_]+` and `[a-z0-9_]+`) Gaussian\."
+)
 CONFIG_KEYS = {"schema", "run_id", "node", "supply", "paper", "base_g5_note", "base_g5_spec", "g1b_note",
                "g1b_spec", "g1b_receipt", "g1b_copy", "pre_split_amendment", "instance_split", "tail", "harness"}
 NODE_KEYS = ("node", "spec_path", "node_dir", "node_spec_sha256", "committed_pin_sha256", "data_manifest_sha256",
@@ -152,6 +157,31 @@ def _launch_fields(config: dict, spec_path: Path, note_path: Path | None, *, dra
     return fields, raw
 
 
+def check_tail(name: str, tail: dict, read_main) -> dict:
+    """Return the spec tail fields after checking this node's published P10 declaration."""
+    if not isinstance(tail, dict) or set(tail) - {"tails", S.TAILS_NU, "authority"} or tail.get("tails") not in S.TAILS:
+        raise S.Stop(f"STOP: {name} needs a declared P10 tail law")
+    law = {key: value for key, value in tail.items() if key != "authority"}
+    node = dict(law, node=name)
+    S.check_tails_nu(node)
+    if tail.get("authority") != P10_ROW:
+        raise S.Stop(f"STOP: {name}'s P10 declaration must cite {P10_ROW}")
+    plan = read_main("docs/r1/PLAN.md") or b""
+    S.plan_row(P10_ROW, lambda _: plan)
+    decisions = [text for row, text in release.author_rows(plan.decode("utf-8")) if row == P10_ROW]
+    if len(decisions) != 1:
+        raise S.Stop(f"STOP: {name}'s P10 declaration must be an author row on published main")
+    declarations = list(P10_DECLARATION.finditer(decisions[0]))
+    if len(declarations) != 1:
+        raise S.Stop(f"STOP: {P10_ROW} must name exactly one set of signed expansion tail laws")
+    match = declarations[0]
+    declared = {gaussian: "gaussian" for gaussian in re.findall(r"`([a-z0-9_]+)`", match["gaussians"])}
+    declared[match["student"]] = f"student_t (nu = {match['nu']})"
+    if set(declared) != {*p3_split.T1_EXPANSION_MLGYM, *p3_split.T1_EXTRA_TASKS} or S.tails_text(node) != declared.get(name):
+        raise S.Stop(f"STOP: {name}'s P10 tail law or degrees of freedom differ from {P10_ROW}")
+    return law
+
+
 def bind(spec_path: Path, note_path: Path | None = None, *, draft: bool = False, root: Path = S.REPO_ROOT,
          read_main=G._read_main) -> dict:
     """Validate a G.5 expansion note and derive its runtime spec without changing base settings."""
@@ -163,6 +193,7 @@ def bind(spec_path: Path, note_path: Path | None = None, *, draft: bool = False,
     name = config.get("node")
     if name not in (*p3_split.T1_EXPANSION_MLGYM, *p3_split.T1_EXTRA_TASKS) or config.get("supply") != p3_split.role_of(name):
         raise S.Stop("STOP: the G.5 addendum supply differs from the node's S9 role")
+    tail = check_tail(name, config["tail"], read_main)
     fields, note_raw = _launch_fields(config, spec_path, note_path, draft=draft, read_main=read_main)
     _check_split(config, root, read_main)
     for row in ROWS:
@@ -185,16 +216,7 @@ def bind(spec_path: Path, note_path: Path | None = None, *, draft: bool = False,
     host_check = G.check_host_record({"hostname": base["worker"]["hostname"],
                                      "isolation_host_check": family.get("isolation_host_check")},
                                      family["g5_commit"], read_main)
-    tail = config.get("tail")
-    if not isinstance(tail, dict) or set(tail) - {"tails", S.TAILS_NU, "authority"} or tail.get("tails") not in S.TAILS:
-        raise S.Stop(f"STOP: {name} needs a declared P10 tail law")
-    node = dict(layout["node"], family=FAMILY, **{key: value for key, value in tail.items() if key != "authority"})
-    S.check_tails_nu(node)
-    tail_row = tail.get("authority", "")
-    S.plan_row(tail_row, read_main, terms=(name, S.tails_text(node)))
-    plan = read_main("docs/r1/PLAN.md").decode("utf-8")
-    if sum(row == tail_row for row, _ in release.author_rows(plan)) != 1:
-        raise S.Stop(f"STOP: {name}'s P10 declaration must be an author row on published main")
+    node = dict(layout["node"], family=FAMILY, **tail)
     runtime = dict(base, paper=config["paper"], run_id=config["run_id"], nodes=[node],
                    harness_families={**base["harness_families"], FAMILY: family})
     runtime["worker"] = dict(base["worker"], base=layout["census_base"],
