@@ -1,0 +1,19 @@
+HEAD d5d83198e3c36ef114bc9d84df1101c775df23ae
+origin/main d6696f295b205bb8bdd1a14208dbe0bde430fd88
+--- status
+--- diff rc
+rc=1
+--- diffstat
+ r1/c3/d3/assemble.py               |  4 +--
+ r1/c3/d3_hpo_ref.py                |  2 +-
+ r1/c3/d3_outcome_table.py          | 16 +++++----
+ r1/scripts/d3_smoke_engineering.py |  4 +--
+ r1/tests/g5_spec_fixtures.py       | 47 ++++++++++++++++++++++++
+ r1/tests/test_d3_integration.py    |  2 +-
+ r1/tests/test_d3_outcome_table.py  | 21 ++++++-----
+ r1/tests/test_t1_g5_seal.py        |  5 +--
+ r1/tests/test_t1_g5_tasl.py        | 73 ++++++++++++++++++++++----------------
+ 9 files changed, 120 insertions(+), 54 deletions(-)
+--- spec/note
+7dcc581573f84044495006865ff3e6966dab3b0e49ad53afff873b7e41dfaa4e  sweep2/t1_tasl/g5_tasl_spec.json
+4000c1dbe0ff4930dde80ef1c5e822dc37be5b8dc9692a8784560b40203b4f59  docs/r1/authorizations/c3_t1_labels_20261128.md
