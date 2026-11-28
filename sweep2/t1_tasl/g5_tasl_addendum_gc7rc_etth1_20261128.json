@@ -1,0 +1,43 @@
+{
+ "schema": "g5_tasl_addendum/v1",
+ "run_id": "c3_t1_labels_20261128_addendum_3",
+ "node": "gc7rc_etth1",
+ "supply": "g5_addendum_extra_task",
+ "paper": {
+  "repo": "https://github.com/dowlingwong/Agent_paper_B.git",
+  "commit": "2a58f7ac5147dad1259914593901ccb226a147f9"
+ },
+ "base_g5_note": "docs/r1/authorizations/c3_t1_labels_20261128.md sha256 4000c1dbe0ff4930dde80ef1c5e822dc37be5b8dc9692a8784560b40203b4f59",
+ "base_g5_spec": "sweep2/t1_tasl/g5_tasl_spec.json sha256 7dcc581573f84044495006865ff3e6966dab3b0e49ad53afff873b7e41dfaa4e",
+ "g1b_note": "docs/r1/authorizations/g1b_x_t1_tasl_20261126.md sha256 16d31f48c48b5cffa26c13d988362e36a4e3241a17f15f41a9ad1ad7dd043539",
+ "g1b_spec": "sweep2/t1_tasl/g1b_tasl_x_spec.json sha256 d0dce0584b5c1c446e989bd7f8981242b36e30f6008f0c38eb43428524cfd238",
+ "g1b_receipt": "docs/r1/reports/g1b_x_20261127/SEAL_RECEIPT_gc7rc_etth1.json sha256 96dad194c74b5dafb790ea3451cb7c6dd7763efd2c5e28737fe9306dd2bd02d7",
+ "g1b_copy": {
+  "assembly_copy": "docs/r1/reports/g5_rel_t1_g1b_20261128/x/ASSEMBLY.json",
+  "assembly_sha256": "b4c90ec6a622dcd4c762ff0504751f85dde45fe5421fbb4780a61c5f565af077",
+  "copy": "docs/r1/reports/g5_rel_t1_g1b_20261128/x/summary.json",
+  "runs_copy": "docs/r1/reports/g5_rel_t1_g1b_20261128/x/runs.jsonl",
+  "runs_sha256": "c23dec91a97cc04f3fb51e15d6248833dfa536a56cf7fda7d75713d82d6808a7",
+  "sealed_path": "/home/dowling/r1_tracks/t1_tasl_x/assembly/g1b-x-tasl-20261126-a/summary.json",
+  "sha256": "67355b668aad1d930814b51e91ccd76620bdad349516d7d630a467d884feaa10",
+  "review": "docs/r1/reviews/G5_EXPANSION_RELCOPY_SOURCE_REVIEW_20261128.md"
+ },
+ "pre_split_amendment": "docs/r1/authorizations/C3_SWEEP2_PREREG_AMENDMENT_SPLIT_V2_20261127.md sha256 970d3e45b5177f0d9f6668e9495905e1878a4ffa8eab3d73c4df6b9292a3bea7",
+ "instance_split": {
+  "path": "r1/c3/splits/c3_p3_split_v2.json",
+  "sha256": "4dd46796e50ec188b5f89ebc8f4c04e6ab60a5056f124538936dd1bb5d6ae53a"
+ },
+ "tail": {
+  "tails": "gaussian",
+  "authority": "R1-G5-TAILS-EXPANSION"
+ },
+ "harness": {
+  "g1b_pin": "3a06d86721b0c1826b165b68a9781a561e4993f4",
+  "g5_commit": "6fc553dfb1f8c368023b61c9f5b0b7ac55a0b53c",
+  "harness_dir": "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1_g5",
+  "isolation_host_check": {
+   "record": "docs/r1/reports/tasl_chain_20261122/TASL2_ISOLATION_HOST_CHECK_X_gc7rc_etth1_20261128.md",
+   "sha256": "6c2231d50c274a26512c5cc20cfcf97212b764e755e0dc6b948d33fbab3369b7"
+  }
+ }
+}
