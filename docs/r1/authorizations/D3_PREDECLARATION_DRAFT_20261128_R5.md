@@ -1,4 +1,5 @@
-**Revision 5 draft (28 Nov 2026). Prepared with Codex for task `local/20261128-09`. Pending independent review, author signature and freeze.**
+**Revision 5 draft (28 Nov 2026). Prepared with Codex for task `local/20261128-09`.
+Pending author signature and freeze.**
 
 # D.3 closed loop on T0 — pre-declaration of both stages (D.3a rule arms, D.3b learned arms) — DRAFT, revision 5
 
@@ -692,8 +693,9 @@ progress is an **infrastructure failure** (§3.1): it is sealed, recorded and at
 new directory, the old one moved aside and disclosed; a single call issued again without counting against the cap),
 with no limit on attempts, and it is never an outcome. Revision 3's STOP "a chunk over its walltime" is withdrawn:
 the walltime (1.5 × the measured smoke chunk time, §11) is a scheduler request only. No wall-clock limit and no date
-decides any check, STOP or outcome (R1-NO-TIMEOUT, R1-STEP-ORDER). The pre-admitted error classes, the failure-rate
-STOP and the per-run budget of 600 s of T0 worker runs are unchanged (R1-NO-TIMEOUT (2); §3.1 item 4).
+decides any check, STOP or outcome (R1-NO-TIMEOUT, R1-STEP-ORDER). The pre-admitted error classes and the
+600 s per-run budget for T0 worker runs still apply (R1-NO-TIMEOUT (2), §3.1 item 4). The pooled stage
+worker-failure STOP follows R1-D3-REV5 above.
 
 **Reported on a STOP:** the stage is reported as stopped, with the STOP record, the number of completed campaigns per
 arm and node, and no contrast: no outcome table is built from a partial design and no statistic is computed from one.
