@@ -40,12 +40,23 @@ No active job ID is recorded for this round: P7, P11 and E0 all completed; no su
 Expansion D6 copy, the resource survey and the houseprice CPU-set check remain as recorded; no new compute
 work is blocked on the P7/P11 results now that both are merged.
 
-## Next round, in order
+## End of round
 
-1. Read the E0 review; apply any findings and re-check until accepted; then the coordinator can merge it.
-2. Take the P5 rerun (`compute/20261127-33` item 2) once E0 is accepted; empty Ada card 2 is available now.
-3. Re-read the HTCondor pool for a startable L40S/A100; submit the D.3 preflight only on `Start=true`.
-4. G.5 campaigns start only after the published note and its strict check.
+**No runnable compute task is left in this round.** The four delivered units are merged, P5's review branch
+`f422df34` is accepted and waiting for the coordinator's merge, and the remaining cards are blocked on
+dependencies outside compute:
+
+| Item | State | What the next round checks |
+|---|---|---|
+| `compute/20261128-03` D.3 preflight | blocked | re-read `condor_status` for a `Start=true` ETP L40S / TOpAS A100; no job id exists |
+| `compute/20261126-06` G.5 campaigns | blocked | the published G.5 note and its strict check; publication is held on `local/20261128-11` |
+| `compute/20261127-28` E-INT census | blocked | a signed census card/spec and a free Ada card |
+| P.4 phase-1 note | with design/local | the reviewed timing carry-forward; no compute job until it is signed |
+| `compute/20261128-16` / P5 review | accepted | coordinator merge only |
+
+Idle/running elsewhere: TASL-2, TASL-7 and Ada card 2 are idle; the coordinator/local are working the G.5
+publication and the P.4 render. No compute job id is open. The recurring host/pool sample is the only
+read-only check for the next round, plus a re-read of the queue.
 
 **Rows (g) acknowledged:** free placement and the card/CPU-set leases were used, no request was edited to get
 a slot, no wall-clock limit decided anything, and no sealed/test/label value was read.
