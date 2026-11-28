@@ -20,7 +20,8 @@ Modes:
   run --engineering-smoke   harness runs at the engineering smoke seed 999 only (label ENGINEERING_ONLY), to check
                             that every configuration runs and every edit is applied and verified;
   run --evidence            the measurement (label EVIDENCE): only with the signed note on published main, on
-                            deepthought, under the conditions of R1-SWEEP2-B2-GO (checked by ``preflight_evidence``).
+                            the signed host, with the R1-SWEEP2-B2-GO environment checks
+                            and the deepthought2 placement in R1-SCREEN-DEEPTHOUGHT2.
 
 STOP rules (the run stops submitting, lets the runs in flight finish, writes the manifest with the reason and exits 3;
 a STOPped run is reported, never resumed or patched): a determinism mismatch (a configuration's repeat at seed 3301
@@ -87,6 +88,8 @@ EVIDENCE_TMP_PREFIX = "r1_smeas_EVIDENCE_"
 SMOKE_SEED = 999                     # r1/e2e.py engineering smoke seed (a reserved engineering namespace)
 FAILURE_STOP_FRACTION = 0.01
 MAX_WORKERS = 16                     # R1-B2-GO / the B.2 addenda: 16 workers
+DEEPTHOUGHT2_WORKERS = 64             # R1-SCREEN-DEEPTHOUGHT2: CPU only, at most 64 CPUs
+DEEPTHOUGHT2_RULING = "R1-SCREEN-DEEPTHOUGHT2"
 FREE_CORES = 10                      # ... with at least 10 of the host's cores left to other users
 COTENANCY_SAMPLE_SECONDS = 60.0
 HARNESS_COMMIT = sa.HARNESS_COMMIT   # 6adf3859..., the B.2 audit harness (R1-SWEEP2-B2-GO); checked again by the analysis
@@ -500,9 +503,15 @@ def code_pins(repo: Path = REPO) -> dict:
     return {rel: sd.sha256_file(Path(repo) / rel) for rel in CODE_FILES}
 
 
-def cotenancy(workers_running: int) -> dict:
+def cotenancy(workers_running: int, *, host_wide: bool = False) -> dict:
     """The accepted B.2 convention: cores left to other users = cpus - (1-min load - our running workers)."""
-    cpus = len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else (os.cpu_count() or 1)
+    # The deepthought2 launch caps its own affinity. The host's load average still covers the whole machine.
+    if host_wide:
+        cpus = os.sysconf("SC_NPROCESSORS_ONLN")
+    elif hasattr(os, "sched_getaffinity"):
+        cpus = len(os.sched_getaffinity(0))
+    else:
+        cpus = os.cpu_count() or 1
     load = os.getloadavg()[0]
     free = cpus - max(0.0, load - workers_running)
     return {"utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "cpus": cpus, "load1": load,
@@ -540,11 +549,19 @@ def preflight_evidence(args, design: dict) -> dict:
     bad = sorted(k for k, v in want.items() if note.get(k) != v)
     if bad:
         raise RunStop(f"STOP: note fields differ from the run: {bad}")
+    host = note.get("launch_host", "deepthought")
+    if host not in ("deepthought", "deepthought2"):
+        raise RunStop(f"STOP: unknown screening launch host {host!r}")
+    moved = host == "deepthought2"
+    cap = DEEPTHOUGHT2_WORKERS if moved else MAX_WORKERS
     try:
-        if not 1 <= args.workers <= int(note["workers"]) <= MAX_WORKERS:
-            raise RunStop(f"STOP: workers {args.workers} not within 1..note workers ({note['workers']}) <= 16")
+        note_workers = int(note["workers"])
     except (KeyError, ValueError):
         raise RunStop("STOP: the note's workers field is missing or not an integer") from None
+    if not 1 <= args.workers <= note_workers <= cap:
+        raise RunStop(f"STOP: workers {args.workers} not within 1..note workers ({note_workers}) <= {cap}")
+    if moved and args.workers != note_workers:
+        raise RunStop("STOP: deepthought2 workers must equal the note's reviewed worker count")
     pre_path, _, pre_sha = note.get("predeclaration", "").partition(" sha256 ")
     try:
         pre_bytes = audit._published_bytes(root, pre_path.strip())
@@ -556,19 +573,36 @@ def preflight_evidence(args, design: dict) -> dict:
     if len(rows) != 1 or "deepthought" not in rows[0] or "R1-SWEEP2-B2-GO" not in rows[0]:
         raise RunStop(f"STOP: published PLAN.md must hold exactly one {START_RULING} row naming deepthought and "
                       "R1-SWEEP2-B2-GO")
+    if moved:
+        move_rows = [line for line in plan_text.splitlines() if line.startswith(f"| {DEEPTHOUGHT2_RULING} |")]
+        if len(move_rows) != 1 or "deepthought2" not in move_rows[0]:
+            raise RunStop(f"STOP: published PLAN.md must hold exactly one {DEEPTHOUGHT2_RULING} row naming deepthought2")
+        if not hasattr(os, "sched_getaffinity"):
+            raise RunStop("STOP: deepthought2 CPU affinity could not be verified")
+        affinity_cpus = sorted(os.sched_getaffinity(0))
+        if not args.workers <= len(affinity_cpus) <= DEEPTHOUGHT2_WORKERS:
+            raise RunStop(f"STOP: deepthought2 affinity must cover {args.workers} workers within 64 CPUs")
+        if os.environ.get("CUDA_VISIBLE_DEVICES") != "":
+            raise RunStop("STOP: deepthought2 requires CUDA_VISIBLE_DEVICES empty")
     provenance = audit.evidence_paper_provenance(root, args.code_commit, args.code_review)
-    environment = audit.evidence_environment(root)               # B6 (a), host deepthought, harness 6adf3859, clean
+    environment = audit.evidence_environment(root, expected_host=host) if moved else audit.evidence_environment(root)
     equivalence = audit.sweep2_harness_equivalence(Path(os.environ["AR_HARNESS_ROOT"]))
     seeds = screen_seeds.check_block(sd.SEED_BLOCK)
     tmp = Path(args.tmp)
     if tmp.parent.resolve() != Path("/tmp").resolve() or not tmp.name.startswith(EVIDENCE_TMP_PREFIX) or tmp.exists():
         raise RunStop(f"STOP: --tmp must be a new directory /tmp/{EVIDENCE_TMP_PREFIX}<stamp>")
-    start = cotenancy(0)
+    start = cotenancy(0, host_wide=True) if moved else cotenancy(0)
     if not start["ok"]:
         raise RunStop(f"STOP: co-tenancy before launch: {start}")
-    return {"note": note_rel, "note_sha256": hashlib.sha256(note_bytes).hexdigest(),
+    record = {"note": note_rel, "note_sha256": hashlib.sha256(note_bytes).hexdigest(),
             "predeclaration_sha256": pre_sha.strip(), "provenance": provenance, "environment": environment,
             "harness_equivalence": equivalence, "seed_check": seeds, "cotenancy_at_start": start}
+    if moved:
+        if start["cpus"] - start["load1"] - args.workers < FREE_CORES:
+            raise RunStop(f"STOP: deepthought2 lacks capacity for {args.workers} workers and {FREE_CORES} free cores: "
+                          f"{start}")
+        record.update(launch_host=host, affinity_cpus=affinity_cpus, placement_ruling=DEEPTHOUGHT2_RULING)
+    return record
 
 
 # ---------------------------------------------------------------------------------------------------- execute
@@ -579,6 +613,7 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
     failures, stop, written = 0, None, 0
     first = {}
     repeat_keys = {(j["node"], j["config"], j["seed"]) for j in jobs if j["condition"] == "repeat"}
+    host_wide = manifest.get("preflight", {}).get("launch_host") == "deepthought2"
     t0 = time.time()
     last_sample = 0.0
 
@@ -617,7 +652,7 @@ def execute(out: Path, jobs: list[dict], run_fn, manifest: dict, workers: int, d
         if not monitor or time.time() - last_sample < COTENANCY_SAMPLE_SECONDS:
             return None
         last_sample = time.time()
-        rec = cotenancy(running)
+        rec = cotenancy(running, host_wide=True) if host_wide else cotenancy(running)
         with open(out / "cotenancy.log", "a", encoding="utf-8") as fh:
             fh.write(json.dumps(rec, sort_keys=True) + "\n")
         return None if rec["ok"] else f"cotenancy {rec['free_for_others']} cores left to other users"
@@ -741,8 +776,9 @@ def main(argv=None) -> int:
         raise SystemExit(f"STOP: evidence output is a new directory directly under {EVIDENCE_OUT_ROOT}/")
     if not args.evidence and str(out.resolve()).startswith(str((REPO / EVIDENCE_OUT_ROOT).resolve())):
         raise SystemExit(f"STOP: {EVIDENCE_OUT_ROOT}/ holds evidence runs only")
-    if not 1 <= args.workers <= MAX_WORKERS:
-        raise SystemExit(f"STOP: workers must be 1..{MAX_WORKERS}")
+    cap = DEEPTHOUGHT2_WORKERS if args.evidence else MAX_WORKERS
+    if not 1 <= args.workers <= cap:
+        raise SystemExit(f"STOP: workers must be 1..{cap}")
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     manifest = {"schema": SCHEMA_RUN, "run_id": sd.RUN_ID, "design_sha256": sd.design_sha256(design),
                 "seeds": list(sd.SEED_BLOCK), "started_utc": stamp, "stub": bool(args.stub),

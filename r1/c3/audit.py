@@ -713,7 +713,7 @@ def worker_runtime_basis() -> dict:
     return dict(WORKER_RUNTIME_BASIS)
 
 
-def evidence_environment(paper_root: Path) -> dict:
+def evidence_environment(paper_root: Path, *, expected_host: str = E1_HOST) -> dict:
     """Bind the audit to the e1-replayed runtime (R1-B2-GO B6 (a)), clean harness and locked sklearn."""
     basis = replay_environment_basis(paper_root)
     installed = {}
@@ -733,8 +733,8 @@ def evidence_environment(paper_root: Path) -> dict:
         probe_names[name] = distribution.version
     if canonical_packages(probe_names)[1] != basis['interpreter']['package_list_sha256']:
         raise ValueError('the audit process package list differs from the e1-replayed package list')
-    if platform.node().split('.')[0] != E1_HOST:
-        raise ValueError(f'the audit must run on {E1_HOST} (R1-B2-GO), the e1 replay host')
+    if platform.node().split('.')[0] != expected_host:
+        raise ValueError(f'the evidence runtime must run on {expected_host}')
     raw = os.environ.get('AR_HARNESS_ROOT')
     if not raw:
         raise ValueError('AR_HARNESS_ROOT missing')
