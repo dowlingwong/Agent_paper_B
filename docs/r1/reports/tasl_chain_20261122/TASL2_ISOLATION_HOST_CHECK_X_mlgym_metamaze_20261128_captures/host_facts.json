@@ -1,0 +1,815 @@
+{
+  "cgroup": {
+    "fs_type": "cgroup2fs",
+    "mountinfo": [
+      "34 25 0:29 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime shared:9 - cgroup2 cgroup2 rw,nsdelegate,memory_recursiveprot"
+    ],
+    "root_controllers": "cpuset cpu io memory hugetlb pids rdma misc",
+    "self": "0::/user.slice/user-1008.slice/session-105528.scope"
+  },
+  "checkouts": {
+    "gc7rc_etth1": {
+      "exists": true,
+      "head": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1",
+          "rev-parse",
+          "HEAD"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "3a06d86721b0c1826b165b68a9781a561e4993f4"
+      },
+      "log_oneline_2": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1",
+          "log",
+          "--oneline",
+          "-2"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "3a06d86 trackg T1 expansion kit: isolated node gc7rc_etth1 (1GC-7RC Task 6, ETTh1 336->96 forecasting)\nc025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes"
+      },
+      "path": "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1",
+      "stash": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1",
+          "stash",
+          "list"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      "status_porcelain": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1",
+          "status",
+          "--porcelain"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "?? nodes/gc7rc_etth1/data"
+      },
+      "status_untracked_all": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1",
+          "status",
+          "--porcelain",
+          "--untracked-files=all"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "?? nodes/gc7rc_etth1/data"
+      },
+      "symbolic_ref": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_etth1",
+          "symbolic-ref",
+          "-q",
+          "HEAD"
+        ],
+        "rc": 1,
+        "stderr": "",
+        "stdout": ""
+      }
+    },
+    "gc7rc_forestcover": {
+      "exists": true,
+      "head": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover",
+          "rev-parse",
+          "HEAD"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "85851664679d10889c5af406843c4a3fc38f7a49"
+      },
+      "log_oneline_2": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover",
+          "log",
+          "--oneline",
+          "-2"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "8585166 trackg T1 expansion kit: isolated node gc7rc_forestcover (1GC-7RC Task 5, Forest Cover Type 7-class)\nc025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes"
+      },
+      "path": "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover",
+      "stash": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover",
+          "stash",
+          "list"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      "status_porcelain": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover",
+          "status",
+          "--porcelain"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "?? nodes/gc7rc_forestcover/data"
+      },
+      "status_untracked_all": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover",
+          "status",
+          "--porcelain",
+          "--untracked-files=all"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "?? nodes/gc7rc_forestcover/data"
+      },
+      "symbolic_ref": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_forestcover",
+          "symbolic-ref",
+          "-q",
+          "HEAD"
+        ],
+        "rc": 1,
+        "stderr": "",
+        "stdout": ""
+      }
+    },
+    "mlgym_metamaze": {
+      "exists": true,
+      "head": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze",
+          "rev-parse",
+          "HEAD"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "aa354485bff6b5746c48ddadcb50d92e9c6f3645"
+      },
+      "log_oneline_2": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze",
+          "log",
+          "--oneline",
+          "-2"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "aa35448 trackg T1 expansion kit: isolated node mlgym_metamaze (R1-T1-NODE-EXPANSION candidate 3, MetaMaze)\nc025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes"
+      },
+      "path": "/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze",
+      "stash": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze",
+          "stash",
+          "list"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      "status_porcelain": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze",
+          "status",
+          "--porcelain"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "?? third_party/mlgym/nodes/mlgym_metamaze/data"
+      },
+      "status_untracked_all": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze",
+          "status",
+          "--porcelain",
+          "--untracked-files=all"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "?? third_party/mlgym/nodes/mlgym_metamaze/data"
+      },
+      "symbolic_ref": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_metamaze",
+          "symbolic-ref",
+          "-q",
+          "HEAD"
+        ],
+        "rc": 1,
+        "stderr": "",
+        "stdout": ""
+      }
+    },
+    "mlgym_titanic": {
+      "exists": true,
+      "head": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_titanic",
+          "rev-parse",
+          "HEAD"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "3a67042ba7e4211feb9681524f3879643c8cf635"
+      },
+      "log_oneline_2": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_titanic",
+          "log",
+          "--oneline",
+          "-2"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "3a67042 trackg T1 expansion candidate 1: MLGym Titanic isolated port kit (mlgym_titanic)\nc025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes"
+      },
+      "path": "/home/dowling/r1_tracks/t1_tasl_x/harness_titanic",
+      "stash": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_titanic",
+          "stash",
+          "list"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      "status_porcelain": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_titanic",
+          "status",
+          "--porcelain"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "?? third_party/mlgym/nodes/mlgym_titanic/data"
+      },
+      "status_untracked_all": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_titanic",
+          "status",
+          "--porcelain",
+          "--untracked-files=all"
+        ],
+        "rc": 0,
+        "stderr": "",
+        "stdout": "?? third_party/mlgym/nodes/mlgym_titanic/data"
+      },
+      "symbolic_ref": {
+        "cmd": [
+          "git",
+          "-C",
+          "/home/dowling/r1_tracks/t1_tasl_x/harness_titanic",
+          "symbolic-ref",
+          "-q",
+          "HEAD"
+        ],
+        "rc": 1,
+        "stderr": "",
+        "stdout": ""
+      }
+    }
+  },
+  "cpu0_thread_siblings": "0-1\n",
+  "cpu_count": 32,
+  "cpu_freq_max_khz": {
+    "cpu0": 5800000,
+    "cpu1": 5800000,
+    "cpu10": 6100000,
+    "cpu11": 6100000,
+    "cpu12": 5800000,
+    "cpu13": 5800000,
+    "cpu14": 5800000,
+    "cpu15": 5800000,
+    "cpu16": 4400000,
+    "cpu17": 4400000,
+    "cpu18": 4400000,
+    "cpu19": 4400000,
+    "cpu2": 5800000,
+    "cpu20": 4400000,
+    "cpu21": 4400000,
+    "cpu22": 4400000,
+    "cpu23": 4400000,
+    "cpu24": 4400000,
+    "cpu25": 4400000,
+    "cpu26": 4400000,
+    "cpu27": 4400000,
+    "cpu28": 4400000,
+    "cpu29": 4400000,
+    "cpu3": 5800000,
+    "cpu30": 4400000,
+    "cpu31": 4400000,
+    "cpu4": 5800000,
+    "cpu5": 5800000,
+    "cpu6": 5800000,
+    "cpu7": 5800000,
+    "cpu8": 6100000,
+    "cpu9": 6100000
+  },
+  "data_root": {
+    "listing": [
+      "gc7rc_etth1",
+      "gc7rc_forestcover",
+      "mlgym_metamaze",
+      "mlgym_titanic"
+    ],
+    "path": "/home/dowling/r1_tracks/t1_tasl_x/data"
+  },
+  "disk": {
+    "/": {
+      "free_bytes": 358531227648,
+      "free_gib": 333.9,
+      "path": "/",
+      "total_bytes": 2014574526464
+    },
+    "/home/dowling": {
+      "free_bytes": 358531227648,
+      "free_gib": 333.9,
+      "path": "/home/dowling",
+      "total_bytes": 2014574526464
+    },
+    "/home/dowling/r1_engineering/t1_tasl_x_hostcheck_g5_20261128_metamaze": {
+      "free_bytes": 358531227648,
+      "free_gib": 333.9,
+      "path": "/home/dowling/r1_engineering/t1_tasl_x_hostcheck_g5_20261128_metamaze",
+      "total_bytes": 2014574526464
+    },
+    "/home/dowling/r1_tracks/t1_tasl_x": {
+      "free_bytes": 358531227648,
+      "free_gib": 333.9,
+      "path": "/home/dowling/r1_tracks/t1_tasl_x",
+      "total_bytes": 2014574526464
+    }
+  },
+  "euid": 1008,
+  "gpu": {
+    "compute_apps": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-compute-apps=gpu_uuid,pid,process_name,used_memory",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "expected_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+    "nvidia_smi_L": {
+      "cmd": [
+        "nvidia-smi",
+        "-L"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "GPU 0: NVIDIA GeForce RTX 4090 (UUID: GPU-4d623e76-7587-ee15-a633-46f60d220d94)"
+    },
+    "query": {
+      "cmd": [
+        "nvidia-smi",
+        "--query-gpu=index,uuid,name,driver_version,memory.total,memory.used,memory.free,utilization.gpu",
+        "--format=csv,noheader"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 24564 MiB, 353 MiB, 23830 MiB, 0 %"
+    }
+  },
+  "groups": [
+    1008
+  ],
+  "harness_repo": {
+    "exists": true,
+    "head": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_repo",
+        "rev-parse",
+        "HEAD"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "3c80b53c4fb22dd26b6cef1cc34acea45fc350b6"
+    },
+    "log_oneline_2": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_repo",
+        "log",
+        "--oneline",
+        "-2"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "3c80b53 Merge r1: R1 build batch 1 (L3, L5, L6) with review fixes\nd9b4401 R1 review fix F7: document the review fixes and dry-run scope"
+    },
+    "path": "/home/dowling/r1_tracks/t1_tasl_x/harness_repo",
+    "stash": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_repo",
+        "stash",
+        "list"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "status_porcelain": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_repo",
+        "status",
+        "--porcelain"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "D  .gitignore\nD  .gitmodules\nD  .python-version\nD  A-Governed-Harness-for-Auditable-LLM-Driven-ML-Experimentation\nD  ARTIFACT_README.md\nD  CLAUDE.md\nD  ENVIRONMENT.md\nD  LICENSE\nD  README.md\nD  artifact_manifest.json\nD  configs/campaigns/resnet_trigger_smoke.json\nD  configs/managers/baseline_manager.json\nD  configs/managers/langgraph_manager.json\nD  configs/managers/prompt_manager.json\nD  configs/nodes/autoresearch_linux.yaml\nD  configs/nodes/autoresearch_macos.yaml\nD  configs/nodes/lr_synthetic.yaml\nD  configs/nodes/mlagentbench_vectorization.yaml\nD  configs/nodes/mlp_synthetic.yaml\nD  configs/nodes/openml_bank_marketing.yaml\nD  configs/nodes/openml_credit_g.yaml\nD  configs/nodes/resnet_trigger.yaml\nD  configs/packets/resnet_trigger_clean_baseline_packet.json\nD  configs/reliability/README.md\nD  configs/reliability/experiments/R1_P_synthetic.yaml\nD  configs/reliability/faults/fault_malformed_tool_example.yaml\nD  configs/reliability/schemas/README.md\nD  configs/reliability/splits/split_development_example.yaml\nD  configs/reliability/tasks/task_repo_repair_example.yaml\nD  configs/workers/dry_run_worker.json\nD  docs/git_structure.md\nD  docs/stage2/architecture.md\nD  docs/stage2/experiment_protocol.md\nD  docs/stage2/memory_architecture.md\nD  docs/stage2/metrics.md\nD  docs/stage2/node_spec.md\nD  docs/stage2/provenance.md\nD  docs/stage2/stage_2_current_structure.md\nD  docs/stage2/stage_2_kdd_aae_instruction_aligned.md\nD  docs/stage2/trial_schema.md\nD  docs/stage_1/autoresearch_director_report.pdf\nD  docs/stage_1/campaign_4panel.png\nD  experiments/artifacts/.gitkeep\nD  experiments/ledgers/.gitkeep\nD  experiments/runs/.gitkeep\nD  experiments/summaries/.gitkeep\nD  harness/claw-code\nD  nodes/ResNet_trigger/.gitignore\nD  nodes/ResNet_trigger/README.md\nD  nodes/ResNet_trigger/campaign_3x5_plot_analysis.ipynb\nD  nodes/ResNet_trigger/cnn_smoke_train_round1.ipynb\nD  nodes/ResNet_trigger/experiment.demo.json\nD  nodes/ResNet_trigger/prepare.py\nD  nodes/ResNet_trigger/program.md\nD  nodes/ResNet_trigger/pyproject.toml\nD  nodes/ResNet_trigger/resnet_1d.py\nD  nodes/ResNet_trigger/train.py\nD  nodes/ResNet_trigger/uv.lock\nD  nodes/autoresearch-macos/.python-version\nD  nodes/autoresearch-macos/README.md\nD  nodes/autoresearch-macos/analysis.ipynb\nD  nodes/autoresearch-macos/memory/MEMORY.md\nD  nodes/autoresearch-macos/memory/project_current_strategy.md\nD  nodes/autoresearch-macos/memory/project_failed_ideas.md\nD  nodes/autoresearch-macos/memory/project_promising_ideas.md\nD  nodes/autoresearch-macos/memory/reference_external_sources.md\nD  nodes/autoresearch-macos/prepare.py\nD  nodes/autoresearch-macos/program.md\nD  nodes/autoresearch-macos/progress.png\nD  nodes/autoresearch-macos/pyproject.toml\nD  nodes/autoresearch-macos/train.py\nD  nodes/autoresearch-macos/uv.lock\nD  nodes/lr_synthetic/.autoresearch_baseline/train.py\nD  nodes/lr_synthetic/train.py\nD  nodes/mlagentbench_vectorization/.autoresearch_baseline/config.yaml\nD  nodes/mlagentbench_vectorization/README.md\nD  nodes/mlagentbench_vectorization/config.yaml\nD  nodes/mlagentbench_vectorization/requirements.txt\nD  nodes/mlagentbench_vectorization/submission.csv\nD  nodes/mlagentbench_vectorization/train.py\nD  nodes/mlp_synthetic/.autoresearch_baseline/train.py\nD  nodes/mlp_synthetic/benchmark.py\nD  nodes/mlp_synthetic/train.py\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-001/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-002/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-003/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-004/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-005/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-006/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-007/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-008/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-009/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-010/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-011/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-012/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-013/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-014/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-015/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-016/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-017/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-018/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-019/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-020/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_baseline/config.yaml\nD  nodes/openml_bank_marketing/NodeSpec.yaml\nD  nodes/openml_bank_marketing/README.md\nD  nodes/openml_bank_marketing/benchmark.py\nD  nodes/openml_bank_marketing/config.yaml\nD  nodes/openml_bank_marketing/data_cache/.gitignore\nD  nodes/openml_bank_marketing/data_cache/.gitkeep\nD  nodes/openml_bank_marketing/requirements.txt\nD  nodes/openml_bank_marketing/train.py\nD  nodes/openml_credit_g/.autoresearch_baseline/config.yaml\nD  nodes/openml_credit_g/NodeSpec.yaml\nD  nodes/openml_credit_g/README.md\nD  nodes/openml_credit_g/benchmark.py\nD  nodes/openml_credit_g/config.yaml\nD  nodes/openml_credit_g/data_cache/.gitignore\nD  nodes/openml_credit_g/data_cache/.gitkeep\nD  nodes/openml_credit_g/requirements.txt\nD  nodes/openml_credit_g/train.py\nD  notebooks/stage2_contract_smoke.ipynb\nD  notebooks/stage2_development_smoke_tests/stage2_langgraph_manager_smoke.py\nD  notebooks/stage2_development_smoke_tests/stage2_priority_0_1_contracts_smoke.py\nD  notebooks/stage2_development_smoke_tests/stage2_priority_2_3_integration_smoke.py\nD  notebooks/stage2_development_smoke_tests/stage2_priority_4_memory_and_manager_smoke.py\nD  notebooks/stage2_development_smoke_tests/stage2_priority_6_16_system_smoke.py\nD  notebooks/stage2_development_smoke_tests/stage2_proposal_to_trial_smoke.py\nD  notebooks/stage2_overview_and_demo.ipynb\nD  notebooks/stage2_real_resnet_report.ipynb\nD  paper/tables/counterfactual_comparison.tex\nD  paper/tables/table1_governance_summary.csv\nD  paper_figures.ipynb\nD  paper_figures.ipynb.bak\nD  plan/archive/KDD_AAE_competitive_analysis.md\nD  plan/archive/KDD_AAE_execution_chunks.md\nD  plan/archive/KDD_AAE_refinement_plan_v2.md\nD  plan/archive/TODO.md\nD  plan/archive/Up-to-date.md\nD  plan/archive/ablation_hypothesis.md\nD  plan/archive/autoresearch_analysis.md\nD  plan/archive/checklist_stage3.md\nD  plan/archive/cleanup_candidates.md\nD  plan/archive/contribution_claims.md\nD  plan/archive/current_readiness_next_steps.md\nD  plan/archive/experiments_plan.md\nD  plan/archive/harness_literature_synthesis.md\nD  plan/archive/kdd_aae_refinement_plan_md.md\nD  plan/archive/limitations.md\nD  plan/archive/master_plan.md\nD  plan/archive/metric_validation/failure_taxonomy_sample.csv\nD  plan/archive/metric_validation/governance_metric_reliability_pairs.csv\nD  plan/archive/metric_validation/governance_metric_summary.csv\nD  plan/archive/metric_validation/reexecution_mlagentbench_vectorization_main_30.csv\nD  plan/archive/ml_intern_analysis.md\nD  plan/archive/paper_edit_checklist.md\nD  plan/archive/paper_preparation.md\nD  plan/archive/priority0_report_corrected.md\nD  plan/archive/raw_plan_stage2.md\nD  plan/archive/reference_check.md\nD  plan/archive/related_work.md\nD  plan/archive/revision_2.md\nD  plan/archive/revision_3.md\nD  \"plan/archive/revision_3_checklist copy.md\"\nD  plan/archive/revision_3_checklist.md\nD  plan/archive/revision_and_edit_checklist.md\nD  plan/archive/revision_checklist.md\nD  plan/archive/revision_plan.md\nD  plan/archive/stage2-summary.md\nD  plan/archive/stage2_real_resnet_report.md\nD  plan/archive/stage_2_kdd_aae_instruction_aligned.md\nD  plan/revision_5.md\nD  plan/revision_6.md\nD  plan/supplement.md\nD  poster-KDD-ETAAI26/KITposter.sty\nD  poster-KDD-ETAAI26/figs/fig1_architecture.pdf\nD  poster-KDD-ETAAI26/figs/fig1_governance_overview.pdf\nD  poster-KDD-ETAAI26/figs/fig3_ir_taxonomy.pdf\nD  poster-KDD-ETAAI26/figs/kimi-matrix-style-reference.png\nD  poster-KDD-ETAAI26/figs/qr_artifact.png\nD  poster-KDD-ETAAI26/kdd_poster.pdf\nD  poster-KDD-ETAAI26/kdd_poster.tex\nD  poster-KDD-ETAAI26/kdd_poster_portrait.pdf\nD  poster-KDD-ETAAI26/kdd_poster_portrait.tex\nD  poster-KDD-ETAAI26/kdd_poster_print_ready.pdf\nD  poster-KDD-ETAAI26/kitlogo_de_rgb.pdf\nD  poster-KDD-ETAAI26/kitlogo_en_rgb.pdf\nD  priority0_report.md\nD  pyproject.toml\nD  scripts/analyze_counterfactual.py\nD  scripts/analyze_governance_counterfactual.py\nD  scripts/analyze_lr_synthetic_lg_ablation.py\nD  scripts/analyze_rationale_truncation.py\nD  scripts/analyze_seed_replication.py\nD  scripts/bootstrap_governance_cis.py\nD  scripts/build_node_research_context.py\nD  scripts/check_experiments.sh\nD  scripts/check_kdd_artifact_completeness.py\nD  scripts/check_kdd_memory_ablation.py\nD  scripts/compare_governed_ungoverned.py\nD  scripts/compare_similarity_methods.py\nD  scripts/compute_bootstrap_cis.py\nD  scripts/create_trial_worktree.py\nD  scripts/export_failure_taxonomy_labels.py\nD  scripts/export_kdd_figures.py\nD  scripts/export_kdd_tables.py\nD  scripts/export_kdd_traces.py\nD  scripts/export_openml_paper_table.py\nD  scripts/export_paper_figures.py\nD  scripts/export_paper_tables.py\nD  scripts/generate_artifact_manifest.py\nD  scripts/generate_research_scouting_plan.py\nD  scripts/inspect_node.py\nD  scripts/parse_node_metric.py\nD  scripts/promote_master_snapshot.py\nD  scripts/recover_pending.py\nD  scripts/recover_pending_trial.py\nD  scripts/reexecute_kept_trials.py\nD  scripts/reset_node.py\nD  scripts/reset_node_state.py\nD  scripts/run_all_ollama_experiments.sh\nD  scripts/run_baseline_seed_replicates.py\nD  scripts/run_campaign.py\nD  scripts/run_counterfactual.py\nD  scripts/run_counterfactual_server.sh\nD  scripts/run_kdd_main_campaign.py\nD  scripts/run_kdd_memory_ablation.py\nD  scripts/run_kdd_noop_trial.py\nD  scripts/run_kdd_stress_trial.py\nD  scripts/run_lg_seed_replication.sh\nD  scripts/run_linux_autoresearch.sh\nD  scripts/run_linux_resnet.sh\nD  scripts/run_linux_resnet_s4s5.sh\nD  scripts/run_local_node_campaign.py\nD  scripts/run_lr_synthetic_campaign.py\nD  scripts/run_lr_synthetic_lg_ablation.py\nD  scripts/run_manager_comparison.py\nD  scripts/run_memory_ablation.py\nD  scripts/run_openml_invalid_config_stress.py\nD  scripts/run_openml_tabular_campaign.py\nD  scripts/run_overnight.sh\nD  scripts/run_p8b_lg_ablation.sh\nD  scripts/run_p8b_lg_ablation_v3.sh\nD  scripts/run_phase_e_local.sh\nD  scripts/run_r1_synthetic_readiness.py\nD  scripts/run_rationale_truncation_ablation.sh\nD  scripts/run_resnet_s123_clean_rerun.sh\nD  scripts/run_resnet_s4s5_clean_rerun.sh\nD  scripts/run_ungoverned_level2.sh\nD  scripts/score_failure_taxonomy_labels.py\nD  scripts/summarize_campaign.py\nD  scripts/sync_to_deepthought2.sh\nD  scripts/validate_governance_metrics.py\nD  scripts/verify_smoke_trial.py\nD  src/autoresearch/__init__.py\nD  src/autoresearch/common/__init__.py\nD  src/autoresearch/common/logging.py\nD  src/autoresearch/common/paths.py\nD  src/autoresearch/common/types.py\nD  src/autoresearch/control_plane/__init__.py\nD  src/autoresearch/control_plane/budget.py\nD  src/autoresearch/control_plane/campaign.py\nD  src/autoresearch/control_plane/controller.py\nD  src/autoresearch/control_plane/decision.py\nD  src/autoresearch/control_plane/events.py\nD  src/autoresearch/control_plane/lifecycle.py\nD  src/autoresearch/control_plane/permissions.py\nD  src/autoresearch/control_plane/state_machine.py\nD  src/autoresearch/evaluation/__init__.py\nD  src/autoresearch/evaluation/ablations.py\nD  src/autoresearch/evaluation/campaign_summary.py\nD  src/autoresearch/evaluation/metrics.py\nD  src/autoresearch/legacy/__init__.py\nD  src/autoresearch/legacy/claw_code.py\nD  src/autoresearch/llm/__init__.py\nD  src/autoresearch/llm/langchain_client.py\nD  src/autoresearch/llm/providers.py\nD  src/autoresearch/manager/__init__.py\nD  src/autoresearch/manager/base.py\nD  src/autoresearch/manager/baseline_manager.py\nD  src/autoresearch/manager/doom_loop.py\nD  src/autoresearch/manager/hyperparam_edits.py\nD  src/autoresearch/manager/langgraph_manager.py\nD  src/autoresearch/manager/prompt_manager.py\nD  src/autoresearch/memory/__init__.py\nD  src/autoresearch/memory/append_store.py\nD  src/autoresearch/memory/event_store.py\nD  src/autoresearch/memory/provenance.py\nD  src/autoresearch/memory/research_context.py\nD  src/autoresearch/memory/schemas.py\nD  src/autoresearch/memory/similarity.py\nD  src/autoresearch/memory/summarizer.py\nD  src/autoresearch/nodes/__init__.py\nD  src/autoresearch/nodes/autoresearch_macos/__init__.py\nD  src/autoresearch/nodes/autoresearch_macos/metric_parser.py\nD  src/autoresearch/nodes/lr_synthetic/__init__.py\nD  src/autoresearch/nodes/lr_synthetic/metric_parser.py\nD  src/autoresearch/nodes/mlagentbench_vectorization/__init__.py\nD  src/autoresearch/nodes/mlagentbench_vectorization/metric_parser.py\nD  src/autoresearch/nodes/mlp_synthetic/__init__.py\nD  src/autoresearch/nodes/mlp_synthetic/metric_parser.py\nD  src/autoresearch/nodes/openml_bank_marketing/__init__.py\nD  src/autoresearch/nodes/openml_bank_marketing/metric_parser.py\nD  src/autoresearch/nodes/openml_credit_g/__init__.py\nD  src/autoresearch/nodes/openml_credit_g/metric_parser.py\nD  src/autoresearch/nodes/registry.py\nD  src/autoresearch/nodes/resnet_trigger/__init__.py\nD  src/autoresearch/nodes/resnet_trigger/metric_parser.py\nD  src/autoresearch/nodes/resnet_trigger/validity.py\nD  src/autoresearch/nodes/spec.py\nD  src/autoresearch/reliability/__init__.py\nD  src/autoresearch/reliability/adjudication/__init__.py\nD  src/autoresearch/reliability/benchmark/__init__.py\nD  src/autoresearch/reliability/control/__init__.py\nD  src/autoresearch/reliability/faults/__init__.py\nD  src/autoresearch/reliability/observability/__init__.py\nD  src/autoresearch/reliability/schema/__init__.py\nD  src/autoresearch/reliability/schema/adapter.py\nD  src/autoresearch/reliability/schema/events.py\nD  src/autoresearch/reliability/schema/export.py\nD  src/autoresearch/reliability/schema/manifest.py\nD  src/autoresearch/reliability/schema/validation.py\nD  src/autoresearch/reliability/training/__init__.py\nD  src/autoresearch/reliability/warning/__init__.py\nD  src/autoresearch/reliability/warning/endpoints.py\nD  src/autoresearch/reporting/__init__.py\nD  src/autoresearch/reporting/export_figures.py\nD  src/autoresearch/reporting/export_tables.py\nD  src/autoresearch/reporting/write_report.py\nD  src/autoresearch/worker/__init__.py\nD  src/autoresearch/worker/base.py\nD  src/autoresearch/worker/claw_worker.py\nD  src/autoresearch/worker/local_worker.py\nD  src/autoresearch/worker/noop_worker.py\nD  src/autoresearch/worker/seeds.py\nD  src/autoresearch/worker/stress_worker.py\nD  tests/reliability/test_reliability_golden.py\nD  tests/reliability/test_reliability_vertical_slice.py\nD  tests/stage2/__init__.py\nD  tests/stage2/fixtures/l5_default_records.json\nD  tests/stage2/test_r1_defects.py\nD  tests/stage2/test_r1_l5.py\nD  tests/stage2/test_r1_l6.py\nD  tests/stage2/test_r1_review_fixes.py\nD  tests/stage2/test_stage2_control_plane.py\nD  tests/stage_1_sprint_deliverable/README.md\nD  tests/stage_1_sprint_deliverable/UPGRADE_CHECKLIST.md\nD  tests/stage_1_sprint_deliverable/deliverables/Resnet_autoresearch.ipynb\nD  tests/stage_1_sprint_deliverable/deliverables/autoresearch_1page.docx\nD  tests/stage_1_sprint_deliverable/deliverables/autoresearch_1page.pdf\nD  tests/stage_1_sprint_deliverable/deliverables/autoresearch_director_report_v2.docx\nD  tests/stage_1_sprint_deliverable/deliverables/autoresearch_director_report_v2.pdf\nD  tests/stage_1_sprint_deliverable/loop_packet.json\nD  tests/test_append_only_memory.py\nD  tests/test_artifact_completeness_and_manifest.py\nD  tests/test_event_stream.py\nD  tests/test_kdd_exports_and_stress.py\nD  tests/test_kdd_noop_trial.py\nD  tests/test_kdd_paper_sections.py\nD  tests/test_legacy_noop_skip.py\nD  tests/test_memory_ablation_status.py\nD  tests/test_metric_parser.py\nD  tests/test_node_spec.py\nD  tests/test_noop_guard.py\nD  tests/test_packaging_dependencies.py\nD  tests/test_pending_recovery.py\nD  tests/test_permissions.py\nD  tests/test_provider_resolver.py\nD  tests/test_repeated_bad_idea_detection.py\nD  tests/test_research_context_and_doom_loop.py\nD  tests/test_reset_node_state.py\nD  tests/test_state_machine.py\nD  tests/test_trial_schema.py\nD  tests/test_worker_reproducibility.py\nD  uv.lock"
+    },
+    "status_untracked_all": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_repo",
+        "status",
+        "--porcelain",
+        "--untracked-files=all"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "D  .gitignore\nD  .gitmodules\nD  .python-version\nD  A-Governed-Harness-for-Auditable-LLM-Driven-ML-Experimentation\nD  ARTIFACT_README.md\nD  CLAUDE.md\nD  ENVIRONMENT.md\nD  LICENSE\nD  README.md\nD  artifact_manifest.json\nD  configs/campaigns/resnet_trigger_smoke.json\nD  configs/managers/baseline_manager.json\nD  configs/managers/langgraph_manager.json\nD  configs/managers/prompt_manager.json\nD  configs/nodes/autoresearch_linux.yaml\nD  configs/nodes/autoresearch_macos.yaml\nD  configs/nodes/lr_synthetic.yaml\nD  configs/nodes/mlagentbench_vectorization.yaml\nD  configs/nodes/mlp_synthetic.yaml\nD  configs/nodes/openml_bank_marketing.yaml\nD  configs/nodes/openml_credit_g.yaml\nD  configs/nodes/resnet_trigger.yaml\nD  configs/packets/resnet_trigger_clean_baseline_packet.json\nD  configs/reliability/README.md\nD  configs/reliability/experiments/R1_P_synthetic.yaml\nD  configs/reliability/faults/fault_malformed_tool_example.yaml\nD  configs/reliability/schemas/README.md\nD  configs/reliability/splits/split_development_example.yaml\nD  configs/reliability/tasks/task_repo_repair_example.yaml\nD  configs/workers/dry_run_worker.json\nD  docs/git_structure.md\nD  docs/stage2/architecture.md\nD  docs/stage2/experiment_protocol.md\nD  docs/stage2/memory_architecture.md\nD  docs/stage2/metrics.md\nD  docs/stage2/node_spec.md\nD  docs/stage2/provenance.md\nD  docs/stage2/stage_2_current_structure.md\nD  docs/stage2/stage_2_kdd_aae_instruction_aligned.md\nD  docs/stage2/trial_schema.md\nD  docs/stage_1/autoresearch_director_report.pdf\nD  docs/stage_1/campaign_4panel.png\nD  experiments/artifacts/.gitkeep\nD  experiments/ledgers/.gitkeep\nD  experiments/runs/.gitkeep\nD  experiments/summaries/.gitkeep\nD  harness/claw-code\nD  nodes/ResNet_trigger/.gitignore\nD  nodes/ResNet_trigger/README.md\nD  nodes/ResNet_trigger/campaign_3x5_plot_analysis.ipynb\nD  nodes/ResNet_trigger/cnn_smoke_train_round1.ipynb\nD  nodes/ResNet_trigger/experiment.demo.json\nD  nodes/ResNet_trigger/prepare.py\nD  nodes/ResNet_trigger/program.md\nD  nodes/ResNet_trigger/pyproject.toml\nD  nodes/ResNet_trigger/resnet_1d.py\nD  nodes/ResNet_trigger/train.py\nD  nodes/ResNet_trigger/uv.lock\nD  nodes/autoresearch-macos/.python-version\nD  nodes/autoresearch-macos/README.md\nD  nodes/autoresearch-macos/analysis.ipynb\nD  nodes/autoresearch-macos/memory/MEMORY.md\nD  nodes/autoresearch-macos/memory/project_current_strategy.md\nD  nodes/autoresearch-macos/memory/project_failed_ideas.md\nD  nodes/autoresearch-macos/memory/project_promising_ideas.md\nD  nodes/autoresearch-macos/memory/reference_external_sources.md\nD  nodes/autoresearch-macos/prepare.py\nD  nodes/autoresearch-macos/program.md\nD  nodes/autoresearch-macos/progress.png\nD  nodes/autoresearch-macos/pyproject.toml\nD  nodes/autoresearch-macos/train.py\nD  nodes/autoresearch-macos/uv.lock\nD  nodes/lr_synthetic/.autoresearch_baseline/train.py\nD  nodes/lr_synthetic/train.py\nD  nodes/mlagentbench_vectorization/.autoresearch_baseline/config.yaml\nD  nodes/mlagentbench_vectorization/README.md\nD  nodes/mlagentbench_vectorization/config.yaml\nD  nodes/mlagentbench_vectorization/requirements.txt\nD  nodes/mlagentbench_vectorization/submission.csv\nD  nodes/mlagentbench_vectorization/train.py\nD  nodes/mlp_synthetic/.autoresearch_baseline/train.py\nD  nodes/mlp_synthetic/benchmark.py\nD  nodes/mlp_synthetic/train.py\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-001/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-002/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-003/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-004/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-005/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-006/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-007/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-008/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-009/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-010/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-011/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-012/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-013/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-014/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-015/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-016/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-017/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-018/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-019/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_artifacts/trial-020/patch.diff\nD  nodes/openml_bank_marketing/.autoresearch_baseline/config.yaml\nD  nodes/openml_bank_marketing/NodeSpec.yaml\nD  nodes/openml_bank_marketing/README.md\nD  nodes/openml_bank_marketing/benchmark.py\nD  nodes/openml_bank_marketing/config.yaml\nD  nodes/openml_bank_marketing/data_cache/.gitignore\nD  nodes/openml_bank_marketing/data_cache/.gitkeep\nD  nodes/openml_bank_marketing/requirements.txt\nD  nodes/openml_bank_marketing/train.py\nD  nodes/openml_credit_g/.autoresearch_baseline/config.yaml\nD  nodes/openml_credit_g/NodeSpec.yaml\nD  nodes/openml_credit_g/README.md\nD  nodes/openml_credit_g/benchmark.py\nD  nodes/openml_credit_g/config.yaml\nD  nodes/openml_credit_g/data_cache/.gitignore\nD  nodes/openml_credit_g/data_cache/.gitkeep\nD  nodes/openml_credit_g/requirements.txt\nD  nodes/openml_credit_g/train.py\nD  notebooks/stage2_contract_smoke.ipynb\nD  notebooks/stage2_development_smoke_tests/stage2_langgraph_manager_smoke.py\nD  notebooks/stage2_development_smoke_tests/stage2_priority_0_1_contracts_smoke.py\nD  notebooks/stage2_development_smoke_tests/stage2_priority_2_3_integration_smoke.py\nD  notebooks/stage2_development_smoke_tests/stage2_priority_4_memory_and_manager_smoke.py\nD  notebooks/stage2_development_smoke_tests/stage2_priority_6_16_system_smoke.py\nD  notebooks/stage2_development_smoke_tests/stage2_proposal_to_trial_smoke.py\nD  notebooks/stage2_overview_and_demo.ipynb\nD  notebooks/stage2_real_resnet_report.ipynb\nD  paper/tables/counterfactual_comparison.tex\nD  paper/tables/table1_governance_summary.csv\nD  paper_figures.ipynb\nD  paper_figures.ipynb.bak\nD  plan/archive/KDD_AAE_competitive_analysis.md\nD  plan/archive/KDD_AAE_execution_chunks.md\nD  plan/archive/KDD_AAE_refinement_plan_v2.md\nD  plan/archive/TODO.md\nD  plan/archive/Up-to-date.md\nD  plan/archive/ablation_hypothesis.md\nD  plan/archive/autoresearch_analysis.md\nD  plan/archive/checklist_stage3.md\nD  plan/archive/cleanup_candidates.md\nD  plan/archive/contribution_claims.md\nD  plan/archive/current_readiness_next_steps.md\nD  plan/archive/experiments_plan.md\nD  plan/archive/harness_literature_synthesis.md\nD  plan/archive/kdd_aae_refinement_plan_md.md\nD  plan/archive/limitations.md\nD  plan/archive/master_plan.md\nD  plan/archive/metric_validation/failure_taxonomy_sample.csv\nD  plan/archive/metric_validation/governance_metric_reliability_pairs.csv\nD  plan/archive/metric_validation/governance_metric_summary.csv\nD  plan/archive/metric_validation/reexecution_mlagentbench_vectorization_main_30.csv\nD  plan/archive/ml_intern_analysis.md\nD  plan/archive/paper_edit_checklist.md\nD  plan/archive/paper_preparation.md\nD  plan/archive/priority0_report_corrected.md\nD  plan/archive/raw_plan_stage2.md\nD  plan/archive/reference_check.md\nD  plan/archive/related_work.md\nD  plan/archive/revision_2.md\nD  plan/archive/revision_3.md\nD  \"plan/archive/revision_3_checklist copy.md\"\nD  plan/archive/revision_3_checklist.md\nD  plan/archive/revision_and_edit_checklist.md\nD  plan/archive/revision_checklist.md\nD  plan/archive/revision_plan.md\nD  plan/archive/stage2-summary.md\nD  plan/archive/stage2_real_resnet_report.md\nD  plan/archive/stage_2_kdd_aae_instruction_aligned.md\nD  plan/revision_5.md\nD  plan/revision_6.md\nD  plan/supplement.md\nD  poster-KDD-ETAAI26/KITposter.sty\nD  poster-KDD-ETAAI26/figs/fig1_architecture.pdf\nD  poster-KDD-ETAAI26/figs/fig1_governance_overview.pdf\nD  poster-KDD-ETAAI26/figs/fig3_ir_taxonomy.pdf\nD  poster-KDD-ETAAI26/figs/kimi-matrix-style-reference.png\nD  poster-KDD-ETAAI26/figs/qr_artifact.png\nD  poster-KDD-ETAAI26/kdd_poster.pdf\nD  poster-KDD-ETAAI26/kdd_poster.tex\nD  poster-KDD-ETAAI26/kdd_poster_portrait.pdf\nD  poster-KDD-ETAAI26/kdd_poster_portrait.tex\nD  poster-KDD-ETAAI26/kdd_poster_print_ready.pdf\nD  poster-KDD-ETAAI26/kitlogo_de_rgb.pdf\nD  poster-KDD-ETAAI26/kitlogo_en_rgb.pdf\nD  priority0_report.md\nD  pyproject.toml\nD  scripts/analyze_counterfactual.py\nD  scripts/analyze_governance_counterfactual.py\nD  scripts/analyze_lr_synthetic_lg_ablation.py\nD  scripts/analyze_rationale_truncation.py\nD  scripts/analyze_seed_replication.py\nD  scripts/bootstrap_governance_cis.py\nD  scripts/build_node_research_context.py\nD  scripts/check_experiments.sh\nD  scripts/check_kdd_artifact_completeness.py\nD  scripts/check_kdd_memory_ablation.py\nD  scripts/compare_governed_ungoverned.py\nD  scripts/compare_similarity_methods.py\nD  scripts/compute_bootstrap_cis.py\nD  scripts/create_trial_worktree.py\nD  scripts/export_failure_taxonomy_labels.py\nD  scripts/export_kdd_figures.py\nD  scripts/export_kdd_tables.py\nD  scripts/export_kdd_traces.py\nD  scripts/export_openml_paper_table.py\nD  scripts/export_paper_figures.py\nD  scripts/export_paper_tables.py\nD  scripts/generate_artifact_manifest.py\nD  scripts/generate_research_scouting_plan.py\nD  scripts/inspect_node.py\nD  scripts/parse_node_metric.py\nD  scripts/promote_master_snapshot.py\nD  scripts/recover_pending.py\nD  scripts/recover_pending_trial.py\nD  scripts/reexecute_kept_trials.py\nD  scripts/reset_node.py\nD  scripts/reset_node_state.py\nD  scripts/run_all_ollama_experiments.sh\nD  scripts/run_baseline_seed_replicates.py\nD  scripts/run_campaign.py\nD  scripts/run_counterfactual.py\nD  scripts/run_counterfactual_server.sh\nD  scripts/run_kdd_main_campaign.py\nD  scripts/run_kdd_memory_ablation.py\nD  scripts/run_kdd_noop_trial.py\nD  scripts/run_kdd_stress_trial.py\nD  scripts/run_lg_seed_replication.sh\nD  scripts/run_linux_autoresearch.sh\nD  scripts/run_linux_resnet.sh\nD  scripts/run_linux_resnet_s4s5.sh\nD  scripts/run_local_node_campaign.py\nD  scripts/run_lr_synthetic_campaign.py\nD  scripts/run_lr_synthetic_lg_ablation.py\nD  scripts/run_manager_comparison.py\nD  scripts/run_memory_ablation.py\nD  scripts/run_openml_invalid_config_stress.py\nD  scripts/run_openml_tabular_campaign.py\nD  scripts/run_overnight.sh\nD  scripts/run_p8b_lg_ablation.sh\nD  scripts/run_p8b_lg_ablation_v3.sh\nD  scripts/run_phase_e_local.sh\nD  scripts/run_r1_synthetic_readiness.py\nD  scripts/run_rationale_truncation_ablation.sh\nD  scripts/run_resnet_s123_clean_rerun.sh\nD  scripts/run_resnet_s4s5_clean_rerun.sh\nD  scripts/run_ungoverned_level2.sh\nD  scripts/score_failure_taxonomy_labels.py\nD  scripts/summarize_campaign.py\nD  scripts/sync_to_deepthought2.sh\nD  scripts/validate_governance_metrics.py\nD  scripts/verify_smoke_trial.py\nD  src/autoresearch/__init__.py\nD  src/autoresearch/common/__init__.py\nD  src/autoresearch/common/logging.py\nD  src/autoresearch/common/paths.py\nD  src/autoresearch/common/types.py\nD  src/autoresearch/control_plane/__init__.py\nD  src/autoresearch/control_plane/budget.py\nD  src/autoresearch/control_plane/campaign.py\nD  src/autoresearch/control_plane/controller.py\nD  src/autoresearch/control_plane/decision.py\nD  src/autoresearch/control_plane/events.py\nD  src/autoresearch/control_plane/lifecycle.py\nD  src/autoresearch/control_plane/permissions.py\nD  src/autoresearch/control_plane/state_machine.py\nD  src/autoresearch/evaluation/__init__.py\nD  src/autoresearch/evaluation/ablations.py\nD  src/autoresearch/evaluation/campaign_summary.py\nD  src/autoresearch/evaluation/metrics.py\nD  src/autoresearch/legacy/__init__.py\nD  src/autoresearch/legacy/claw_code.py\nD  src/autoresearch/llm/__init__.py\nD  src/autoresearch/llm/langchain_client.py\nD  src/autoresearch/llm/providers.py\nD  src/autoresearch/manager/__init__.py\nD  src/autoresearch/manager/base.py\nD  src/autoresearch/manager/baseline_manager.py\nD  src/autoresearch/manager/doom_loop.py\nD  src/autoresearch/manager/hyperparam_edits.py\nD  src/autoresearch/manager/langgraph_manager.py\nD  src/autoresearch/manager/prompt_manager.py\nD  src/autoresearch/memory/__init__.py\nD  src/autoresearch/memory/append_store.py\nD  src/autoresearch/memory/event_store.py\nD  src/autoresearch/memory/provenance.py\nD  src/autoresearch/memory/research_context.py\nD  src/autoresearch/memory/schemas.py\nD  src/autoresearch/memory/similarity.py\nD  src/autoresearch/memory/summarizer.py\nD  src/autoresearch/nodes/__init__.py\nD  src/autoresearch/nodes/autoresearch_macos/__init__.py\nD  src/autoresearch/nodes/autoresearch_macos/metric_parser.py\nD  src/autoresearch/nodes/lr_synthetic/__init__.py\nD  src/autoresearch/nodes/lr_synthetic/metric_parser.py\nD  src/autoresearch/nodes/mlagentbench_vectorization/__init__.py\nD  src/autoresearch/nodes/mlagentbench_vectorization/metric_parser.py\nD  src/autoresearch/nodes/mlp_synthetic/__init__.py\nD  src/autoresearch/nodes/mlp_synthetic/metric_parser.py\nD  src/autoresearch/nodes/openml_bank_marketing/__init__.py\nD  src/autoresearch/nodes/openml_bank_marketing/metric_parser.py\nD  src/autoresearch/nodes/openml_credit_g/__init__.py\nD  src/autoresearch/nodes/openml_credit_g/metric_parser.py\nD  src/autoresearch/nodes/registry.py\nD  src/autoresearch/nodes/resnet_trigger/__init__.py\nD  src/autoresearch/nodes/resnet_trigger/metric_parser.py\nD  src/autoresearch/nodes/resnet_trigger/validity.py\nD  src/autoresearch/nodes/spec.py\nD  src/autoresearch/reliability/__init__.py\nD  src/autoresearch/reliability/adjudication/__init__.py\nD  src/autoresearch/reliability/benchmark/__init__.py\nD  src/autoresearch/reliability/control/__init__.py\nD  src/autoresearch/reliability/faults/__init__.py\nD  src/autoresearch/reliability/observability/__init__.py\nD  src/autoresearch/reliability/schema/__init__.py\nD  src/autoresearch/reliability/schema/adapter.py\nD  src/autoresearch/reliability/schema/events.py\nD  src/autoresearch/reliability/schema/export.py\nD  src/autoresearch/reliability/schema/manifest.py\nD  src/autoresearch/reliability/schema/validation.py\nD  src/autoresearch/reliability/training/__init__.py\nD  src/autoresearch/reliability/warning/__init__.py\nD  src/autoresearch/reliability/warning/endpoints.py\nD  src/autoresearch/reporting/__init__.py\nD  src/autoresearch/reporting/export_figures.py\nD  src/autoresearch/reporting/export_tables.py\nD  src/autoresearch/reporting/write_report.py\nD  src/autoresearch/worker/__init__.py\nD  src/autoresearch/worker/base.py\nD  src/autoresearch/worker/claw_worker.py\nD  src/autoresearch/worker/local_worker.py\nD  src/autoresearch/worker/noop_worker.py\nD  src/autoresearch/worker/seeds.py\nD  src/autoresearch/worker/stress_worker.py\nD  tests/reliability/test_reliability_golden.py\nD  tests/reliability/test_reliability_vertical_slice.py\nD  tests/stage2/__init__.py\nD  tests/stage2/fixtures/l5_default_records.json\nD  tests/stage2/test_r1_defects.py\nD  tests/stage2/test_r1_l5.py\nD  tests/stage2/test_r1_l6.py\nD  tests/stage2/test_r1_review_fixes.py\nD  tests/stage2/test_stage2_control_plane.py\nD  tests/stage_1_sprint_deliverable/README.md\nD  tests/stage_1_sprint_deliverable/UPGRADE_CHECKLIST.md\nD  tests/stage_1_sprint_deliverable/deliverables/Resnet_autoresearch.ipynb\nD  tests/stage_1_sprint_deliverable/deliverables/autoresearch_1page.docx\nD  tests/stage_1_sprint_deliverable/deliverables/autoresearch_1page.pdf\nD  tests/stage_1_sprint_deliverable/deliverables/autoresearch_director_report_v2.docx\nD  tests/stage_1_sprint_deliverable/deliverables/autoresearch_director_report_v2.pdf\nD  tests/stage_1_sprint_deliverable/loop_packet.json\nD  tests/test_append_only_memory.py\nD  tests/test_artifact_completeness_and_manifest.py\nD  tests/test_event_stream.py\nD  tests/test_kdd_exports_and_stress.py\nD  tests/test_kdd_noop_trial.py\nD  tests/test_kdd_paper_sections.py\nD  tests/test_legacy_noop_skip.py\nD  tests/test_memory_ablation_status.py\nD  tests/test_metric_parser.py\nD  tests/test_node_spec.py\nD  tests/test_noop_guard.py\nD  tests/test_packaging_dependencies.py\nD  tests/test_pending_recovery.py\nD  tests/test_permissions.py\nD  tests/test_provider_resolver.py\nD  tests/test_repeated_bad_idea_detection.py\nD  tests/test_research_context_and_doom_loop.py\nD  tests/test_reset_node_state.py\nD  tests/test_state_machine.py\nD  tests/test_trial_schema.py\nD  tests/test_worker_reproducibility.py\nD  uv.lock"
+    },
+    "symbolic_ref": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl_x/harness_repo",
+        "symbolic-ref",
+        "-q",
+        "HEAD"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "refs/heads/main"
+    }
+  },
+  "home": "/home/dowling",
+  "hostname": "TASL-2",
+  "interpreters": {
+    "system_py3": {
+      "executable": "/usr/bin/python3",
+      "exists": true,
+      "path": "/usr/bin/python3",
+      "realpath": "/usr/bin/python3.10",
+      "sha256": "a2f33a6e006989270f4340528eb61f8f97366e00a5d1b602ac8672ea44fc56ae",
+      "version": "3.10.12",
+      "vv": "Python 3.10.12 (main, Aug 31 2026, 10:18:17) [GCC 11.4.0]"
+    },
+    "torch312": {
+      "executable": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "exists": true,
+      "path": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+      "realpath": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+      "sha256": "23bc148d2b48964b621c5561ff2b81c1d9c7b717967a7491efbf12f4304882b5",
+      "version": "3.12.16",
+      "vv": "Python 3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]"
+    },
+    "venv_jax": {
+      "executable": "/home/dowling/r1_trackg_20261125/venv_jax/bin/python",
+      "exists": true,
+      "path": "/home/dowling/r1_trackg_20261125/venv_jax/bin/python",
+      "realpath": "/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12",
+      "sha256": "23bc148d2b48964b621c5561ff2b81c1d9c7b717967a7491efbf12f4304882b5",
+      "version": "3.12.16",
+      "vv": "Python 3.12.16 (main, Oct 26 2026, 14:08:45) [Clang 23.1.3 ]"
+    }
+  },
+  "lease": {
+    "cpu_locks": {
+      "cpus-0-3.lock": true,
+      "cpus-12-15.lock": true,
+      "cpus-16-31.lock": true,
+      "cpus-4-7.lock": true
+    },
+    "gpu0_lock": {
+      "exists": true,
+      "path": "/home/dowling/r1_locks/gpu0.lock"
+    },
+    "r1_locks_listing": {
+      "cmd": [
+        "ls",
+        "-la",
+        "/home/dowling/r1_locks"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "\u603b\u8ba1 16\ndrwxrwxr-x  4 dowling dowling 4096 11\u6708 26 14:53 .\ndrwxr-x--- 23 dowling dowling 4096 11\u6708 25 03:23 ..\ndrwxrwxr-x  2 dowling dowling 4096 11\u6708 17 15:42 bin\n-rw-rw-r--  1 dowling dowling    0 11\u6708 27 18:57 cpus-0-3.lock\n-rw-------  1 dowling dowling    0 11\u6708 27 18:57 cpus-12-15.lock\n-rw-rw-r--  1 dowling dowling    0 11\u6708 27 22:41 cpus-16-31.lock\n-rw-rw-r--  1 dowling dowling    0 11\u6708 27 18:57 cpus-4-7.lock\n-rw-rw-r--  1 dowling dowling    0 11\u6708 28 06:10 gpu0.lock\ndrwx------  2 dowling dowling 4096 11\u6708 16 01:54 _to_delete"
+    }
+  },
+  "local_time": "2026-11-28T06:10:51-0800",
+  "lsm": "lockdown,capability,landlock,yama,apparmor",
+  "meminfo_head": "MemTotal:       65543252 kB\nMemFree:        10399880 kB\nMemAvailable:   60915292 kB",
+  "microcode_unique": [
+    "0x133"
+  ],
+  "os_release": "PRETTY_NAME=\"Ubuntu 22.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"22.04\"\nVERSION=\"22.04.5 LTS (Jammy Jellyfish)\"\nVERSION_CODENAME=jammy\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=jammy\n",
+  "running_jobs": {
+    "cmd": [
+      "ps",
+      "-u",
+      "1008",
+      "-o",
+      "pid,etime,cmd",
+      "--no-headers"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "1528083       00:28 /lib/systemd/systemd --user\n1528084       00:28 (sd-pam)\n1528091       00:28 /usr/bin/pipewire\n1528092       00:28 /usr/bin/pipewire-pulse\n1528093       00:28 /snap/snapd-desktop-integration/391/usr/bin/user-session-helper /snap/snapd-desktop-integration/391/usr/bin/snapd-desktop-integration\n1528094       00:28 /usr/bin/wireplumber\n1528153       00:28 /usr/bin/dbus-daemon --session --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only\n1528171       00:28 /usr/libexec/xdg-document-portal\n1528177       00:28 /usr/libexec/xdg-permission-store\n1528832       00:01 sshd: dowling@notty\n1528833       00:00 bash -s\n1528846       00:00 /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python /home/dowling/r1_engineering/t1_tasl_x_hostcheck_g5_20261128_metamaze/scripts/host_facts.py --base /home/dowling/r1_engineering/t1_tasl_x_hostcheck_g5_20261128_metamaze --x /home/dowling/r1_tracks/t1_tasl_x --out /home/dowling/r1_engineering/t1_tasl_x_hostcheck_g5_20261128_metamaze/captures/mlgym_metamaze/host_facts.json --text /home/dowling/r1_engineering/t1_tasl_x_hostcheck_g5_20261128_metamaze/captures/mlgym_metamaze/host_facts.txt --tag session\n1528847       00:00 tail -1\n1528909       00:00 ps -u 1008 -o pid,etime,cmd --no-headers"
+  },
+  "seven_node": {
+    "exists": true,
+    "head": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "rev-parse",
+        "HEAD"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "c025f89aeafc2199bf3487b4bcaa16678273c702"
+    },
+    "log_oneline_2": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "log",
+        "--oneline",
+        "-2"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "c025f89 trackg noise_floor (T1 TASL review r1): stop_on_timeout stops a chunk right after the first timeout row; CPU chunks only for CPU-only nodes\naf48080 trackg pilot_g4: --gpu-uuid for the worker on a direct host run (R1-T1-HOST-TASL)"
+    },
+    "path": "/home/dowling/r1_tracks/t1_tasl/harness",
+    "stash": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "stash",
+        "list"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    "status_porcelain": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "status",
+        "--porcelain"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "?? nodes/mlab_cifar10/data\n?? nodes/mlab_imdb/data\n?? nodes/mlab_ogbn_arxiv/data\n?? third_party/mlgym/nodes/mlgym_cifar10/data\n?? third_party/mlgym/nodes/mlgym_fmnist/data\n?? third_party/mlgym/nodes/mlgym_houseprice/data"
+    },
+    "status_untracked_all": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "status",
+        "--porcelain",
+        "--untracked-files=all"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "?? nodes/mlab_cifar10/data\n?? nodes/mlab_imdb/data\n?? nodes/mlab_ogbn_arxiv/data\n?? third_party/mlgym/nodes/mlgym_cifar10/data\n?? third_party/mlgym/nodes/mlgym_fmnist/data\n?? third_party/mlgym/nodes/mlgym_houseprice/data"
+    },
+    "symbolic_ref": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_tracks/t1_tasl/harness",
+        "symbolic-ref",
+        "-q",
+        "HEAD"
+      ],
+      "rc": 1,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  "seven_node_expected_pin": "c025f89aeafc2199bf3487b4bcaa16678273c702",
+  "sysctls": {
+    "kernel.apparmor_restrict_unprivileged_userns": {
+      "name": "kernel.apparmor_restrict_unprivileged_userns",
+      "ok": true,
+      "path": "/proc/sys/kernel/apparmor_restrict_unprivileged_userns",
+      "value": "0"
+    },
+    "kernel.dmesg_restrict": {
+      "name": "kernel.dmesg_restrict",
+      "ok": true,
+      "path": "/proc/sys/kernel/dmesg_restrict",
+      "value": "1"
+    },
+    "kernel.unprivileged_userns_clone": {
+      "name": "kernel.unprivileged_userns_clone",
+      "ok": true,
+      "path": "/proc/sys/kernel/unprivileged_userns_clone",
+      "value": "1"
+    },
+    "kernel.yama.ptrace_scope": {
+      "name": "kernel.yama.ptrace_scope",
+      "ok": true,
+      "path": "/proc/sys/kernel/yama/ptrace_scope",
+      "value": "1"
+    },
+    "user.max_user_namespaces": {
+      "name": "user.max_user_namespaces",
+      "ok": true,
+      "path": "/proc/sys/user/max_user_namespaces",
+      "value": "254738"
+    }
+  },
+  "tools": {
+    "flock": {
+      "cmd": [
+        "flock",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "flock\uff0c\u6765\u81ea util-linux 2.37.2"
+    },
+    "git": {
+      "cmd": [
+        "git",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "git version 2.34.1"
+    },
+    "nvidia_smi": {
+      "cmd": [
+        "nvidia-smi",
+        "--version"
+      ],
+      "rc": 255,
+      "stderr": "",
+      "stdout": "ERROR: Option --version is not recognized. Please run 'nvidia-smi -h'."
+    },
+    "systemctl_user": {
+      "cmd": [
+        "systemctl",
+        "--user",
+        "is-system-running"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "running"
+    },
+    "systemd_run": {
+      "cmd": [
+        "systemd-run",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "systemd 249 (249.11-0ubuntu3.23)\n+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT +GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY -P11KIT -QRENCODE +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified"
+    },
+    "uv": {
+      "cmd": [
+        "/home/dowling/.local/bin/uv",
+        "--version"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "uv 0.13.6 (x86_64-unknown-linux-gnu)"
+    }
+  },
+  "trackp_harness_readonly": {
+    "exists": true,
+    "head": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_trackp/autoresearch_harness",
+        "rev-parse",
+        "HEAD"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "897d83c8efa364ec2fdd37288241cc42e01d7274"
+    },
+    "path": "/home/dowling/r1_trackp/autoresearch_harness",
+    "stat": {
+      "cmd": [
+        "stat",
+        "-c",
+        "%n %y %s",
+        "/home/dowling/r1_trackp/autoresearch_harness"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": "/home/dowling/r1_trackp/autoresearch_harness 2026-10-25 18:26:52.528713273 -0700 4096"
+    },
+    "status_porcelain": {
+      "cmd": [
+        "git",
+        "-C",
+        "/home/dowling/r1_trackp/autoresearch_harness",
+        "status",
+        "--porcelain",
+        "--untracked-files=no"
+      ],
+      "rc": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  },
+  "uid": 1008,
+  "uname": {
+    "machine": "x86_64",
+    "node": "TASL-2",
+    "processor": "x86_64",
+    "release": "6.8.0-149-generic",
+    "system": "Linux",
+    "version": "#149~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Wed Oct 28 20:58:45 UTC "
+  },
+  "uptime": "1099166.51 34085044.43",
+  "user": {
+    "cmd": [
+      "id"
+    ],
+    "rc": 0,
+    "stderr": "",
+    "stdout": "uid=1008(dowling) gid=1008(dowling) \u7ec4=1008(dowling)"
+  },
+  "utc": "2026-11-28T14:10:51Z"
+}

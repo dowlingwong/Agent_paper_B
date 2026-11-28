@@ -1,0 +1,16 @@
+utc=2026-11-28T14:07:20Z repo=/home/dowling/r1_tracks/t1_tasl_x/harness_titanic_g5 pin=d2ce4701faf03f00efaf9c475879acf213411d3b node=mlgym_titanic
+euid=1008 non_root=True
+home=/home/dowling runs_root=/home/dowling/r1_engineering/t1_tasl_x_hostcheck_g5_20261128_titanic/work/interp_mlgym_titanic_8b_ae8i9/runs
+--- env: /home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python
+  version=3.12.16 executable=/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python
+  realpath=/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+  sys_path=['/home/dowling/r1_tracks/t1_tasl_x/harness_titanic_g5/src', '/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python312.zip', '/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12', '/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/lib/python3.12/lib-dynload', '/home/dowling/r1_tracks/t1_tasl/envs/torch312/lib/python3.12/site-packages']
+  broad_entries=[]
+  sandbox_config_ok=True worker_sandbox_available=True
+--- system_py3: /usr/bin/python3
+  version=3.10.12 executable=/usr/bin/python3
+  realpath=/usr/bin/python3.10
+  sys_path=['/home/dowling/r1_tracks/t1_tasl_x/harness_titanic_g5/src', '/usr/lib/python310.zip', '/usr/lib/python3.10', '/usr/lib/python3.10/lib-dynload', '/usr/local/lib/python3.10/dist-packages', '/usr/lib/python3/dist-packages']
+  broad_entries=[]
+  sandbox_config_ok=True worker_sandbox_available=True
+condition_4_pass=True env_check_pass=True system_py3_check_pass=True
