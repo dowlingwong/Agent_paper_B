@@ -1,0 +1,7 @@
+mode=bindfail rc=90 root=/tmp/d3a_guard_test.qXdUPW
+chunk_called=no
+stop_json=yes
+stop_check=ready rc=90
+endpoint_check_ready.json: ok=False failed=guard reason=server_alive: the PID the driver started must be alive
+seal=OK
+result=PASS

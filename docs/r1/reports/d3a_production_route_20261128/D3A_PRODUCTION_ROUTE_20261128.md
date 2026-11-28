@@ -156,7 +156,8 @@ the P7 audit shim, not in the v1 image.
 
 The deepthought audit side is P8 (`D3A_P8_HOST_20261128`, re-check ACCEPTED at `b70cfa01`); this
 record changes neither that host nor `r1/tests`. The environment capture's base sample header is
-19:27:58Z; its Python/shim/docker block was appended at 19:34Z.
+19:27:58Z; its Python/shim/docker block was appended at 19:33:44Z (the file mtime; the first
+draft rounded this to 19:34Z).
 
 **Adjacent observation.** `r1/c3/d3/launch.py` still carries
 `D3_IMAGE = ghcr.io/dowlingwong/r1-htc-gpu@sha256:49dd9900…` (the v2.2 digest), while rev 5 §2 binds
@@ -228,6 +229,49 @@ Python 3.11.17 also has no field in the current key block, so the same row must 
 image; none is currently available. Until that row exists, no D.3a campaign starts. No evidence run
 has started, so this is a binding decision, not a STOP of existing evidence.
 
+### 4.1 Endpoint identity guard before every chunk (compute/20261128-23)
+
+Local's stub check (`coord/local` `1a6a2cf5`) found that when the template's own server failed to
+bind, a separate responder on `127.0.0.1:8095` answered `/props` and the template went on to the
+chunk. Readiness alone therefore does not prove which process serves the endpoint.
+
+The production template now calls `r1.c3.d3.endpoint_guard` **after readiness** (so a foreign
+responder is caught before the probe result is trusted) and **immediately before every chunk**. The
+guard fails closed unless all of the following hold:
+
+| Check | Evidence |
+|---|---|
+| listener owner | `ss -ltnp 'sport = :8095'` names exactly the PID the driver started, and no other PID |
+| `/props` model | `model_path` equals the manifest `server_argv` `-m` path |
+| `/props` context | `default_generation_settings.n_ctx` equals the manifest `server_argv` `-c` value |
+| `/props` slots | `total_slots` equals the manifest `server_argv` `-np` value |
+| compute PID | `nvidia-smi --query-compute-apps` lists that PID exactly once |
+| compute card | that PID's GPU UUID equals the manifest `route.gpu_uuid` |
+| canonical lease | the guard's inherited fd 9 and a server fd both point at the manifest
+`route.gpu_lease_path` inode (`~/r1_locks/gpu0.lock`) |
+| leased card | `nvidia-smi -i <lease index> --query-gpu=uuid` equals the manifest UUID |
+| pre-server probe | `observed.json` has the same UUID, `lease: true` and the same lease path |
+
+A mismatch writes `endpoint_check_<tag>.json` (`r1_d3_endpoint_check/v1`), then `STOP.json`
+(`r1_d3_endpoint_stop/v1`), stops the server, seals the capture directory with `SHA256SUMS` and
+exits **90** before `r1.c3.d3.campaign_chunk` is imported. The scene is kept, not deleted. A
+multi-chunk driver may pass `CHUNK_ROWS` (tab-separated launch/out rows); the guard is called for
+each row. The reviewed chunk argv is unchanged.
+
+**Engineering test (no GPU, server process, campaign or label).**
+`endpoint_guard_driver_test.sh` runs the production template with stub host commands and a real
+HTTP `/props`; the guard itself is the repository module and reads `/proc` and the real response.
+
+| Case | Result |
+|---|---|
+| `success` | guard passes after readiness and before the chunk; chunk stub is called; exit 0 |
+| `foreign` | the started PID is alive but another process owns the port; STOP at `listener_pid`; chunk not called; seal OK; exit 90 |
+| `bindfail` | the started server exits and a foreign responder answers `/props`; STOP at `server_alive`; chunk not called; seal OK; exit 90 |
+
+The pytest set `r1/tests/test_d3_endpoint_guard.py` covers every identity check, the foreign-responder
+case, the CLI STOP record and a real `HostProbe` integration against `/proc` and a live `/props`.
+On TASL-2: **23 passed**. Captures are under `captures/endpoint_guard/`.
+
 ## 5. Resource basis
 
 Measured at the exact runtime by the accepted P7 record
@@ -272,7 +316,8 @@ are for the HTCondor route and are not edited or used here.
    `r1/tests/test_d3_analysis.py` passes 53 tests (`captures/p11_analysis_pin.txt`).
 4. The author signs P9; the coordinator publishes the note byte-identically on `main`.
 5. Only then does a chunk launch, after `validate --launch`, the strict note check, the canonical
-   lease and the empty-card/foreign-process check. G.5 has the TASL pair first; D.3a waits for it.
+   lease, the empty-card/foreign-process check, and the endpoint identity guard (§4.1) after
+   readiness and immediately before every chunk. G.5 has the TASL pair first; D.3a waits for it.
 
 No campaign, audit, G6/G7 step, label read or outcome was produced here. This record does not change
 the note's `approved: false` state.
@@ -288,12 +333,34 @@ python -B -m pytest -q -p no:cacheprovider -rfE \
 97 passed in 2.74s
 ```
 
+The endpoint guard unit and integration set on this tip:
+
+```
+python -B -m pytest r1/tests/test_d3_endpoint_guard.py -q
+23 passed
+```
+
+That set includes the Linux-only `HostProbe` integration (fake `ss`/`nvidia-smi`, a live `/props`,
+a real lease inode); on macOS the same set is 22 passed and 1 skipped. The stub driver test
+(`endpoint_guard_driver_test.sh`) passes the success, foreign-responder and failed-bind cases; its
+outputs are in `captures/endpoint_guard/`.
+
+The full `r1/tests` suite was run on clean checkouts of the published base `c66603ae` and code tip
+`0354083d` with harness `9bb41680` (the final commit adds only the SPID-0 seal guard, record text and
+seals; the guard module and tests are unchanged). Two modules (`test_trackp_p4_runner.py`,
+`test_trackp_sft_select_stop.py`) fail collection identically at both tips and were ignored. Base:
+`53 failed, 4888 passed, 162 skipped, 3 errors`; tip: `52 failed, 4912 passed, 162 skipped, 3
+errors`. The sorted `FAILED`/`ERROR` ID sets differ by one base-only flaky entry
+(`test_t1_tasl_crosscheck.py::test_default_part_on_both_hosts_seal_and_compare`) and **zero tip-only
+entries**: no new failure. The counts and ID comparison are in
+`captures/endpoint_guard/full_suite_compare.txt`.
+
 Cache staging: `read_data_cache` returns the reviewed tree `3843b53c…` and all five OpenML
 `prepare_node_dir` data maps equal the MANIFEST (four files, one ARFF each);
-`captures/cache_staging.txt` has the output. No repository code changed in this unit; it is records,
-one manifest, JSON launch/ledger data and capture scripts. The full `r1/tests` suite is not required
-for a docs-only record, but the focused launcher/chunk/adapter/accounting set that consumes these
-files passes, and P10/P11 pass at the base.
+`captures/cache_staging.txt` has the output. This guard unit changes one new module, its tests and
+the production template; it changes no manifest, launch record, signed value or experiment code
+path. The focused launcher/chunk/adapter/accounting set that consumes those files passes, and
+P10/P11 pass at the base.
 
 ## 8. Hashes
 
@@ -305,14 +372,22 @@ files passes, and P10/P11 pass at the base.
 | `run_id_ledger.json` | `62becc147a2b321cd5c1b082ac451bedd0941662bff93d3cfb06374639cd9d38` |
 | `observed.json` | `da07e83499a821c229c509d9bd4aefb0087f242d8c600e8fe0b911c79370a42f` |
 | `endpoint_run.sh` | `d2b088d652bb5f1604f30fb9515af0d32eb44e8583bbe465ecbf7894e39ae3ad` |
-| `production_driver.sh` | `bd027076cf71f205c059df481b1d0e4f0e0712cdb0a9b762880edf4c726cc7a5` |
+| `production_driver.sh` | `00c04cc8343b672308c8ceb57458b9af4e7ae869972e39087a2ff8bf58410e3c` |
+| `endpoint_guard_driver_test.sh` | `0d6b2d84a519467bddbab1ae38fd417afabbe9404d3e1942b51f7aff9a2c7b6d` |
+| `r1/c3/d3/endpoint_guard.py` | `a1ef4184ad680bf37d5d2b1632b18b50e7706811da18266930b933423129ed92` |
+| `r1/tests/test_d3_endpoint_guard.py` | `6f23da54ad09aa94999e20504a324debb99a97261cc6d2fdb52b0cbfe1e17615` |
 | `captures/server_argv.txt` | `9ed9d647a7e2c9ededf14f12a170271577a3f12c2eb5abf8239756bc4f436ab6` |
 | `captures/props.json` | `92fc6b976fe98a295033ac162beabdddc6ebd0b5af691de16fd524155b6f57da` |
 | `captures/models.json` | `2ff596bf1be4a6c9354949f8ff6e8d4342b252b7c98d3f1ce7cc8a0f1ef420e4` |
 | `captures/environment_20261128.txt` | `3637c4c615d96da8b7aaf18fd2bc51bdb941c42f95fc957bf65b22e006152d21` |
-| `captures/launch_ssh_dryrun.txt` | `f2b902f0a84af085615be2bec9e1d5cc54131e6ff180bb32e922bd11a6e513d5` |
-| `captures/cache_staging.txt` | `ced91811c19d6cd70d0d8e0b90db5d1d99c192ee862cd909554e38f06e0f2253` |
-| `captures/SHA256SUMS` | `6690c5f2a3db6e462da109ae71b01c26d8d4c396e7ddc360057dc03f5365ebf9` (covers every capture file, including `server.log` and `status.log`) |
+| `captures/launch_ssh_dryrun.txt` | `a0d0b662dcd1bc7614ff2c7ba431eebd378c1ecd0488852df6ee71c2c10a6ad8` |
+| `captures/cache_staging.txt` | `2dedbbc2d7983aaec3203e70f12477fed30ff0c5f14fbd1deb0186d6ed9a0dfb` |
+| `captures/endpoint_guard/driver_success.txt` | `ac36d9ac70d5bfe5029f4d1fcae2e1e763c975f278289171d7968eb97c1cff70` |
+| `captures/endpoint_guard/driver_foreign.txt` | `4d4646a53d8692fa069cf863ff1f80144820bb453b2266f274f6d1172851662e` |
+| `captures/endpoint_guard/driver_bindfail.txt` | `30e23956c9fc688d7b19885c1fcb442b840725a40961d532af6b3946f0dc0ebe` |
+| `captures/endpoint_guard/pytest_endpoint_guard.txt` | `e8dadd7e0388988b572b2c3977b6dda1c1c1b78b9368282b9e4eb8a229ba4245` |
+| `captures/endpoint_guard/full_suite_compare.txt` | `eea0984e958a4a1fb97cf17368c4643bbcb6cd6b763b4bd24f040945ba0a1715` |
+| `captures/SHA256SUMS` | `ac7a6503d0945d76f3b653aa0808b90ab07ff2b08d4073b108409a899f8abaf0` (covers every capture file, including `server.log`, `status.log` and the endpoint-guard runs) |
 | `SHA256SUMS` (record root) | binds this record and `captures/SHA256SUMS`; its hash is stated in the `coord/compute` report |
 
 ## 9. Decided alone
@@ -322,6 +397,10 @@ the work-root locks of the P7 engineering receipt; to probe the card before star
 the production chunk must; to set the user scope at 20 GiB (`20G`) from the decimal 1.4 × 14.27 GB basis; to record the
 direct-route environment as a disclosed substitution for the §2 image after finding Docker
 inaccessible and no Apptainer; to allocate `d3a-prod-20261128-a` after checking that no host
-directory, report or job used it; and to run only a seven-second endpoint start, no campaign. No
-signed value, pin, seed, request, image digest or harness byte was changed; no label, test or
-evaluation value was read; no other user's process was touched.
+directory, report or job used it; and to run only a seven-second endpoint start, no campaign. For the
+endpoint guard: to check listener PID, `/props` model/context/slots, the compute-app UUID, the
+canonical lease inode and the leased card's UUID together, fail closed on the first mismatch, seal
+the capture directory only after the started server is quiescent, and use exit 90 so an
+infrastructure STOP cannot be mistaken for a chunk failure. No signed value, pin, seed, request,
+image digest or harness byte was changed; no label, test or evaluation value was read; no other
+user's process was touched.
