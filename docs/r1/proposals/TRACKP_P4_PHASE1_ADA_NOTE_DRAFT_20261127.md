@@ -1,7 +1,7 @@
 # Track P P.4 phase 1 on Ada — authorization draft
 
 **Status — unsigned, ready for final checks (28 November 2026).** This revision applies PLAN §10 to the
-[phase-1 authorization design](TRACKP_P4_SFT_AUTHORIZATION_DRAFT_20261121.md). Phase 1 is ENGINEERING_ONLY
+[phase-1 authorization design](../proposals/TRACKP_P4_SFT_AUTHORIZATION_DRAFT_20261121.md). Phase 1 is ENGINEERING_ONLY
 and uses the receipted sweep-1 train/dev partition. The test evaluator reads synthetic labels. The four
 fitted models, reports and readiness intervals from this phase establish engineering readiness only.
 
