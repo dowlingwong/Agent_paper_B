@@ -1,0 +1,2 @@
+deepthought.etp.kit.edu NVIDIA GeForce GTX TITAN X 2 4 Unclaimed Idle false
+deepthought2.etp.kit.edu NVIDIA L40S 1 2 Unclaimed Idle false
