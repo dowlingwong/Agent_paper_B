@@ -1125,6 +1125,102 @@ def test_rel_t1_g1b_copy_d6a_refusals(tmp_path, monkeypatch):
         RC.check_source(SPEC, "seven", summary)
 
 
+def expansion_relcopy_fixture(tmp_path, monkeypatch, rows=None):
+    spec_path = "sweep2/t1_tasl/g1b_tasl_x_spec.json"
+    spec = json.loads((ROOT / spec_path).read_bytes())
+    spec["hosts"][S.WORKER_HOST]["sealed_root"] = str(tmp_path / "sealed_g1b")
+    spec_raw = json.dumps(spec, sort_keys=True).encode()
+    spec_sha = hashlib.sha256(spec_raw).hexdigest()
+    relative = f"assembly/{RC.X_RUN_ID}"
+    g1b_copy(tmp_path, relative, G.X_SUMMARY_SCHEMA, RC.X_RUN_ID, G.X_NODES,
+             asm_schema=G.X_ASSEMBLY_SCHEMA, rows=rows, qualifies=False)
+    source = tmp_path / relative
+    assembly_path = source / "ASSEMBLY.json"
+    assembly = json.loads(assembly_path.read_text())
+    assembly.update(spec_json_sha256=spec_sha, jobs=[{"node": n, "spec_sha256": spec_sha} for n in G.X_NODES])
+    assembly_path.write_text(json.dumps(assembly))
+    summary_path = source / "summary.json"
+    summary = json.loads(summary_path.read_text())
+    summary["assembly_sha256"] = G.L._sha_file(assembly_path)
+    summary_path.write_text(json.dumps(summary))
+    published = {spec_path: spec_raw, f"{RC.X_RESULT}/summary.json": summary_path.read_bytes(),
+                 f"{RC.X_RESULT}/ASSEMBLY.json": assembly_path.read_bytes(),
+                 RC.X_REVIEW: b"# Source review\n\n**Verdict: ACCEPTED.**\n",
+                 RC.X_NOTE: (f"approved: true\nlabel: ENGINEERING_ONLY\nrun_id: {RC.X_RUN_ID}\n"
+                             f"spec_sha256: {spec_sha}\nlabels_read: none\n").encode()}
+    amendment = {"path": R.SPLIT_AMENDMENT_PATH, "sha256": RC.X_SPLIT_SHA256}
+    monkeypatch.setattr(G, "_read_main", published.get)
+    monkeypatch.setattr(R, "split_v2_amendment", lambda root: amendment)
+    monkeypatch.setattr(RC, "X_RESULT_SHA256", {
+        name: hashlib.sha256(published[f"{RC.X_RESULT}/{name}"]).hexdigest()
+        for name in ("summary.json", "ASSEMBLY.json")
+    })
+    return summary_path, published, amendment
+
+
+def test_rel_t1_g1b_copy_expansion_matches_addendum_entry(tmp_path, monkeypatch):
+    summary, _, amendment = expansion_relcopy_fixture(tmp_path, monkeypatch)
+    repo = tmp_path / "repo"
+    dest = "docs/r1/reports/g5_rel_t1_g1b/test-expansion"
+    record = RC.copy_summary(SPEC, "x", summary, dest, repo=repo)
+    for name in ("summary.json", "ASSEMBLY.json", "runs.jsonl"):
+        assert (repo / dest / name).read_bytes() == (summary.parent / name).read_bytes()
+    assert json.loads((repo / dest / "COPY_RECORD.json").read_text()) == record
+    assert record["pre_split_amendment"] == f"{amendment['path']} sha256 {amendment['sha256']}"
+    assert record["qualifies_D21"] == {node: False for node in G.X_NODES}
+    review = "docs/r1/reviews/G5_EXPANSION_RELCOPY_REVIEW.md"
+    files = {record[k]: (repo / record[k]).read_bytes() for k in ("copy", "assembly_copy", "runs_copy")}
+    files[review] = ("\n".join(record["review_must_name"]) + "\nVerdict: ACCEPTED\n").encode()
+    checked = S.check_g1b_copy({**record["g1b_copy"], "review": review}, schema=G.X_SUMMARY_SCHEMA, run_id=RC.X_RUN_ID,
+                              nodes=list(G.X_NODES), read_main=files.get)
+    assert checked["runs_sha256"] == record["runs_sha256"]
+
+
+def test_rel_t1_g1b_copy_expansion_refuses_unbound_inputs(tmp_path, monkeypatch):
+    summary, published, amendment = expansion_relcopy_fixture(tmp_path, monkeypatch)
+    repo = tmp_path / "repo"
+    dest = "docs/r1/reports/g5_rel_t1_g1b/test-expansion"
+    amendment["sha256"] = "0" * 64
+    stop("published R1-G5-S9 PRE-SPLIT v2 amendment", RC.copy_summary, SPEC, "x", summary, dest, repo=repo)
+    amendment["sha256"] = RC.X_SPLIT_SHA256
+    stop("expansion summary must be", RC.copy_summary, SPEC, "x", summary.with_name("other.json"), dest, repo=repo)
+    review = published.pop(RC.X_REVIEW)
+    stop("requires these records on published main", RC.copy_summary, SPEC, "x", summary, dest, repo=repo)
+    published[RC.X_REVIEW] = review
+    source = summary.read_bytes()
+    published[f"{RC.X_RESULT}/summary.json"] = source + b"\n"
+    stop("differs from the accepted G.1b result", RC.copy_summary, SPEC, "x", summary, dest, repo=repo)
+    published[f"{RC.X_RESULT}/summary.json"] = source
+    summary.write_bytes(source + b"\n")
+    stop("differs from the reviewed published result", RC.copy_summary, SPEC, "x", summary, dest, repo=repo)
+    summary.write_bytes(source)
+    runs_path = summary.parent / "runs.jsonl"
+    runs_path.write_bytes(runs_path.read_bytes() + b"\n")
+    stop("not bound to its directory", RC.copy_summary, SPEC, "x", summary, dest, repo=repo)
+    assert not (repo / dest).exists()
+
+
+def test_rel_t1_g1b_copy_expansion_refuses_audit_seeds_and_existing_target(tmp_path, monkeypatch):
+    rows = g1b_runs(G.X_NODES)
+    summary, _, _ = expansion_relcopy_fixture(tmp_path / "bad", monkeypatch, [*rows, dict(rows[0], train_seed=7006)])
+    repo = tmp_path / "repo"
+    dest = "docs/r1/reports/g5_rel_t1_g1b/test-expansion"
+    stop("seed in the audit block 7001-7010", RC.copy_summary, SPEC, "x", summary, dest, repo=repo)
+    target = repo / dest
+    assert not target.exists()
+
+    summary, _, _ = expansion_relcopy_fixture(tmp_path / "good", monkeypatch)
+    write_copies = RC._write_copies
+
+    def concurrent_target(*args):
+        target.mkdir()
+        return write_copies(*args)
+
+    monkeypatch.setattr(RC, "_write_copies", concurrent_target)
+    stop("written once", RC.copy_summary, SPEC, "x", summary, dest, repo=repo)
+    assert target.is_dir() and not list(target.iterdir())
+
+
 DETERMINISM_FAILED = {"qualifies_D21": False, "reason": "fixed-seed determinism failed",
                       "determinism": {"deterministic": False}, "divergent": {"rows": 0, "by_config": {}}}
 
