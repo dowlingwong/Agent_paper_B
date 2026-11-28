@@ -16,7 +16,7 @@ def busy(seconds, cpu):
 
 
 def record(phase, cpus, workers, load):
-    free = cpus - (load - workers)
+    free = cpus - max(0.0, load - workers)
     return {"utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "phase": phase, "cpus": cpus, "workers_running": workers,
             "load1": round(load, 2), "free_for_others": round(free, 2),
