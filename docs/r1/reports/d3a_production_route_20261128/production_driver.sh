@@ -28,13 +28,13 @@ DATA_CACHE="$B/data_cache"
 SCOPE="systemd-run --user --scope -p Delegate=yes -p MemoryMax=20G -p MemorySwapMax=0"
 
 mkdir -p "$V"
+status() { echo "$(date -u +%FT%TZ) $*" | tee -a "$V/status.log"; }
 cd "$REPO"
 
 # The reviewed screening cache must be staged for every OpenML node before a campaign.
 for n in openml_breast_w openml_climate openml_credit_approval openml_ionosphere openml_sonar; do
   [ -d "$DATA_CACHE/$n/data_cache" ] || { status "data_cache missing for $n"; exit 81; }
 done
-status() { echo "$(date -u +%FT%TZ) $*" | tee -a "$V/status.log"; }
 
 # Canonical leases: fd 8 = CPUs 16-31, fd 9 = the GPU card the probe checks by inheritance.
 exec 8>"$CPU_LEASE"
