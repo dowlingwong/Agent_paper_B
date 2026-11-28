@@ -1,0 +1,9 @@
+2026-11-28T19:27:30Z leases_taken gpu=/home/dowling/r1_locks/gpu0.lock cpu=/home/dowling/r1_locks/cpus-16-31.lock wrapper=1673636
+2026-11-28T19:27:30Z probe_start
+2026-11-28T19:27:30Z probe_rc=0
+2026-11-28T19:27:30Z server_start
+2026-11-28T19:27:30Z server_pid=1673663
+2026-11-28T19:27:35Z server_ready=1
+2026-11-28T19:27:35Z server_stop
+2026-11-28T19:27:35Z server_rc=0
+2026-11-28T19:27:37Z leases_released

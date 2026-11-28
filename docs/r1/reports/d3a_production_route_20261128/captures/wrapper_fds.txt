@@ -1,0 +1,7 @@
+总计 0
+lr-x------ 1 dowling dowling 64 11月 28 11:27 0 -> pipe:[102247054]
+l-wx------ 1 dowling dowling 64 11月 28 11:27 1 -> pipe:[102247055]
+l-wx------ 1 dowling dowling 64 11月 28 11:27 2 -> pipe:[102247056]
+lr-x------ 1 dowling dowling 64 11月 28 11:27 255 -> /home/dowling/r1_tracks/work/d3a_prod_20261128/record/endpoint_run.sh
+l-wx------ 1 dowling dowling 64 11月 28 11:27 8 -> /home/dowling/r1_locks/cpus-16-31.lock
+l-wx------ 1 dowling dowling 64 11月 28 11:27 9 -> /home/dowling/r1_locks/gpu0.lock

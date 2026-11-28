@@ -1,0 +1,1 @@
+{"driver": "535.309.01", "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94", "host": "TASL-2", "lease": true, "lease_kind": "lease", "memory_check": "pass", "model": "NVIDIA GeForce RTX 4090"}

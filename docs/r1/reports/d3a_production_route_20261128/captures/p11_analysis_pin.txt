@@ -1,0 +1,8 @@
+# P11 analysis pin and tests at the production base (engineering re-check)
+# Host: TASL-2, repo /home/dowling/r1_tracks/work/d3a_prod_20261128/repo at c3a48405
+# Command:
+#   sha256sum r1/c3/d3_analysis.py
+#   PYTHONPATH=<audit shim> AR_HARNESS_ROOT=<harness 9bb41680> pytest -q -p no:cacheprovider -rfE r1/tests/test_d3_analysis.py
+# Output:
+c0be039905e682e8b1702542e16607f09daf30a59be3363bbdf5a85c64a484ce  r1/c3/d3_analysis.py
+53 passed, 18 subtests passed in 2.28s

@@ -1,0 +1,13 @@
+{
+ "allocated_utc": "2026-11-28T19:30:00Z",
+ "checks": {
+  "active_jobs": "No Paper B job on TASL-2, TASL-7, Ada or deepthought; the ETP queue holds no dwong job at 19:28Z (see captures/active_jobs_20261128.txt).",
+  "host_directories": "No path matching *d3a-prod-20261128* under /home/dowling/r1_tracks/work on TASL-2 or TASL-7 before allocation.",
+  "records": "No report, record or branch on origin/main, origin/coord/compute or origin/coord/local uses this run id."
+ },
+ "purpose": "D.3a production evidence: seven nodes x seven arms x repetition 0, one run id for the stage; no chunk has started.",
+ "run_id": "d3a-prod-20261128-a",
+ "schema": "r1_d3_production_run_id_ledger/v1",
+ "state": "allocated_unused",
+ "used_by": []
+}
