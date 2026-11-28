@@ -1,0 +1,82 @@
+# local/20261128-10: 79 new G.5 focused failure/error IDs
+# Base a70c8872; reviewed draft 97db7586. All 24 baseline IDs also occur on the draft.
+
+ERROR r1/tests/test_t1_g5_tasl.py::test_p3_pilot_basis_check_passes_on_synthetic_sealed_g4b_attempts
+ERROR r1/tests/test_t1_g5_tasl.py::test_p3_pilot_basis_check_refusals
+FAILED r1/tests/test_t1_g5_seal.py::test_cli_commands_are_behind_the_gates
+FAILED r1/tests/test_t1_g5_tasl.py::test_audit_k_is_read_from_the_note
+FAILED r1/tests/test_t1_g5_tasl.py::test_c12_tasl7_audit_chunk_needs_tasl7s_own_record
+FAILED r1/tests/test_t1_g5_tasl.py::test_cited_reviews_must_name_a_review_file
+FAILED r1/tests/test_t1_g5_tasl.py::test_cli
+FAILED r1/tests/test_t1_g5_tasl.py::test_d21_scope_determinism_and_cross_host_still_stop
+FAILED r1/tests/test_t1_g5_tasl.py::test_d21_scope_non_qualifying_node_without_usable_sigma_still_stops
+FAILED r1/tests/test_t1_g5_tasl.py::test_d21_scope_rows_are_required_on_main
+FAILED r1/tests/test_t1_g5_tasl.py::test_draft_section5_block_is_the_key_lines_render
+FAILED r1/tests/test_t1_g5_tasl.py::test_followup_6_one_row_cannot_serve_as_decisions_and_e4_row
+FAILED r1/tests/test_t1_g5_tasl.py::test_g5_tasl_gpuh_b_needs_the_server_stopped_during_audits
+FAILED r1/tests/test_t1_g5_tasl.py::test_launch_validation_wants_the_run_copies_beside_the_summary_copy
+FAILED r1/tests/test_t1_g5_tasl.py::test_m1_c12_record_is_read_from_main
+FAILED r1/tests/test_t1_g5_tasl.py::test_m1_minor_record_checks
+FAILED r1/tests/test_t1_g5_tasl.py::test_m2_near_miss_record_names_stop[docs/r1/G5_AR_PREREQUISITES_20261206.md]
+FAILED r1/tests/test_t1_g5_tasl.py::test_m2_near_miss_record_names_stop[docs/r1/reports/a/b/G5_AR_PREREQUISITES_20261206.md]
+FAILED r1/tests/test_t1_g5_tasl.py::test_m2_near_miss_record_names_stop[docs/r1/reports/g5_ar_20261206/G5_AR_PREREQUISITES_20261206_v2.md]
+FAILED r1/tests/test_t1_g5_tasl.py::test_m3_autoresearch_jobs_join_the_floors_by_node
+FAILED r1/tests/test_t1_g5_tasl.py::test_m3_freeze_date_read_from_the_note
+FAILED r1/tests/test_t1_g5_tasl.py::test_m3_gate_copy_on_main_beside_the_summary_and_reviewed
+FAILED r1/tests/test_t1_g5_tasl.py::test_m3_seven_copy_needs_its_cross_check_gate[gate0-assembly_json_sha256]
+FAILED r1/tests/test_t1_g5_tasl.py::test_m3_seven_copy_needs_its_cross_check_gate[gate1-schema]
+FAILED r1/tests/test_t1_g5_tasl.py::test_m3_seven_copy_needs_its_cross_check_gate[gate2-nodes]
+FAILED r1/tests/test_t1_g5_tasl.py::test_m3_seven_copy_needs_its_cross_check_gate[gate3-crosscheck_run_id]
+FAILED r1/tests/test_t1_g5_tasl.py::test_m3_seven_copy_needs_its_cross_check_gate[gate4-g1b_spec_sha256]
+FAILED r1/tests/test_t1_g5_tasl.py::test_m5_launch_under_arpend_b
+FAILED r1/tests/test_t1_g5_tasl.py::test_m6_wording_checkouts_and_cited_reviews
+FAILED r1/tests/test_t1_g5_tasl.py::test_note_binding_and_prerequisites[<lambda>-P1 must cite]
+FAILED r1/tests/test_t1_g5_tasl.py::test_note_binding_and_prerequisites[<lambda>-P11 must be PASS|placeholder]
+FAILED r1/tests/test_t1_g5_tasl.py::test_note_binding_and_prerequisites[<lambda>-P3 must cite0]
+FAILED r1/tests/test_t1_g5_tasl.py::test_note_binding_and_prerequisites[<lambda>-P3 must cite1]
+FAILED r1/tests/test_t1_g5_tasl.py::test_note_binding_and_prerequisites[<lambda>-P6 must cite]
+FAILED r1/tests/test_t1_g5_tasl.py::test_note_binding_and_prerequisites[<lambda>-audited_band]
+FAILED r1/tests/test_t1_g5_tasl.py::test_note_binding_and_prerequisites[<lambda>-paper_commit]
+FAILED r1/tests/test_t1_g5_tasl.py::test_note_binding_and_prerequisites[<lambda>-placeholder]
+FAILED r1/tests/test_t1_g5_tasl.py::test_note_binding_and_prerequisites[<lambda>-spec_sha256]
+FAILED r1/tests/test_t1_g5_tasl.py::test_note_key_lines_are_matched_line_by_line
+FAILED r1/tests/test_t1_g5_tasl.py::test_note_signature_draft_mode_and_name
+FAILED r1/tests/test_t1_g5_tasl.py::test_p3_main_half_runs_at_tasl7_job_starts
+FAILED r1/tests/test_t1_g5_tasl.py::test_round2_n1_b_stop_is_recorded_once_on_tasl2_only
+FAILED r1/tests/test_t1_g5_tasl.py::test_shipped_spec_is_all_a_unsigned_and_matches_the_draft
+FAILED r1/tests/test_t1_g5_tasl.py::test_spec_carries_nodes_families_seeds_markers_and_key_values
+FAILED r1/tests/test_t1_g5_tasl.py::test_spec_carries_the_t1_feat_decisions_fields
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-PENDING items]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-byte-identical]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-d21_verdict]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-environment must read]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-g1b_note]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-g5_spec_sha256]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-host_check]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-review must be on main]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-review]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-tails]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-unfilled]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_record_contents[<lambda>-verdict]
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_review_verdict_and_other_environment
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_15_tails_nu
+FAILED r1/tests/test_t1_g5_tasl.py::test_stop_5_for_autoresearch_from_its_record
+FAILED r1/tests/test_t1_g5_tasl.py::test_switch_decisions_and_e4_rows
+FAILED r1/tests/test_t1_g5_tasl.py::test_switch_is_off_by_default_and_needs_both_keys
+FAILED r1/tests/test_t1_g5_tasl.py::test_switch_noise_precheck_before_any_job
+FAILED r1/tests/test_t1_g5_tasl.py::test_switch_refuses_an_unsigned_or_blocked_spec
+FAILED r1/tests/test_t1_g5_tasl.py::test_switch_rel_t1_g1b_copy_checks_and_stop_5
+FAILED r1/tests/test_t1_g5_tasl.py::test_switch_stop_13_pin_check_and_family_checkout
+FAILED r1/tests/test_t1_g5_tasl.py::test_switch_stop_14_freeze_wait
+FAILED r1/tests/test_t1_g5_tasl.py::test_switch_stop_15_exactly_one_reviewed_record
+FAILED r1/tests/test_t1_g5_tasl.py::test_t1_feat_decisions_row_is_checked_at_launch
+FAILED r1/tests/test_t1_g5_tasl.py::test_tails_constants_and_the_shipped_spec
+FAILED r1/tests/test_t1_g5_tasl.py::test_tails_line_unchanged_for_gaussian_and_pending
+FAILED r1/tests/test_t1_g5_tasl.py::test_tails_nu_spec_field_validated
+FAILED r1/tests/test_t1_g5_tasl.py::test_tasl2_cpu_row_is_required_at_launch
+FAILED r1/tests/test_t1_g5_tasl.py::test_tasl2_cpuset_record_gates_houseprice_tasl2_jobs
+FAILED r1/tests/test_t1_g5_tasl.py::test_two_cards_pending_node_runs_on_tasl2_not_on_tasl7_until_its_pass
+FAILED r1/tests/test_t1_g5_tasl.py::test_two_cards_tasl7_audit_launch_needs_the_cross_host_pass
+FAILED r1/tests/test_t1_g5_tasl.py::test_two_cards_xc3_note_binds_the_xc3_spec_on_main
+FAILED r1/tests/test_t1_g5_tasl.py::test_two_cards_xc3_reading_from_main
+FAILED r1/tests/test_t1_g5_tasl.py::test_xc3_listed_record_on_a_tasl7_launch
