@@ -1745,6 +1745,12 @@ preregistration, the gate code and every signed note are unchanged.
 |---|---|
 | R1-MAC-WORKFLOW-APPROVAL | **Approve the four Mac worker and coordinator documentation edits for review and publication** (author, 27 Nov 2026, in Codex chat, “都没问题，我允许的，签署同意并commit， push”, responding to the four-file review and the Mac checkout item in `AUTHOR.md` at `a536afe7`). Scope: the worker launch guide in `README.md`, task cadence and agent runtimes in `canon/README.md`, the dispatch procedure in the coordinator's `SOUL.md`, and its linked work-order and §7 updates in `AUTOML_AS_DAC_NEXT_PHASE_20261126.md`. Carry the changes onto published main with its newer manuscript, stage approval and preflight procedures retained. The coordinator may publish the reviewed document changes under R1-CODEX-RECORDED-SIGNATURES. The locally provisioned launcher and other checkout changes are outside this approval. |
 
+### 28 November 2026 (a) — P.4 E0 same-code repeatability (author)
+
+| ID | Decision |
+|---|---|
+| R1-P4-E0-REPEATABILITY | **Repeat the P.4 E0 run once on each host at the identical code, configuration, data, model and seed before any change to the E0 criterion** (author, 28 Nov 2026, in the coordinator session: "同意 A，先做两边同代码重复性复测。若需要修改 E0 的通过标准，再把证据和新判据给我。", answering `AUTHOR.md` on `coord/coordinator` @ `a06dfc3f`). Basis: under R1-P4-E0-SAME-CODE-REFERENCE the TASL-7 run (`main` `7716cfce`) passes both slopes but its RPS is 19.09 % below the pinned Ada run `p5_20261127_b/e0e` (relative tolerance 10 %). (1) Compute runs one repeat on Ada (RTX 6000 Ada) and one on TASL-7 (RTX 4090), each bound to paper `c80f83bc`, the same `e0_config_ref.json` content as the first run on that host, the same data manifest, base model and seed, under the per-card lease on an empty card, ENGINEERING_ONLY. (2) It reports each host's within-host differences on the three E0 criteria with the existing comparator, and the cross-host comparison, without changing a tolerance. (3) The existing E0 criterion stays in force: the phase-1 note and A5 SFT remain gated under R1-P4-PHASE1-SIGNATURE. Any change to the E0 pass criterion comes to the author with the repeat evidence and the proposed criterion; nothing is adopted before the author signs it. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
