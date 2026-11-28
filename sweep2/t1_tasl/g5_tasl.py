@@ -3053,6 +3053,13 @@ def operational_spec(path: Path, *, engineering: bool = False, launch: bool = Tr
     return spec
 
 
+def close_scan(engineering: bool):
+    if not engineering:
+        return G.processes_mentioning
+    import g5_p11
+    return g5_p11.close_processes
+
+
 def part_3b2(a) -> dict:
     """The part 3b-2 commands behind the same gates as ``close-attempt``: the spec validated for launch (the copy step,
     which precedes the signature, without launch) and the import-source check after the lazy imports."""
@@ -3072,7 +3079,7 @@ def part_3b2(a) -> dict:
     if a.cmd == "seal-server":
         return SE.seal_server(spec, Path(a.server_dir))
     if a.cmd == "close-server":
-        return SE.close_server(spec, Path(a.server_dir), a.reason)
+        return SE.close_server(spec, Path(a.server_dir), a.reason, scan=close_scan(engineering))
     if a.cmd == "server-span":
         return SE.register_server_span(spec, Path(a.receipt))
     if a.cmd == "rel-copy":
@@ -3253,7 +3260,7 @@ def main(argv=None) -> int:
             check_import_sources()
             spec = operational_spec(Path(a.spec), engineering=a.engineering)
             print(json.dumps(g5_job.close_attempt(spec, Path(a.spec), a.node, a.job, Path(a.attempt_dir), a.reason,
-                                                  chunk=a.chunk), indent=1))
+                                                  chunk=a.chunk, scan=close_scan(a.engineering)), indent=1))
         elif a.cmd in ("claim-chunk", "register-chunk", "abandon-claim", "finalize-remote"):   # TWO-CARDS, TASL-2
             import g5_job                                    # noqa: PLC0415
             check_import_sources()
