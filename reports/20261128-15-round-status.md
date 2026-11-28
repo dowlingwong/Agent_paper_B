@@ -28,7 +28,8 @@ running anywhere, and no card was runnable this round.** All host reads below ar
 ## Active jobs and leases
 
 - `760158.0` (`dwong`, R2 sparse-sk project, `slot1_4@c03-001-179`, 4 CPUs / 32 GB) is running. It is **not a
-  Paper B job** and was not touched. Pool totals: 3 running, 0 idle for our submitter; 12,275 idle slots all users.
+  Paper B job** and was not touched. The submitter `dwong` has no queued job; pool-wide, all users have 137
+  running and 12,275 idle jobs (slots are a separate count).
 - No GPU model beyond A100/V100S/L40S/TITAN X is advertised. **No H200 or H100 is back.** The ETP collector's GPU
   ads are the two TITAN X on `deepthought` and the one L40S on `deepthought2`; TOpAS shows V100S (`c03-001-159`),
   A100 (`c03-001-167` 0 free, `c03-001-175` 8 free but not startable, `c03-001-179` 0 free).
