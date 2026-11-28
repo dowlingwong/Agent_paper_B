@@ -6,7 +6,7 @@ ETTh1 supplies a separate descriptive node output under R1-G5-S9 (2). It is excl
 arms training and the primary gate.
 
 ```text
-approved: false
+approved: true
 run_id: c3_t1_labels_20261128_addendum_3
 node: gc7rc_etth1
 paper_commit: 2a58f7ac5147dad1259914593901ccb226a147f9
