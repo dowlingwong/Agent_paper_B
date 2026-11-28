@@ -5,7 +5,7 @@ The coordinator publishes the approved note after the per-node binding and indep
 This node enters the T1 MLGym suite for the arms and primary gate after the signed releases.
 
 ```text
-approved: false
+approved: true
 run_id: c3_t1_labels_20261128_addendum_2
 node: mlgym_metamaze
 paper_commit: 9b044b59f58109b3d1e4eb1822623160958b1d95
