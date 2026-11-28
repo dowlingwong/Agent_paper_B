@@ -17,10 +17,32 @@ COPY_DIR = "docs/r1/reports/g5_rel_t1_g1b_20261126/seven"
 COPY_REVIEW = "docs/r1/reviews/REL_T1_G1B_COPY_REVIEW_20261126.md"
 FIXTURE = Path(__file__).with_name("g5_p11_fixture")
 ISOLATION_LIB = "src/autoresearch/trackg/node_lib/ar_isolated.py"
+SHELLS = {"bash", "dash", "sh", "zsh"}
 
 
 def root() -> Path:
     return Path.home() / "r1_engineering" / "g5-p11"
+
+
+def close_processes(path: Path, proc_root: Path = Path("/proc")) -> list[int]:
+    """Exclude the P11 CLI and its shell launchers from the command-line scan."""
+    pid = os.getpid()
+    invocation = {pid}
+    while True:
+        try:
+            status = (proc_root / str(pid) / "status").read_text(encoding="utf-8", errors="replace")
+            parent = next((line.removeprefix("PPid:").strip() for line in status.splitlines()
+                           if line.startswith("PPid:")), "")
+            if not parent.isdecimal():
+                break
+            parent_pid = int(parent)
+            if parent_pid == 0 or parent_pid in invocation or (proc_root / parent / "exe").readlink().name not in SHELLS:
+                break
+        except OSError:
+            break
+        pid = parent_pid
+        invocation.add(pid)
+    return [pid for pid in S.G.processes_mentioning(path, proc_root) if pid not in invocation]
 
 
 def no_links(path: Path) -> None:
