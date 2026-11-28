@@ -1,0 +1,8 @@
+cd /data1/zli538/paperb_p4_20261127/p5_20261127_b/paper_c80f83bc
+AR_HARNESS_ROOT=/data1/zli538/paperb_p4_20261127/p5_20261127_b/harness \
+HF_HOME=/data1/zli538/paperb_p4_20261127/p5_20261127_b/hf \
+TRANSFORMERS_OFFLINE=1 HF_HUB_OFFLINE=1 PYTHONDONTWRITEBYTECODE=1 \
+  /data1/zli538/paperb_p4_20261127/venv/bin/python -B r1/scripts/trackp_gpu_smoke.py \
+  --model models/qwen3.5-0.8b-base --out <capture>/smoke_report.json \
+  --gpu GPU-f439cca8-bd1d-d5c6-d15e-bbfbc02c8154 \
+  --lock /data1/zli538/r1_locks/gpu0.lock --lease-log <capture>/smoke_lease.jsonl
