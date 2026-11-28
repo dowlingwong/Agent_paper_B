@@ -1,0 +1,7 @@
+# t1_tasl g5 node=mlgym_breakout_minatar spec=/home/dowling/r1_engineering/g5-p11/g5-p11-20261128T033600Z-determinism.json start=2026-11-28T08:37:25Z host=TASL-2 cpus=0-7
+Running scope as unit: run-r6a1e78ac737e4883bb8ac8edb5d207c4.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r6a1e78ac737e4883bb8ac8edb5d207c4.scope
+STOP: foreign compute processes on the leased GPU before the job: [{'pid': 1302930, 'used_memory': '21640 MiB'}] (no shared card)
+NODE_EXIT=2
+systemd_run_rc=2
+# end=2026-11-28T08:37:25Z

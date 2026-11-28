@@ -1,0 +1,7 @@
+# t1_tasl g5 node=mlab_imdb spec=/home/dowling/r1_engineering/g5-p11/g5-p11-20261128T033600Z-tar.json start=2026-11-28T10:04:51Z host=TASL-2 cpus=0-7
+Running scope as unit: run-r36844de796f746509fdf7837a718bc5a.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r36844de796f746509fdf7837a718bc5a.scope
+STOP: out.tar could not be written; out/ kept for the seal
+NODE_EXIT=2
+systemd_run_rc=2
+# end=2026-11-28T10:06:05Z

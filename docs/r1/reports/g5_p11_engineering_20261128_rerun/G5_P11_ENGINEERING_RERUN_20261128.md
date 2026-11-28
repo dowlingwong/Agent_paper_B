@@ -170,6 +170,12 @@ Node/run seals are not claimed for this scenario: `seal-node` correctly refuses 
 or node STOP, and the scenario deliberately runs wave 1 only. The primary `-lease` scenario covers node/run seals;
 the determinism evidence is the six chunk repeat receipts.
 
+Two extra node logs at `08:37:24Z`/`08:37:25Z` (PIDs 1308394/1308708) are the first campaign attempts of this
+scenario: they were refused before a job record because the P7 server still held the TASL-2 card. They are kept
+and attributed to that refusal; no campaign from them entered the run. The six repeat records carry the synthetic
+engine's internal `label: EVIDENCE` wire value; the record and every seal are ENGINEERING_ONLY and no evidence
+path reads them.
+
 ### `-restart` (C7/C10) — PASS
 
 Spec `g5-p11-20261128T033600Z-restart` sha256
@@ -210,8 +216,9 @@ Spec `g5-p11-20261128T033600Z-tar` sha256
 Spec `g5-p11-20261128T033600Z-closeserver` sha256
 `324db598fa00e18e9ef2c6cbbe0a7a0ff4f6f814e10dfed46f48c663dfe8920f`.
 
-- Server-1 (record `4154b044…`) had a normal end (21 s span) and was sealed by `seal-server`; it is the ordinary
-  path, not the interruption.
+- Server-1 (record `4154b044…`, 21 s span) was ended by the first kill attempt and its wrapper wrote an end
+  record with `server_rc: -9`; `seal-server` sealed it. It is the ordinary seal path, not the `close-server`
+  interruption (the `close-server` receipt is only on server-2).
 - Server-2 (record `967801cc…`) was started 10:06:47Z, probed, then the wrapper and child were killed with
   `SIGKILL` before the wrapper could write an end record. `close-server` wrote a receipt with `closed: true`,
   `end_basis: closed_at`, reason `P11 engineering server interruption`, `stopped_utc` 10:07:07Z; `seal-server`
@@ -226,14 +233,14 @@ Spec `g5-p11-20261128T033600Z-closeserver` sha256
 |---|---|---|
 | C2 | Both nodes, campaign + 3 audit chunks each, K = 10, re-materialization and isolation receipts; the `-determinism` scenario repeats the same fixed-seed claims: 200/200/10 same outcomes, 0 diffs, six repeat records agree | PASS |
 | C4 | Per-wave and per-chunk diagnostics for both nodes | PASS |
-| C5 | Ten primary chunk deadlines reproduce the declared formula; the `-determinism` chunks 0–2 also record the formula | PASS |
+| C5 | Ten primary chunk deadlines reproduce the declared formula; the `-determinism` chunks keep their diagnostics (their deadline fields are not part of this receipt) | PASS (primary) |
 | C6 | Attempt, node, run and server seals; access log; closed attempt; the `-tar` seal writes `out_clear.tar` | PASS |
 | C7 | Two primary server starts, probes and a stop/restart around the C11 chunk; the `-restart` scenario adds `restart-ready` → server down → STOP 12 → server-2 probe | PASS |
 | C9 | Meter at W = 20, MEM A, K = 10, closed attempt; 425 GPU-h threshold | PASS |
 | C10 | 3020 s primary proposer span with one restart; the `-restart` short span with both server identities and the interruption record; the hours-long/multi-day part remains STOP 12 while the table runs (R1-G5-P11) | PARTIAL (multi-day STOP 12) |
 | C11 | Server-holds-lease and chunk-holds-lease mutual refusals | PASS |
 | C14 | Real-engine harness, isolated worker, STOP 7 injection | PASS |
-| C15 | `seal-attempt`/`seal-node`/`seal-run`, `seal-server`, `server-span`, noise pre-check; `-tar` `out_clear.tar` (1,130 files) and `-closeserver` abnormal end; assembly/release need the signed note | PASS (assembly/release not yet) |
+| C15 | `seal-attempt`/`seal-node`/`seal-run`, `seal-server`, `server-span`, noise pre-check; `-tar` `out_clear.tar` (1,130 files), `-closeserver` abnormal end, and the reviewed REL-T1-G1B copy in the primary record; assembly/release need the signed note | PASS (assembly/release not yet) |
 | C16 | One full TASL-7 chunk claimed, run, registered and sealed on TASL-2 | PASS |
 
 ## Hashes that matter (new scenarios)
@@ -255,7 +262,9 @@ Spec `g5-p11-20261128T033600Z-closeserver` sha256
 archives stay on the hosts and are cited by their seal-receipt hashes; the record set carries the named JSON,
 JSONL and log members only. The `-determinism` repeat members are extracted from the sealed `out.tar` as
 `out/audit/determinism.json` and `out/audit-repeat/chunk_record.json`; the `-tar` member is the archive listing
-and its sha256, not the archive.
+and its sha256, not the archive. The `p11-probe` and `server-span` command outputs were printed to the
+console and not saved as separate files; the server records and seal receipts carry the identity and the span,
+and the meter reports 0 open servers for every scenario.
 
 ## What happens next
 
