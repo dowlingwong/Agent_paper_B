@@ -34,3 +34,8 @@ stands for C7 and the server side of C11.
 
 Decided alone: did not call `validate --launch` as an item test (per the disposition), did not fabricate a note or
 a smoke spec, and applied only the review's MINOR-1 wording fix.
+
+**Update 28 Nov 02:00 CET:** the coordinator has withdrawn the "checked at publication" disposition for the
+P11 host tests (STATE `a06dfc3f`: `local/20261128-02` must supply a G.5 P11 engineering smoke path, because
+R1-G5-P11 needs pre-publication coverage). The refusal captures above remain valid evidence, but the task is
+**not complete**: compute runs the engineering smoke items when local publishes that path, then gets a fresh review.
