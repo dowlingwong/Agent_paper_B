@@ -19,7 +19,7 @@ below. The same ID and spec bytes are used on both hosts. Start with the primary
 and retain any refusal, exit code, attempt or claim. Record actual paths and IDs.
 
 Set these variables in the task checkout on both hosts. Supply one common UTC stamp and
-use a fresh one for each scenario. Capture the spec SHA-256 from `p11-init` on both hosts.
+use a fresh one for each scenario. Capture the spec SHA-256 and clean exact task commit from `p11-init` on both hosts.
 
 ```sh
 unset G5_TASL_ENABLE_REAL
@@ -121,7 +121,7 @@ again with the server down. When
 `$RUN/mlab_imdb/audits-wave1/chunk-1/attempt-1/out/lease-ready` appears, run
 `g5 serve "$SPEC" --engineering` in a separate TASL-7 terminal and verify the
 same lease refusal. Create `lease-continue` beside `lease-ready` to finish the
-audit. Check the live GPU model and driver in the resulting job record.
+audit. Check the live GPU model, driver, paper commit and both environment freezes in the resulting job record.
 If a pre-engine attempt allocated a directory, use its actual attempt number.
 
 Copy the TASL-7 completed attempt, wrapper log and `$RUN/_access_log.jsonl` into
@@ -151,6 +151,7 @@ attempt's `out/` tree for the seal. Verify that the seal records and hashes
 # TASL-2, separate closed-attempt scenario
 g5 p11-meter "$SPEC"
 g5 p11-closed-fixture "$SPEC"
+sleep 5 # Make the synthetic interval visible at the meter’s 0.001 GPU-hour resolution.
 ATTEMPT="$RUN/mlab_imdb/campaigns-wave1/attempt-1"
 g5 close-attempt "$SPEC" "$ATTEMPT" --node mlab_imdb --job campaigns-wave1 \
   --reason "P11 synthetic interrupted attempt" --engineering
@@ -189,7 +190,8 @@ the earlier reviewed real REL-T1-G1B copy and bind its digest in the coverage
 record. Real C15 assembly and release remain gated by the signed sequence.
 
 ```sh
-PYTHONPATH="$T1" python3 -c 'from pathlib import Path; import g5_assemble,sys; p=Path(sys.argv[1]); g5_assemble.verify_evidence(p,p,test=False)' "$BASE/table/$ID"
+python3 -m r1.c3.release --stage traindev --source g5 --table "$BASE/table/$ID" \
+  --audit "$BASE/table/$ID" --out "$BASE/table/$ID/release"
 ```
 
 The host record reports each C item, the actual code and spec SHA-256, review,

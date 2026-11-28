@@ -857,12 +857,12 @@ def verify_evidence(table_dir: Path, audit_dir: Path, *, test: bool, lock=None, 
     spec = S.load_spec(spec_path)
     spec_sha = L._sha_file(spec_path)
     table_dir, audit_dir = Path(table_dir), Path(audit_dir)
-    engineering_root = (Path.home() / "r1_engineering" / "g5-p11").resolve()
-    if any(path.resolve().is_relative_to(engineering_root) for path in (table_dir, audit_dir)):
-        raise Stop("STOP: P11 engineering outputs cannot enter a G.5 release")
+    from r1.c3.release import ReleaseStop, refuse_g5_engineering
+    try:
+        refuse_g5_engineering(table_dir, audit_dir)
+    except ReleaseStop as exc:
+        raise Stop(str(exc)) from None
     build = json.loads((table_dir / "build.json").read_text())
-    if build.get("label") == "ENGINEERING_ONLY":
-        raise Stop("STOP: P11 engineering outputs cannot enter a G.5 release")
     if build.get("schema") != TABLE_SCHEMA or build.get("spec_sha256") != spec_sha or build.get("source") != SOURCE:
         raise Stop("STOP: the table was not built by this assembly from the committed G.5 spec")
     check = lock or SE.release_lock

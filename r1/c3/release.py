@@ -659,6 +659,21 @@ def _published_clean(release_checks, extra_paths=()) -> bytes:
     return data
 
 
+def refuse_g5_engineering(table_dir: Path, *other_paths: Path) -> None:
+    """Refuse P11 artifacts before a release can read a data partition."""
+    root = (Path.home() / "r1_engineering" / "g5-p11").resolve()
+    if any(path.resolve().is_relative_to(root) for path in (table_dir, *other_paths)):
+        raise ReleaseStop("STOP: P11 engineering outputs cannot enter a G.5 release")
+    metadata = table_dir / "build.json"
+    if metadata.is_file():
+        try:
+            build = json.loads(metadata.read_bytes())
+        except (OSError, ValueError):
+            return  # The existing integrity check handles malformed evidence metadata.
+        if isinstance(build, dict) and build.get("label") == "ENGINEERING_ONLY":
+            raise ReleaseStop("STOP: P11 engineering outputs cannot enter a G.5 release")
+
+
 def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrity_args: dict) -> dict:
     """Write the receipted partition of (source, stage); returns the receipt. Refuses an existing output."""
     from r1.c3 import release_checks
@@ -667,6 +682,8 @@ def release(stage: str, *, source: str, table_dir, audit_dir, out_root, integrit
     tier = SOURCES[source]
     table_dir, audit_dir, out_root = Path(table_dir), Path(audit_dir), Path(out_root)
     refuse_sealed(table_dir, audit_dir, out_root)
+    if source == "g5":
+        refuse_g5_engineering(table_dir, audit_dir, out_root)
     head = _head()
     require_d8_confirmation()
     row = release_row(tier, stage, writing=True)

@@ -37,7 +37,7 @@ class SyntheticChat:
         else:
             value = self.state
             new_line = f"OFFSET = {value}  # inert"
-        diff = f"--- a/train.py\n+++ b/train.py\n@@ -3,3 +3,3 @@\n \n-OFFSET = {self.state}\n+{new_line}\n \n"
+        diff = f"--- a/train.py\n+++ b/train.py\n@@ -5,3 +5,3 @@\n \n-OFFSET = {self.state}\n+{new_line}\n \n"
         self.state = value
         return json.dumps({"rationale": "P11 synthetic", "summary": "change integer offset",
                            "objective": "synthetic CUDA checksum", "diff": diff}), {
@@ -60,7 +60,7 @@ def infrastructure_runner(*args, **kwargs):
 
 def metrics(out: Path) -> dict:
     rows = [json.loads(line) for line in (out / "rows.jsonl").read_text().splitlines()]
-    good = [r for r in rows if r["kind"] == "ok"]
+    good = [r for r in rows if r["outcome"]["kind"] == "ok"]
     if any(not math.isfinite(r["outcome"]["value"]) for r in good):
         raise ValueError("non-finite synthetic audit value")
     return {(r["unit"], r["seed"]): r["outcome"]["value"] for r in good}
@@ -79,13 +79,20 @@ def main() -> int:
     infile = a.campaign if a.mode == "campaign" else a.chunk
     if infile is None:
         p.error("input does not match the engine command")
-    data = json.loads(infile.read_bytes())
-    run_id = data["run_id"]
+    base = Path.home() / "r1_engineering" / "g5-p11"
+    kit = a.harness_root.absolute()
+    run_id = kit.name
     if not re.fullmatch(r"g5-p11-[0-9]{8}T[0-9]{6}Z(?:-[a-z0-9]+)?", run_id):
         p.error("P11 requires a synthetic run ID")
-    base = Path.home() / "r1_engineering" / "g5-p11"
-    if a.harness_root.resolve() != base / "kit" / run_id or base / "runs" / run_id not in a.out.resolve().parents:
-        p.error("P11 engine inputs and outputs must use the engineering root")
+    out = a.out.absolute()
+    expected_infile = out.parent / ("campaign.json" if a.mode == "campaign" else "chunk.json")
+    if kit != base / "kit" / run_id or kit.resolve() != kit or \
+            base / "runs" / run_id not in out.parents or out.resolve() != out or \
+            infile.absolute() != expected_infile or infile.resolve() != expected_infile:
+        p.error("P11 engine inputs and outputs must use the engineering run and attempt")
+    data = json.loads(infile.read_bytes())
+    if data.get("run_id") != run_id:
+        p.error("P11 engine input belongs to another run")
     if a.mode == "audit" and run_id.endswith("-lease") and os.uname().nodename == "TASL-7":
         (a.out.parent / "lease-ready").touch(exist_ok=False)
         while not (a.out.parent / "lease-continue").is_file():
@@ -109,6 +116,9 @@ def main() -> int:
             (a.out / "determinism.json").write_text(json.dumps({
                 "label": "ENGINEERING_ONLY", "same_fixed_seed_outcomes": len(original),
             }) + "\n")
+    result_name = "campaign_record.json" if a.mode == "campaign" else "chunk_record.json"
+    rec["label"] = "ENGINEERING_ONLY"
+    (a.out / result_name).write_text(json.dumps(rec, indent=1, sort_keys=True, default=str) + "\n")
     (a.out / "p11-unread.bin").write_bytes(b"\xff\x00P11\x00\x80")
     if run_id.endswith("-tar"):
         # An existing directory makes the actual tar command fail without exhausting shared disk.

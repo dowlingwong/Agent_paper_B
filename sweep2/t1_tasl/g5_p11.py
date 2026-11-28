@@ -36,10 +36,20 @@ def run_keys(run_id: str) -> tuple[Path, Path]:
     return base, base / f"{run_id}.json"
 
 
+def paper_pin() -> str:
+    head = S.G._sh(["git", "rev-parse", "HEAD"], cwd=S.REPO_ROOT)
+    status = S.G._sh(["git", "status", "--porcelain", "--untracked-files=all"], cwd=S.REPO_ROOT)
+    pin = head.stdout.strip()
+    if head.returncode or status.returncode or status.stdout.strip() or not re.fullmatch(r"[0-9a-f]{40}", pin):
+        raise S.Stop("STOP: P11 engineering requires a clean task checkout at its exact paper commit")
+    return pin
+
+
 def _recipe(path: Path, raw: dict) -> dict:
     run_id = raw.get("run_id")
     base, spec_file = run_keys(run_id)
-    if raw != {"schema": SCHEMA, "label": LABEL, "run_id": run_id} or path.absolute() != spec_file:
+    if raw != {"schema": SCHEMA, "label": LABEL, "run_id": run_id, "paper_commit": paper_pin()} or \
+            path.absolute() != spec_file:
         raise S.Stop(f"STOP: P11 requires the exact engineering recipe at {spec_file}")
     no_links(spec_file)
     if os.environ.get(S.ENABLE_ENV) == "1":
@@ -73,13 +83,13 @@ def load(path: Path, raw: dict) -> dict:
 
 def create(run_id: str) -> dict:
     base, target = run_keys(run_id)
-    raw = {"schema": SCHEMA, "label": LABEL, "run_id": run_id}
+    raw = {"schema": SCHEMA, "label": LABEL, "run_id": run_id, "paper_commit": paper_pin()}
     _recipe(target, raw)
     base.mkdir(parents=True, exist_ok=True)
     with target.open("x", encoding="utf-8") as fh:
         json.dump(raw, fh, sort_keys=True)
         fh.write("\n")
-    return {"label": LABEL, "spec": str(target), "sha256": S.L._sha_file(target)}
+    return {"label": LABEL, "spec": str(target), "sha256": S.L._sha_file(target), "paper_commit": raw["paper_commit"]}
 
 
 def _file_set(node: str, library: bytes) -> dict[str, bytes]:
@@ -190,6 +200,7 @@ def closed_fixture(spec: dict) -> dict:
 
 
 def probe(spec: dict) -> dict:
+    from datetime import datetime, timezone
     from time import monotonic
     from urllib.error import URLError
     from urllib.request import Request, urlopen
@@ -207,6 +218,7 @@ def probe(spec: dict) -> dict:
             document = json.load(response)
     except (URLError, OSError, ValueError) as exc:
         raise S.Stop(f"STOP 12: the engineering proposer probe failed: {exc}") from None
-    return {"label": LABEL, "run_id": spec["run_id"], "identity": identity,
+    return {"label": LABEL, "run_id": spec["run_id"], "utc": datetime.now(timezone.utc).isoformat(),
+            "identity": identity,
             "completion_seconds": monotonic() - start, "usage": document.get("usage"),
             "health": S.T4.latency_probe(spec)}

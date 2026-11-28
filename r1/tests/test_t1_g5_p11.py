@@ -19,6 +19,7 @@ RUN_ID = "g5-p11-20261128T120000Z"
 def recipe(tmp_path, monkeypatch):
     monkeypatch.setattr(P.Path, "home", lambda: tmp_path)
     monkeypatch.delenv(S.ENABLE_ENV, raising=False)
+    monkeypatch.setattr(P, "paper_pin", lambda: "a" * 40)
     path = Path(P.create(RUN_ID)["spec"])
     return path, S.load_spec(path, engineering=True)
 
@@ -26,6 +27,7 @@ def recipe(tmp_path, monkeypatch):
 def test_disjoint_recipe_paths_and_identity(recipe):
     path, spec = recipe
     assert S.output_label(spec) == P.LABEL
+    assert spec["paper_commit"] == "a" * 40
     assert {n["node"] for n in spec["nodes"]} == set(P.NODES)
     assert all(n["data_manifest_sha256"] is None for n in spec["nodes"])
     for root in (J.run_root(spec), J.SE.sealed_run(spec), J.SE.proposer_sealed_run(spec)):
@@ -79,6 +81,10 @@ def test_release_refuses_marker_even_after_copy(recipe, tmp_path):
             (directory / "build.json").write_bytes((marker / "build.json").read_bytes())
         with pytest.raises(S.Stop, match="engineering outputs"):
             g5_assemble.verify_evidence(directory, directory, test=False)
+        from r1.c3.release import ReleaseStop, release
+        with pytest.raises(ReleaseStop, match="engineering outputs"):
+            release("traindev", source="g5", table_dir=directory, audit_dir=directory,
+                    out_root=tmp_path / "release", integrity_args={})
 
 
 def test_synthetic_seal_has_engineering_label(recipe):

@@ -881,7 +881,7 @@ RECORD_KEYS = {"schema", "label", "run_id", "node", "family", "job", "wave", "ch
                "ptrace_scope", "cgroup", "harness", "environment", "data", "server_record", "server_props_before",
                "server_props_after", "server_stopped", "latency_probe_before", "latency_probe_after", "deadline_epoch",
                "started_utc", "finished_utc", "gpu_seconds", "engine", "engine_rc", "out_tar_sha256", "plan_sha256",
-               "cpu_leases", "cpu_preflight", "addendum_note_sha256", "noise_precheck",
+               "cpu_leases", "cpu_preflight", "addendum_note_sha256", "noise_precheck", "engineering_paper_commit",
                "stop", "stop_class", "node_log", "output_use", "owner", "worker_host", "claim_sha256", "crosshost_pass"}
 
 
@@ -1386,6 +1386,7 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
     if engineering:
         record["output_use"] = "ENGINEERING_ONLY P11 synthetic workload"
         record["noise_precheck"] = context["noise_precheck"]
+        record["engineering_paper_commit"] = spec["paper_commit"]
     if claim_sha is not None:
         record["claim_sha256"] = claim_sha
         record["crosshost_pass"] = context.get("crosshost_pass")          # the PASS records the switch checked
@@ -1432,6 +1433,8 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
                            f"{orphan_units(orphaned)}; {OPERATOR_RULE}")
             record["harness"] = G.harness_checkout(shim, host, git)
             record["environment"] = G.environment(shim, host, wnode)
+            if engineering and host == S.AUDIT_HOST:
+                record["environment"]["p11_c16_jax312"] = G.environment(shim, host, {"env": "jax312"})
             if kind == "campaigns":
                 raw = Path(server_record).read_bytes()
                 record["server_record"] = T4.check_server_record(spec, raw, record["spec_sha256"])
