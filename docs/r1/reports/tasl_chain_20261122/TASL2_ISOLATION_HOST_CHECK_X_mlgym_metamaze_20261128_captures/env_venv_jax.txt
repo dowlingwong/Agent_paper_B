@@ -1,0 +1,20 @@
+kind=venv_jax freeze_tool=/home/dowling/r1_trackg_20261125/venv_jax/bin/python -m pip --disable-pip-version-check freeze
+python=/home/dowling/r1_trackg_20261125/venv_jax/bin/python version='3.12.16'
+uv='uv 0.13.6 (x86_64-unknown-linux-gnu)'
+freeze_sha256=630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9 lines=56
+committed_sha256=630ed6e1b823e0e2183c64ffb09bebd9994f755f518db2867ee538f388f5fdd9 lines=56 committed=/home/dowling/r1_tracks/t1_tasl/paper_g5_20261128/sweep2/g1b/env/venv_jax.freeze.txt
+freeze_same_raw=True same_sorted=True
+link python: readlink=python3.12 -> /home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+link python3: readlink=python3.12 -> /home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+link python3.12: readlink=/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12 -> /home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+target=/home/dowling/.local/share/uv/python/cpython-3.12.16-linux-x86_64-gnu/bin/python3.12
+target_sha256=23bc148d2b48964b621c5561ff2b81c1d9c7b717967a7491efbf12f4304882b5 bytes=31028464 version='Python 3.12.16'
+pyvenv_cfg_sha256=edea305f2199f0c90ee4e0fa1476e54ba0dd9c9df4ce39664545cd2d74da7d4e
+freeze_sha256_equal=True
+freeze_committed_file_sha256=True
+freeze_lines=True
+freeze_same_sorted=True
+python_version=True
+target_version_3_12_16=True
+all_three_links_same_target=True
+condition_pass=True

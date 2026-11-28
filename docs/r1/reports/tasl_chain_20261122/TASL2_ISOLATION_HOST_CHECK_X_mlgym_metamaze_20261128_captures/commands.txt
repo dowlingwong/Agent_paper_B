@@ -1,0 +1,8 @@
+# G.5 expansion TASL-2 host check at harness pin 3f92d3c3fa9a6c41e583bb6075e3f92f8caed685, node mlgym_metamaze
+# host-check root: /home/dowling/r1_engineering/t1_tasl_x_hostcheck_g5_20261128_metamaze
+# harness worktree: /home/dowling/r1_tracks/t1_tasl_x/harness_metamaze_g5 (detached; separate clone harness_repo)
+# CPU set: 0-3; CPUs 8-11 never used. Environment: venv_jax; C6 GPU smoke uses torch312.
+# C6 GPU smoke: torch312, full UUID GPU-4d623e76-7587-ee15-a633-46f60d220d94,
+#   under flock ~/r1_locks/gpu0.lock, lease log not written.
+# Orchestration: bash scripts/phase3_checks.sh (C1-C7), then pins_report.py, env_check.py, host_facts.py.
+# No deletion, no commit, no push; no G.1b/G.5/G.4 chunk; no label read.

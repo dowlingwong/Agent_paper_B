@@ -1,0 +1,25 @@
+{
+  "checks": {
+    "parent_attach_child": {
+      "ok": true,
+      "why": "ok"
+    },
+    "parent_detach_child": {
+      "ok": true,
+      "why": "ok"
+    },
+    "unrelated_sibling_attach": {
+      "errno": 1,
+      "ok": false,
+      "why": "Operation not permitted"
+    }
+  },
+  "children_reaped": true,
+  "condition_2_pass": true,
+  "euid": 1008,
+  "lsm": "lockdown,capability,landlock,yama,apparmor",
+  "ptrace_scope": 1,
+  "ptrace_scope_raw": "1",
+  "utc": "2026-11-28T14:07:19Z",
+  "yama_in_lsm": true
+}
