@@ -1,0 +1,7 @@
+{
+ "config_sha256": "9e5ec2ce66a5d315f9901d83bea8a7071e51ca50826eb6a2ab4b6426461c2563",
+ "files": {
+  "config.yaml": "model_type: logistic_regression\nC: 0.001\nmax_depth: 5\nn_estimators: 100\nlearning_rate: 0.05\nclass_weight: balanced\nscaler: standard\nimputer: most_frequent\nmax_iter: 1000\n"
+ },
+ "keep_run": 3
+}

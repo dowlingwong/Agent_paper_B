@@ -1,0 +1,12 @@
+NODE=openml_climate
+STATUS=failed
+FAILURE_CATEGORY=runtime_error
+FAILURE_MESSAGE=ParserError: while parsing a flow mapping
+  in "<unicode string>", line 6, column 15:
+    class_weight: {1
+                  ^
+expected ',' or '}', but got ':'
+  in "<unicode string>", line 7, column 7:
+    scaler: standard
+          ^
+

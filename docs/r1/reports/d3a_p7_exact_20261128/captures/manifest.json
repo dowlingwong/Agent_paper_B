@@ -1,0 +1,61 @@
+{
+ "W": 20,
+ "arms": [
+  "A0",
+  "A0R",
+  "A1",
+  "A2",
+  "FIXR3",
+  "EGATE",
+  "LADDER"
+ ],
+ "campaign_model": "NVIDIA GeForce RTX 4090",
+ "campaign_model_source": {
+  "path": "docs/r1/proposals/d3_design_20261126/D3_G1_G6_DESIGN_REV6_LAUNCHERS_20261126.md",
+  "sha256": "0d696535d94395c85592c7ac9483790483966bbe0bf48961d132c50aa49b922d"
+ },
+ "constants": {
+  "path": "docs/r1/reports/d3_g2_20261127/d3_constants.json",
+  "sha256": "4f5f686be8f0210bcb27dfe0968296d68cf54e7266fb72c9038e741163776a93"
+ },
+ "data_cache_root": "/home/dowling/r1_tracks/work/d3p7c_20261128/data_cache",
+ "harness_commit": "9bb416805175149eb87b71f28d77530572aa4bce",
+ "llm_cap": 80,
+ "memory_mode": "append_only_summary",
+ "nodes": [
+  "digits_mlp",
+  "openml_breast_w",
+  "openml_climate",
+  "openml_credit_approval",
+  "openml_ionosphere",
+  "openml_sonar",
+  "tabular_mlp"
+ ],
+ "noise": {
+  "path": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+  "sha256": "3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310"
+ },
+ "predeclaration": {
+  "path": "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261122.md",
+  "sha256": "e091b1b59fafd29ca2f5950d48641611491082a62252268cca2f5c19146b9745"
+ },
+ "proposer": {
+  "alias": "gemma4_31b",
+  "base_url": "http://127.0.0.1:8095/v1",
+  "model": "gemma4_31b",
+  "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "schema": "manager_proposal/v1",
+  "temperature": 0.2,
+  "thinking": false
+ },
+ "schema": "r1_d3_campaign_manifest/v1",
+ "split": {
+  "path": "r1/c3/splits/c3_p3_split_v1.json",
+  "sha256": "b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569"
+ },
+ "stage": "a",
+ "trial_budget": 80,
+ "verify_runs": 2,
+ "verify_seed_base": 20000,
+ "verify_split_policy": "vary"
+}

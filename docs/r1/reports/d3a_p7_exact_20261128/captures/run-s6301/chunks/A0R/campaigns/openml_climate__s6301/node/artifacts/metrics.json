@@ -1,0 +1,11 @@
+{
+  "config_path": "config.yaml",
+  "dataset_id": 1467,
+  "dataset_name": "climate-model-simulation-crashes",
+  "failure_category": "invalid_config",
+  "failure_message": "model_type='svm' is not in allowed values ['gradient_boosting', 'logistic_regression', 'random_forest']",
+  "node": "openml_climate",
+  "seed": 6301,
+  "status": "failed",
+  "target": "Class"
+}

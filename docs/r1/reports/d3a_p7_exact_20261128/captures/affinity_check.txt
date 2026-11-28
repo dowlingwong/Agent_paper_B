@@ -1,0 +1,4 @@
+captured_utc=2026-11-28T08:40:44Z
+r1.scripts.d3_smoke_engineering pid=1310266 Cpus_allowed_list=16-31
+llama-server pid=1310012 Cpus_allowed_list=16-31
+train.py --config config.yaml pid=1313204 Cpus_allowed_list=0-31

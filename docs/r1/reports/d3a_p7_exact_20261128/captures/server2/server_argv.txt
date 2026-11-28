@@ -1,0 +1,1 @@
+/home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server -m /home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf --host 127.0.0.1 --port 8095 -ngl 999 -c 32768 -np 1 --jinja --chat-template-kwargs \{\"enable_thinking\":false\} --cache-type-k q8_0 --cache-type-v q8_0 --no-webui 

@@ -1,0 +1,8 @@
+--- a/config.yaml
++++ b/config.yaml
+@@ -6,4 +6,4 @@
+ class_weight: balanced
+ scaler: minmax
+ imputer: most_frequent
+-max_iter: 1000
++max_iter: 2000

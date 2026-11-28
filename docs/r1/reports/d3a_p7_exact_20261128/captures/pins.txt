@@ -1,0 +1,17 @@
+read_utc 2026-11-28T09:07:33Z
+2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75  /home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf
+646caa007c99a5c9e644dac1c1a6a75f84ed78c5ca08da39a2fb690073d61e5b  /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server
+cache_tree 01c8e35a332a05790b1ea90ca31efbd3b019e4090f960b06bcd036ace0bbf290  -
+751a23df324df7fe479a7582be79635073281c2e835d485a594e182942859578  /home/dowling/r1_tracks/work/d3p7c_20261128/manifest.json
+7b1900dd4f1ec7d2c692728a86b64bac3b7471aa54541bc5176cd28cc4ea5336  /home/dowling/r1_tracks/work/d3p7c_20261128/observed.json
+9ed9d647a7e2c9ededf14f12a170271577a3f12c2eb5abf8239756bc4f436ab6  /home/dowling/r1_tracks/work/d3p7c_20261128/server2/server_argv.txt
+1a8232145d11d8946dcb63a0ab82b7986a535d016c9acafd71b9c6249f613cb7  /home/dowling/r1_tracks/work/d3p7c_20261128/server2/props.json
+cc1ed95ccdb919080b1685b7970109860f02cdef5670eefd03132ba2f8dc65b1  /home/dowling/r1_tracks/work/d3p7c_20261128/worker_gate.json
+144a09a723df7f2d96e7250025e5f2a240dc822e7e5be453252028f07a9d812d  /home/dowling/r1_tracks/work/d3p7c_20261128/p7_summary.json
+e072e98a40a9c1ddaee984c33d0025cd868931b739669146172ab79cc9c6052c  /home/dowling/r1_tracks/work/d3p7c_20261128/host_mem_samples_c.csv
+af79a1422f6bad6ca8be5a25762d18fe60be3fb757e86de1a7e8cd7567f70bcd  /home/dowling/r1_tracks/work/d3p7c_20261128/scratch_samples.csv
+harness 9bb416805175149eb87b71f28d77530572aa4bce
+python /home/dowling/r1_tracks/venv/bin/python 3.11.17
+packages pandas=3.0.3 scikit-learn=1.8.0 numpy=2.4.4 scipy=1.17.1
+run_ids d3a-p7-exact-20261128-c d3a-p7-exact-20261128-d
+server_start 2026-11-28T08:38:34Z server_end 2026-11-28T09:06:20Z span_s 1666

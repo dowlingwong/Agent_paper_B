@@ -1,0 +1,26 @@
+{
+ "arm": "A1",
+ "campaign_id": "openml_climate__s6302",
+ "campaign_kind": "harness",
+ "ended_on": "worker_runs",
+ "final_sha256": "08eb987ac3003bd74d5431b96bd7f68ce301576f05c4cac3b72c2dca864ea4ed",
+ "instance_id": "openml_climate__s6302",
+ "instance_seed": 6302,
+ "llm_calls": 20,
+ "node": "openml_climate",
+ "pre_decision_snapshots": {
+  "w20_pre.json": "974aa1d9364349415f1655a7a56990c293f6f423892442cfb84d9aa16fb88d62"
+ },
+ "record_name": "a__A1__openml_climate__s6302__r0",
+ "repetition": 0,
+ "schema": "r1_d3_campaign/v1",
+ "snapshot_schema": "r1_d3_snapshot/v1",
+ "snapshots": {
+  "w10.json": "b26fbb8632c20a214c4880ffcbaae9f7dc396750ddf904f9db30ce3cf2df2e76",
+  "w15.json": "b9077a6a2028844abf260778b50b4a092d12bed364f20b9a3151acc20dad4efc",
+  "w20.json": "2fb4a68ffd5437818450e1a788330224c3d711ae90821053027da2c09f5db70a",
+  "w5.json": "b6efd545910edb3e3c597cbfc41145779164b1804a519abbe9eb44eadbd2691d"
+ },
+ "stage": "a",
+ "worker_runs": 20
+}
