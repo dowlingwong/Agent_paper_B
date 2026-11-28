@@ -1,0 +1,172 @@
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+2026-11-28T12:59:30Z
+--- slot175
+Activity = "Idle"
+Cpus = 176
+Name = "slot1@c03-001-175.gridka.de"
+Requirements = Start && (WithinResourceLimits)
+Start = false
+StartdIpAddr = "<157.180.231.47:9618?CCBID=157.180.230.228:9618%3faddrs%3d157.180.230.228-9618+[2a00-139c-9-0-333d-832f-ac13-c80e]-9618%26alias%3dc03-001-140.gridka.de%26noUDP%26sock%3dcollector#1497&PrivNet=gridka.de&addrs=[2a00-139c-9-0-8fb0-9e1-2007-c333]-9618+157.180.231.47-9618&alias=c03-001-175.gridka.de&noUDP&sock=startd_4492_b783>"
+StarterAbilityList = "HasVM,HasSIF,HasTDP,HasJava,HasSshd,HasDocker,HasOsUser,HasContainer,HasDockerURL,HasReconnect,HasJobDeferral,HasSingularity,HasFileTransfer,HasSandboxImage,HasJICLocalStdin,HasJobNetworking,HasPidNamespaces,HasJICLocalConfig,HasPerFileEncryption,HasJobTransferPlugins,HasCommonFilesTransfer,HasTransferInputRemaps,HasSelfCheckpointTransfers,HasFileTransferPluginMethods"
+State = "Unclaimed"
+WithinResourceLimits = (ifThenElse(TARGET._cp_orig_RequestCpus =!= undefined,TARGET.RequestCpus <= MY.Cpus,MY.ConsumptionCpus <= MY.Cpus) && ifThenElse(TARGET._cp_orig_RequestDisk =!= undefined,TARGET.RequestDisk <= MY.Disk,MY.ConsumptionDisk <= MY.Disk) && ifThenElse(TARGET._cp_orig_RequestGPUs =!= undefined,TARGET.RequestGPUs <= MY.GPUs,MY.ConsumptionGPUs <= MY.GPUs) && ifThenElse(TARGET._cp_orig_RequestMemory =!= undefined,TARGET.RequestMemory <= MY.Memory,MY.ConsumptionMemory <= MY.Memory))
+--- gpu ads
+slot1@c03-001-159.gridka.de Unclaimed Idle undefined error 9 56 undefined
+slot1_2@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot1_3@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot1_4@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot1_5@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot1_6@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot1_7@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot1_8@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot1_9@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot1_10@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot1_11@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot1_12@c03-001-159.gridka.de Claimed Busy undefined error 8 56 undefined
+slot2@c03-001-159.gridka.de Unclaimed Idle undefined error 9 56 undefined
+slot2_2@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot2_3@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot2_4@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot2_5@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot2_6@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot2_7@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot2_8@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot2_9@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot2_10@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot2_11@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot2_12@c03-001-159.gridka.de Claimed Busy undefined error 8 56 undefined
+slot3@c03-001-159.gridka.de Unclaimed Idle undefined error 13 56 undefined
+slot3_6@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot3_7@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot3_8@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot3_9@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot3_10@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot3_11@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot3_12@c03-001-159.gridka.de Preempting Vacating undefined false 8 56 undefined
+slot4@c03-001-159.gridka.de Unclaimed Idle undefined error 12 56 undefined
+slot4_2@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot4_3@c03-001-159.gridka.de Claimed Busy undefined error 4 56 undefined
+slot4_4@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot4_5@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot4_6@c03-001-159.gridka.de Claimed Busy undefined error 8 56 undefined
+slot5@c03-001-159.gridka.de Unclaimed Idle undefined error 12 56 undefined
+slot5_2@c03-001-159.gridka.de Claimed Busy undefined error 4 56 undefined
+slot5_3@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot5_7@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot5_8@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot5_9@c03-001-159.gridka.de Claimed Busy undefined error 8 56 undefined
+slot6@c03-001-159.gridka.de Unclaimed Idle undefined error 8 56 undefined
+slot6_1@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot6_2@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot6_3@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot6_4@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot6_5@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot6_6@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot6_7@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot6_8@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot6_9@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot6_10@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot6_11@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot6_12@c03-001-159.gridka.de Preempting Vacating undefined false 8 56 undefined
+slot7@c03-001-159.gridka.de Unclaimed Idle undefined error 12 56 undefined
+slot7_2@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot7_6@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot7_7@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot7_8@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot7_9@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot7_10@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot7_11@c03-001-159.gridka.de Claimed Busy undefined error 1 56 undefined
+slot7_12@c03-001-159.gridka.de Claimed Busy undefined error 8 56 undefined
+slot1@c03-001-167.gridka.de Unclaimed Idle undefined error 0 8 undefined
+slot1_1@c03-001-167.gridka.de Claimed Busy undefined error 4 8 undefined
+slot1_2@c03-001-167.gridka.de Claimed Busy undefined error 8 8 undefined
+slot1_3@c03-001-167.gridka.de Claimed Busy undefined error 8 8 undefined
+slot1_4@c03-001-167.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_5@c03-001-167.gridka.de Claimed Busy undefined error 4 8 undefined
+slot1_6@c03-001-167.gridka.de Claimed Busy undefined error 8 8 undefined
+slot1_7@c03-001-167.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_8@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_9@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_10@c03-001-167.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_11@c03-001-167.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_12@c03-001-167.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_13@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_14@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_15@c03-001-167.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_16@c03-001-167.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_17@c03-001-167.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_18@c03-001-167.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_19@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_20@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_21@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_22@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_23@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_24@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_25@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_26@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_27@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_28@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_29@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_30@c03-001-167.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1@c03-001-175.gridka.de Unclaimed Idle false false 176 8 undefined
+slot1_16@c03-001-175.gridka.de Claimed Busy false false 16 8 undefined
+slot1@c03-001-179.gridka.de Unclaimed Idle undefined error 0 8 undefined
+slot1_1@c03-001-179.gridka.de Claimed Suspended undefined error 8 8 undefined
+slot1_2@c03-001-179.gridka.de Claimed Busy undefined error 8 8 undefined
+slot1_3@c03-001-179.gridka.de Claimed Busy undefined error 8 8 undefined
+slot1_4@c03-001-179.gridka.de Claimed Busy undefined error 8 8 undefined
+slot1_5@c03-001-179.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_6@c03-001-179.gridka.de Claimed Suspended undefined error 8 8 undefined
+slot1_7@c03-001-179.gridka.de Claimed Busy undefined error 8 8 undefined
+slot1_8@c03-001-179.gridka.de Claimed Busy undefined error 8 8 undefined
+slot1_9@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_10@c03-001-179.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_11@c03-001-179.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_12@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_13@c03-001-179.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_14@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_15@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_16@c03-001-179.gridka.de Claimed Busy undefined error 4 8 undefined
+slot1_17@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_18@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_19@c03-001-179.gridka.de Claimed Busy undefined error 4 8 undefined
+slot1_20@c03-001-179.gridka.de Claimed Busy undefined error 4 8 undefined
+slot1_21@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_22@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_23@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_24@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_25@c03-001-179.gridka.de Claimed Busy undefined error 8 8 undefined
+slot1_26@c03-001-179.gridka.de Claimed Busy undefined error 16 8 undefined
+slot1_27@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_28@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_29@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_30@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_31@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_32@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_33@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_34@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_35@c03-001-179.gridka.de Claimed Busy undefined error 4 8 undefined
+slot1_36@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_37@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_38@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_39@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_40@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_41@c03-001-179.gridka.de Claimed Suspended undefined error 1 8 undefined
+slot1_43@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_44@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_45@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_47@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_49@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_50@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_51@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+slot1_52@c03-001-179.gridka.de Claimed Busy undefined error 1 8 undefined
+--- q all
+760040 0 friemer 2 /work/friemer/tth/CMSSW_14_1_0_pre4/src/run3-eid/output_preshower_minimal_no_batch_norm_no_preshower/output_preshower_minimal_no_batch_norm_no_preshower_run.sh
+--- etp
+slot1@deepthought.etp.kit.edu Unclaimed Idle false false 10 4 undefined
+slot1@deepthought2.etp.kit.edu Unclaimed Idle false false 32 2 undefined
+slot1@nemo2_gpu-928336640c@g4401.nemo.privat Unclaimed Idle false false 16 1 undefined
+slot1@nemo2_gpu-b2b5dd9c63@g4401.nemo.privat Unclaimed Idle false false 40 4 undefined
+slot1_1@nemo2_gpu-b2b5dd9c63@g4401.nemo.privat Claimed Busy false false 24 4 undefined
