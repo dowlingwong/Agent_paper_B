@@ -1,0 +1,170 @@
+{
+ "K": 10,
+ "K_row": null,
+ "affinity": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7
+ ],
+ "attempt": 1,
+ "cgroup": {
+  "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r33b94f4898bc4da5b36d260aaf0b4a9f.scope",
+  "memory.max": "8589934592",
+  "memory.swap.max": "0"
+ },
+ "chunk": null,
+ "cpu_leases": [
+  {
+   "lease": "/home/dowling/r1_locks/cpus-0-3.lock",
+   "pid": 1082600
+  },
+  {
+   "lease": "/home/dowling/r1_locks/cpus-4-7.lock",
+   "pid": 1082600
+  }
+ ],
+ "data": {
+  "data_root": "/home/dowling/r1_engineering/g5-p11/scratch/g5-p11-20261128T033600Z-lease/data",
+  "setup": null
+ },
+ "deadline_epoch": 1795854225.6863923,
+ "engine": {
+  "file": "src/autoresearch/trackg/audit_g5.py",
+  "infrastructure_reruns": 2,
+  "marker": "g5_tasl_engine_contract/1",
+  "module": "autoresearch.trackg.audit_g5",
+  "row_value": "outcome.value",
+  "schemas": [
+   "trackg_g5_campaign/v1",
+   "trackg_g5_audit_chunk/v1",
+   "trackg_g5_audit_row/v1"
+  ],
+  "subcommands": {
+   "audit": "audit",
+   "campaign": "campaign"
+  },
+  "truncation_invalid_in": "autoresearch.trackg.audit_g5.TruncationInvalidManager"
+ },
+ "engine_rc": 0,
+ "engineering_paper_commit": "f7dc4945f63e09d1a7b66207bbbc43f76997aa29",
+ "environment": {
+  "freeze_sha256": "d2e70fe45ce8db8dcf478c28a89a4d3c40fe448edd83b834c0eb8cd63ad09a42",
+  "name": "torch312",
+  "packages": 77,
+  "python": "/home/dowling/r1_tracks/t1_tasl/envs/torch312/bin/python",
+  "python_version": "3.12.16"
+ },
+ "family": "G5-7",
+ "finished_utc": "2026-11-28T03:34:17Z",
+ "foreign_checks": [
+  {
+   "foreign": [],
+   "when": "before the job"
+  },
+  {
+   "foreign": [],
+   "when": "before the engine"
+  },
+  {
+   "foreign": [],
+   "when": "after the engine"
+  }
+ ],
+ "gpu": {
+  "driver": "535.309.01",
+  "memory_total": "24564 MiB",
+  "name": "NVIDIA GeForce RTX 4090",
+  "uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+ },
+ "gpu_seconds": 74.0,
+ "harness": {
+  "commit": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+  "dir": "/home/dowling/r1_tracks/t1_tasl/harness_g5"
+ },
+ "harness_commit": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+ "host": {
+  "affinity": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "host": "TASL-2",
+  "hostname": "TASL-2",
+  "kernel": "6.8.0-149-generic",
+  "uid": 1008
+ },
+ "job": "campaigns-wave1",
+ "label": "ENGINEERING_ONLY",
+ "latency_probe_after": {
+  "max_ms": 51.67,
+  "median_ms": 31.85,
+  "n": 20,
+  "p95_ms": 51.37
+ },
+ "latency_probe_before": {
+  "max_ms": 63.34,
+  "median_ms": 26.66,
+  "n": 20,
+  "p95_ms": 51.94
+ },
+ "lease": {
+  "lease": "/home/dowling/r1_locks/gpu0.lock",
+  "pid": 1082600
+ },
+ "node": "mlab_imdb",
+ "node_log": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/_logs/mlab_imdb-20261128T033303Z-1082544.node.log",
+ "noise_precheck": {
+  "delta_n": 0.002,
+  "node": "mlab_imdb",
+  "runs_sha256": "1f56c0681d3a6cbd8005b3ee45da4ef2680d9354c869a0d16433b72afc971385",
+  "sigma_node": 0.003978323446012868
+ },
+ "options": {
+  "G5-ARPEND": "A",
+  "G5-AUDIT": "A",
+  "G5-DIV": "A",
+  "G5-MEM": "A",
+  "G5-SLOT": "A",
+  "G5-TASL-GPUH": "A",
+  "G5-TEMP": "A",
+  "G5-W": "A"
+ },
+ "out_tar_sha256": "d98fc490e0746cd33968e28c4722d4e01337b2d50a644b87e1bdd718db734e25",
+ "output_use": "ENGINEERING_ONLY P11 synthetic workload",
+ "ptrace_scope": 1,
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "schema": "g5_tasl_job_record/1",
+ "server_props_after": {
+  "build_info": "b1-620d222",
+  "model_file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+  "n_ctx": 32768,
+  "total_slots": 1
+ },
+ "server_props_before": {
+  "build_info": "b1-620d222",
+  "model_file": "google_gemma-4-31B-it-Q4_K_M.gguf",
+  "n_ctx": 32768,
+  "total_slots": 1
+ },
+ "server_record": {
+  "pid": 2586631,
+  "sha256": "27174cf70d6bf3215c2258430f166aee26a9867761ff0cc8ffe457731f2adb72",
+  "started_utc": "2026-11-28T03:31:00Z"
+ },
+ "spec_sha256": "f5365e84ae6147c3a24e0f8169332286fae0ed6a192826ce459a282c3c2eddc5",
+ "started_utc": "2026-11-28T03:33:03Z",
+ "stop": null,
+ "stop_class": null,
+ "wave": 1,
+ "worker_host": "TASL-2"
+}

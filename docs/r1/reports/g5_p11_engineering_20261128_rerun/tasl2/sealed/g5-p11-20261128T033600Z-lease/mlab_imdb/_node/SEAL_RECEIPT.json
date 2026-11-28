@@ -1,0 +1,38 @@
+{
+ "attempts": [
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlab_imdb/campaigns-wave1/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlab_imdb/audits-wave1/chunk-0/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlab_imdb/audits-wave1/chunk-1/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlab_imdb/audits-wave1/chunk-2/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlab_imdb/campaigns-wave2/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlab_imdb/audits-wave2/chunk-0/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlab_imdb/audits-wave2/chunk-1/attempt-1"
+ ],
+ "copied": [
+  "wave1_plan.tar",
+  "wave1_plan_index.json",
+  "wave_checks_wave1.json",
+  "wave2_plan.tar",
+  "wave2_plan_index.json",
+  "wave_checks_wave2.json"
+ ],
+ "ended": "wave 2 checked",
+ "files": {
+  "wave1_plan.tar": "83cf1142f89c3732c88a08b06965445142bf4f506ec5ca81afbfc999ba71af77",
+  "wave1_plan_index.json": "f097bdc06cf224dc05f522695a832a448e862b607159f75bcf699846200754b0",
+  "wave2_plan.tar": "403bbc61bca8b4ede898edfb3839f38a39b713e0f3ccac26810862954dd353bf",
+  "wave2_plan_index.json": "5671d7abb639e1990284efc932ac0d60c86af7739ee6dba3fc7c2a6cc5739e20",
+  "wave_checks_wave1.json": "0ef369153afea0648f00525327dbff972aa7618bcad52f17a276ef95edd1ee97",
+  "wave_checks_wave2.json": "6a560ff3504bb1570a19713456650071d56d13d23495d6a04f4e153d18885506"
+ },
+ "host": "TASL-2",
+ "kind": "node",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlab_imdb",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "schema": "g5_tasl_seal_receipt/1",
+ "seal_mode": "procedural",
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed/g5-p11-20261128T033600Z-lease/mlab_imdb/_node",
+ "sealed_utc": "2026-11-28T04:30:35Z",
+ "who": "g5_seal"
+}

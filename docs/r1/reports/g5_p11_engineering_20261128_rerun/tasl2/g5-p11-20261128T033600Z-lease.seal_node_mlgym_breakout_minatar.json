@@ -1,0 +1,38 @@
+{
+ "schema": "g5_tasl_seal_receipt/1",
+ "label": "ENGINEERING_ONLY",
+ "seal_mode": "procedural",
+ "kind": "node",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "node": "mlgym_breakout_minatar",
+ "copied": [
+  "wave1_plan.tar",
+  "wave1_plan_index.json",
+  "wave_checks_wave1.json",
+  "wave2_plan.tar",
+  "wave2_plan_index.json",
+  "wave_checks_wave2.json"
+ ],
+ "ended": "wave 2 checked",
+ "attempts": [
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlgym_breakout_minatar/campaigns-wave1/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlgym_breakout_minatar/audits-wave1/chunk-0/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlgym_breakout_minatar/audits-wave1/chunk-1/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlgym_breakout_minatar/audits-wave1/chunk-2/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlgym_breakout_minatar/campaigns-wave2/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlgym_breakout_minatar/audits-wave2/chunk-0/attempt-1",
+  "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlgym_breakout_minatar/audits-wave2/chunk-1/attempt-1"
+ ],
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed/g5-p11-20261128T033600Z-lease/mlgym_breakout_minatar/_node",
+ "files": {
+  "wave1_plan.tar": "8c1523ebef049c37d231b609ee3c3fffee0c1eadb1cd7b929ea4160996f350b1",
+  "wave1_plan_index.json": "4af1f9c5357036999157ffc9b18899c26003e300d7c8d84f0365012e097c9bd2",
+  "wave2_plan.tar": "75549c7ee2bb813940254287f6153f7d751578af1692f8a04828f2ad226c9f98",
+  "wave2_plan_index.json": "1b3e097ac7ab685ce301022f7d8da7888dbd86f25cecaa82eb80c906f30c4b36",
+  "wave_checks_wave1.json": "7305c60d33242244f3b02644ceabda1dbd490332321286d1ffb8ec880f339ba9",
+  "wave_checks_wave2.json": "a4c7ee12edfeba20a91c92c98d51d4003f6f06c81e23588de8262b6606465cb3"
+ },
+ "who": "g5_seal",
+ "host": "TASL-2",
+ "sealed_utc": "2026-11-28T04:30:35Z"
+}

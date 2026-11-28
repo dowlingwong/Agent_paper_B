@@ -1,0 +1,33 @@
+{
+ "K": 10,
+ "chunk": 1,
+ "chunks": 3,
+ "crosshost_pass": {
+  "node": "mlab_imdb",
+  "records": [
+   {
+    "crosscheck_run_id": "g1b-tasl-20261121-b-xc3-a",
+    "mode": "short",
+    "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json",
+    "sha256": "9cce90640315f5de6a8ce0ce1de9456eada82fc25214950fc8a18ce4ff515920"
+   }
+  ],
+  "source": "spec",
+  "xc3_fail": "A"
+ },
+ "gpu_hours_at_claim": 0.222,
+ "host": "TASL-7",
+ "job": "audits-wave1",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlab_imdb",
+ "plan_index_sha256": "f097bdc06cf224dc05f522695a832a448e862b607159f75bcf699846200754b0",
+ "plan_json_sha256": "b58240949fe2b6569990b9fa10cb92c9ff73b156450d57d66009d964665935d7",
+ "plan_tar_sha256": "83cf1142f89c3732c88a08b06965445142bf4f506ec5ca81afbfc999ba71af77",
+ "registered_attempts_at_claim": [],
+ "rule": "R1-G5-AUDIT-TWO-CARDS",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "schema": "g5_tasl_remote_claim/1",
+ "spec_sha256": "f5365e84ae6147c3a24e0f8169332286fae0ed6a192826ce459a282c3c2eddc5",
+ "utc": "2026-11-28T03:47:03Z",
+ "wave": 1
+}

@@ -1,0 +1,28 @@
+{
+ "schema": "g5_tasl_seal_receipt/1",
+ "label": "ENGINEERING_ONLY",
+ "seal_mode": "procedural",
+ "kind": "attempt",
+ "run_id": "g5-p11-20261128T033600Z-closed",
+ "node": "mlab_imdb",
+ "job": "campaigns-wave1",
+ "chunk": null,
+ "attempt": 1,
+ "source": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-closed/mlab_imdb/campaigns-wave1/attempt-1",
+ "copied": [
+  "job_record.json"
+ ],
+ "node_log": null,
+ "out_clear_files": 1,
+ "stop": "STOP: closed without a job record: P11 synthetic interrupted attempt",
+ "stop_class": "infrastructure",
+ "job_record_sha256": "fc3f024828ea45715d24d8753f34c902c985716eba46e516c39176b97641f542",
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed/g5-p11-20261128T033600Z-closed/mlab_imdb/campaigns-wave1/attempt-1",
+ "files": {
+  "job_record.json": "fc3f024828ea45715d24d8753f34c902c985716eba46e516c39176b97641f542",
+  "out_clear.tar": "01a642e93ae9479dc33c1c4d6b7f5761c44c7367d00fb31f96726104b73337f3"
+ },
+ "who": "g5_seal",
+ "host": "TASL-2",
+ "sealed_utc": "2026-11-28T03:52:07Z"
+}

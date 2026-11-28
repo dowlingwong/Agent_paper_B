@@ -1,0 +1,33 @@
+{
+ "schema": "g5_tasl_seal_receipt/1",
+ "label": "ENGINEERING_ONLY",
+ "seal_mode": "procedural",
+ "kind": "attempt",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "node": "mlab_imdb",
+ "job": "audits-wave1",
+ "chunk": 1,
+ "attempt": 1,
+ "source": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlab_imdb/audits-wave1/chunk-1/attempt-1",
+ "copied": [
+  "out.tar",
+  "job_record.json",
+  "diagnostics.json",
+  "SHA256SUMS"
+ ],
+ "node_log": null,
+ "out_clear_files": null,
+ "stop": null,
+ "stop_class": null,
+ "job_record_sha256": "05b298ad42808c1ae09019c59b4b1e3b8b575bb6b6cd4a5993286a2f3eb257ec",
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed/g5-p11-20261128T033600Z-lease/mlab_imdb/audits-wave1/chunk-1/attempt-1",
+ "files": {
+  "SHA256SUMS": "2ed2ff48e069bfd2bcb53119d3d67e649790159b55ff46c396efbfbd0df3f525",
+  "diagnostics.json": "1082f8adc8a3ceca2561a1ff5b55edc20acc13812ef411370713781459cc4e19",
+  "job_record.json": "05b298ad42808c1ae09019c59b4b1e3b8b575bb6b6cd4a5993286a2f3eb257ec",
+  "out.tar": "33a4764458eadfb27f4626b7c90714c2d4f82b26d9bfcad63866e5edc5390730"
+ },
+ "who": "g5_seal",
+ "host": "TASL-2",
+ "sealed_utc": "2026-11-28T03:56:00Z"
+}

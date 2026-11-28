@@ -1,0 +1,36 @@
+{
+ "schema": "g5_tasl_seal_receipt/1",
+ "label": "ENGINEERING_ONLY",
+ "seal_mode": "procedural",
+ "kind": "run",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "copied": [
+  "_access_log.jsonl",
+  "_k_lock.json",
+  "refusals.tar",
+  "logs.tar",
+  "remote.tar"
+ ],
+ "not_run": [],
+ "remote_final": {
+  "access_log": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/_remote/TASL-7/access_log-1.jsonl",
+  "access_log_sha256": "063c4bbeab2815dc09437bd51410b20badae69c02f9c9f07ca9d2990c30172fd",
+  "host": "TASL-7",
+  "registered_attempts": 1,
+  "run_id": "g5-p11-20261128T033600Z-lease",
+  "schema": "g5_tasl_remote_final/1",
+  "spec_sha256": "f5365e84ae6147c3a24e0f8169332286fae0ed6a192826ce459a282c3c2eddc5",
+  "utc": "2026-11-28T03:56:00Z"
+ },
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed/g5-p11-20261128T033600Z-lease/_run",
+ "files": {
+  "_access_log.jsonl": "32f5582e216ced1dcb281d51d4bd5658983ca6279a98a5df62d87d6738fb178a",
+  "_k_lock.json": "545ab94cfd875eb594c085a852453985469cdc73ad10881350f97b11bc8528a1",
+  "logs.tar": "1982c12d4ba7f6ee21c8de282817051d4c3210ca51f09d0e7421895fc8f04e43",
+  "refusals.tar": "c0da14283bd7d66f71a1980a2d6b1714bde1de08482c174df8ccda2ce6c8da9c",
+  "remote.tar": "501ac9a588ce7bbcec5f46eb506642438e4360f32839891afbb869b67a48b3b0"
+ },
+ "who": "g5_seal",
+ "host": "TASL-2",
+ "sealed_utc": "2026-11-28T04:30:35Z"
+}

@@ -1,0 +1,34 @@
+{
+ "attempt": 1,
+ "chunk": 1,
+ "copied": [
+  "out.tar",
+  "job_record.json",
+  "diagnostics.json",
+  "SHA256SUMS"
+ ],
+ "files": {
+  "SHA256SUMS": "2bc32907234a503d5fb7ef6b961d278d64cd03f11100ab0393dddaff86189d56",
+  "diagnostics.json": "3f8a22e16eb631d173fd7be2345c49aa84c9f72d9aff9a787384be5956d35dad",
+  "job_record.json": "9a380354fb5cd46349e7e845c9c2b1176c1dfa348995b18ceea64df7d3060a58",
+  "node.log": "17c2c8f427eaeae7b47c78189d513baab778a121bc5af0c3b0ebeed2b76a0b15",
+  "out.tar": "78d3030f1b073214a0cbf4adda974862c0030ee132eeac543045a8591fdc35a5"
+ },
+ "host": "TASL-2",
+ "job": "audits-wave1",
+ "job_record_sha256": "9a380354fb5cd46349e7e845c9c2b1176c1dfa348995b18ceea64df7d3060a58",
+ "kind": "attempt",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlgym_breakout_minatar",
+ "node_log": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/_logs/mlgym_breakout_minatar-20261128T035707Z-1102324.node.log",
+ "out_clear_files": null,
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "schema": "g5_tasl_seal_receipt/1",
+ "seal_mode": "procedural",
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed/g5-p11-20261128T033600Z-lease/mlgym_breakout_minatar/audits-wave1/chunk-1/attempt-1",
+ "sealed_utc": "2026-11-28T04:30:29Z",
+ "source": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/mlgym_breakout_minatar/audits-wave1/chunk-1/attempt-1",
+ "stop": null,
+ "stop_class": null,
+ "who": "g5_seal"
+}

@@ -1,0 +1,52 @@
+{
+ "K": 10,
+ "K_row": null,
+ "chunk": null,
+ "claim_sha256": "13f0d5062280a7b452b1a26ebb51c9b0b46afb4546ac9ed568cd37a3bc571c28",
+ "crosshost_pass": {
+  "node": "mlab_imdb",
+  "records": [
+   {
+    "crosscheck_run_id": "g1b-tasl-20261121-b-xc3-a",
+    "mode": "short",
+    "record": "docs/r1/reports/tasl_chain_20261122/G1B_XC3_SHORT_VERDICT_mlab_imdb_20261125.json",
+    "sha256": "9cce90640315f5de6a8ce0ce1de9456eada82fc25214950fc8a18ce4ff515920"
+   }
+  ],
+  "source": "spec",
+  "xc3_fail": "A"
+ },
+ "engineering_paper_commit": "f7dc4945f63e09d1a7b66207bbbc43f76997aa29",
+ "family": "G5-7",
+ "foreign_checks": [],
+ "harness_commit": "cbf7a0030d73fbc73e2735a6b0e33f25ddf04a98",
+ "job": "audits-wave1",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlab_imdb",
+ "node_log": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-lease/_logs/mlab_imdb-20261128T034638Z-2589052.node.log",
+ "noise_precheck": {
+  "delta_n": 0.002,
+  "node": "mlab_imdb",
+  "runs_sha256": "1f56c0681d3a6cbd8005b3ee45da4ef2680d9354c869a0d16433b72afc971385",
+  "sigma_node": 0.003978323446012868
+ },
+ "options": {
+  "G5-ARPEND": "A",
+  "G5-AUDIT": "A",
+  "G5-DIV": "A",
+  "G5-MEM": "A",
+  "G5-SLOT": "A",
+  "G5-TASL-GPUH": "A",
+  "G5-TEMP": "A",
+  "G5-W": "A"
+ },
+ "output_use": "ENGINEERING_ONLY P11 synthetic workload",
+ "run_id": "g5-p11-20261128T033600Z-lease",
+ "schema": "g5_tasl_job_record/1",
+ "spec_sha256": "f5365e84ae6147c3a24e0f8169332286fae0ed6a192826ce459a282c3c2eddc5",
+ "started_utc": "2026-11-28T03:46:39Z",
+ "stop": "STOP: STOP: the GPU lease /home/dowling/r1_locks/gpu0.lock is held by another job (no shared card)",
+ "stop_class": "refused_before_run",
+ "wave": 1,
+ "worker_host": "TASL-7"
+}

@@ -1,0 +1,34 @@
+{
+ "schema": "g5_tasl_seal_receipt/1",
+ "label": "ENGINEERING_ONLY",
+ "seal_mode": "procedural",
+ "kind": "attempt",
+ "run_id": "g5-p11-20261128T033600Z-infra",
+ "node": "mlab_imdb",
+ "job": "audits-wave1",
+ "chunk": 0,
+ "attempt": 1,
+ "source": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-infra/mlab_imdb/audits-wave1/chunk-0/attempt-1",
+ "copied": [
+  "out.tar",
+  "job_record.json",
+  "diagnostics.json",
+  "SHA256SUMS"
+ ],
+ "node_log": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-infra/_logs/mlab_imdb-20261128T043257Z-1137449.node.log",
+ "out_clear_files": null,
+ "stop": "STOP 7: final infrastructure failures in the audit chunk after the engine's reruns (a new attempt after diagnosis)",
+ "stop_class": "infrastructure",
+ "job_record_sha256": "304f5d4ccaab265f3424623fc4651df9eadcb92035e7d57192fd84569e89667b",
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed/g5-p11-20261128T033600Z-infra/mlab_imdb/audits-wave1/chunk-0/attempt-1",
+ "files": {
+  "SHA256SUMS": "dc90622d3826d762f9abc4a2fe4cd0887f3e448c61937aacefb9ba9b0e21f354",
+  "diagnostics.json": "735232705bf5dca386f118b20c5a33d038886b205709e907e8102b56372982c3",
+  "job_record.json": "304f5d4ccaab265f3424623fc4651df9eadcb92035e7d57192fd84569e89667b",
+  "node.log": "52a340ddde37599dc9f2f03f1bb12d14ecaff901d4e37b2ed4d172228a395023",
+  "out.tar": "54c968351d909fd6cfb918e861b106301a0596620b0e7e76f9dc46de09505293"
+ },
+ "who": "g5_seal",
+ "host": "TASL-2",
+ "sealed_utc": "2026-11-28T04:38:33Z"
+}

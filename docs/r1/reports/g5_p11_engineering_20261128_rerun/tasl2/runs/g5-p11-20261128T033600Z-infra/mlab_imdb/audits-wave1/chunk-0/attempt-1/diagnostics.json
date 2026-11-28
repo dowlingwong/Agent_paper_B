@@ -1,0 +1,37 @@
+{
+ "K": 10,
+ "attempt": 1,
+ "chunk": 0,
+ "chunks": 3,
+ "gpu_seconds": 325.3,
+ "job": "audits-wave1",
+ "label": "ENGINEERING_ONLY",
+ "label_seed_runs": {
+  "divergent": 0,
+  "infrastructure": 1,
+  "ok": 99
+ },
+ "node": "mlab_imdb",
+ "plan_sha256": "d536e4a6e8d2e132af90d4df35f0c828c6161e9b58bcc39fd9d2c645fde65c36",
+ "run_id": "g5-p11-20261128T033600Z-infra",
+ "runs_planned_evaluation": 100,
+ "runs_planned_label": 100,
+ "schema": "g5_tasl_diagnostics_audit/1",
+ "seeds_planned": [
+  7001,
+  7002,
+  7003,
+  7004,
+  7005,
+  7006,
+  7007,
+  7008,
+  7009,
+  7010
+ ],
+ "spec_sha256": "33edf99de2ec76c6b9e9a9c7a91c6f0a01bdec552e17017e5d04a1607e3f9354",
+ "stop": "STOP 7: final infrastructure failures in the audit chunk after the engine's reruns (a new attempt after diagnosis)",
+ "stop_class": "infrastructure",
+ "wave": 1,
+ "wave_e5": null
+}
