@@ -15,16 +15,19 @@ relative tolerance. This is a STOP for the phase-1 note's `ada_smoke_e0` line.**
 - **Host / card:** TASL-7, RTX 4090 (sm_89), driver `580.178.04`, UUID
   `GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1`. Lease `2026-11-28T00:11:43Z`–`00:40:07Z`; 0 foreign processes
   and 0 MiB foreign memory at start and end (empty card).
-- **Environment:** venv `/home/dowling/r1_trackp/venvs/trackp-gpu`, torch `2.6.0+cu124`, transformers `5.19.0`,
-  peft `0.21.2`; harness `897d83c8efa364ec2fdd37288241cc42e01d7274` (the same harness commit as the Ada run),
-  clean.
+- **Environment:** venv `/home/dowling/r1_trackp/venvs/trackp-gpu`, Python 3.12.15 (Ada ran 3.12.10; the required
+  torch/transformers/peft pins match), torch `2.6.0+cu124`, transformers `5.19.0`, peft `0.21.2`; harness
+  `897d83c8efa364ec2fdd37288241cc42e01d7274` (the same harness commit as the Ada run), clean.
 - **Data:** `data_manifest_sha256 = b963be2dd378241e0b0689907d4051bfa62922a8e4968aa40061ed7ef275bfef`, exactly
   the Ada run's data manifest.
-- **Config:** `e0_config_ref_tasl7.json` is `trackp_portal.json` with only `e0.final.max_steps 6000→2000` and
-  `patience 10→5`; file sha256 `4f47048dd37bb53b4ced22404d749253dd80d96a5c91f3750ab031d01aa35993`, canonical
-  `config_sha256 31dd5776887df8e03c7f6e360f460c47f43c5d3bafc04a22c17f595c3b99b3d4`. The E0-relevant blocks
-  (`e0`, `head_lr`, `lora`, `lr_grid`, `token_lr`, Kev base revision) are **identical** to the Ada config;
-  only host fields differ (GPU model, lock path, direct block).
+- **Config:** `e0_config_ref_tasl7.json` differs from `trackp_portal.json` in three leaves: `e0.final.max_steps
+  6000→2000`, `patience 10→5`, and the comment. File sha256
+  `4f47048dd37bb53b4ced22404d749253dd80d96a5c91f3750ab031d01aa35993`, canonical
+  `config_sha256 31dd5776887df8e03c7f6e360f460c47f43c5d3bafc04a22c17f595c3b99b3d4`. Its `host` descriptor still
+  says "TASL-2 (zhixu portal)" because it is inherited from `trackp_portal.json` — a stale label, not a different
+  host; the manifest and the lease record TASL-7. The E0-relevant blocks (`e0`, `head_lr`, `lora`, `lr_grid`,
+  `token_lr`, Kev base revision) are **identical** to the Ada config; the other differing fields are host/runtime
+  and directory fields (`sft`, `venv`, `image`, `direct`, lease, paths), not the E0 recipe.
 - **Run outcome:** `pass: true`; `lora.best_step 1800`, `stopped_at 2000`, `early_stopped false`; head fit is
   descriptive (L-BFGS) and the fresh head is restored before LoRA.
 
@@ -51,8 +54,8 @@ no early stop); head-fit test RPS 0.016919 (Ada) → 0.017788 (TASL-7); `rps_ext
 ## What this means and what happens next
 
 The slopes agree closely and the data, harness, model revision and E0 recipe are identical, so the recipe change
-is not the cause of the 19 % RPS gap. The gap is in the near-zero RPS level, where a relative tolerance is sharp
-(about 2.7e-5 absolute). Under the existing comparator this is a miss, therefore a STOP: do not widen a tolerance,
+is not the cause of the 19 % RPS gap. The gap is in the near-zero RPS level, where a relative tolerance is sharp:
+the 10 % tolerance is 1.438e-5 absolute and the observed gap is 2.746e-5 absolute. Under the existing comparator this is a miss, therefore a STOP: do not widen a tolerance,
 re-run for a better value, or change the reference without the author's decision.
 
 Options for the author/coordinator (not chosen here): (a) re-baseline both hosts on the current code and pre-declare

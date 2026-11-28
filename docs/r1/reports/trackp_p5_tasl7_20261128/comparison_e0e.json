@@ -29,19 +29,19 @@
  ],
  "descriptive": {
   "head_fit.best_step": {
-   "ada": null,
-   "reference": null
+   "candidate_tasl7": null,
+   "reference_ada": null
   },
   "head_fit.early_stopped": {
-   "ada": null,
-   "reference": null
+   "candidate_tasl7": null,
+   "reference_ada": null
   },
   "head_fit.stopped_at": {
-   "ada": null,
-   "reference": null
+   "candidate_tasl7": null,
+   "reference_ada": null
   },
   "head_fit.test": {
-   "ada": {
+   "candidate_tasl7": {
     "label_mean_slope_vs_m": 1.0290607441508008,
     "label_width_slope_vs_s": 0.9253971715455148,
     "mean_slope": 0.9122917653175353,
@@ -57,7 +57,7 @@
     "width_slope_vs_label_lb95": 0.10399266725187878,
     "width_slope_vs_label_ub95": 0.22130333185433967
    },
-   "reference": {
+   "reference_ada": {
     "label_mean_slope_vs_m": 1.0290607441508008,
     "label_width_slope_vs_s": 0.9253971715455148,
     "mean_slope": 0.8757186033754527,
@@ -75,48 +75,48 @@
    }
   },
   "label_mean_slope_vs_m": {
-   "ada": 1.0290607441508008,
-   "reference": 1.0290607441508008
+   "candidate_tasl7": 1.0290607441508008,
+   "reference_ada": 1.0290607441508008
   },
   "label_width_slope_vs_s": {
-   "ada": 0.9253971715455148,
-   "reference": 0.9253971715455148
+   "candidate_tasl7": 0.9253971715455148,
+   "reference_ada": 0.9253971715455148
   },
   "lora.best_step": {
-   "ada": 1800,
-   "reference": 1900
+   "candidate_tasl7": 1800,
+   "reference_ada": 1900
   },
   "lora.early_stopped": {
-   "ada": false,
-   "reference": false
+   "candidate_tasl7": false,
+   "reference_ada": false
   },
   "lora.stopped_at": {
-   "ada": 2000,
-   "reference": 2000
+   "candidate_tasl7": 2000,
+   "reference_ada": 2000
   },
   "mean_slope_vs_label": {
-   "ada": 0.9839245004921822,
-   "reference": 0.9852865163897692
+   "candidate_tasl7": 0.9839245004921822,
+   "reference_ada": 0.9852865163897692
   },
   "n": {
-   "ada": 1000,
-   "reference": 1000
+   "candidate_tasl7": 1000,
+   "reference_ada": 1000
   },
   "rps_extrap": {
-   "ada": 0.0002471327116275448,
-   "reference": 0.0003245682367181754
+   "candidate_tasl7": 0.0002471327116275448,
+   "reference_ada": 0.0003245682367181754
   },
   "rps_interp": {
-   "ada": 3.38252649666433e-05,
-   "reference": 2.9734848422629057e-05
+   "candidate_tasl7": 3.38252649666433e-05,
+   "reference_ada": 2.9734848422629057e-05
   },
   "width_ratio": {
-   "ada": 1.0797578251522897,
-   "reference": 1.090546030150527
+   "candidate_tasl7": 1.0797578251522897,
+   "reference_ada": 1.090546030150527
   },
   "width_slope": {
-   "ada": 0.8468574078211898,
-   "reference": 0.8446932302498212
+   "candidate_tasl7": 0.8468574078211898,
+   "reference_ada": 0.8446932302498212
   }
  },
  "equivalent": false,
