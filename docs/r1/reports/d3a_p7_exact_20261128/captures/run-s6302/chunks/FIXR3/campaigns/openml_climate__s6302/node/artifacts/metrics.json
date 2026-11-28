@@ -1,0 +1,31 @@
+{
+  "config": {
+    "C": 0.001,
+    "class_weight": "balanced",
+    "imputer": "most_frequent",
+    "learning_rate": 0.05,
+    "max_depth": 5,
+    "max_iter": 1000,
+    "model_type": "logistic_regression",
+    "n_estimators": 100,
+    "scaler": "standard"
+  },
+  "dataset_id": 1467,
+  "dataset_name": "climate-model-simulation-crashes",
+  "model_type": "logistic_regression",
+  "n_test": 81,
+  "n_train": 378,
+  "n_val": 81,
+  "node": "openml_climate",
+  "positive_label": "2",
+  "seed": 6322,
+  "split": {
+    "test": 0.15,
+    "train": 0.7,
+    "val": 0.15
+  },
+  "status": "success",
+  "target": "Class",
+  "val_accuracy": 0.6296296296296297,
+  "val_auc": 0.9362934362934363
+}

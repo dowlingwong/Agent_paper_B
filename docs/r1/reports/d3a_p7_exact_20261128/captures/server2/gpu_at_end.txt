@@ -1,0 +1,2 @@
+GPU-4d623e76-7587-ee15-a633-46f60d220d94, 21999 MiB, 2184 MiB, 0 %, 15.29 W, 46
+1310012, /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server, 21640 MiB

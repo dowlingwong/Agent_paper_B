@@ -1,0 +1,70 @@
+{
+ "gate": {
+  "campaigns": 14,
+  "engineering_only": true,
+  "expected_campaigns": 14,
+  "gate": "FAIL",
+  "schema": "r1_d3_p7_worker_gate/v1",
+  "worker": {
+   "admitted_diagnosed_runtime_errors": 2,
+   "failure_rate": 0.18115942028985507,
+   "failure_rate_limit": 0.1299,
+   "failures": 50,
+   "failures_by_category": {
+    "invalid_config": 50
+   },
+   "harness_only": {
+    "above_limit": true,
+    "failure_rate": 0.25,
+    "failures": 50,
+    "note": "Sensitivity only; the declared stage denominator pools replicate runs.",
+    "trials": 200
+   },
+   "prechecks": 2,
+   "runtime_errors": 2,
+   "skips": 34,
+   "successful": 226,
+   "trials": 276,
+   "unadmitted_runtime_errors": 0
+  }
+ },
+ "git_commit": "5200647086afc1e65dd65fd9e369e265af154935",
+ "gpu_peak": {
+  "mem_free_min": 2184.0,
+  "mem_used_max": 21999.0,
+  "power_max": 392.5,
+  "samples": 795,
+  "temp_max": 72.0,
+  "util_max": 100.0
+ },
+ "host_min_available_b": 51960090624,
+ "host_peak_used_b": 14270492672,
+ "host_total_ram_b": 67116290048,
+ "max_call_s": 11.03837,
+ "max_calls": {
+  "A0": 21,
+  "A0R": 22,
+  "A1": 22,
+  "A2": 48,
+  "EGATE": 3,
+  "FIXR3": 7,
+  "LADDER": 20
+ },
+ "max_campaign_mean_s": 5.764,
+ "projection_base_gpu_h_7nodes": 28.848819999999993,
+ "projection_base_s_per_node": {
+  "A0": 2178.792,
+  "A0R": 2282.544,
+  "A1": 2282.544,
+  "A2": 4980.0960000000005,
+  "EGATE": 311.25600000000003,
+  "FIXR3": 726.264,
+  "LADDER": 2075.04
+ },
+ "projection_base_sum_s": 14836.535999999996,
+ "projection_sens_gpu_h_7nodes": 32.9100849,
+ "projection_sens_sum_s": 16925.18652,
+ "scratch_cache_b": 123531,
+ "scratch_max_run1_b": 3952663,
+ "scratch_max_run2_b": 3523406
+}
