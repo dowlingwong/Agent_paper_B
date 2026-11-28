@@ -30,3 +30,13 @@ phase-1 run `trackp-p4-p1-20261122-a` is still gated. Compute checks its ledger 
 
 Decided alone to carry the original per-arm figures as planning estimates and report the new engineering usage
 alongside the formal charge. No host job or sealed data access in this Local unit.
+
+## Publication follow-up
+
+Published main `9b044b59` and queue `d47cab43` now contain the timing disposition and both exact reviewed
+artifact digests. The unsigned draft marks P5 PASS on `local-20261128-13-p4-phase1-note` @
+`ef11f990aca966808a632237631bdc13b9aa5d8f`, superseding the pending P5 version above. The note SHA-256 is
+`7f97e1a9c93e11c1dfe12f019e56cd4abbd51fc8704841757dce2cbd42b4a4bd`. The independent publication re-check
+is **ACCEPTED** (review SHA-256 `014007bda4ee02e7c523a464792e134d2c4c89e9978cb98b90c8e1f59e1e1bef`).
+Published artifact digests, launch-strength spec, note binding and diff checks passed. The official parser
+still stops at P3. The remaining signature is routed to the author in `AUTHOR.md`; no phase-1 job is recorded.
