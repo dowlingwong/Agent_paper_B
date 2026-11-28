@@ -1,0 +1,28 @@
+captured_utc=2026-11-28T19:27:58Z
+host=TASL-2
+--- repo ---
+c3a484055f717865e4e6826833e405af41771013
+--- harness ---
+9bb416805175149eb87b71f28d77530572aa4bce
+--- python/packages ---
+3.11.17 (main, Oct 21 2026, 17:46:53) [Clang 23.1.3 ]
+pandas 3.0.3
+scikit-learn 1.8.0
+numpy 2.4.4
+scipy 1.17.1
+--- container runtimes ---
+/usr/bin/docker
+apptainer=absent
+singularity=absent
+--- model/binary ---
+2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75  /home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf
+646caa007c99a5c9e644dac1c1a6a75f84ed78c5ca08da39a2fb690073d61e5b  /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server
+--- cpu/gpu ---
+型号名称：                               Intel(R) Core(TM) i9-14900KF
+0, GPU-4d623e76-7587-ee15-a633-46f60d220d94, NVIDIA GeForce RTX 4090, 535.309.01, 24564 MiB, 353 MiB, 23830 MiB
+--- memory/disk ---
+               total        used        free      shared  buff/cache   available
+内存：67116290048  3891425280 10317352960    45842432 52907511808 62432309248
+交换： 2147479552      786432  2146693120
+文件系统         1024的块       已用      可用 容量 挂载点
+/dev/nvme0n1p2 1967357936 1517460620 349887284  82% /

@@ -1,0 +1,95 @@
+{
+ "W": 20,
+ "arms": [
+  "A0",
+  "A0R",
+  "A1",
+  "A2",
+  "FIXR3",
+  "EGATE",
+  "LADDER"
+ ],
+ "campaign_model": "NVIDIA GeForce RTX 4090",
+ "campaign_model_source": {
+  "path": "docs/r1/proposals/d3_design_20261126/D3_G1_G6_DESIGN_REV6_LAUNCHERS_20261126.md",
+  "sha256": "0d696535d94395c85592c7ac9483790483966bbe0bf48961d132c50aa49b922d"
+ },
+ "constants": {
+  "path": "docs/r1/reports/d3_g2_20261127/d3_constants.json",
+  "sha256": "4f5f686be8f0210bcb27dfe0968296d68cf54e7266fb72c9038e741163776a93"
+ },
+ "data_cache_root": "/home/dowling/r1_tracks/work/d3a_prod_20261128/data_cache",
+ "harness_commit": "9bb416805175149eb87b71f28d77530572aa4bce",
+ "llm_cap": 80,
+ "memory_mode": "append_only_summary",
+ "nodes": [
+  "digits_mlp",
+  "openml_breast_w",
+  "openml_climate",
+  "openml_credit_approval",
+  "openml_ionosphere",
+  "openml_sonar",
+  "tabular_mlp"
+ ],
+ "noise": {
+  "path": "results/r1/noise/D28_REPAIR_20261027/summary.json",
+  "sha256": "3d12ce058c584d862b683bf9e0c79b8c1f7609343c7b62b839c00c4a83c34310"
+ },
+ "predeclaration": {
+  "path": "docs/r1/authorizations/D3_PREDECLARATION_DRAFT_20261128_R5.md",
+  "sha256": "700d93cac277a23f527f20a49f8606987e63f615547b435cf924b2706ec778ad"
+ },
+ "proposer": {
+  "alias": "gemma4_31b",
+  "base_url": "http://127.0.0.1:8095/v1",
+  "model": "gemma4_31b",
+  "model_sha256": "2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75",
+  "schema": "manager_proposal/v1",
+  "temperature": 0.2,
+  "thinking": false
+ },
+ "route": {
+  "cpu_affinity": "16-31",
+  "cpu_lease_path": "/home/dowling/r1_locks/cpus-16-31.lock",
+  "driver": "535.309.01",
+  "gpu_lease_path": "/home/dowling/r1_locks/gpu0.lock",
+  "gpu_uuid": "GPU-4d623e76-7587-ee15-a633-46f60d220d94",
+  "host": "TASL-2",
+  "launcher": "ssh",
+  "llama_server_sha256": "646caa007c99a5c9e644dac1c1a6a75f84ed78c5ca08da39a2fb690073d61e5b",
+  "scope": "systemd-run --user --scope -p Delegate=yes -p MemoryMax=20G -p MemorySwapMax=0",
+  "server_argv": [
+   "/home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server",
+   "-m",
+   "/home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf",
+   "--host",
+   "127.0.0.1",
+   "--port",
+   "8095",
+   "-ngl",
+   "999",
+   "-c",
+   "32768",
+   "-np",
+   "1",
+   "--jinja",
+   "--chat-template-kwargs",
+   "{\"enable_thinking\":false}",
+   "--cache-type-k",
+   "q8_0",
+   "--cache-type-v",
+   "q8_0",
+   "--no-webui"
+  ]
+ },
+ "schema": "r1_d3_campaign_manifest/v1",
+ "split": {
+  "path": "r1/c3/splits/c3_p3_split_v1.json",
+  "sha256": "b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569"
+ },
+ "stage": "a",
+ "trial_budget": 80,
+ "verify_runs": 2,
+ "verify_seed_base": 20000,
+ "verify_split_policy": "vary"
+}

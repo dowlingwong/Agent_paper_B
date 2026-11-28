@@ -1,0 +1,4 @@
+Name:	llama-server
+Pid:	1673663
+PPid:	1673636
+Cpus_allowed_list:	16-31

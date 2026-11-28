@@ -1,0 +1,6 @@
+# P10 verify-seed disjointness check at the production base (engineering re-check)
+# Host: TASL-2, repo /home/dowling/r1_tracks/work/d3a_prod_20261128/repo at c3a48405
+# Command:
+#   PYTHONPATH=<audit shim> AR_HARNESS_ROOT=<harness 9bb41680> python -B -m r1.c3.d3_verify_namespaces
+# Output:
+{"checked_budget_indexes": [1, 80], "max_seed": 20801, "min_seed": 20010, "seed_count": 160, "verdict": "PASS", "verify_runs": 2, "verify_seed_base": 20000}

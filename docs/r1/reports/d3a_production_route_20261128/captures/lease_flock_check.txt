@@ -1,0 +1,6 @@
+checked_utc=2026-11-28T19:31:35Z
+holder_pid=1677212
+--- /proc/locks matching the canonical inodes ---
+16: FLOCK  ADVISORY  WRITE 1677214 103:02:120091889 0 EOF
+36: FLOCK  ADVISORY  WRITE 1677213 103:02:120088542 0 EOF
+--- lslocks ---
