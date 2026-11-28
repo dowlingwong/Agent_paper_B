@@ -371,7 +371,7 @@ P10/P11 pass at the base.
 | `run_id_ledger.json` | `62becc147a2b321cd5c1b082ac451bedd0941662bff93d3cfb06374639cd9d38` |
 | `observed.json` | `da07e83499a821c229c509d9bd4aefb0087f242d8c600e8fe0b911c79370a42f` |
 | `endpoint_run.sh` | `d2b088d652bb5f1604f30fb9515af0d32eb44e8583bbe465ecbf7894e39ae3ad` |
-| `production_driver.sh` | `c446c56fc3864e4d52e5decae10cd24b090e017637529c5248d9b4883eb5aa4e` |
+| `production_driver.sh` | `00c04cc8343b672308c8ceb57458b9af4e7ae869972e39087a2ff8bf58410e3c` |
 | `endpoint_guard_driver_test.sh` | `0d6b2d84a519467bddbab1ae38fd417afabbe9404d3e1942b51f7aff9a2c7b6d` |
 | `r1/c3/d3/endpoint_guard.py` | `a1ef4184ad680bf37d5d2b1632b18b50e7706811da18266930b933423129ed92` |
 | `r1/tests/test_d3_endpoint_guard.py` | `6f23da54ad09aa94999e20504a324debb99a97261cc6d2fdb52b0cbfe1e17615` |
@@ -381,12 +381,12 @@ P10/P11 pass at the base.
 | `captures/environment_20261128.txt` | `3637c4c615d96da8b7aaf18fd2bc51bdb941c42f95fc957bf65b22e006152d21` |
 | `captures/launch_ssh_dryrun.txt` | `a0d0b662dcd1bc7614ff2c7ba431eebd378c1ecd0488852df6ee71c2c10a6ad8` |
 | `captures/cache_staging.txt` | `2dedbbc2d7983aaec3203e70f12477fed30ff0c5f14fbd1deb0186d6ed9a0dfb` |
-| `captures/endpoint_guard/driver_success.txt` | `1693bfd63ef58db7c319fa057324d57bd7adb907b2cb4f7fb5ead7bcc1f34c21` |
-| `captures/endpoint_guard/driver_foreign.txt` | `54fca5a25691db7535e2728d22e551080094861093583f6d5e73211250f7ffea` |
-| `captures/endpoint_guard/driver_bindfail.txt` | `9d7fa49f750c7147c727806fa3989db8d32f4d7ec1f985015c3f11e0755174fc` |
+| `captures/endpoint_guard/driver_success.txt` | `ac36d9ac70d5bfe5029f4d1fcae2e1e763c975f278289171d7968eb97c1cff70` |
+| `captures/endpoint_guard/driver_foreign.txt` | `4d4646a53d8692fa069cf863ff1f80144820bb453b2266f274f6d1172851662e` |
+| `captures/endpoint_guard/driver_bindfail.txt` | `30e23956c9fc688d7b19885c1fcb442b840725a40961d532af6b3946f0dc0ebe` |
 | `captures/endpoint_guard/pytest_endpoint_guard.txt` | `e8dadd7e0388988b572b2c3977b6dda1c1c1b78b9368282b9e4eb8a229ba4245` |
 | `captures/endpoint_guard/full_suite_compare.txt` | `eea0984e958a4a1fb97cf17368c4643bbcb6cd6b763b4bd24f040945ba0a1715` |
-| `captures/SHA256SUMS` | `8d922f4064dd477276bb8ffdd3ed7772d59c21c6f72efb6841696c4fd13b4365` (covers every capture file, including `server.log`, `status.log` and the endpoint-guard runs) |
+| `captures/SHA256SUMS` | `ac7a6503d0945d76f3b653aa0808b90ab07ff2b08d4073b108409a899f8abaf0` (covers every capture file, including `server.log`, `status.log` and the endpoint-guard runs) |
 | `SHA256SUMS` (record root) | binds this record and `captures/SHA256SUMS`; its hash is stated in the `coord/compute` report |
 
 ## 9. Decided alone

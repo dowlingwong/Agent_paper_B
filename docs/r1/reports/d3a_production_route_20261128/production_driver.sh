@@ -45,8 +45,10 @@ seal_scene() {
   local tag="$1" rc="$2" detail="$3"
   status "STOP endpoint_identity check=$tag rc=$rc scene=$V"
   # Quiesce the started server before hashing: its log must not change after the seal.
-  kill -TERM "${SPID:-0}" 2>/dev/null || true
-  wait "${SPID:-0}" 2>/dev/null || true
+  if [ -n "${SPID:-}" ] && [ "${SPID}" != "0" ]; then
+    kill -TERM "$SPID" 2>/dev/null || true
+    wait "$SPID" 2>/dev/null || true
+  fi
   sleep 1
   {
     echo "{"

@@ -1,4 +1,4 @@
-mode=success rc=0 root=/tmp/d3a_guard_test.1r428o
+mode=success rc=0 root=/tmp/d3a_guard_test.nEn9at
 chunk_called=yes
 stop_json=no
 result=PASS
