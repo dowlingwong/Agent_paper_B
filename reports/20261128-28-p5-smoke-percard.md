@@ -8,7 +8,9 @@ lease, 0 foreign processes at start and end. The E0 part is the accepted fresh-r
 - Task `compute/20261127-33` item 2 (P5 rerun); base `origin/main` `d25938ed`.
 - Deliverable branch `compute-p5-smoke-percard-20261128` @ **`1e8b4aecf31ee4f240e697dc6b3e8f355e78bfd4`**;
   record `docs/r1/reports/trackp_p5_smoke_percard_20261128/P5_SMOKE_PERCARD_20261128.md`.
-- Review branch `compute-p5-smoke-percard-20261128-review`: **pending**.
+- Review branch `compute-p5-smoke-percard-20261128-review` @ `f422df34a411c57f5551a43a852baf11d38d1d14`:
+  **ACCEPTED** (captures 7/7; kernels bound; lease index 2/UUID/0 foreign; E0 cited, timing left open).
+  Merged to `main` `c11ce78b`.
 - Capture `SHA256SUMS` 7 entries; all verify.
 - Host: Ada `ucrtasl`, `zli538` venv, Python 3.12.10, torch 2.6.0+cu124, transformers 5.19.0, CUDA 12.4;
   paper `c80f83bc`, harness `897d83c8`, config `trackp_ada_v1.json` `bb0c7251…`.
