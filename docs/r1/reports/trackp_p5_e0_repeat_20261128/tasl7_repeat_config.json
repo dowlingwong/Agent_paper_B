@@ -1,0 +1,177 @@
+{
+ "comment": "Track P on zhixu portal (RUNBOOK Track P; docs/r1/prompts/PORTAL_TRACK_P_RUNBOOK.md 1.6 / 2.3). Host values filled in Phase 2.3 (26 Oct 2026) from r1/c3/train/registry.yaml (every file verified against the Hub record at the pinned revision; Kev adapters also against the GitHub kev-1.0 release tarballs). AI-assisted (Claude); ENGINEERING_ONLY config. | TASL-7 same-code E0 reference copy (R1-P4-E0-SAME-CODE-REFERENCE): e0.final max_steps 6000->2000 and patience 10->5 only; all other values unchanged.",
+ "host": "TASL-2 (zhixu portal)",
+ "work_dir": "/home/dowling/r1_trackp",
+ "models_dir": "/home/dowling/r1_trackp/models",
+ "runs_dir": "/home/dowling/r1_trackp/runs",
+ "hf_home": "/home/dowling/r1_trackp/hf_cache",
+ "gpu": {
+  "name": "NVIDIA GeForce RTX 4090",
+  "compute_capability": "8.9",
+  "lock_path": "/home/dowling/r1_locks/gpu0.lock",
+  "dtype": "bfloat16",
+  "gradient_checkpointing": true
+ },
+ "bases": {
+  "kev-0.8b": {
+   "family": "kev",
+   "adapter_repo": "jaredpalmer/kev-0.8b",
+   "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+   "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+   "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+   "local_path": "/home/dowling/r1_trackp/models/Qwen__Qwen3.5-0.8B-Base@dc7cdfe2ee41",
+   "lr": 2e-05,
+   "adapter_local_path": "/home/dowling/r1_trackp/models/jaredpalmer__kev-0.8b@788ddbdd6571"
+  },
+  "kev-4b": {
+   "family": "kev",
+   "adapter_repo": "jaredpalmer/kev-4b",
+   "adapter_revision": "591dcb5bd6d05eb0b5131ea6608f93f10243335c",
+   "base_repo": "Qwen/Qwen3.5-4B-Base",
+   "base_revision": "1001bb4d826a52d1f399e183466143f4da7b741b",
+   "local_path": "/home/dowling/r1_trackp/models/Qwen__Qwen3.5-4B-Base@1001bb4d826a",
+   "lr": 2e-05,
+   "adapter_local_path": "/home/dowling/r1_trackp/models/jaredpalmer__kev-4b@591dcb5bd6d0"
+  },
+  "qwen3.5-0.8b-base": {
+   "family": "qwen_control",
+   "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+   "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+   "local_path": "/home/dowling/r1_trackp/models/Qwen__Qwen3.5-0.8B-Base@dc7cdfe2ee41",
+   "lr": 0.0001
+  },
+  "qwen3.5-4b-base": {
+   "family": "qwen_control",
+   "base_repo": "Qwen/Qwen3.5-4B-Base",
+   "base_revision": "1001bb4d826a52d1f399e183466143f4da7b741b",
+   "local_path": "/home/dowling/r1_trackp/models/Qwen__Qwen3.5-4B-Base@1001bb4d826a",
+   "lr": 0.0001
+  },
+  "laya": {
+   "family": "laya",
+   "base_repo": "convaiinnovations/laya-typed-decisions",
+   "base_revision": "e929ae5cf69bc34259cd2f95c9e91145b818b1f0",
+   "local_path": "/home/dowling/r1_trackp/models/convaiinnovations__laya-typed-decisions@e929ae5cf69b",
+   "lr": 2e-05
+  },
+  "startlux-0.8b": {
+   "family": "startlux",
+   "base_repo": "startlux-models/StartLux-Decision-v1.1-0.8B-Instant",
+   "base_revision": "6496ae641cc71b149ce9dad69bd97f2a44e7bf11",
+   "local_path": "/home/dowling/r1_trackp/models/startlux-models__StartLux-Decision-v1.1-0.8B-Instant@6496ae641cc7",
+   "lr": 0.0001,
+   "licence": "CC-BY-NC-4.0 (research use only)"
+  },
+  "startlux-2b": {
+   "family": "startlux",
+   "base_repo": "startlux-models/StartLux-Decision-v1.1-2B-Instant",
+   "base_revision": "f1e6cd147dda82c9ffa3e8e725d5c1f175566fb1",
+   "local_path": "/home/dowling/r1_trackp/models/startlux-models__StartLux-Decision-v1.1-2B-Instant@f1e6cd147dda",
+   "lr": 0.0001,
+   "licence": "CC-BY-NC-4.0 (research use only)"
+  },
+  "startlux-4b": {
+   "family": "startlux",
+   "base_repo": "startlux-models/StartLux-Decision-v1.1-4B-Instant",
+   "base_revision": "416088f77cfce09633906a3675c7cd2e5dabcf10",
+   "local_path": "/home/dowling/r1_trackp/models/startlux-models__StartLux-Decision-v1.1-4B-Instant@416088f77cfc",
+   "lr": 0.0001,
+   "licence": "CC-BY-NC-4.0 (research use only)"
+  }
+ },
+ "code_pins": {
+  "kev": "jaredpalmer/kev@2074cc44256200bb37540103fa4572901faa10f3",
+  "laya": "NandhaKishorM/laya@a478221bcad24d1a9c47b361c79328ebd2b100c6",
+  "startlux_decide": "StartLuxLabs/StartLux-Decision@a99977d9332decc9fb27a2488b4a83b533b6cd5f"
+ },
+ "lora": {
+  "r": 16,
+  "alpha": 32,
+  "dropout": 0.05
+ },
+ "head_lr": 0.001,
+ "lr_grid": [
+  1e-05,
+  3e-05,
+  0.0001
+ ],
+ "lr_grid_comment": "R1-LR-GRID (author, 26 Oct): one adapter-lr grid for every family, chosen by val RPS; replaces the per-base lr of spec \u00a74 for P.3a onwards (the per-base 'lr' values are the P.0/P.4 engineering runs' lr and stay for spike/toy only). New heads keep head_lr 1e-3.",
+ "token_lr": 0.0001,
+ "token_lr_comment": "R1-TOKEN-INIT (author, 26 Oct: 'train those rows in fp32 at a lower lr'): the bin-token family's new token rows, fp32, lr 1e-4 (10x below new heads; value chosen by the Track P agent, author to confirm).",
+ "spike": {
+  "toy_examples": 100,
+  "seq_len": 1024,
+  "batch_size": 8,
+  "steps": 13,
+  "seed": 0,
+  "comment": "13 steps x batch 8 = one pass over the 100 toy examples (P.0 '100-example toy SFT'; was 10 = 80 examples, STOP 3 review)"
+ },
+ "toy_batch": {
+  "examples": 64,
+  "steps": 50,
+  "seed": 0
+ },
+ "e0": {
+  "protocol": "trackp_e0/v2",
+  "batch_size": 8,
+  "seed": 0,
+  "screen": {
+   "max_steps": 2000,
+   "eval_every": 100,
+   "patience": 5
+  },
+  "final": {
+   "max_steps": 2000,
+   "eval_every": 100,
+   "patience": 5
+  },
+  "comment": "R1-E0-PROTOCOL + R1-E0-BUDGET (author, 26 Oct): lr screen on lr_grid (<= 2,000 steps, chosen by val RPS), then one run at the selected lr (cap 6,000, eval every 100, patience 10); E0 metrics from that run; the hard-label and native runs reuse the selected lr with the final budget. Screen patience 5 is the Track P agent's (eval every 100 confirmed, R1-TRACKP-CHOICES). Head fit: full-batch L-BFGS on CPU, descriptive (R1-E0-HEADFIT)."
+ },
+ "e3": {
+  "steps": 300,
+  "seeds": [
+   0,
+   1,
+   2
+  ]
+ },
+ "sft": {
+  "effective_batch": 16,
+  "max_epochs": 5,
+  "warmup_frac": 0.05,
+  "eval_every_frac": 0.25,
+  "patience": 2,
+  "seeds": [
+   0,
+   1,
+   2
+  ]
+ },
+ "jev": {
+  "base_url": "https://api.typesafe.ai",
+  "model": "jev-1.14.0",
+  "repeats": 3,
+  "comment": "R1-JEV-RUNG / R1-EDGES-10 (author, 26 Oct): jev-1.14.0; 10 yes/no questions (one per finite bin edge). Verify with the key that the name exists before Phase 7; the client refuses a different returned version."
+ },
+ "rb_demos": {
+  "base_url": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "max_analysis_tokens": 256,
+  "n_examples": 500
+ },
+ "venv": {
+  "path": "/home/dowling/r1_trackp/venvs/trackp-gpu",
+  "python": "3.12.15",
+  "torch": "2.6.0+cu124",
+  "transformers": "5.19.0",
+  "peft": "0.21.2",
+  "flash_linear_attention": "0.5.2",
+  "causal_conv1d": "1.7.0 (built from source, CUDA 12.2 toolkit, sm_89)",
+  "torch_pin": "torch==2.6.0+cu124 (R1-ENV-PIN, author 26 Oct: kept on driver 535 via CUDA minor-version compatibility)"
+ },
+ "kev_temperature": {
+  "training": 1.0,
+  "post_hoc": "temperature scaling on dev, the same procedure for every model (R1-TEMPERATURE)"
+ },
+ "code_pins_comment": "R1-ENV-PIN: Kev code pinned at the exact commit used in P.0 (2074cc4), 23 commits after the kev-1.0 tag; its diff to the tag is recorded in docs/r1/reports/trackp_phase2_20261026/kev_diff_vs_kev-1.0.*"
+}

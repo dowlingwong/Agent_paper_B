@@ -1,0 +1,2 @@
+{"event": "start", "gpu_index": 0, "gpu_uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be", "job": "trackp e0 kev-0.8b", "other_processes": {"count": 0, "memory_mib": 0}, "pid": 3548655, "trackx_marker": "absent: /home/zli538/r1_locks/trackx_evidence.active", "utc": "2026-11-28T01:31:39Z"}
+{"event": "end", "gpu_index": 0, "gpu_uuid": "GPU-9be33fd1-8eeb-497d-772a-87362d6720be", "job": "trackp e0 kev-0.8b", "other_processes": {"count": 0, "memory_mib": 0}, "pid": 3548655, "utc": "2026-11-28T02:09:42Z"}
