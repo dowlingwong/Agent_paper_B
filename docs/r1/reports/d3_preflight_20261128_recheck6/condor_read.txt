@@ -1,0 +1,56 @@
+## host and read start
+deepthought2
+2026-11-28T18:16:04Z
+
+## condor_status (ETP collector), GPU-advertising slots
+deepthought.etp.kit.edu 4 2 10 Unclaimed Idle false false error
+deepthought2.etp.kit.edu 2 1 32 Unclaimed Idle false false error
+g4401.nemo.privat 1 1 16 Drained Idle undefined false undefined
+g4401.nemo.privat 4 4 48 Unclaimed Idle false false error
+g4401.nemo.privat 4 4 16 Claimed Retiring false false error
+
+## condor_status -pool c03-001-140 (TOpAS), c03-001-175 slots
+slot1@c03-001-175.gridka.de 8 8 176 Unclaimed Idle false false error
+slot1_16@c03-001-175.gridka.de 8 0 16 Claimed Busy false false error
+
+## condor_status -pool c03-001-140 (TOpAS), all GPU-advertising slots
+c03-001-159.gridka.de 56 8 11 Unclaimed Idle undefined error error
+c03-001-159.gridka.de 56 1 8 Claimed Busy undefined error error
+c03-001-159.gridka.de 56 8 8 Unclaimed Idle undefined error error
+c03-001-159.gridka.de 56 1 8 Claimed Busy undefined error error
+c03-001-159.gridka.de 56 8 14 Unclaimed Idle undefined error error
+c03-001-159.gridka.de 56 1 8 Claimed Busy undefined error error
+c03-001-159.gridka.de 56 8 14 Unclaimed Idle undefined error error
+c03-001-159.gridka.de 56 1 8 Preempting Vacating undefined false undefined
+c03-001-159.gridka.de 56 8 14 Unclaimed Idle undefined error error
+c03-001-159.gridka.de 56 1 8 Preempting Vacating undefined false undefined
+c03-001-159.gridka.de 56 8 13 Unclaimed Idle undefined error error
+c03-001-159.gridka.de 56 1 8 Claimed Busy undefined error error
+c03-001-159.gridka.de 56 8 14 Unclaimed Idle undefined error error
+c03-001-159.gridka.de 56 1 8 Preempting Vacating undefined false undefined
+c03-001-167.gridka.de 8 8 4 Unclaimed Idle undefined error error
+c03-001-167.gridka.de 8 2 4 Claimed Busy undefined error error
+c03-001-167.gridka.de 8 1 8 Claimed Busy undefined error error
+c03-001-167.gridka.de 8 1 8 Claimed Busy undefined error error
+c03-001-167.gridka.de 8 2 4 Claimed Busy undefined error error
+c03-001-167.gridka.de 8 1 8 Claimed Busy undefined error error
+c03-001-167.gridka.de 8 1 1 Claimed Busy undefined error error
+c03-001-175.gridka.de 8 8 176 Unclaimed Idle false false error
+c03-001-179.gridka.de 8 8 0 Unclaimed Idle undefined error error
+c03-001-179.gridka.de 8 2 4 Claimed Busy undefined error error
+c03-001-179.gridka.de 8 1 8 Preempting Vacating undefined false undefined
+c03-001-179.gridka.de 8 1 8 Claimed Busy undefined error error
+c03-001-179.gridka.de 8 1 8 Claimed Busy undefined error error
+c03-001-179.gridka.de 8 1 8 Preempting Vacating undefined false undefined
+c03-001-179.gridka.de 8 1 8 Preempting Vacating undefined false undefined
+c03-001-179.gridka.de 8 1 8 Claimed Busy undefined error error
+
+## condor_q -submitter dwong (ETP)
+5045947 0 5 one-job-at-a-time for the H200 U3/D1 units; release after the H200 work (by user dwong)
+5045949 0 5 restarted job: the probe does no work on its second start
+5045952 0 5 superseded: scaffolding gate bug fixed; this attempt would refuse a good GPU (by user dwong)
+
+## condor_q -pool c03-001-140 -submitter dwong (TOpAS)
+
+## read end
+2026-11-28T18:16:04Z
