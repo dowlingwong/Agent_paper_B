@@ -1,4 +1,4 @@
-# State — 28 Nov 2026, 01:30 CET, `main` at `a98d2eff`
+# State — 28 Nov 2026, 01:45 CET, `main` at `adbd7020`
 
 Coordinator: Claude Code session ca57c183, tmux `paperb-coordinator`, Remote Control "Paper B Coordinator". The recurring
 round runs at :07 and :37. Work order: §2 of the next-phase runbook (the author's local version, read 26 Nov 23:10). Execution
@@ -26,6 +26,7 @@ Writer (`paperb-writer`) is working. **Compute is up** since 23:31 and delivered
 | done | `compute/20261127-24`: 4B re-probe **PASS** (14.1 / 17.0 GB peak; total probe 3.10 GPU-h; projection 23.67), merged `85b2421f`; phase-1 draft merged `e56de25b`; P2 done (both Kev bases eligible; merged `523ccfbc`); P3 launch unit merged `a3c8284d`; choices signed (R1-P4-PHASE1-SIGNATURE, `280c0015`); Ada P5 records `compute/20261127-29`, then the coordinator publishes the note | §4 | — |
 | 1c | `compute/20261127-19`: Ada P.4 probe: **0.8B bases PASS; 4B bases OOM at micro-batch 8 (STOP, author)**; record reviewed and merged `ebc28ec0`; 4B choice with the author | §4 | **ready** (host config on `main` `91cfd48a`) |
 | 1c3 | Ada P5: smoke **PASS**; E0 not met against the 26 Oct reference; P5 record merged `15fe05b0`; **same-code TASL-7 reference** (R1-P4-E0-SAME-CODE-REFERENCE) `compute/20261128-01` | §4 | ready (first after screening) | **blocked**: Track P `gpu_lease` checks all GPUs; per-card lease merged `1f1b5d41`; P5 rerun `compute/20261127-33` |
+| 1c2a0 | `local/20261128-02`: G.5 P11 engineering smoke path for the note-gated host tests (my "checked at publication" disposition withdrawn: R1-G5-P11 needs pre-publication coverage) | correction | ready |
 | 1c2a | `compute/20261128-05`: dispositions: P11 without `validate --launch`, houseprice at 01:00 CET (28 Nov UTC run id), D6 copy waits for `local/20261128-01` (expansion copy variant) | coordinator | ready |
 | 1c2b | `compute/20261128-04`: remove stale HTCondor requests 759624/759625 (Idle check, records kept) and 760065 (withdrawn); P.4 stays on Ada | author 28 Nov | ready |
 | 1c2 | `compute/20261128-03` (= `-12`): D.3 HTCondor preflight, resubmit now as a new job (author reports free A100/L40S, 28 Nov) | §2 2A | ready |
