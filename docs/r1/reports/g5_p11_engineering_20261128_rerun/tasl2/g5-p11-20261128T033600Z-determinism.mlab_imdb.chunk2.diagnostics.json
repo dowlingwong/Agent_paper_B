@@ -1,0 +1,46 @@
+{
+ "K": 10,
+ "attempt": 1,
+ "chunk": 2,
+ "chunks": 3,
+ "gpu_seconds": 33.2,
+ "job": "audits-wave1",
+ "label": "ENGINEERING_ONLY",
+ "label_seed_runs": {
+  "divergent": 0,
+  "infrastructure": 0,
+  "ok": 5
+ },
+ "node": "mlab_imdb",
+ "plan_sha256": "612d5f7607247c79f981918ef9f89ad755b082e5df67ee45eaea5844618e3744",
+ "run_id": "g5-p11-20261128T033600Z-determinism",
+ "runs_planned_evaluation": 5,
+ "runs_planned_label": 5,
+ "schema": "g5_tasl_diagnostics_audit/1",
+ "seeds_planned": [
+  7001,
+  7002,
+  7003,
+  7004,
+  7005,
+  7006,
+  7007,
+  7008,
+  7009,
+  7010
+ ],
+ "spec_sha256": "1cc9f4d4e91fec02d7ef1ad257ee20065180babeb491217201e55c016cc865dc",
+ "stop": null,
+ "stop_class": null,
+ "wave": 1,
+ "wave_e5": {
+  "audited": 40,
+  "baseline_label_divergent_other": 0,
+  "baseline_label_timeouts": 0,
+  "complete_label": 40,
+  "divergent_label": 0,
+  "members": 40,
+  "parent_divergent_seeds": 0,
+  "partial_label": 0
+ }
+}

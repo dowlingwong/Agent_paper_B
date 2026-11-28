@@ -4,14 +4,15 @@ Task `compute/20261128-10` (reissue of `compute/20261128-09`), PLAN **R1-G5-P11*
 `f7dc4945f63e09d1a7b66207bbbc43f76997aa29` (repair `2f110e26` merged; review `fd3099ed` accepted).
 ENGINEERING_ONLY: no G.5 label or evidence run, no sealed/test read, no note created.
 
-**Result: the primary matrix and the C9/C15 pre-run seal path PASS on the repaired code; four separate scenarios
-are blocked by another user's compute on the TASL-7 GPU.** Both nodes complete two campaign waves and all planned
-audit chunks; diagnostics report no STOP; `baseline_failed = 0`; the TASL-7 audit chunk is claimed, run,
-registered and sealed on TASL-2; the meter reads 0.885 worker GPU-h and 0.839 proposer GPU-h. The C14 `-infra`
-scenario records the expected STOP 7. The `-determinism`, `-restart`, `-tar` and `-closeserver` scenarios did not
-start because the reviewed G.5 code refuses a TASL-7 server beside another user's compute process; the exact
-block is recorded below. This record is therefore a **partial host record**, not the complete P11 matrix, and is
-not yet offered for the final P11 review.
+**Result: the P11 engineering matrix now runs every scenario on the repaired code.** The primary matrix and the
+C9/C15 pre-run seal path PASS; both nodes complete two campaign waves and all planned audit chunks; diagnostics
+report no STOP; `baseline_failed = 0`; the TASL-7 audit chunk is claimed, run, registered and sealed on TASL-2;
+the meter reads 0.885 worker GPU-h and 0.839 proposer GPU-h. The C14 `-infra` scenario records the expected STOP 7.
+The four scenarios blocked on 28 Nov 05:10Z by another user's compute on the TASL-7 card — `-determinism`,
+`-restart`, `-tar` and `-closeserver` — were run on the free TASL-7 card at 08:35–10:08Z and PASS their items:
+C2/C4/C5 repeat, C7/C10 controlled restart, C15 tar failure and C15 close-server. The earlier refusal is kept in
+`tasl7/g5-p11-20261128T033600Z-determinism.serve.log` as the record of that attempt. This record is now offered
+for one fresh review of the complete item table; it is still ENGINEERING_ONLY.
 
 ## Environment and pins
 
@@ -140,70 +141,138 @@ recorded one infrastructure row (seed 7001, through all retries) and stopped wit
 diagnosis)`; class `infrastructure`; 99 ok, 1 infrastructure. The attempt and server were sealed. This is the
 expected STOP 7, not a host failure.
 
-## Separate scenarios
+## Separate scenarios (28 Nov 08:35–10:08Z, TASL-7 card free)
 
-### `-determinism` (C2/C4/C5 repeat) — BLOCKED at server start
+All four use the same base `f7dc4945`, the same harness and the reviewed G.5 code; `G5_TASL_ENABLE_REAL` is unset.
+The TASL-7 card had no foreign compute at any scenario start (checked each time; TASL-2's GPU was empty after the
+P7 server stopped). Every server used the declared `-c 32768` q8_0 K/V argv and one slot.
 
-The spec `g5-p11-20261128T033600Z-determinism` was created on both hosts with the same bytes (sha256
-`1cc9f4d4e91fec02d7ef1ad257ee20065180babeb491217201e55c016cc865dc`). The TASL-7 server start at `04:38Z`
-refused before any server directory was written:
+### `-determinism` (C2/C4/C5 repeat) — PASS
 
-```
-STOP: foreign compute processes on the leased GPU before the server: [{'pid': 2624911, 'used_memory': '386 MiB'}]
-(no shared card)
-```
+Spec `g5-p11-20261128T033600Z-determinism` sha256
+`1cc9f4d4e91fec02d7ef1ad257ee20065180babeb491217201e55c016cc865dc`.
 
-PID 2624911 was another user's `python scripts/bench/run_eu.py` (uid `jiachenl`), not a Paper B process. The
-refusal is an infrastructure condition, not a scenario result. At `04:50Z` the card additionally held a `tianyu`
-Jupyter kernel (PID 2599483, 450 MiB) and another `jiachenl` benchmark (PID 2633157, 8402 MiB), so the reviewed
-G.5 code still refuses to start. The scenario has not run.
+- Server: PID 2748828, started 08:35:26Z, stopped 09:57:20Z, span **4,914 s**; `/props` 32,768 context, one slot.
+- Campaigns: `mlab_imdb` and `mlgym_breakout_minatar`, wave 1, each 80 proposals, 40 ran, 40 kept, 0 invalid,
+  0 infrastructure, 0 refused, 0 timed out, `stop: null`.
+- Audits: three chunks each. `label_seed_runs` for chunks 0 and 1: 100 ok, 0 divergent, 0 infrastructure; final
+  chunks 2: 5 ok, 0 divergent, 0 infrastructure. All `stop: null`.
+- Fixed-seed repeat: each chunk's archive carries `out/audit/determinism.json` with
+  `same_fixed_seed_outcomes` **200** (chunks 0, 1) and **10** (final chunk 2), and
+  `out/audit-repeat/chunk_record.json` with `expected_runs 200`, `diffs_recounted 0`, `infrastructure_reruns 2`,
+  `gate: noise_floor.check_effective ... effective:true`. The six repeat records agree.
+- `wave-checks`: `stops: []`, `warnings: []` for both nodes.
+- Seals: eight attempt receipts (two campaigns, six chunks), all rc 0. The server seal is
+  `cd71834e…` record / `16f51e8d…` end / `c21576c6…` log; `server-span` rc 0.
+- Meter: worker **0.791 GPU-h**, proposer 4,914 s (1 registered, 0 open, no gaps).
 
-### `-restart` (C7/C10) — BLOCKED
+Node/run seals are not claimed for this scenario: `seal-node` correctly refuses a node that has no wave-2 checks
+or node STOP, and the scenario deliberately runs wave 1 only. The primary `-lease` scenario covers node/run seals;
+the determinism evidence is the six chunk repeat receipts.
 
-Spec `…-restart` sha256 `71571e3796d307c632d1afb20656faa8f81097146f13d5f01e690d32bc89ac18`. Not started: it needs
-the same TASL-7 proposer lease, held by the foreign processes above. The primary scenario did exercise two clean
-server starts, two `p11-probe` identity checks and a stop/restart around the C11 chunk, but not the controlled
-`restart-ready` → STOP 12 path that this scenario names.
+Two extra node logs at `08:37:24Z`/`08:37:25Z` (PIDs 1308394/1308708) are the first campaign attempts of this
+scenario: they were refused before a job record because the P7 server still held the TASL-2 card. They are kept
+and attributed to that refusal; no campaign from them entered the run. The six repeat records carry the synthetic
+engine's internal `label: EVIDENCE` wire value; the record and every seal are ENGINEERING_ONLY and no evidence
+path reads them.
 
-### `-tar` (C15 tar failure) — BLOCKED
+### `-restart` (C7/C10) — PASS
 
-Spec `…-tar` sha256 `fed68f4c8b98cb6a1601c1fdf1496770d6c7cc2522d18ff43111d7ee1450a303`. Not started: a campaign
-needs the TASL-7 server. The actual seal tar is exercised by every primary `seal-attempt`; the deliberate
-`out.tar`-is-a-directory failure is not yet shown.
+Spec `g5-p11-20261128T033600Z-restart` sha256
+`71571e3796d307c632d1afb20656faa8f81097146f13d5f01e690d32bc89ac18`.
 
-### `-closeserver` (C15 close-server) — BLOCKED
+- Server-1: PID 2758307 (record `8b768b1d…`), 09:58:06Z–09:58:39Z, span **33 s**; `p11-probe` PASS
+  (32,768 context, one slot, build `b1-620d222`). The server was stopped at 09:58:39Z.
+- `mlab_imdb` wave-1 campaign: `restart-ready` at **09:59:11Z**; with the server down `restart-continue` was
+  written at **10:01:29Z**; the wrapper recorded
+  `STOP 12: after the wave: <urlopen error [Errno 111] Connection refused> (re-run as a new attempt)` at
+  **10:02:40Z**, class `infrastructure`.
+- Server-2: restarted 10:02:19Z–10:02:46Z, span **27 s**, record `e8ed4127…`; `p11-probe` PASS again.
+- The failed campaign attempt is sealed (`d38acd55…` job record, `49321120…` diagnostics, `d694b9d5…` out.tar);
+  `server-span` accepted both server receipts. Meter: worker 0.059 GPU-h, proposer **60 s** (2 registered,
+  0 open, no gaps).
 
-Spec `…-closeserver` sha256 `324db598fa00e18e9ef2c6cbbe0a7a0ff4f6f814e10dfed46f48c663dfe8920f`. Not started: it
-needs a TASL-7 server to kill without a normal end record. `seal-server` and `server-span` themselves passed on
-the two primary servers.
+The primary record's two clean starts and its stop/restart around the C11 chunk remain the C10 short-span
+evidence; this scenario adds the controlled `restart-ready` → STOP 12 path. The hours-long part of C10 remains a
+STOP 12 while the table runs, as R1-G5-P11 states.
+
+### `-tar` (C15 tar failure) — PASS
+
+Spec `g5-p11-20261128T033600Z-tar` sha256
+`fed68f4c8b98cb6a1601c1fdf1496770d6c7cc2522d18ff43111d7ee1450a303`.
+
+- The engine's `-tar` fixture left `out.tar` as a directory, so the real `tar -cf out.tar out` failed. The job
+  recorded `STOP: out.tar could not be written; out/ kept for the seal`, class `infrastructure`, and kept the
+  clear `out/` tree.
+- `seal-attempt` sealed it as `out_clear.tar` with **1,130** clear files; archive sha256
+  `07c6a35dffae71c5c27780c36115b6e4ae43affb17289e59531fca002ce187d9`; the seal receipt records
+  `out_clear_files: 1130`, the job-record hash and the node log. The capture carries the archive listing, not
+  the archive itself.
+- Server: record `a94246b6…`, 10:03:49Z–10:05:35Z, span **106 s**; `p11-probe` PASS. Meter: worker 0.021 GPU-h,
+  proposer 106 s (1 registered, 0 open).
+
+### `-closeserver` (C15 close-server) — PASS
+
+Spec `g5-p11-20261128T033600Z-closeserver` sha256
+`324db598fa00e18e9ef2c6cbbe0a7a0ff4f6f814e10dfed46f48c663dfe8920f`.
+
+- Server-1 (record `4154b044…`, 21 s span) was ended by the first kill attempt and its wrapper wrote an end
+  record with `server_rc: -9`; `seal-server` sealed it. It is the ordinary seal path, not the `close-server`
+  interruption (the `close-server` receipt is only on server-2).
+- Server-2 (record `967801cc…`) was started 10:06:47Z, probed, then the wrapper and child were killed with
+  `SIGKILL` before the wrapper could write an end record. `close-server` wrote a receipt with `closed: true`,
+  `end_basis: closed_at`, reason `P11 engineering server interruption`, `stopped_utc` 10:07:07Z; `seal-server`
+  then sealed it with span **20 s**. Both `server_end.json` and the seal receipt are in the capture.
+- Meter: worker 0.0 GPU-h, proposer **41 s** (2 registered, 0 open, no gaps). The lease was free before
+  `close-server`; `gpu0.lock` is free after it.
+
 
 ## Coverage against C1–C16
 
 | Item | This run | Status |
 |---|---|---|
-| C2 | Both nodes, campaign + 3 audit chunks each, K = 10, re-materialization and isolation receipts; the fixed-seed repeat scenario is blocked | PARTIAL |
+| C2 | Both nodes, campaign + 3 audit chunks each, K = 10, re-materialization and isolation receipts; the `-determinism` scenario repeats the same fixed-seed claims: 200/200/10 same outcomes, 0 diffs, six repeat records agree | PASS |
 | C4 | Per-wave and per-chunk diagnostics for both nodes | PASS |
-| C5 | Ten chunk deadlines reproduce the declared formula | PASS |
-| C6 | Attempt, node, run and server seals; access log; closed attempt | PASS |
-| C7 | Two primary server starts, probes and a stop/restart around the C11 chunk; the controlled `-restart` path is blocked | PARTIAL |
+| C5 | Ten primary chunk deadlines reproduce the declared formula; the `-determinism` chunks keep their diagnostics (their deadline fields are not part of this receipt) | PASS (primary) |
+| C6 | Attempt, node, run and server seals; access log; closed attempt; the `-tar` seal writes `out_clear.tar` | PASS |
+| C7 | Two primary server starts, probes and a stop/restart around the C11 chunk; the `-restart` scenario adds `restart-ready` → server down → STOP 12 → server-2 probe | PASS |
 | C9 | Meter at W = 20, MEM A, K = 10, closed attempt; 425 GPU-h threshold | PASS |
-| C10 | 3020 s proposer span with one restart; the hours-long/multi-day part remains for the table and `-restart` is blocked | PARTIAL |
+| C10 | 3020 s primary proposer span with one restart; the `-restart` short span with both server identities and the interruption record; the hours-long/multi-day part remains STOP 12 while the table runs (R1-G5-P11) | PARTIAL (multi-day STOP 12) |
 | C11 | Server-holds-lease and chunk-holds-lease mutual refusals | PASS |
 | C14 | Real-engine harness, isolated worker, STOP 7 injection | PASS |
-| C15 | `seal-attempt`/`seal-node`/`seal-run`, `seal-server`, `server-span`, noise pre-check; `-tar` and `-closeserver` blocked; assembly/release need the signed note | PARTIAL |
+| C15 | `seal-attempt`/`seal-node`/`seal-run`, `seal-server`, `server-span`, noise pre-check; `-tar` `out_clear.tar` (1,130 files), `-closeserver` abnormal end, and the reviewed REL-T1-G1B copy in the primary record; assembly/release need the signed note | PASS (assembly/release not yet) |
 | C16 | One full TASL-7 chunk claimed, run, registered and sealed on TASL-2 | PASS |
+
+## Hashes that matter (new scenarios)
+
+| Item | SHA-256 |
+|---|---|
+| `-determinism` server record / end / log | `cd71834e…` / `16f51e8d…` / `c21576c6…` |
+| `-determinism` server span | 4,914 s; meter worker 0.791 GPU-h |
+| `-restart` server-1 record / server-2 record | `8b768b1d…` / `e8ed4127…` |
+| `-restart` campaign job record / diagnostics / out.tar | `d38acd55…` / `49321120…` / `d694b9d5…` |
+| `-tar` `out_clear.tar` | `07c6a35dffae71c5c27780c36115b6e4ae43affb17289e59531fca002ce187d9` (1,130 files) |
+| `-tar` server record / span | `a94246b6…` / 106 s |
+| `-closeserver` server-1 / server-2 records | `4154b044…` / `967801cc…` |
+| `-closeserver` server-2 end / seal | `bed5f477…` / closed true, 20 s |
 
 ## Files
 
 `tasl2/` and `tasl7/` mirror the engineering roots; `SHA256SUMS` binds this record set. The attempt `out.tar`
 archives stay on the hosts and are cited by their seal-receipt hashes; the record set carries the named JSON,
-JSONL and log members only.
+JSONL and log members only. The `-determinism` repeat members are extracted from the sealed `out.tar` as
+`out/audit/determinism.json` and `out/audit-repeat/chunk_record.json`; the `-tar` member is the archive listing
+and its sha256, not the archive. The `p11-probe` and `server-span` command outputs were printed to the
+console and not saved as separate files; the server records and seal receipts carry the identity and the span,
+and the meter reports 0 open servers for every scenario.
 
 ## What happens next
 
-The remaining separate scenarios are listed above. After they finish, a fresh agent reviews the whole item table.
-G.5 publication still waits on the reviewed P11 coverage and the local render. No label, test or evaluation
-value was read; no tolerance, note, seed, spec or request was changed.
+One fresh review of the complete P11 item table. After acceptance, G.5 publication still waits on the local
+render and the remaining note checks. No label, test or evaluation value was read; no tolerance, note, seed,
+spec or request was changed. The four new scenarios ran on the free TASL-7 card; the earlier refusal record is
+kept, not overwritten.
 
-**Decided alone:** host placement (TASL-2 worker, TASL-7 proposer and one audit chunk), the shared stamp and
-fresh IDs, stopping the server for the C11 chunk, and stopping each scenario's server after its last job.
+**Decided alone:** host placement (TASL-2 worker, TASL-7 proposer), the shared stamp and fresh IDs, stopping the
+server for the C11 chunk, the `restart-ready`/`restart-continue` timing, killing the close-server wrapper and
+child with `SIGKILL`, and stopping each scenario's server after its last job. No signed value was changed.

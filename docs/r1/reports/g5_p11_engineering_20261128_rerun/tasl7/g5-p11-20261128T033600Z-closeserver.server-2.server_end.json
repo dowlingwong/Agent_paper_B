@@ -1,0 +1,13 @@
+{
+ "stopped_utc": "2026-11-28T10:07:07Z",
+ "closed": true,
+ "end_basis": "closed_at",
+ "reason": "P11 engineering server interruption",
+ "latest_log_mtime_utc": "2026-11-28T10:06:50Z",
+ "server_rc": null,
+ "stop_signal": null,
+ "server_record_sha256": "967801ccbaa1c900b69974e3e4e316aa961c30a8ce5983632b4af95360d1f640",
+ "server_log_sha256": "ac77fdcb2da21f234414ed2f72903712cd5989ee18edb65a96f1a5cacb63d33b",
+ "closed_by": "g5_seal",
+ "host": "TASL-7"
+}

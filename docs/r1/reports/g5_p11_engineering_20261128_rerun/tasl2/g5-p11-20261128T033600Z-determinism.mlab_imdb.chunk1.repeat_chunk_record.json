@@ -1,0 +1,48 @@
+{
+ "K": 10,
+ "chunk": 1,
+ "diff_rule": "trackg_diff_recount/v1",
+ "diffs_recounted": 0,
+ "engine_contract": "g5_tasl_engine_contract/1",
+ "expected_runs": 200,
+ "finished_epoch": 1795858442.676009,
+ "gate": "noise_floor.check_effective: effective:true, waivers {}, exceptions [], log intact, parent not traced",
+ "infrastructure_reruns": 2,
+ "label": "EVIDENCE",
+ "limits": {
+  "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rb0d19a28c5d146e39d6f94b56fc6f71a.scope",
+  "cpu_list": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (delegated scope /sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rb0d19a28c5d146e39d6f94b56fc6f71a.scope)",
+  "gpu_uuids": [
+   "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+  ],
+  "isolation_waivers": {},
+  "kill_grace_seconds": 10.0,
+  "measured_run_seconds": 65.156,
+  "memory_bytes": null,
+  "memory_method": "external",
+  "provisional_timeout_seconds": null,
+  "timeout_factor": 3.0,
+  "uncapped": [],
+  "uncapped_reason": null
+ },
+ "memory_events_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-rb0d19a28c5d146e39d6f94b56fc6f71a.scope",
+ "node": "mlab_imdb",
+ "run_id": "g5-p11-20261128T033600Z-determinism",
+ "schema": "trackg_g5_audit_chunk_record/v1",
+ "started_epoch": 1795858116.0828075,
+ "stop": null,
+ "stop_kind": null,
+ "units_rematerialised": 20,
+ "wave": 1,
+ "written_rows": 200
+}

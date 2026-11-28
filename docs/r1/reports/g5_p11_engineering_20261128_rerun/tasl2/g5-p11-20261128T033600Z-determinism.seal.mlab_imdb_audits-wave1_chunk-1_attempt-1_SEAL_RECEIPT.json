@@ -1,0 +1,34 @@
+{
+ "attempt": 1,
+ "chunk": 1,
+ "copied": [
+  "out.tar",
+  "job_record.json",
+  "diagnostics.json",
+  "SHA256SUMS"
+ ],
+ "files": {
+  "SHA256SUMS": "76276bc9b1d76b4d70998466afb9f04e71235fc3bf074e190d98ac3af0f423e2",
+  "diagnostics.json": "88140e1581db529f5a7be0fb5ed2fc67a59b147d6a6ea4352fef016a61245f15",
+  "job_record.json": "6f6429b95368f22dc33c28678649f3d5ea6425f9be821376bf7850ea860e7bb0",
+  "node.log": "70e4b1c9db88d13e0142676ebecd52d4554868284d2225dbf73e392126b9addc",
+  "out.tar": "a5eb1330c281a222f84a67665c3dadacd2935c80fbae4c40c89ff8363c7eb966"
+ },
+ "host": "TASL-2",
+ "job": "audits-wave1",
+ "job_record_sha256": "6f6429b95368f22dc33c28678649f3d5ea6425f9be821376bf7850ea860e7bb0",
+ "kind": "attempt",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlab_imdb",
+ "node_log": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-determinism/_logs/mlab_imdb-20261128T092308Z-1369183.node.log",
+ "out_clear_files": null,
+ "run_id": "g5-p11-20261128T033600Z-determinism",
+ "schema": "g5_tasl_seal_receipt/1",
+ "seal_mode": "procedural",
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed/g5-p11-20261128T033600Z-determinism/mlab_imdb/audits-wave1/chunk-1/attempt-1",
+ "sealed_utc": "2026-11-28T09:57:46Z",
+ "source": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-determinism/mlab_imdb/audits-wave1/chunk-1/attempt-1",
+ "stop": null,
+ "stop_class": null,
+ "who": "g5_seal"
+}

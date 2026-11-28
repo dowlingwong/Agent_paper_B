@@ -1,0 +1,7 @@
+# t1_tasl g5 node=mlab_imdb spec=/home/dowling/r1_engineering/g5-p11/g5-p11-20261128T033600Z-restart.json start=2026-11-28T09:59:07Z host=TASL-2 cpus=0-7
+Running scope as unit: run-ra42f50e1316146b8b96b42d00cea60ee.scope
+scope_cgroup=/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-ra42f50e1316146b8b96b42d00cea60ee.scope
+STOP 12: after the wave: <urlopen error [Errno 111] Connection refused> (re-run as a new attempt)
+NODE_EXIT=2
+systemd_run_rc=2
+# end=2026-11-28T10:02:40Z
