@@ -1,0 +1,16 @@
+{
+  "schema": "trackg_node/v1",
+  "name": "synthetic",
+  "description": "P11 synthetic deterministic CUDA arithmetic on four generated integers",
+  "suite": "test",
+  "editable_paths": ["train.py"],
+  "frozen_paths": ["parent.py", "worker.py", "ar_isolated.py"],
+  "run_command": "python3 parent.py {budget}",
+  "metric_name": "val_accuracy",
+  "metric_direction": "maximize",
+  "metric": {"metric_regex": "^val_accuracy: *([0-9.]+)", "test_metric_regex": "^test_accuracy: *([0-9.]+)"},
+  "run_budget": {"kind": "steps", "value": 5},
+  "workers": {"dataloader_workers": 0, "threads": 1},
+  "selection": {"test_scored": true, "selection_split": "validation", "test_metric_name": "test_accuracy"},
+  "isolation": {"entry": "parent.py", "args": ["{budget}"], "env": {}}
+}

@@ -245,10 +245,10 @@ def _files(d: Path) -> dict[str, str]:
     return out
 
 
-def _write_receipt(part: Path, target: Path, receipt: dict) -> dict:
+def _write_receipt(part: Path, target: Path, receipt: dict, *, spec: dict) -> dict:
     """The receipt of the staged directory ``part`` (its files), naming the final ``target``; then ``part`` becomes
     ``target``."""
-    receipt = {"schema": RECEIPT_SCHEMA, "label": S.EVIDENCE, "seal_mode": "procedural", **receipt,
+    receipt = {"schema": RECEIPT_SCHEMA, "label": S.output_label(spec), "seal_mode": "procedural", **receipt,
                "sealed_path": str(target), "files": _files(part), "who": WHO, "host": socket.gethostname(),
                "sealed_utc": utc()}
     with (part / RECEIPT).open("x") as fh:
@@ -302,7 +302,7 @@ def _attempt_parts(spec: dict, attempt_dir: Path) -> dict:
         rel = Path(attempt_dir).resolve().relative_to(run_root(spec).resolve()).parts
     except ValueError:
         raise Stop(f"STOP: {attempt_dir} is not <run_id>/<node>/<job>[/chunk-i]/attempt-N of this run") from None
-    nodes = [n["node"] for n in spec["nodes"]] if spec.get("_addendum") else S.T1_NODES
+    nodes = [n["node"] for n in spec["nodes"]] if spec.get("_addendum") or S.engineering_spec(spec) else S.T1_NODES
     if len(rel) not in (3, 4) or rel[0] not in nodes or rel[1] not in S.JOBS or not G.ATTEMPT.fullmatch(rel[-1]):
         raise Stop(f"STOP: {attempt_dir} is not <run_id>/<node>/<job>[/chunk-i]/attempt-N")
     kind, _ = rel[1].split("-wave")
@@ -329,7 +329,7 @@ def seal_attempt(spec: dict, attempt_dir: Path) -> dict:
     if not rec_path.is_file():
         raise Stop(f"STOP: {src} has no job record (running, or close it with close-attempt first)")
     record = json.loads(rec_path.read_text())
-    want = {"schema": "g5_tasl_job_record/1", "label": S.EVIDENCE, "run_id": spec["run_id"], "node": parts["node"],
+    want = {"schema": "g5_tasl_job_record/1", "label": S.output_label(spec), "run_id": spec["run_id"], "node": parts["node"],
             "job": parts["job"], "chunk": parts["chunk"], "attempt": parts["attempt"]}
     bad = [k for k, v in want.items() if record.get(k) != v]
     if bad:
@@ -362,7 +362,7 @@ def seal_attempt(spec: dict, attempt_dir: Path) -> dict:
                                       "source": str(src), "copied": copied, "node_log": node_log,
                                       "out_clear_files": out_clear, "stop": record.get("stop"),
                                       "stop_class": record.get("stop_class"),
-                                      "job_record_sha256": L._sha_file(part / "job_record.json"), **binding})
+                                      "job_record_sha256": L._sha_file(part / "job_record.json"), **binding}, spec=spec)
     if out_clear is not None:
         shutil.rmtree(src / "out")               # sealed and verified: out/ leaves the clear runs tree
     return receipt
@@ -446,7 +446,7 @@ def seal_node(spec: dict, node: str) -> dict:
         if idx.is_file() and json.loads(idx.read_text())["plan_tar_sha256"] != L._sha_file(part / f"wave{wave}_plan.tar"):
             raise Stop(f"STOP: {node} wave {wave}: plan.tar differs from its index ({part} is left for inspection)")
     return _write_receipt(part, target, {"kind": "node", "run_id": spec["run_id"], "node": node, "copied": names,
-                                   "ended": ended, "attempts": [str(a) for a in attempts], **addendum_binding(spec)})
+                                   "ended": ended, "attempts": [str(a) for a in attempts], **addendum_binding(spec)}, spec=spec)
 
 
 def seal_run(spec: dict, *, not_run: tuple = ()) -> dict:
@@ -456,7 +456,7 @@ def seal_run(spec: dict, *, not_run: tuple = ()) -> dict:
     check_seal_mode(spec)
     remote_final = check_remote_final(spec)      # R1-G5-AUDIT-TWO-CARDS: no open claim, the final TASL-7 log (M2)
     root = run_root(spec)
-    nodes = [n["node"] for n in spec["nodes"]] if spec.get("_addendum") else S.T1_NODES
+    nodes = [n["node"] for n in spec["nodes"]] if spec.get("_addendum") or S.engineering_spec(spec) else S.T1_NODES
     unknown = sorted(set(not_run) - set(nodes))
     if unknown:
         raise Stop(f"STOP: {unknown} are not G.5 nodes")
@@ -481,7 +481,7 @@ def seal_run(spec: dict, *, not_run: tuple = ()) -> dict:
             _tar_dir(root, name, part / f"{name.lstrip('_')}.tar")
             names.append(f"{name.lstrip('_')}.tar")
     return _write_receipt(part, target, {"kind": "run", "run_id": spec["run_id"], "copied": names,
-                                   "not_run": sorted(not_run), "remote_final": remote_final, **addendum_binding(spec)})
+                                   "not_run": sorted(not_run), "remote_final": remote_final, **addendum_binding(spec)}, spec=spec)
 
 
 # =============================================================================================== locks, the reader
@@ -745,7 +745,7 @@ def seal_server(spec: dict, server_dir: Path, *, alive=None) -> dict:
     target = proposer_sealed_run(spec) / src.name
     part = _stage(target)
     _tar_dir(src.parent, src.name, part / "server.tar")
-    receipt = {"schema": SERVER_RECEIPT_SCHEMA, "label": S.EVIDENCE, "seal_mode": "procedural", "kind": "server",
+    receipt = {"schema": SERVER_RECEIPT_SCHEMA, "label": S.output_label(spec), "seal_mode": "procedural", "kind": "server",
                "run_id": spec["run_id"], "server": src.name, "source": str(src), "pid": rec.get("pid"),
                "started_utc": started, "stopped_utc": stopped, "span_seconds": round(span, 1),
                "closed": bool(end.get("closed")), "latest_log_mtime_utc": end.get("latest_log_mtime_utc"),
