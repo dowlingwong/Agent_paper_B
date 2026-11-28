@@ -37,12 +37,18 @@ case "$KIND" in
   *)   echo "usage: t1_tasl_node.sh g1b|g4|xc|g5|g5t7 <spec> <node> <note> [<server_record>|<host>|<job> <server_record|->] [--enable]" >&2; exit 2 ;;
 esac
 [ -n "$SPEC" ] && [ -n "$NODE" ] && [ -n "$NOTE" ] || { echo "STOP: missing arguments" >&2; exit 2; }
-[ -z "$ENABLE" ] || [ "$ENABLE" = "--enable" ] || { echo "STOP: unknown flag $ENABLE" >&2; exit 2; }
+if [ "$ENABLE" = "--engineering" ]; then
+  case "$KIND:$NOTE" in g5:-|g5t7:-) ;; *)
+    echo "STOP: --engineering requires g5 or g5t7 and - in place of the note" >&2; exit 2 ;;
+  esac
+fi
+[ -z "$ENABLE" ] || [ "$ENABLE" = "--enable" ] || [ "$ENABLE" = "--engineering" ] || { echo "STOP: unknown flag $ENABLE" >&2; exit 2; }
 HERE=$(cd "$(dirname "$0")" && pwd)
 PY=${T1_TASL_ORCHESTRATOR_PYTHON:-python3}
 QUERY=(--node "$NODE")
 [ "$KIND" = xc ] && QUERY+=(--host "$XHOST")
 [ "$KIND" = g5t7 ] && QUERY+=(--host TASL-7)
+[ "$ENABLE" = "--engineering" ] && QUERY+=(--engineering)
 CPUS=$("$PY" "$HERE/$SCRIPT" cpus "$SPEC" "${QUERY[@]}") || { echo "STOP: cannot read the node's cpus" >&2; exit 2; }
 LOGDIR=$("$PY" "$HERE/$SCRIPT" logdir "$SPEC" "${QUERY[@]}") || { echo "STOP: cannot read the log directory" >&2; exit 2; }
 mkdir -p "$LOGDIR" || exit 3
@@ -54,7 +60,15 @@ ARGS=(run-node "$SPEC" --node "$NODE" --note "$NOTE")
 [ "$KIND" = g5t7 ] && ARGS=(run "$SPEC" --node "$NODE" --note "$NOTE" --job "$JOB" --host TASL-7 --chunk "$CHUNK")
 [ "$KIND" = g4 ] && ARGS+=(--server-record "$SERVER")
 [ "$KIND" = xc ] && ARGS+=(--host "$XHOST")
-[ -n "$ENABLE" ] && ARGS+=(--enable)
+if [ "$ENABLE" = "--engineering" ]; then
+  if [ "$KIND" = g5t7 ]; then
+    ARGS=(run "$SPEC" --node "$NODE" --job "$JOB" --host TASL-7 --chunk "$CHUNK")
+  else
+    ARGS=(run "$SPEC" --node "$NODE" --job "$JOB")
+    [ "$SERVER" != "-" ] && ARGS+=(--server-record "$SERVER")
+  fi
+fi
+[ -n "$ENABLE" ] && ARGS+=("$ENABLE")
 {
   echo "# t1_tasl $KIND node=$NODE spec=$SPEC start=$(date -u +%Y-%m-%dT%H:%M:%SZ) host=$(hostname) cpus=$CPUS"
   systemd-run --user --scope -p Delegate=yes -p MemoryMax=8G -p MemorySwapMax=0 -- \
