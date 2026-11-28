@@ -41,8 +41,10 @@ The values are snapshots, not reservations. COMPUTE.md's Ada CPU count can be up
   removed/withdrawn. No request changed.
 - Job `760065` (P.4 H200) remains withdrawn; P.4 stays on the direct Ada route.
 
-## Branches and records
+## Checks, review and branches
 
+- Checks: read-only host and scheduler commands only; no code changed, so no unit tests and no full-suite
+  comparison apply. The P7 review remains R2 **ACCEPTED**, R3 diff re-check clean.
 - Report branch only: `coord/compute` (this file). No deliverable branch is needed for a read-only sample.
 - Previous P7 deliverables remain where reported: `compute-d3a-p7-20261128` @ `3c12db25` (substantive
   `b730ee9b`), review `compute-d3a-p7-20261128-review` @ `b86e8966` (R2 ACCEPTED, R3 clean); merged
