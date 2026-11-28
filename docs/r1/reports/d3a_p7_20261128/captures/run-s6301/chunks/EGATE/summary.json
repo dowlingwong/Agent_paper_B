@@ -8,23 +8,23 @@
    "campaign_id": "openml_climate__s6301",
    "campaign_kind": "replicate",
    "ended_on": "worker_runs",
-   "final_sha256": "6fa6999c872089d550c5d62caad9accf05bdc54194c307a73313fc054ea33995",
+   "final_sha256": "9c90dbfeee667b19efcad3882f8aed87eb202b7661613b6de6ccb4cc81f7f95d",
    "instance_id": "openml_climate__s6301",
    "instance_seed": 6301,
    "llm_calls": 3,
    "node": "openml_climate",
    "pre_decision_snapshots": {
-    "w20_pre.json": "03eeefbac1850702199a57589014f36210d038b88cc86afa97d84a7b0c39abc1"
+    "w20_pre.json": "f2dfb38842db9eb9642d25ab3bd6b2af3f704bd1e7499ee19faaa39a1f8b5841"
    },
    "record_name": "a__EGATE__openml_climate__s6301__r0",
    "repetition": 0,
    "schema": "r1_d3_campaign/v1",
    "snapshot_schema": "r1_d3_snapshot/v1",
    "snapshots": {
-    "w10.json": "5d0907525ab255705715c7e01bde8257dd0a53e0401e80bbbb6a2b3710885824",
-    "w15.json": "7d327af7064700996c0fedfb2fc640b670af5697ff2e5ba2d1601d8a8749dd80",
-    "w20.json": "83e5ed20ed4ac4f900a5aefd8d6d024baae87a00e8f2fc4a66b070d4615b9120",
-    "w5.json": "e01dde123beedcc6e1abeef0ce0ddc930062db2581062d2b1a0af097116f4450"
+    "w10.json": "9de35efbb86f0872e1e57b41d94e0daafc0a1c7c5006632ef9f7989deb5f8812",
+    "w15.json": "a61b044fd4ac683619cb5b43e8ad537533bbb403b9a807e722de298df49ac5bf",
+    "w20.json": "b5278b0cff31b927ef256452750a7a751fb8c2717d9872daf9b8ba95806587f8",
+    "w5.json": "16b6f64ee964c981e68d2f79c66c910dcde16ce349a86e88e836416023cfb199"
    },
    "stage": "a",
    "worker_runs": 20,

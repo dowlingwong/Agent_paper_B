@@ -1,0 +1,6 @@
+read_utc 2026-11-28T07:16:40Z
+2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75  /home/dowling/exam-x/models/gemma4_31b/google_gemma-4-31B-it-Q4_K_M.gguf
+646caa007c99a5c9e644dac1c1a6a75f84ed78c5ca08da39a2fb690073d61e5b  /home/dowling/r1_tracks/opt/llama.cpp/build/bin/llama-server
+cache_tree 01c8e35a332a05790b1ea90ca31efbd3b019e4090f960b06bcd036ace0bbf290  -
+manifest a13824068fa54239bdcf88890c68b73114888c1742c0ac0a2b6e50bbc8b5289e  /home/dowling/r1_tracks/work/d3p7b_20261128/manifest.json
+observed 612be6daa3824d85bdb4f1ac0afc08d239d3a06f4cf17cd573ebd67dbba10660  /home/dowling/r1_tracks/work/d3p7b_20261128/observed.json

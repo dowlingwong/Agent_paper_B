@@ -1,0 +1,7 @@
+read_utc 2026-11-28T06:42:18Z
+driver 1227781
+pid 1227781 的当前亲和力列表：16-31
+server 1227644
+pid 1227644 的当前亲和力列表：16-31
+worker probe (cwd under /home/dowling/r1_tracks/work/d3p7b_20261128):
+worker pid 1235795 cwd /home/dowling/r1_tracks/work/d3p7b_20261128/run-s6301/chunks/A0/campaigns/openml_climate__s6301/node Cpus_allowed_list:	16-31

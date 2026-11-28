@@ -8,23 +8,23 @@
    "campaign_id": "openml_climate__s6302",
    "campaign_kind": "replicate",
    "ended_on": "worker_runs",
-   "final_sha256": "c3bfbaecb1b018f81f65bf230eab581433eb24baf5c3e453ef29be9279bf8847",
+   "final_sha256": "4de08daec2a2c1eb21376a10eb481dd0b7d456f430faf7535820a3512b4660ce",
    "instance_id": "openml_climate__s6302",
    "instance_seed": 6302,
    "llm_calls": 3,
    "node": "openml_climate",
    "pre_decision_snapshots": {
-    "w20_pre.json": "717b9a8e0f86eba2c5d967d919bce582d29bc64a5dd955ea1e254a9f10e32dba"
+    "w20_pre.json": "bfddaae97c4c3a54a840a4d003a3e07fe88a891e90e6791519a1603d179fdbfb"
    },
    "record_name": "a__EGATE__openml_climate__s6302__r0",
    "repetition": 0,
    "schema": "r1_d3_campaign/v1",
    "snapshot_schema": "r1_d3_snapshot/v1",
    "snapshots": {
-    "w10.json": "11e51c555b19af56d9d7546c1ca2f865bebb0d9a3b5a3de3963a45c5196bda70",
-    "w15.json": "0cf4575296ed30aeeaf42279870b5355ad5c1eae0a373deb9c78674adf1527bb",
-    "w20.json": "b6f54a7a263ae2ddaff7f4f36147831430488a797064b7f7f0ccefa7bc6c066e",
-    "w5.json": "c065e11109981abb46c458e717f25cb1d3d54662dc8c19cceb1776379f92088c"
+    "w10.json": "7d54341b6a72586f8026e47636b5784cfe9107897acbda5e668735198981b160",
+    "w15.json": "74fbb1ed051743435cbff8869d1564b2e675469537a15a24dcb623219eaf76a0",
+    "w20.json": "27bf593681d7ae21904902ba78197395de1493e2968f29bfbe1e5f38fbda2532",
+    "w5.json": "9190d4f631f9bc832cd50d3e1a1a9e4f4aa20da87538476b2aa22f5123e029ec"
    },
    "stage": "a",
    "worker_runs": 20,

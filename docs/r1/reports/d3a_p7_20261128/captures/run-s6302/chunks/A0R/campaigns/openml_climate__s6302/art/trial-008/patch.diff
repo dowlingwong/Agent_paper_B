@@ -1,0 +1,11 @@
+--- a/config.yaml
++++ b/config.yaml
+@@ -3,7 +3,7 @@
+ max_depth: 5
+ n_estimators: 100
+ learning_rate: 0.05
+-class_weight: balanced
++class_weight: none
+ scaler: standard
+ imputer: most_frequent
+ max_iter: 1000

@@ -18,7 +18,7 @@
   "path": "docs/r1/reports/d3_g2_20261127/d3_constants.json",
   "sha256": "4f5f686be8f0210bcb27dfe0968296d68cf54e7266fb72c9038e741163776a93"
  },
- "data_cache_root": "/home/dowling/r1_tracks/work/d3p7_20261128/data_cache",
+ "data_cache_root": "/home/dowling/r1_tracks/work/d3p7b_20261128/data_cache",
  "harness_commit": "9bb416805175149eb87b71f28d77530572aa4bce",
  "llm_cap": 80,
  "memory_mode": "append_only_summary",
