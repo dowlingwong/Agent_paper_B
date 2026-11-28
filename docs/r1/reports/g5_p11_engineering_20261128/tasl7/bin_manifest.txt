@@ -1,0 +1,23 @@
+link  libggml-base.so -> libggml-base.so.0
+link  libggml-base.so.0 -> libggml-base.so.0.27.0
+319f347861f8e217c781c935ca725e759d600cd3f507a752a8342f57c03c729b  libggml-base.so.0.27.0
+link  libggml-cpu.so -> libggml-cpu.so.0
+link  libggml-cpu.so.0 -> libggml-cpu.so.0.27.0
+24404f9b0a6bc8a87b37c4d17ed1bfb9d16d5c6910d5b3f3ec6bceff182c9b85  libggml-cpu.so.0.27.0
+link  libggml-cuda.so -> libggml-cuda.so.0
+link  libggml-cuda.so.0 -> libggml-cuda.so.0.27.0
+32643debc09ce1db0e878d8c386cda5719830d12ca64a47a42f3f534c5ffc5a6  libggml-cuda.so.0.27.0
+link  libggml.so -> libggml.so.0
+link  libggml.so.0 -> libggml.so.0.27.0
+b47afc8df32f1b725819c54fd3bc1beb4516418b89989e655e1233e8f9fff63c  libggml.so.0.27.0
+link  libllama-common.so -> libllama-common.so.0
+link  libllama-common.so.0 -> libllama-common.so.0.7.0
+1671952b976843885af52dbe982767330d1c7920d5a8c64e516a781fdc96f667  libllama-common.so.0.7.0
+17167d6d94075cf18067f7d7bb8350c5d27c7f8b4383aa20b31a9a46362dc321  libllama-server-impl.so
+link  libllama.so -> libllama.so.0
+link  libllama.so.0 -> libllama.so.0.7.0
+d2f7f3b2eb941e23e832a62884c5e7ce58f8d0868cfc1196b204014bc4b0057a  libllama.so.0.7.0
+link  libmtmd.so -> libmtmd.so.0
+link  libmtmd.so.0 -> libmtmd.so.0.7.0
+cf31e497219a59b6da7f10a38df90d9d77a7860286a5b99824c870a7740e04d0  libmtmd.so.0.7.0
+b70f488248ba6c77c1a0750ba666e08d827fc42cfdac918726b6704aaca47d8b  llama-server

@@ -1,0 +1,51 @@
+{
+ "deadline_rule": "a run starts only with 3 x census + 60 s left, a manager call only with 120 s more",
+ "diff_rule": "trackg_diff_recount/v1",
+ "engine_contract": "g5_tasl_engine_contract/1",
+ "finished_epoch": 1795831554.6503704,
+ "gate": "noise_floor.check_effective: effective:true, waivers {}, exceptions [], log intact, parent not traced",
+ "instances": [
+  {
+   "dir": "instance_1_history",
+   "instance": 1,
+   "memory_mode": "history",
+   "wall_seconds": 1.6
+  }
+ ],
+ "label": "ENGINEERING_ONLY",
+ "limits": {
+  "cgroup_parent": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r308f28227a044b49a88a36b2ad144600.scope",
+  "cpu_list": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7
+  ],
+  "external_limit": "external: systemd-run --user --scope -p MemoryMax=8G -p MemorySwapMax=0 (delegated scope /sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r308f28227a044b49a88a36b2ad144600.scope)",
+  "gpu_uuids": [
+   "GPU-4d623e76-7587-ee15-a633-46f60d220d94"
+  ],
+  "isolation_waivers": {},
+  "kill_grace_seconds": 10.0,
+  "measured_run_seconds": 65.156,
+  "memory_bytes": null,
+  "memory_method": "external",
+  "provisional_timeout_seconds": null,
+  "timeout_factor": 3.0,
+  "uncapped": [],
+  "uncapped_reason": null
+ },
+ "memory_events_cgroup": "/sys/fs/cgroup/user.slice/user-1008.slice/user@1008.service/app.slice/run-r308f28227a044b49a88a36b2ad144600.scope",
+ "node": "mlab_imdb",
+ "run_id": "g5-p11-20261128T014000Z-lease",
+ "schema": "trackg_g5_campaign_record/v1",
+ "started_epoch": 1795831553.0167696,
+ "stop": "V2DiffCampaignError: STOP: the baseline did not give an ok run after reruns; nothing is compared against a missing incumbent value",
+ "stop_kind": "baseline_failed",
+ "truncation_invalid": "completion_tokens >= 4096",
+ "wave": 1
+}
