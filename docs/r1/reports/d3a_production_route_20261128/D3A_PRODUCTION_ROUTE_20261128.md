@@ -345,11 +345,12 @@ a real lease inode); on macOS the same set is 22 passed and 1 skipped. The stub 
 (`endpoint_guard_driver_test.sh`) passes the success, foreign-responder and failed-bind cases; its
 outputs are in `captures/endpoint_guard/`.
 
-The full `r1/tests` suite was run on clean checkouts of the published base `c66603ae` and this tip
-with harness `9bb41680`. Two modules (`test_trackp_p4_runner.py`, `test_trackp_sft_select_stop.py`)
-fail collection identically at both tips and were ignored. Base: `53 failed, 4888 passed, 162
-skipped, 3 errors`; tip: `52 failed, 4912 passed, 162 skipped, 3 errors`. The sorted `FAILED`/`ERROR`
-ID sets differ by one base-only flaky entry
+The full `r1/tests` suite was run on clean checkouts of the published base `c66603ae` and code tip
+`0354083d` with harness `9bb41680` (the final commit adds only the SPID-0 seal guard, record text and
+seals; the guard module and tests are unchanged). Two modules (`test_trackp_p4_runner.py`,
+`test_trackp_sft_select_stop.py`) fail collection identically at both tips and were ignored. Base:
+`53 failed, 4888 passed, 162 skipped, 3 errors`; tip: `52 failed, 4912 passed, 162 skipped, 3
+errors`. The sorted `FAILED`/`ERROR` ID sets differ by one base-only flaky entry
 (`test_t1_tasl_crosscheck.py::test_default_part_on_both_hosts_seal_and_compare`) and **zero tip-only
 entries**: no new failure. The counts and ID comparison are in
 `captures/endpoint_guard/full_suite_compare.txt`.
