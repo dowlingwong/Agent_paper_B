@@ -12,6 +12,8 @@ runner; no GPU job, server, label or evaluation value is read here.
 from __future__ import annotations
 
 import argparse
+import os
+import re
 import json
 import socket
 import subprocess
@@ -54,13 +56,58 @@ def gpu_index_from_lease(lease_path: str | None) -> int:
     """Read the card index from a ``gpu<index>.lock`` lease; 0 when there is no indexed lease."""
     if not lease_path:
         return 0
-    import re
-
     match = re.search(r"gpu(\d+)\.lock$", str(lease_path))
     return int(match.group(1)) if match else 0
 
 
-def probe(*, gpu_index: int = 0, required_memory_mib: int,
+def gpu_selector_from_lease(lease_path: str | None, expected_uuid: Any) -> int | str:
+    """Resolve a deployment lease by its exact index or bound UUID."""
+    if not isinstance(expected_uuid, str) or not re.fullmatch(
+            r"GPU-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", expected_uuid):
+        raise LaunchStop("deployment SSH needs hardware.proposer_gpu_uuid")
+    name = Path(lease_path).name if lease_path else ""
+    match = re.fullmatch(r"gpu([0-9]+)\.lock", name)
+    if match:
+        return int(match.group(1))
+    if name == f"{expected_uuid}.lock":
+        return expected_uuid
+    raise LaunchStop("the SSH lease must name the card index or bound proposer GPU UUID")
+
+
+def check_ssh_lease_fd(path: str, *, fd: int = 9) -> None:
+    """Confirm the SSH probe inherited its wrapper's lock for the declared card."""
+    import fcntl
+
+    try:
+        if not os.path.samestat(os.fstat(fd), os.stat(path)):
+            raise LaunchStop("the inherited SSH lease descriptor does not match the declared file")
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError as exc:
+        raise LaunchStop("the SSH probe could not confirm its inherited GPU lock") from exc
+
+
+def assigned_cuda_uuid() -> str:
+    """Resolve the single CUDA-visible HTCondor assignment to the NVML device UUID."""
+    import ctypes
+    from uuid import UUID
+
+    visible = os.environ.get("CUDA_VISIBLE_DEVICES", "").strip()
+    if not visible or "," in visible:
+        raise LaunchStop("the HTCondor job needs one CUDA_VISIBLE_DEVICES entry")
+    try:
+        driver = ctypes.CDLL("libcuda.so.1")
+        count, device = ctypes.c_int(), ctypes.c_int()
+        if driver.cuInit(0) != 0 or driver.cuDeviceGetCount(ctypes.byref(count)) != 0 or count.value != 1:
+            raise LaunchStop("CUDA cannot confirm exactly one assigned proposer device")
+        uuid_bytes = ctypes.create_string_buffer(16)
+        if driver.cuDeviceGet(ctypes.byref(device), 0) != 0 or driver.cuDeviceGetUuid(uuid_bytes, device) != 0:
+            raise LaunchStop("CUDA cannot resolve the assigned proposer device UUID")
+    except (OSError, AttributeError) as exc:
+        raise LaunchStop("the HTCondor job cannot load the CUDA device identity") from exc
+    return f"GPU-{UUID(bytes=uuid_bytes.raw)}"
+
+
+def probe(*, gpu_index: int | str = 0, required_memory_mib: int,
           proposer_model: str = "gemma4_31b", host: str | None = None,
           lease: bool = True, lease_path: str | None = None, lease_kind: str = "ssh",
           request: Mapping[str, Any] | None = None, scope: str | None = None,
@@ -114,11 +161,26 @@ def probe_from_records(launch: Mapping[str, Any], manifest: Mapping[str, Any], *
     # Record the host the probe actually runs on, for every launcher; HTCondor chooses it and
     # SSH/direct target one host, which check_hardware then compares with the launch record.
     lease_kind = "htcondor" if launcher == "htcondor" else "lease"
-    index = gpu_index if gpu_index is not None else gpu_index_from_lease(lease_path)
-    return probe(gpu_index=index, required_memory_mib=required, proposer_model=proposer,
-                 host=None, lease=True, lease_path=lease_path, lease_kind=lease_kind,
-                 request=launch.get("request"), scope=launch.get("scope"),
-                 environment_freeze=hardware.get("environment_freeze"), runner=runner)
+    selector: int | str = gpu_index if gpu_index is not None else gpu_index_from_lease(lease_path)
+    deployment = "retry_ledger" in launch
+    if deployment:
+        if gpu_index is not None:
+            raise LaunchStop("deployment probes the reserved card without an index override")
+        if launcher == "htcondor":
+            selector = assigned_cuda_uuid()
+            expected_uuid = selector
+        else:
+            if lease_path != launch.get("lease_path"):
+                raise LaunchStop("the declared and live SSH lease paths differ")
+            expected_uuid = hardware.get("proposer_gpu_uuid")
+            selector = gpu_selector_from_lease(lease_path, expected_uuid)
+    record = probe(gpu_index=selector, required_memory_mib=required, proposer_model=proposer,
+                   host=None, lease=True, lease_path=lease_path, lease_kind=lease_kind,
+                   request=launch.get("request"), scope=launch.get("scope"),
+                   environment_freeze=hardware.get("environment_freeze"), runner=runner)
+    if deployment and record["gpu_uuid"] != expected_uuid:
+        raise LaunchStop("the reserved device and observed GPU UUID differ")
+    return record
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -132,6 +194,10 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     launch = read_json(args.launch)
     manifest = read_json(args.manifest)
+    if "retry_ledger" in launch and launch.get("launcher") == "ssh":
+        if not args.lease_path:
+            raise LaunchStop("deployment SSH needs its inherited card lease")
+        check_ssh_lease_fd(args.lease_path)
     record = probe_from_records(launch, manifest, lease_path=args.lease_path, gpu_index=args.gpu_index)
     write_json(args.out, record)
     print(json.dumps({key: record[key] for key in

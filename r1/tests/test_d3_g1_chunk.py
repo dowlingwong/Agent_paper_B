@@ -1,6 +1,7 @@
 """Tests for the D.3 G1 campaign chunk record/layout unit (synthetic, CPU only)."""
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 
@@ -14,6 +15,7 @@ from r1.c3.d3.campaign_chunk import (
     run_chunk,
     sha256sums,
 )
+from r1.c3.d3.evidence_accounting import CampaignAccounting, LOSS_SCHEMA, RETRY_SCHEMA
 from r1.c3.d3.snapshots import SnapshotRecorder, sha256_json, wrap
 from r1.harness import import_harness
 
@@ -263,6 +265,53 @@ def test_replicate_factory_and_harness_factory_are_exclusive(tmp_path):
     with pytest.raises(ChunkStop):
         run_chunk(spec, tmp_path / "chunk", _factory, manifest=_manifest(spec), observed=_observed(),
                   replicate_factory=_replicate_factory())
+
+
+@pytest.mark.parametrize("arm,prior_attempts", [("A0", 0), ("FIXR3", 2)])
+def test_deployment_campaigns_record_the_current_lease_and_chunk_retry_history(
+        tmp_path, monkeypatch, arm, prior_attempts):
+    from r1.c3.d3 import campaign_chunk
+
+    spec = _spec(arm=arm, instance_seeds=(6201, 6202))
+    manifest = _manifest(spec)
+    observed = {**_observed(), "schema": "r1_d3_observed/v1", "lease_kind": "lease"}
+    launch = {key: getattr(spec, key) for key in ("stage", "node", "arm", "repetition", "launcher")}
+    launch.update(instance_seeds=list(spec.instance_seeds), manifest={"sha256": "a" * 64},
+                  lease_path=observed["lease_path"], hardware={"proposer_gpu_uuid": observed["gpu_uuid"]})
+    ledger = {
+        "schema": RETRY_SCHEMA, "run_id": "d3a-fixture",
+        "chunk": {key: launch[key] for key in ("stage", "node", "arm", "repetition", "instance_seeds")}
+                 | {"manifest_sha256": "a" * 64, "gpu_model": observed["model"]},
+        "attempts": [],
+    }
+    for index in range(prior_attempts):
+        attempt = {"attempt_id": f"attempt-{index}", "state": "infrastructure_lost", "job_id": f"job-{index}"}
+        receipt = json.dumps({**attempt, "schema": LOSS_SCHEMA, "job_record_sha256": str(index) * 64,
+                              "run_id": ledger["run_id"], "chunk": ledger["chunk"]})
+        ledger["attempts"].append({**attempt, "receipt": receipt,
+                                   "receipt_sha256": hashlib.sha256(receipt.encode()).hexdigest()})
+    ledger["attempts"].append({"attempt_id": f"attempt-{prior_attempts}", "state": "current"})
+    accounting = CampaignAccounting.from_job(launch | {"retry_ledger": ledger}, observed)
+    # The inter-campaign gap is excluded from both campaign intervals.
+    class Clock:
+        monotonic_ns = iter([100_000_000_000, 103_500_000_000, 200_000_000_000, 202_250_000_000]).__next__
+
+    monkeypatch.setattr(campaign_chunk, "time", Clock)
+    kwargs = {"factory": _factory} if arm == "A0" else {"replicate_factory": _replicate_factory()}
+    out = tmp_path / "retained"
+    run_chunk(spec, out, manifest=manifest, observed=observed, accounting=accounting, **kwargs)
+    assert json.loads((out / "retry_ledger.json").read_text()) == ledger
+    assert "  retry_ledger.json\n" in (out / "SHA256SUMS").read_text()
+    for seed, seconds in zip(spec.instance_seeds, (3.5, 2.25), strict=True):
+        campaign = out / "campaigns" / spec.instance_id(seed)
+        summary = json.loads((campaign / "summary.json").read_text())
+        receipt = json.loads((campaign / "campaign.json").read_text())["accounting"]
+        assert summary["infra_attempts"] == prior_attempts + 1
+        assert summary["proposer_gpu_seconds"] == summary["wall_seconds"] == seconds
+        assert receipt["elapsed_ns"] == int(seconds * 1e9)
+        assert receipt["gpu_uuid"] == observed["gpu_uuid"]
+        assert receipt["attempt_id"] == ledger["attempts"][-1]["attempt_id"]
+        assert summary["worker_runs"] == (20 if arm == "A0" else 18)
 
 
 def test_end_sampler_fills_the_chunk_after_the_campaign(tmp_path):

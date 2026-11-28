@@ -1,8 +1,10 @@
 """Tests for the D.3 G1 launchers (design revision 6b) — synthetic, CPU only."""
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -11,9 +13,11 @@ from r1.c3.d3 import launch_htcondor as H
 from r1.c3.d3 import launch_ssh as S
 from r1.c3.d3 import probe as P
 from r1.c3.d3.campaign_chunk import ChunkSpec, check_hardware, sha256_json
+from r1.c3.d3.evidence_accounting import AccountingStop, CampaignAccounting, LOSS_SCHEMA, RETRY_SCHEMA
 
 SOURCE = {"path": "docs/r1/authorizations/example.md",
           "sha256": "a" * 64, "model": "NVIDIA RTX 4090"}
+UUID = "GPU-cadcadca-1000-2000-3000-400000000000"
 
 
 def _record(**kw):
@@ -33,6 +37,20 @@ def _write(path: Path, payload) -> str:
     path.write_text(json.dumps(payload, sort_keys=True) + "\n" if not isinstance(payload, str) else payload,
                     encoding="utf-8")
     return L.sha256_file(path)
+
+
+def _deployment(record):
+    model = "NVIDIA RTX 4090"
+    chunk = {key: record[key] for key in ("stage", "node", "arm", "repetition", "instance_seeds")}
+    chunk.update(manifest_sha256=record["manifest"]["sha256"], gpu_model=model)
+    attempt = {"attempt_id": "attempt-1", "state": "infrastructure_lost", "job_id": "760000.0"}
+    receipt = json.dumps({**attempt, "schema": LOSS_SCHEMA, "run_id": "d3a-fixture", "chunk": chunk,
+                          "job_record_sha256": "d" * 64})
+    attempt.update(receipt=receipt, receipt_sha256=hashlib.sha256(receipt.encode()).hexdigest())
+    ledger = {"schema": RETRY_SCHEMA, "run_id": "d3a-fixture", "chunk": chunk,
+              "attempts": [attempt, {"attempt_id": "attempt-2", "state": "current"}]}
+    return {**record, "observed": {"path": "observed.json", "probe": True}, "retry_ledger": ledger,
+            "hardware": {**record["hardware"], "proposer_gpu_uuid": UUID}}
 
 
 def _staged(tmp_path: Path):
@@ -63,6 +81,166 @@ def test_launch_record_requires_signed_values():
         L.validate_launch({**good, "instance_seeds": [6201, 6202]})
     with pytest.raises(L.LaunchStop):
         L.validate_launch({**good, "launcher": "magic"})
+
+
+@pytest.mark.parametrize("changed", ["missing", "arm", "seeds", "manifest", "retry_gpu", "receipt",
+                                     "attempt_id", "attempt_state", "duplicate_job", "foreign_loss"])
+def test_deployment_refuses_invalid_retry_ledger(changed):
+    record = _deployment(_record())
+    ledger = record["retry_ledger"]
+    prior, current = ledger["attempts"]
+    if changed == "missing":
+        del record["retry_ledger"]
+    elif changed == "arm":
+        ledger["chunk"]["arm"] = "A0"
+    elif changed == "seeds":
+        ledger["chunk"]["instance_seeds"] = [6201]
+    elif changed == "manifest":
+        ledger["chunk"]["manifest_sha256"] = "0" * 64
+    elif changed == "retry_gpu":
+        ledger["chunk"]["gpu_model"] = "NVIDIA L40S"
+    elif changed == "receipt":
+        prior["receipt_sha256"] = "unsealed"
+    elif changed == "attempt_id":
+        current["attempt_id"] = prior["attempt_id"]
+    elif changed == "attempt_state":
+        prior["state"] = "success"
+    elif changed == "foreign_loss":
+        prior["job_id"] = "760007.0"
+    else:
+        ledger["attempts"].insert(1, {**prior, "attempt_id": "different"})
+    with pytest.raises(L.LaunchStop, match="retry ledger|prior attempt"):
+        L.validate_deployment_launch(record)
+
+
+def test_deployment_checks_the_live_reservation():
+    record = _deployment(_record(lease_path="/lease/gpu0.lock"))
+    observed = {"schema": L.OBSERVED_SCHEMA, "model": "NVIDIA RTX 4090", "gpu_uuid": UUID,
+                "lease": True, "lease_kind": "lease", "lease_path": "/lease/gpu0.lock"}
+    accounting = CampaignAccounting.from_job(record, observed)
+    assert accounting.infra_attempts == 2
+    with pytest.raises(AccountingStop, match="positive elapsed"):
+        accounting.receipt(100, 100)
+    for change in [{"lease": False}, {"lease_kind": "htcondor"}, {"lease_path": "/lease/gpu1.lock"},
+                   {"gpu_uuid": ""}, {"gpu_uuid": "GPU-another"}, {"model": "NVIDIA L40S"}]:
+        with pytest.raises(AccountingStop, match="reservation"):
+            CampaignAccounting.from_job(record, observed | change)
+
+
+def test_deployment_condor_probes_the_cuda_assignment(monkeypatch):
+    record = _deployment(_record(launcher="htcondor"))
+    monkeypatch.setattr(P, "assigned_cuda_uuid", lambda: UUID)
+
+    def runner(argv, **kwargs):
+        if "--query-gpu=name,uuid,driver_version,memory.total,memory.free" in argv:
+            assert argv[1:3] == ["-i", UUID]
+            return SimpleNamespace(returncode=0, stdout=f"NVIDIA RTX 4090, {UUID}, 535, 24564, 24000\n")
+        return SimpleNamespace(returncode=0, stdout="")
+
+    manifest = {"proposer_model": "gemma4_31b"}
+    observed = P.probe_from_records(record, manifest, runner=runner)
+    assert CampaignAccounting.from_job(record, observed).gpu_uuid == UUID
+    with pytest.raises(L.LaunchStop, match="without an index override"):
+        P.probe_from_records(record, manifest, gpu_index=0, runner=runner)
+
+
+def test_assigned_cuda_uuid_reads_the_single_visible_device(monkeypatch):
+    import ctypes
+    from uuid import UUID as ParseUUID
+
+    def count(target):
+        target._obj.value = 1
+        return 0
+
+    def get_uuid(target, device):
+        target.raw = ParseUUID(UUID[4:]).bytes
+        return 0
+
+    driver = SimpleNamespace(cuInit=lambda _: 0, cuDeviceGetCount=count,
+                             cuDeviceGet=lambda _, ordinal: ordinal, cuDeviceGetUuid=get_uuid)
+    monkeypatch.setattr(ctypes, "CDLL", lambda name: driver)
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "2")
+    assert P.assigned_cuda_uuid() == UUID
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "2,3")
+    with pytest.raises(L.LaunchStop, match="one CUDA_VISIBLE_DEVICES"):
+        P.assigned_cuda_uuid()
+
+
+@pytest.mark.parametrize("lease_name,selector", [("gpu3.lock", "3"), (UUID + ".lock", UUID)])
+def test_deployment_ssh_probes_the_exact_lease(lease_name, selector):
+    lease = "/leases/" + lease_name
+    record = _deployment(_record(lease_path=lease))
+    manifest = {"proposer_model": "gemma4_31b"}
+
+    def runner(argv, **kwargs):
+        if "--query-gpu=name,uuid,driver_version,memory.total,memory.free" not in argv:
+            return SimpleNamespace(returncode=0, stdout="")
+        assert argv[1:3] == ["-i", selector]
+        return SimpleNamespace(returncode=0, stdout=f"NVIDIA RTX 4090, {UUID}, 535, 24564, 24000\n")
+
+    assert P.probe_from_records(record, manifest, lease_path=lease, runner=runner)["gpu_uuid"] == UUID
+    with pytest.raises(L.LaunchStop, match="lease paths differ"):
+        P.probe_from_records(record, manifest, lease_path="/leases/gpu0.lock", runner=runner)
+    wrong = "/leases/GPU-11111111-1111-1111-1111-111111111111.lock"
+    with pytest.raises(L.LaunchStop, match="must name the card index or"):
+        P.probe_from_records({**record, "lease_path": wrong}, manifest, lease_path=wrong, runner=runner)
+
+
+def test_deployment_checks_inherited_lease_fd(tmp_path):
+    import fcntl
+
+    lease, other = tmp_path / "gpu4.lock", tmp_path / "other.lock"
+    other.touch()
+    with lease.open("w") as fh:
+        P.check_ssh_lease_fd(str(lease), fd=fh.fileno())
+        with lease.open("r") as contender, pytest.raises(BlockingIOError):
+            fcntl.flock(contender, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        with pytest.raises(L.LaunchStop, match="does not match"):
+            P.check_ssh_lease_fd(str(other), fd=fh.fileno())
+
+
+def test_deployment_launchers_stage_one_fresh_attempt(tmp_path):
+    launch_path, manifest, _, _ = _staged(tmp_path)
+    record = _deployment(L.read_json(launch_path))
+    ledger = record["retry_ledger"]
+    prior, current = ledger["attempts"]
+    raw_receipt = tmp_path / "loss_receipt.json"
+    raw_receipt.write_bytes(prior["receipt"].encode())
+    submitted = dict(record)
+    submitted["retry_ledger"] = {**ledger, "attempts": [
+        {key: value for key, value in prior.items() if key != "receipt"} | {"receipt_path": raw_receipt.name},
+        current,
+    ]}
+    L.write_launch(launch_path, submitted)
+    calls = []
+
+    def runner(argv, **kwargs):
+        calls.append((argv, kwargs))
+        return SimpleNamespace(returncode=0, stdout="1 job(s) submitted to cluster 760001.\n", stderr="")
+
+    submit = tmp_path / "submit"
+    out = tmp_path / "results" / "out"
+    result = H.submit(launch_path, out, submit_dir=submit, manifest_path=manifest, runner=runner)
+    assert result["cluster_id"] == "760001"
+    assert calls[-1][0][-1] == H.SUBMIT_NAME and calls[-1][1]["cwd"] == submit
+    assert L.read_json(submit / "launch.json")["retry_ledger"] == record["retry_ledger"]
+    with pytest.raises(L.LaunchStop, match="already exists"):
+        H.submit(launch_path, out, submit_dir=submit, manifest_path=manifest, runner=runner)
+    assert len(calls) == 1
+
+    result = S.launch(launch_path, out, manifest_path=manifest, lease_path="/leases/gpu0.lock", runner=runner)
+    assert result["ssh_rc"] == 0
+    command, kwargs = calls[-1]
+    assert f"mkdir -- {out.parent}" in command[-1]
+    assert "--out out" in kwargs["input"]
+    assert L.read_json(out.parent / "launch.json")["retry_ledger"] == record["retry_ledger"]
+    with pytest.raises(L.LaunchStop, match="already claimed"):
+        S.launch(launch_path, out, manifest_path=manifest, lease_path="/leases/gpu0.lock", runner=runner)
+    assert len(calls) == 2
+    raw_receipt.write_text("{\"tampered\": true}\n")
+    with pytest.raises(L.LaunchStop, match="SHA-256 differs"):
+        H.submit(launch_path, out, submit_dir=tmp_path / "different", manifest_path=manifest, runner=runner)
+    assert len(calls) == 2
 
 
 def test_both_launchers_pass_the_same_chunk_argv(tmp_path):
