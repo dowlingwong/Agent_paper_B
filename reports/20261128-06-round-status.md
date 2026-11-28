@@ -21,7 +21,7 @@ deepthought stop record, deepthought2 screening launch.
 | Task | What | ID / stamp | State |
 |---|---|---|---|
 | `compute/20261128-01` TASL-7 E0 same-code reference | `trackp.py e0 --stage final` on paper `c80f83bc`, config `e0_config_ref_tasl7.json`, `--evidence DRYRUN`, seed 0, lr 1e-4, card UUID `GPU-ab72fb4a…` | PID 2289540; run `/home/dowling/r1_trackp/runs/p5_e0_ref_20261128/e0e`; TASL-7 | LoRA stage, ~476/2,000 steps at 00:23 UTC; ~3 s per step wall on TASL-7; report written on completion; comparison + review follow |
-| `compute/20261128-06` screening on deepthought2 | third re-issue, code `a7c2f8fb`, cache `3843b53c…`, 64 workers | launch script PID 3697711; checkout `paper_dt2_20261128T001405Z`; OUT `results/r1/screen_measure/SMEAS_EVIDENCE_<stamp>` | `git worktree add` still materialising 15,061 files on `/work` (87 % at 00:25 UTC); preflight/first progress pending; next round verifies and then checks rows/10,164 |
+| `compute/20261128-06` screening on deepthought2 | third re-issue, code `a7c2f8fb`, cache `3843b53c…`, 64 workers | launch script PID 3697711; checkout `paper_dt2_20261128T001405Z`; OUT `SMEAS_EVIDENCE_20261128T001405Z` | **launched 00:27:01Z**; strict preflight passed (co-tenancy ok, 119.82 cores free); 277 rows at 00:28, 0 failed, of 10,164; analysis on completion |
 
 ## Blocked / not started
 
