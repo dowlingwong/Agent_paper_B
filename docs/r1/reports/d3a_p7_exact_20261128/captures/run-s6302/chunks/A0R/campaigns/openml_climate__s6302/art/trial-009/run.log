@@ -1,0 +1,5 @@
+NODE=openml_climate
+STATUS=failed
+FAILURE_CATEGORY=invalid_config
+FAILURE_MESSAGE=C=0.0009 outside allowed range [0.001, 100.0]
+

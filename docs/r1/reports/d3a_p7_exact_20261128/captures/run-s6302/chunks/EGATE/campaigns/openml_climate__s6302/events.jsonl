@@ -1,0 +1,6 @@
+{"event_type": "proposal_created", "payload": {"instance_id": "openml_climate__s6302", "llm_calls": 1, "step_index": 0}}
+{"event_type": "control_decision", "payload": {"decision": "kept", "instance_id": "openml_climate__s6302", "llm_calls": 0, "step_index": 0}}
+{"event_type": "proposal_created", "payload": {"instance_id": "openml_climate__s6302", "llm_calls": 2, "step_index": 1}}
+{"event_type": "control_decision", "payload": {"decision": "discarded", "instance_id": "openml_climate__s6302", "llm_calls": 0, "step_index": 1}}
+{"event_type": "proposal_created", "payload": {"instance_id": "openml_climate__s6302", "llm_calls": 3, "step_index": 2}}
+{"event_type": "control_decision", "payload": {"decision": "discarded", "instance_id": "openml_climate__s6302", "llm_calls": 0, "step_index": 2}}

@@ -14,7 +14,8 @@ altered; the run is reported as measured.
   runtime binding is explicitly held in that note).
 - Deliverable branch: `compute-d3a-p7-exact-20261128` (tip stated in the `coord/compute` report).
 - Host: TASL-2, RTX 4090 `GPU-4d623e76-7587-ee15-a633-46f60d220d94`, driver 535.309.01,
-  24,564 MiB. Leases `~/r1_locks/gpu0.lock` and `~/r1_locks/cpus-16-31.lock` held for the server's
+  24,564 MiB. Locks `/home/dowling/r1_tracks/work/d3p7c_20261128/gpu0.lock` and
+  `…/cpus-16-31.lock` (the work-root files the captured start script locks) held for the server's
   life; driver, every worker and the server ran under `taskset -c 16-31`.
 - Harness: `9bb416805175149eb87b71f28d77530572aa4bce`, clean (`harness_actual` HEAD, dirty=false).
 - Proposer: `gemma4_31b` Q4_K_M, sha256 `2959c1b0a4f792493bb0092846ea06aec54547e47be979c282634d938d501b75`;
@@ -37,7 +38,8 @@ The server was started from the captured command line, not from the older 8,192-
 
 `/props` after readiness: `n_ctx` **32,768**, `total_slots` **1**, build `b11669-620d2225c`, model
 file `google_gemma-4-31B-it-Q4_K_M.gguf`. The server loaded in 4.8 s and used **21,977 MiB** of the
-24,564 MiB card (21,618 MiB in the compute process), leaving 2,206 MiB free. The exact argv, `/props`,
+24,564 MiB card (21,618 MiB in the compute process at load; 21,638–21,640 MiB at chunk end),
+leaving 2,206 MiB free. The exact argv, `/props`,
 start/end GPU captures and the server log are in `captures/server2/`.
 
 | Item | Value |
@@ -51,6 +53,13 @@ start/end GPU captures and the server log are in `captures/server2/`.
 
 The `-ngl 999` model fits; the server does **not** fall back to CPU. The card was empty before the
 start (`memory_free` 23,830 MiB, no compute process) and after the end.
+
+**Affinity note.** `captures/affinity_check.txt` (08:40:44Z) records the driver and server at `16-31`
+and one transient `train.py` at `0-31`; that worker had already exited when the PID was re-read.
+`captures/affinity_all.txt`, started immediately after, records every worker PID seen for the rest of
+the run, all at `16-31`; `captures/affinity_probe.txt` records the first worker at `16-31`. The single
+`0-31` reading is disclosed and is not treated as the run's affinity: the receipt's monitored workers
+and both long-lived processes are `16-31`.
 
 ## 2. Per-arm and per-seed result
 
@@ -90,9 +99,9 @@ of **12.99 %**. Replicate failures count as worker runs and failures in the deno
 |---|---:|
 | Charged worker trials | 276 (200 harness + 76 replicate) |
 | Successful | 226 |
-| Failures | **50** (all `invalid_config`) |
+| Failures | **50** charged: 48 plain `invalid_config` + 2 admitted truncated-mapping `ParserError` counted in the same rate |
 | Failure rate | **50/276 = 18.116 %** (limit 12.99 %) |
-| Per seed | 6301 21/135 = 15.56 %; 6302 29/141 = 20.57 % |
+| Per seed | 6301 **22/138 = 15.94 %**; 6302 **28/138 = 20.29 %** |
 | Precheck rejections (uncharged) | 2 |
 | Control-plane skips | 34 |
 | Admitted runtime errors | 2 (both truncated-mapping `ParserError`, A0R trial-015 and A2 trial-046 on 6301) |
@@ -105,9 +114,11 @@ also above the limit. Both denominators fail.
 **Comparison with the published P7 (same host, model, harness and seeds).** The published run used
 `-c 8192` with no explicit q8_0 K/V and recorded 33/271 = 12.18 % (harness-only 33/195 = 16.92 %);
 this run at the frozen runtime records 50/276 = 18.12 % (harness-only 25.00 %). The exact runtime
-therefore changes the manager's proposal stream enough to move the gate from PASS to FAIL. This is a
-property of the measured runtime, not a counting change: `worker_gate.py` is the same corrected
-classifier used for the accepted P7 (charged = the worker ran).
+therefore moves the gate from PASS to FAIL in this two-seed sample: it changed the manager's proposal
+stream enough to add 17 charged `invalid_config` failures and remove 43 control-plane skips. The sample
+supports a runtime dependence; it does not estimate how often that happens. This is not a counting
+change: `worker_gate.py` is the same corrected classifier used for the accepted P7 (charged = the
+worker ran).
 
 ## 4. Resource peaks
 
@@ -171,7 +182,8 @@ No repository code changed in this unit. The deliverable's independent review is
 A first start at 08:33:15Z used the same exact server and commands but was stopped after A0 and part
 of A0R when it was found that the host-RAM and scratch samplers were not running from the first
 second. It is **not** the receipt and none of its outputs are used; its status, GPU samples, affinity
-probe and the two run logs are kept under `captures/attempt-0-partial/` for transparency. The receipt
+probe and the 6301 run log are kept under `captures/attempt-0-partial/` for transparency (the partial
+start never reached seed 6302). The receipt
 is the 08:38:47Z–09:05:41Z run above. No campaign from the discarded start entered the gate.
 
 ## 8. What this means

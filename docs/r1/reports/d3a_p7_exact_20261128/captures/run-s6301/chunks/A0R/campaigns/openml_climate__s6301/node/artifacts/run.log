@@ -1,0 +1,4 @@
+NODE=openml_climate
+STATUS=failed
+FAILURE_CATEGORY=invalid_config
+FAILURE_MESSAGE=model_type='svm' is not in allowed values ['gradient_boosting', 'logistic_regression', 'random_forest']
