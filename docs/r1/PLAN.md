@@ -1745,6 +1745,12 @@ preregistration, the gate code and every signed note are unchanged.
 |---|---|
 | R1-MAC-WORKFLOW-APPROVAL | **Approve the four Mac worker and coordinator documentation edits for review and publication** (author, 27 Nov 2026, in Codex chat, “都没问题，我允许的，签署同意并commit， push”, responding to the four-file review and the Mac checkout item in `AUTHOR.md` at `a536afe7`). Scope: the worker launch guide in `README.md`, task cadence and agent runtimes in `canon/README.md`, the dispatch procedure in the coordinator's `SOUL.md`, and its linked work-order and §7 updates in `AUTOML_AS_DAC_NEXT_PHASE_20261126.md`. Carry the changes onto published main with its newer manuscript, stage approval and preflight procedures retained. The coordinator may publish the reviewed document changes under R1-CODEX-RECORDED-SIGNATURES. The locally provisioned launcher and other checkout changes are outside this approval. |
 
+### 28 November 2026 — D.3a decision packet if screening returns SHARED (author)
+
+| ID | Decision |
+|---|---|
+| R1-D3-SHARED-DECISION-PACKET | **A decision-node SHARED triggers a proposal for the seventh D.3a arm and a separate author decision** (author, 28 Nov 2026, in Codex chat: “如果出现 `SHARED`，让协调员提交第七个 arm 的方案；等你看到证据和成本，再决定是否加入。” and “到时让协调员一次报齐触发节点、估计值和区间、增量算力，以及 rev 5 要改哪些对照和分析。若没有节点触发 `SHARED`，就按已签规则继续走 rev 4 的 step (8)。”). Under R1-D3-STEP8-HOLD, after a completed screening evidence run, report in one packet the triggering node(s), the estimate(s) and interval(s) from the declared primary analysis, incremental compute, and the contrasts and analysis changes a revision 5 would need. The proposed arm is an additional A2 variant with a cumulative keep-count threshold correction, compared with the existing A2 to test whether the correction improves closed-loop performance. This row authorizes preparation of the proposal. Adoption, execution and any revision 5 require the separate author decision and the existing review, signature and freeze. If no decision node returns SHARED, proceed with step (8) on revision 4 under R1-D3-STEP8-HOLD. |
+
 ## 11. Relation to Paper A
 
 - Paper A stays an independent measurement paper.
