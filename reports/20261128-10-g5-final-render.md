@@ -13,7 +13,7 @@ for: coordinator
 | Unsigned note | `1a2ecfc2a05136edea226ea5aacc136419f5b8e02abe8e4c8d7943f63834079c` |
 | Filled spec | `7dcc581573f84044495006865ff3e6966dab3b0e49ad53afff873b7e41dfaa4e` |
 | Independent tier-E review | `d4a0a485fab302a4fdad157480bf5bced74ed6cb1fccbb7e9311e5d35a2bc6f3` |
-| P11 manifest, 420 entries | `e5202d61d251cbdcdef40e68c44e704fd4fa4b2902190fcf2d9c0ee3076d364f` |
+| P11 manifest, 420 entries | `6e27a28967979af047cfb28a72707219e3ad8c49a6720cfc2d193e59caa3b8e0` |
 | Houseprice S14 verdict JSON | `2447e4363976b6d5565f4b49efa079d35989f8cf8a284bb8190f6a43e4665c61` |
 | Focused suite new failure/error IDs | `b385a976eb14edc71d1845992b9ff3ae809e07d19ce008f0a732de3ad0ed1245` |
 
