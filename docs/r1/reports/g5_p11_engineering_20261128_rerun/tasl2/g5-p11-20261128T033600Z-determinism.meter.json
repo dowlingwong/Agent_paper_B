@@ -1,0 +1,16 @@
+{
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g5-p11-20261128T033600Z-determinism",
+ "W": 20,
+ "memory": "A",
+ "K": 10,
+ "worker_gpu_hours": 0.791,
+ "proposer": {
+  "seconds": 4914.0,
+  "registered": 1,
+  "open": 0,
+  "open_servers": [],
+  "gaps": []
+ },
+ "threshold_gpu_hours": 425
+}

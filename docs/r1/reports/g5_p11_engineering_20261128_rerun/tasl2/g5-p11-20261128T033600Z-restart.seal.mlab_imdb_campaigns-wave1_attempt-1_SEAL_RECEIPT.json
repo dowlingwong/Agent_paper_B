@@ -1,0 +1,34 @@
+{
+ "attempt": 1,
+ "chunk": null,
+ "copied": [
+  "out.tar",
+  "job_record.json",
+  "diagnostics.json",
+  "SHA256SUMS"
+ ],
+ "files": {
+  "SHA256SUMS": "ab8d35f640847f739bfb6db2d44e662c73a4148ce643979bcdfd24fd2fb244ee",
+  "diagnostics.json": "4932112000cfee07aa69b38cbce9960c5e4156b4215a4d7df77a769700c84a92",
+  "job_record.json": "d38acd55e89eba33011cbb5580465f57e459a3a3d149597aceb78dbe911052d9",
+  "node.log": "2c2d07c677fd48f11c4a6c528c052b4ace819a12c940e47af2c17cb7a7ac4640",
+  "out.tar": "d694b9d50045f41ea90cad4ce0ec3450c6153e4029e6a7ce35304220fe71baf7"
+ },
+ "host": "TASL-2",
+ "job": "campaigns-wave1",
+ "job_record_sha256": "d38acd55e89eba33011cbb5580465f57e459a3a3d149597aceb78dbe911052d9",
+ "kind": "attempt",
+ "label": "ENGINEERING_ONLY",
+ "node": "mlab_imdb",
+ "node_log": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-restart/_logs/mlab_imdb-20261128T095907Z-1402178.node.log",
+ "out_clear_files": null,
+ "run_id": "g5-p11-20261128T033600Z-restart",
+ "schema": "g5_tasl_seal_receipt/1",
+ "seal_mode": "procedural",
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed/g5-p11-20261128T033600Z-restart/mlab_imdb/campaigns-wave1/attempt-1",
+ "sealed_utc": "2026-11-28T10:03:55Z",
+ "source": "/home/dowling/r1_engineering/g5-p11/runs/g5-p11-20261128T033600Z-restart/mlab_imdb/campaigns-wave1/attempt-1",
+ "stop": "STOP 12: after the wave: <urlopen error [Errno 111] Connection refused> (re-run as a new attempt)",
+ "stop_class": "infrastructure",
+ "who": "g5_seal"
+}

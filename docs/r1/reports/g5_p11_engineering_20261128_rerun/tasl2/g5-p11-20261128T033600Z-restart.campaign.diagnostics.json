@@ -1,0 +1,58 @@
+{
+ "attempt": 1,
+ "checks": {
+  "requests_without_cache_prompt_false": 0,
+  "run_median_over_basis": 0
+ },
+ "completion_tokens": {
+  "max": null,
+  "p50": null,
+  "p95": null
+ },
+ "counts": {
+  "divergent_in_campaign": 0,
+  "duplicate": 0,
+  "inert": 0,
+  "infrastructure_final": 0,
+  "invalid": 0,
+  "kept": 0,
+  "manager_calls": 0,
+  "prompt_overflow": 0,
+  "proposals": 0,
+  "ran": 0,
+  "refused": 0,
+  "timed_out": 0,
+  "truncated": 0,
+  "truncated_not_invalid": 0
+ },
+ "cross_instance_duplicate_groups": 0,
+ "gpu_seconds": 213.1,
+ "job": "campaigns-wave1",
+ "label": "ENGINEERING_ONLY",
+ "ledger_stops": {
+  "baseline_failed": 0,
+  "baseline_timeout": 0,
+  "stop_integrity": 0,
+  "stop_transport": 0,
+  "stop_unisolated": 0
+ },
+ "ledgers": 0,
+ "node": "mlab_imdb",
+ "prompt_tokens": {
+  "max": null,
+  "p50": null,
+  "p95": null
+ },
+ "run_id": "g5-p11-20261128T033600Z-restart",
+ "schema": "g5_tasl_diagnostics_campaign/1",
+ "shares": {
+  "infrastructure_final_of_proposals": null,
+  "invalid_of_calls": null,
+  "ran_of_valid": null,
+  "single_seed_divergent_of_proposals": null
+ },
+ "spec_sha256": "71571e3796d307c632d1afb20656faa8f81097146f13d5f01e690d32bc89ac18",
+ "stop": "STOP 12: after the wave: <urlopen error [Errno 111] Connection refused> (re-run as a new attempt)",
+ "stop_class": "infrastructure",
+ "wave": 1
+}

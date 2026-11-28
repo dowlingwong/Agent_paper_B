@@ -1,0 +1,16 @@
+{
+ "label": "ENGINEERING_ONLY",
+ "run_id": "g5-p11-20261128T033600Z-closeserver",
+ "W": 20,
+ "memory": "A",
+ "K": 10,
+ "worker_gpu_hours": 0.0,
+ "proposer": {
+  "seconds": 41.0,
+  "registered": 2,
+  "open": 0,
+  "open_servers": [],
+  "gaps": []
+ },
+ "threshold_gpu_hours": 425
+}

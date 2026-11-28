@@ -1,0 +1,25 @@
+{
+ "closed": false,
+ "files": {
+  "server.tar": "5e9082afd817d4940d7bf3e5e7c92e9b4185a924b1c45fcc33fdac382b30c89a"
+ },
+ "host": "TASL-7",
+ "kind": "server",
+ "label": "ENGINEERING_ONLY",
+ "latest_log_mtime_utc": null,
+ "pid": 2748828,
+ "run_id": "g5-p11-20261128T033600Z-determinism",
+ "schema": "g5_tasl_server_seal_receipt/1",
+ "seal_mode": "procedural",
+ "sealed_path": "/home/dowling/r1_engineering/g5-p11/sealed-proposer/g5-p11-20261128T033600Z-determinism/server-1",
+ "sealed_utc": "2026-11-28T09:57:33Z",
+ "server": "server-1",
+ "server_end_sha256": "16f51e8d4e48ca097880eda0d3acc24318e663789d65de407e00847ee47cb4c9",
+ "server_log_sha256": "c21576c63f1c8a8ffc208595a24c6d0877ab2894277ba6ba2838e2afd7802818",
+ "server_record_sha256": "cd71834e7476cc8f8dd6093c7fff13b9b47ad9a708693bacb7460ac9c264919d",
+ "source": "/home/dowling/r1_engineering/g5-p11/proposer/g5-p11-20261128T033600Z-determinism/server-1",
+ "span_seconds": 4914.0,
+ "started_utc": "2026-11-28T08:35:26Z",
+ "stopped_utc": "2026-11-28T09:57:20Z",
+ "who": "g5_seal"
+}

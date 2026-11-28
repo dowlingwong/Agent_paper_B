@@ -1,0 +1,58 @@
+{
+ "attempt": 1,
+ "checks": {
+  "requests_without_cache_prompt_false": 0,
+  "run_median_over_basis": 0
+ },
+ "completion_tokens": {
+  "max": 64.0,
+  "p50": 64.0,
+  "p95": 64.0
+ },
+ "counts": {
+  "divergent_in_campaign": 0,
+  "duplicate": 0,
+  "inert": 40,
+  "infrastructure_final": 0,
+  "invalid": 0,
+  "kept": 40,
+  "manager_calls": 80,
+  "prompt_overflow": 0,
+  "proposals": 80,
+  "ran": 40,
+  "refused": 0,
+  "timed_out": 0,
+  "truncated": 0,
+  "truncated_not_invalid": 0
+ },
+ "cross_instance_duplicate_groups": 0,
+ "gpu_seconds": 74.0,
+ "job": "campaigns-wave1",
+ "label": "ENGINEERING_ONLY",
+ "ledger_stops": {
+  "baseline_failed": 0,
+  "baseline_timeout": 0,
+  "stop_integrity": 0,
+  "stop_transport": 0,
+  "stop_unisolated": 0
+ },
+ "ledgers": 4,
+ "node": "mlab_imdb",
+ "prompt_tokens": {
+  "max": 128.0,
+  "p50": 128.0,
+  "p95": 128.0
+ },
+ "run_id": "g5-p11-20261128T033600Z-tar",
+ "schema": "g5_tasl_diagnostics_campaign/1",
+ "shares": {
+  "infrastructure_final_of_proposals": 0.0,
+  "invalid_of_calls": 0.0,
+  "ran_of_valid": 0.5,
+  "single_seed_divergent_of_proposals": 0.0
+ },
+ "spec_sha256": "fed68f4c8b98cb6a1601c1fdf1496770d6c7cc2522d18ff43111d7ee1450a303",
+ "stop": "STOP: out.tar could not be written; out/ kept for the seal",
+ "stop_class": "infrastructure",
+ "wave": 1
+}
