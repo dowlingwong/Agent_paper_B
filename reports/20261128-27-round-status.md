@@ -11,6 +11,7 @@ on its review branch.
 |---|---|---|---|
 | `compute/20261128-15` — P7 at `-c 32768` q8_0 K/V | **STOP** under frozen rev 4: server fits (21,977 MiB), 14/14 campaigns, worker gate **50/276 = 18.12 %** vs 12.99 %; published 8k P7 was 33/271 = 12.18 % | `compute-d3a-p7-exact-20261128` @ `d0b3b35c` | `…-review` @ `688028b5`: **ACCEPTED** (re-check: 944/944 captures, 28/28 inner; per-seed corrected 22/138, 28/138). Merged `a70c8872`. The gate is re-read at rev 5 (18.53 %) by the coordinator. |
 | `compute/20261128-12` item 1 / `-10` — G.5 P11 complete matrix | **PASS** on the four remaining scenarios: determinism (200/200/10 same outcomes, 0 diffs), restart (STOP 12, 33 s + 27 s servers), tar (`out_clear.tar`, 1,130 files), close-server (closed true, 20 s) | `compute-g5-p11-matrix-complete-20261128` @ `0ce1e664` | `…-review` @ `b186d017`: **ACCEPTED** (420/420 captures; 08:37 refusal explained). Merged `a70c8872`. |
+| `compute/20261127-33` item 2 — P5 staged smoke on the per-card lease | **PASS**: Ada card 2, all four kernels bound, bf16 rel err 0.002875, 3,345 MiB, 26 s, 0 foreign | `compute-p5-smoke-percard-20261128` @ `1e8b4aec` | review pending |
 | `compute/20261128-16` — P.4 E0 fresh runs | **PASS**: 4 fresh runs, all slope pairs within 0.05; RPS host means differ by **2.9494e-5** ≤ 3.04e-5; 2.7936 GPU-h | `compute-p4-e0-fresh-20261128` @ `c22ba021` | `…-review` @ `0bd80f7a`: **ACCEPTED** (one minor: TASL-7 within-host absolute spread 4.5e-5 exceeds the cross-host limit; the pass relies on mean cancellation) |
 
 ## Hosts and jobs at 12:07–12:08Z
@@ -30,7 +31,7 @@ No active job ID is recorded for this round: P7, P11 and E0 all completed; no su
 | Card | Waits for | Owner |
 |---|---|---|
 | `compute/20261128-16` E0 | review **ACCEPTED**; coordinator merge | coordinator |
-| `compute/20261127-33` item 2 — P5 rerun | E0 review acceptance and the reviewed timing disposition; now the next P.4 card | compute |
+| `compute/20261127-33` item 2 — P5 smoke | review pending; timing carry-forward still to be reviewed before the phase-1 note | compute / design |
 | `compute/20261126-06` — G.5 campaigns | published G.5 note; final render ACCEPTED (`6466e044`), publication held for `local/20261128-11` fixture fix | coordinator / local |
 | `compute/20261128-03` — D.3 batch preflight | a `Start=true` ETP L40S / TOpAS A100; none advertised at 12:07Z | compute, re-read each round |
 | `compute/20261127-28` — E-INT census | signed census card/spec and a free Ada card; Paper B priority | author / design |
