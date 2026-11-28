@@ -23,7 +23,8 @@ edited and no job id was created.** New since recheck 4: NEMO2's `g4401` adverti
 | `deepthought.etp.kit.edu` (ETP) | TITAN X | 4 / 2 | Unclaimed / Idle | false | error |
 
 Exact expressions read from the ETP collector (`condor_status -af … Start Requirements WithinResourceLimits`):
-every GPU slot above with `Start = false` also has `Requirements = false` and `WithinResourceLimits = error`. The
+the three ETP slots that advertise GPUs in `Unclaimed` or `Claimed/Retiring` state read `Requirements = false` and
+`WithinResourceLimits = error`; the `Drained` NEMO2 slot reads `Start = false` with `Requirements = undefined`. The
 `c03-001-175` slots read `Start = false` from the TOpAS collector (`c03-001-140.gridka.de`).
 
 ## Queue
