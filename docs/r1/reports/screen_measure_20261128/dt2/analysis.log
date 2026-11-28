@@ -1,0 +1,26 @@
+{
+ "label": "EVIDENCE",
+ "verdicts": {
+  "digits_mlp": "INCONCLUSIVE",
+  "openml_breast_w": "NOT_TESTED",
+  "openml_climate": "INCONCLUSIVE",
+  "openml_credit_approval": "NOT_TESTED",
+  "openml_ionosphere": "NOT_TESTED",
+  "openml_sonar": "NOT_TESTED",
+  "openml_wdbc": "NOT_TESTED",
+  "tabular_mlp": "NOT_TESTED"
+ },
+ "decision": "R1_THEORY_RHO_2_FINAL",
+ "decision_seven_nodes": "R1_THEORY_RHO_2_FINAL",
+ "bonferroni_level": 0.975,
+ "verdicts_bonferroni": {
+  "digits_mlp": "INCONCLUSIVE",
+  "openml_breast_w": "NOT_TESTED",
+  "openml_climate": "INCONCLUSIVE",
+  "openml_credit_approval": "NOT_TESTED",
+  "openml_ionosphere": "NOT_TESTED",
+  "openml_sonar": "NOT_TESTED",
+  "openml_wdbc": "NOT_TESTED",
+  "tabular_mlp": "NOT_TESTED"
+ }
+}

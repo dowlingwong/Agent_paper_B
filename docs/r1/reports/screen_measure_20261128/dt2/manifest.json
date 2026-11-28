@@ -1,0 +1,487 @@
+{
+ "code_sha256": {
+  "r1/noise/e1_noise_floor.py": "a3fa508f0c16ec1cfb5b2afa0b37c8cfa6e9b965a8e5d90b6ab6e3c92a830b75",
+  "r1/noise/screen_analysis.py": "a54753e1b9cba5cf5605f83d7e53a97d98246aded14b4c97aecb9edc1a2ed089",
+  "r1/noise/screen_design.py": "3443c044cc8a779a75f46561667dfba744f71e81233f503ca81051c9541791b5",
+  "r1/noise/screen_measure.py": "ae2d1688824ddbeb2b2c5a2e346822000aa3245730b531b0372d6c288ccabf11",
+  "r1/noise/screen_power.py": "8775c7ffd6e4722a8752aa90b63fde1e91f48db44c3b5652a927c85e078fd5dd",
+  "r1/noise/screen_seeds.py": "dff8252b46101b695c9a938d722c11f3c68f56fb3c388859350a03e5112f2c4e"
+ },
+ "data_cache": {
+  "dir": "/work/dwong/screen_fix_20261127/data_cache_20261127T134927Z",
+  "nodes": {
+   "openml_breast_w": "058343f9759365d02c51eee9c52489ba84097a5428d0e2cf2e95a4456dbe9c94",
+   "openml_climate": "3dc7f6bb3b80f5cebe63bc2eb187279ce204ca57137d6f24da80f5fee411cebd",
+   "openml_credit_approval": "1dc25c439ca26164d3b47584d8ee70fe4427c95d224edc6bc5184546c1bc7c40",
+   "openml_ionosphere": "97951b0b5341d5a44c6e0f367c0d9cab4d46949dbd898dfc92005569725d1c6f",
+   "openml_sonar": "36d193ed8aa2be9f8d12ea9233da83b5698bdc285b3061af52e3d215370f2253",
+   "openml_wdbc": "afd165f3e610cd198b069c724a185b7362d8ba643a99a2454787e6414df5bc8c"
+  },
+  "tree_sha256": "3843b53cddca6c32f00f5a1eeb96f34a78ca2871720900f4e6b8c0f724130d07"
+ },
+ "design_sha256": "bbc98b87d2170ad89ff17a92303ffb440583b74b035d2690a6a2ababeb8d8ec8",
+ "edit_sets": {
+  "digits_mlp": "equal",
+  "openml_breast_w": "equal",
+  "openml_climate": "equal",
+  "openml_credit_approval": "equal",
+  "openml_ionosphere": "equal",
+  "openml_sonar": "equal",
+  "openml_wdbc": "equal",
+  "tabular_mlp": "equal"
+ },
+ "elapsed_seconds": 1468.2,
+ "failed_runs": 0,
+ "finished_utc": "20261128T005129Z",
+ "harness": {
+  "branch": "HEAD",
+  "commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+  "dirty": false,
+  "root": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness"
+ },
+ "host": {
+  "cpus": 128,
+  "node": "deepthought2",
+  "platform": "Linux-5.14.0-570.62.1.el9_6.x86_64-x86_64-with-glibc2.34",
+  "python": "3.13.15"
+ },
+ "label": "EVIDENCE",
+ "libraries": {
+  "numpy": "2.4.4",
+  "pandas": "3.0.3",
+  "scikit-learn": "1.8.0",
+  "scipy": "1.17.1"
+ },
+ "planned_runs": 10164,
+ "preflight": {
+  "affinity_cpus": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60,
+   61,
+   62,
+   63
+  ],
+  "cotenancy_at_start": {
+   "cpus": 128,
+   "free_for_others": 119.82,
+   "load1": 8.18,
+   "ok": true,
+   "our_workers": 0,
+   "utc": "2026-11-28T00:26:59Z"
+  },
+  "environment": {
+   "environment_basis": {
+    "data_caches_sha256": {
+     "openml_breast_w": "88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487",
+     "openml_climate": "73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d",
+     "openml_credit_approval": "05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3",
+     "openml_ionosphere": "1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e",
+     "openml_sonar": "ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c",
+     "openml_wdbc": "075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3"
+    },
+    "disclosure": "R1-B2-GO B6 (a): no environment freeze bound to the sweep-1 launch exists. The B.2 audit environment is established by the published, independently reviewed e1 environment replay (docs/r1/reports/e1_replay_20261117/REPORT.md, sha256 5892913533416e5e8c66ae913a46528a29be69e483eaecd2ca04929b5dad0048, at 52992b22; review E1_AMEND_RUN_REVIEW_20261117.md ACCEPTED; 16/16 cases at tolerance 0) and by re-running that replay's current-environment checks (r1/scripts/c3_env_replay.py check_environment: wrapper target, Python and library versions, uv.lock, the 25 Oct freeze plus narwhals, dist-info mtimes) at audit start; the current package list, interpreter build, prefix, wrapper target and newest dist-info mtime must equal the replay's recorded values. This is a current-state observation, not a launch-bound snapshot. Carried from the replay report (section 9): (1) dataset identity for the six OpenML nodes rests on the amended evidence of R1-E1-OPENML-AMEND (sweep-1 data id, sweep-1 loaded-data fingerprint recomputed equal, OpenML md5 self-consistency, and audited cache bytes unchanged since the 16 Nov audit), not on a file hash recorded by sweep 1; the surviving cache bytes are not anchored by a hash the sweep-1 launch wrote; (2) the batch .venv executables are wrappers to the shared venv /ceph/dwong/r1_prepare_20261025/venv, not a separately built venv; (3) the replay is a bounded reproducibility check of 16 worker evaluations, reconstructed from uv.lock and the batch venv; it is not proof that every original dependency or all 288 roots were identical, and it says nothing about LLM seed replay. The batch harness is tracked-clean; its only untracked files are the six OpenML data caches (tree digests required equal to the e1 post-run record) and paper/tables/artifact_completeness_report.txt, as the e1 record states.",
+    "e1_commit": "52992b22b50e496935136b50c5b31a79a17d7f20",
+    "files_sha256": {
+     "docs/r1/reports/e1_replay_20261117/REPORT.md": "5892913533416e5e8c66ae913a46528a29be69e483eaecd2ca04929b5dad0048",
+     "docs/r1/reports/e1_replay_20261117/SHA256SUMS.txt": "2a46aa714a6a843cce0a487364a871f0667224247f87d82ec37b160d7fb06495",
+     "docs/r1/reports/e1_replay_20261117/cases.jsonl": "ce6ed7b38b987d5bb6ed89472ce295ef76223e90935eb758d8d3c168531d6aba",
+     "docs/r1/reports/e1_replay_20261117/pins.json": "72aff78d92eed58af0e3563e2207cf1ea1981bcd07f99fd4eb1d6b4350fb78f7",
+     "docs/r1/reports/e1_replay_20261117/summary.json": "ff7fe3c3f7b1d6e37c874dbbd906b3ed3b8890cf114bec6266bc2d89f278a27b",
+     "docs/r1/reviews/E1_AMEND_RUN_REVIEW_20261117.md": "ffaf34aec0ed658441af30c9803b7f4c6b56ded88b4d2efbb8ad0194df6a1cdd"
+    },
+    "harness_path": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness",
+    "interpreter": {
+     "build": "3.13.15 (main, Aug 14 2026, 15:34:59) [Clang 22.1.3 ]",
+     "newest_dist_info_mtime_utc": "2026-10-26T22:09:12.359336+00:00",
+     "package_list_sha256": "c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f",
+     "prefix": "/ceph/dwong/r1_prepare_20261025/venv",
+     "python_version": "3.13.15",
+     "wrapper_target": "/ceph/dwong/r1_prepare_20261025/venv/bin/python"
+    },
+    "report_dir": "docs/r1/reports/e1_replay_20261117",
+    "review": "docs/r1/reviews/E1_AMEND_RUN_REVIEW_20261117.md",
+    "ruling": "R1-B2-GO B6 (a)"
+   },
+   "environment_checks_at_start": {
+    "build": "3.13.15 (main, Aug 14 2026, 15:34:59) [Clang 22.1.3 ]",
+    "checked_utc": "2026-11-28T00:26:59Z",
+    "newest_dist_info_mtime_utc": "2026-10-26T22:09:12.359336+00:00",
+    "package_list_sha256": "c09242ac13970394a660452fb1b92dde39edcf390022c40a19327e67e725315f",
+    "prefix": "/ceph/dwong/r1_prepare_20261025/venv",
+    "wrapper_target": "/ceph/dwong/r1_prepare_20261025/venv/bin/python"
+   },
+   "harness_commit": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+   "harness_dirty": false,
+   "harness_root": "/ceph/dwong/r1_prepare_20261025/r1_c3_sweep_ENGINEERING_ONLY_20261027_2YSBbw/autoresearch_harness",
+   "harness_untracked": {
+    "basis": "tracked-clean; untracked = the six OpenML data caches (tree digests = e1 post-run) and paper/tables/artifact_completeness_report.txt",
+    "data_caches_sha256": {
+     "openml_breast_w": "88f68825a3d93e4724b453346c6bc7c360e9e7594658a13b3761589ec359f487",
+     "openml_climate": "73c5af1187710d75c717db532b74c287238d97c91d603351c2d865608c6b1f5d",
+     "openml_credit_approval": "05cf63a22a3c4e3a391fac7eb78fe6a36ba6c5b9e9071bee1e05760aef97dcb3",
+     "openml_ionosphere": "1079cb09c620388b48062855a8849337cd132fcd8cf1c31c4cece6a578cb0c4e",
+     "openml_sonar": "ccca8605802002e6df8fef3080a6169c32a91ad8b4c401ad0cf173f16137020c",
+     "openml_wdbc": "075915dc1fa10dc7a3f736a5d297765dd057e767becb38ee59b97bace868ebf3"
+    },
+    "untracked_count": 17
+   },
+   "package_list_sha256": "a089bbf1fc7522a596631f4dd9535a18866336ff18edbbae14932106d94f16d3",
+   "python": "3.13.15 (main, Aug 14 2026, 15:34:59) [Clang 22.1.3 ]",
+   "scikit_learn": "1.8.0",
+   "uv_lock_sha256": "dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090",
+   "worker_prefix": "/ceph/dwong/r1_prepare_20261025/venv",
+   "worker_python": "/ceph/dwong/r1_prepare_20261025/venv/bin/python",
+   "worker_runtime_basis": {
+    "limitation": "the probe does not attest the task process itself ([AS]: NOT CHECKABLE); accepted and disclosed under R1-B2-GO B4 (a)",
+    "record": "runs.jsonl:worker_runtime",
+    "ruling": "R1-B2-GO B4 (a)",
+    "what": "per seed run, a separate probe process started with the worker's PATH and command interpreter records the interpreter, prefix, library versions and package-list hash; every record must equal the approved venv (validate_worker_records)"
+   },
+   "worker_versions": {
+    "numpy": "2.4.4",
+    "pandas": "3.0.3",
+    "scikit-learn": "1.8.0",
+    "scipy": "1.17.1"
+   }
+  },
+  "harness_equivalence": {
+   "audit_harness": "6adf3859de66c4814fcf376eed59880fbd8eeaf7",
+   "changed_elsewhere": [
+    "src/autoresearch/control_plane/campaign.py",
+    "src/autoresearch/control_plane/snapshot.py",
+    "src/autoresearch/llm/langchain_client.py",
+    "src/autoresearch/llm/providers.py",
+    "src/autoresearch/manager/langgraph_manager.py",
+    "src/autoresearch/memory/summarizer.py",
+    "tests/stage2/test_r1_cache_prompt.py",
+    "tests/stage2/test_r1_track_s_arms.py"
+   ],
+   "diff": "empty",
+   "paths": [
+    "nodes",
+    "configs",
+    "harness",
+    "uv.lock",
+    "src/autoresearch/worker",
+    "src/autoresearch/nodes",
+    "src/autoresearch/common",
+    "src/autoresearch/manager/base.py"
+   ],
+   "sweep2_harness": "a3fedbbd44309b3fdf99d853ad841b9ec2c299e2"
+  },
+  "launch_host": "deepthought2",
+  "note": "docs/r1/authorizations/screen_measure_20261127_reissue_3.md",
+  "note_sha256": "55779a6cfeea13cce99989f6e9680a48a96f0fc5fbc4f4476222cf73d767af9b",
+  "placement_ruling": "R1-SCREEN-DEEPTHOUGHT2",
+  "predeclaration_sha256": "a380dbf122f17705f29ae0d056a8eafeebe67f2718a6fca09616994c09362585",
+  "provenance": {
+   "paper_code_clean": true,
+   "paper_code_commit": "a7c2f8fb7b90b3237e61672c6b48112365dcdb24",
+   "published_main": "a98d2eff1d2847e34f00effe66b53bc00467e936",
+   "review_path": "docs/r1/reviews/SCREEN_MEASURE_DEEPTHOUGHT2_REVIEW_20261128.md",
+   "review_sha256": "dc7b0d63bdda07377f2bf41fdc15b1f88cfe3b8d3aa5d19739a037722f1eaadb"
+  },
+  "seed_check": {
+   "additional": {
+    "G.4 pilot seed allow-list (sweep2/g4/g4_lib.py; sweep2/t1_tasl/g4_tasl.py: 4001-4099)": [
+     4001,
+     4099,
+     99
+    ]
+   },
+   "block": [
+    3301,
+    3420,
+    120
+   ],
+   "d3": {
+    "D.3 audit seeds (6700 + 10 i + k)": [
+     6701,
+     6880,
+     180
+    ],
+    "D.3 instance seeds": [
+     6201,
+     6218,
+     18
+    ],
+    "D.3 replicate seeds (6500 + 10 i + j)": [
+     6501,
+     6679,
+     162
+    ],
+    "D.3 smoke replicate seeds (6300 + 10 (s - 6300) + j)": [
+     6311,
+     6329,
+     18
+    ],
+    "D.3 smoke seeds": [
+     6301,
+     6302,
+     2
+    ]
+   },
+   "reserved": {
+    "B.2 audit seeds, label 7001-7005 and evaluation 7006-7010 (r1/c3/audit.py DEFAULT_SEEDS)": [
+     7001,
+     7010,
+     10
+    ],
+    "D21 noise floors, joint seeds": [
+     3001,
+     3030,
+     30
+    ],
+    "D21 noise floors, split seeds": [
+     2001,
+     2030,
+     30
+    ],
+    "D21 noise floors, train seeds (r1/noise/e1_noise_floor.py SEED_BASE; g1b note: 30 seeds)": [
+     1001,
+     1030,
+     30
+    ],
+    "E1b audit seeds (r1/headroom/e1b_collect.py AUDIT_SEED_BASE; R1-E1B-RERUN2)": [
+     5001,
+     5006,
+     6
+    ],
+    "G.1b proposed training-seed block (RUNBOOK G.1b; sweep2/s2_c3b_lib.py G1B_SEED_BLOCK)": [
+     8001,
+     8010,
+     10
+    ],
+    "G.4 pilot instance seeds (authorizations/g4_t1_tasl_20261122.md)": [
+     4001,
+     4003,
+     3
+    ],
+    "S2-C3b prompt-measurement seeds (sweep2/s2_c3b_lib.py PROMPT_MEASUREMENT_SEEDS)": [
+     6101,
+     6108,
+     8
+    ],
+    "T1 G.5 instance seeds = P3 T1 split universe (r1/c3/p3_split.py T1_SEEDS)": [
+     5101,
+     5112,
+     12
+    ],
+    "Track S audit blocks (r1/tracks/collect.py AUDIT_SEED_BASES)": [
+     100000,
+     799999,
+     700000
+    ],
+    "Track S instance blocks (r1/tracks/collect.py INSTANCE_SEED_BLOCKS on trackS-ops-20261030)": [
+     30000,
+     39999,
+     10000
+    ],
+    "engineering smoke seeds (r1/e2e.py 999)": [
+     999,
+     999,
+     1
+    ],
+    "exam instance and audit seeds (r1/exam/namespace.py; sweep2/s2_c3b_lib.py EXAM_SEED_BLOCK 9001-9303)": [
+     9001,
+     9303,
+     303
+    ],
+    "sweep 1 and sweep 2 instance seeds = P3 T0 split universe (e1b_collect._instance_seed, k = 0..17)": [
+     100,
+     275,
+     90
+    ]
+   }
+  }
+ },
+ "run_id": "smeas-20261123-a",
+ "runs_sha256": "c0863b6fa866d06ba8e2e63b6ef4e3b63c5170fb713a83783554bc08cd7f579a",
+ "schema": "r1_screen_measure_run/v2",
+ "seeds": [
+  3301,
+  3302,
+  3303,
+  3304,
+  3305,
+  3306,
+  3307,
+  3308,
+  3309,
+  3310,
+  3311,
+  3312,
+  3313,
+  3314,
+  3315,
+  3316,
+  3317,
+  3318,
+  3319,
+  3320,
+  3321,
+  3322,
+  3323,
+  3324,
+  3325,
+  3326,
+  3327,
+  3328,
+  3329,
+  3330,
+  3331,
+  3332,
+  3333,
+  3334,
+  3335,
+  3336,
+  3337,
+  3338,
+  3339,
+  3340,
+  3341,
+  3342,
+  3343,
+  3344,
+  3345,
+  3346,
+  3347,
+  3348,
+  3349,
+  3350,
+  3351,
+  3352,
+  3353,
+  3354,
+  3355,
+  3356,
+  3357,
+  3358,
+  3359,
+  3360,
+  3361,
+  3362,
+  3363,
+  3364,
+  3365,
+  3366,
+  3367,
+  3368,
+  3369,
+  3370,
+  3371,
+  3372,
+  3373,
+  3374,
+  3375,
+  3376,
+  3377,
+  3378,
+  3379,
+  3380,
+  3381,
+  3382,
+  3383,
+  3384,
+  3385,
+  3386,
+  3387,
+  3388,
+  3389,
+  3390,
+  3391,
+  3392,
+  3393,
+  3394,
+  3395,
+  3396,
+  3397,
+  3398,
+  3399,
+  3400,
+  3401,
+  3402,
+  3403,
+  3404,
+  3405,
+  3406,
+  3407,
+  3408,
+  3409,
+  3410,
+  3411,
+  3412,
+  3413,
+  3414,
+  3415,
+  3416,
+  3417,
+  3418,
+  3419,
+  3420
+ ],
+ "started_utc": "20261128T002606Z",
+ "stop": null,
+ "stub": false,
+ "workers": 64,
+ "written_runs": 10164
+}
