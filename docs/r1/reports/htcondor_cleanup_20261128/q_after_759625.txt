@@ -1,0 +1,3 @@
+Total for query: 0 jobs; 0 completed, 0 removed, 0 idle, 0 running, 0 held, 0 suspended 
+Total for all users: 6 jobs; 0 completed, 0 removed, 0 idle, 6 running, 0 held, 0 suspended
+
