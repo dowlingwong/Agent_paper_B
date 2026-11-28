@@ -42,9 +42,14 @@ placeholders. This round verified the published pin, with no new manuscript revi
   L40S and TOpAS A100 and submitted nothing. At 01:32 UTC, the only running job on that account in the queue
   was `760158.0` for R2. Check for a startable slot and a new Paper B job ID. The earlier screening
   `SMEAS_EVIDENCE_20261128T001405Z` completed 10,164/10,164 with zero failures and no SHARED verdict.
-  `R1_THEORY_RHO_2_FINAL` releases the rev 4 step (8) bindings (`local/20261128-04`). The per-arm smoke
-  and stage-specific launch notes still precede D.3. D.3b also needs the frozen arms.
-  [Published preflight](https://github.com/dowlingwong/Agent_paper_B/blob/914e1cf9/docs/r1/reports/d3_preflight_20261128_recheck/D3_HTCONDOR_PREFLIGHT_RECHECK_20261128.md)
+  `R1_THEORY_RHO_2_FINAL` released the rev 4 step (8) bindings. The post-report fetch found
+  `local/20261128-04` delivered on `local-20261128-04-d3-step8` @
+  `ad6e5f18faeca24f4e82b9bacc85cfbfb1bd2e5b`, tier E ACCEPTED at `950e9303`, with zero new suite
+  failures or errors. Frozen rev 4 SHA-256 is `e091b1b59fafd29ca2f5950d48611611491082a62252268cca2f5c19146b9745`.
+  The binding awaits coordinator publication. The per-arm smoke and stage-specific launch notes precede D.3.
+  D.3b also needs the frozen arms.
+  [Published preflight](https://github.com/dowlingwong/Agent_paper_B/blob/914e1cf9/docs/r1/reports/d3_preflight_20261128_recheck/D3_HTCONDOR_PREFLIGHT_RECHECK_20261128.md) ·
+  [Local handoff](https://github.com/dowlingwong/Agent_paper_B/blob/164acaacb9f721834fce4508bbff88d026398f77/reports/20261128-04-d3-step8.md)
 - **G.5 P11 matrix, `compute/20261128-09`.** Compute branch `compute-g5-p11-matrix-20261128` @
   `0a7488182038b319c5d09e247c185c9646bd2136` reports an engineering STOP at
   `g5-p11-20261128T014000Z`. Both synthetic baselines stopped before proposals. The kit's step line reaches
