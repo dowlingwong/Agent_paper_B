@@ -1,0 +1,57 @@
+{
+ "ok": true,
+ "run_id": "c3_t1_labels_20261128",
+ "options": {
+  "G5-W": "A",
+  "G5-TEMP": "A",
+  "G5-MEM": "A",
+  "G5-AUDIT": "A",
+  "G5-DIV": "A",
+  "G5-TASL-GPUH": "A",
+  "G5-SLOT": "A",
+  "G5-ARPEND": "A"
+ },
+ "unsigned": [],
+ "launch_blockers": [],
+ "projection": {
+  "share=0.6 K=10": {
+   "worker_gpu_hours": 305.3,
+   "campaign_gpu_hours": 55.1,
+   "capped_gpu_hours": 305.3
+  },
+  "share=0.6 K=6": {
+   "worker_gpu_hours": 208.5,
+   "campaign_gpu_hours": 55.1,
+   "capped_gpu_hours": 208.5
+  },
+  "share=0.8 K=10": {
+   "worker_gpu_hours": 386.0,
+   "campaign_gpu_hours": 62.4,
+   "capped_gpu_hours": 386.0
+  },
+  "share=0.8 K=6": {
+   "worker_gpu_hours": 259.9,
+   "campaign_gpu_hours": 62.4,
+   "capped_gpu_hours": 259.9
+  }
+ },
+ "cap_gpu_hours": 425,
+ "share_0_8_with_margin": 424.6,
+ "audited_band": [
+  100,
+  200
+ ],
+ "freeze_wait_release_date": "2027-12-31",
+ "split": {
+  "path": "r1/c3/splits/c3_p3_split_v1.json",
+  "sha256": "b5967dd74a5b2a8bfd5f936aa57d00a231199eb36eedad5f005e3e0d6a71e569",
+  "nodes": 8
+ },
+ "e4_amendment_needed": true,
+ "divergence_denominator_weaker": false,
+ "tasl7_pending_crosshost": [],
+ "tasl2_cpu_replacements": {
+  "mlgym_houseprice": "0-7"
+ },
+ "pilot_basis_run_id": "g4b-tasl-20261124-a"
+}
