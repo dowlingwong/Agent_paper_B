@@ -1,0 +1,31 @@
+utc=2026-11-28T04:54:38Z host=deepthought nproc=40
+              total        used        free      shared  buff/cache   available
+Mem:            503          38         154           4         310         457
+---env---
+python 3.13.15
+prefix /ceph/dwong/r1_prepare_20261025/venv
+sklearn 1.8.0
+numpy 2.4.4
+pandas 3.0.3
+scipy 1.17.1
+uv_lock=dd42d0187d16305913de75031a6fb69dcee00a08476f2f41278a8c307883d090
+---harness---
+checkout=/work/dwong/d3-audit-harness-20261128
+commit=9bb416805175149eb87b71f28d77530572aa4bce
+dirty_entries=0
+tree=c520138e36ae46d6fb27715ff3a37748d5324ad8
+040000 tree 7f8de4ed92942c8c412bf7880d02a3df8d4e83be	configs
+100644 blob 14086e4bd4b11ce51058a60b763a1192c2cd3412	src/autoresearch/__init__.py
+040000 tree 971a9f63f9658bbec534311659fc66a2211ec25a	src/autoresearch/common
+040000 tree 4996b3ad8d91f8155addf2d7a6453b1ddc5bb287	src/autoresearch/control_plane
+040000 tree 36c2c34725853209dac596dd993f86add0e2d497	src/autoresearch/evaluation
+040000 tree 08e8ddeeaff98f8cf2c2e293f4b68367ffaeb400	src/autoresearch/legacy
+040000 tree 85c96dac6468c890e912554b8546a1a64e5a9327	src/autoresearch/llm
+040000 tree 5f52174cb4886d41eb80a68d373e44beedb7138f	src/autoresearch/manager
+040000 tree 61bc9af021b9b62ff49e1a572df9bcb2b2122a59	src/autoresearch/memory
+040000 tree 711ba50ddda552c8b97433a9464b2f1b118fce7c	src/autoresearch/nodes
+040000 tree 8f62103f65795e4662b077e1fb1bf6a3af25bbc2	src/autoresearch/reliability
+040000 tree 6db81b088694ae8940768ada819777a8bb5f1d17	src/autoresearch/reporting
+040000 tree 563e7afd63bfdc720c1f0309b1025299cea8114e	src/autoresearch/worker
+---diff_against_same_pin---
+diff_empty
