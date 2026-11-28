@@ -1325,6 +1325,15 @@ def worker_shim(spec: dict, node: dict, context: dict) -> tuple[dict, dict]:
     return shim, node
 
 
+def _post_wave_identity(spec: dict, get) -> dict:
+    try:
+        return T4.server_identity(spec, get)
+    except (Stop, OSError) as exc:
+        if not isinstance(exc, Stop) and not S.engineering_spec(spec):
+            raise
+        raise Stop(f"STOP 12: after the wave: {exc} (re-run as a new attempt)") from None
+
+
 def _write_json(path: Path, obj: dict) -> None:
     with Path(path).open("x") as fh:
         fh.write(json.dumps(obj, indent=1, sort_keys=True, default=str) + "\n")
@@ -1535,10 +1544,7 @@ def run_job(spec_path: Path, node_name: str, job: str, context: dict, *, smi=G._
                 raise NodeStop(ORPHANS_EXIT)
             record["foreign_checks"].append(G.check_no_foreign(gpu, "after the engine", smi))
             if kind == "campaigns":
-                try:
-                    record["server_props_after"] = T4.server_identity(spec, get)
-                except Stop as exc:
-                    raise Stop(f"STOP 12: after the wave: {exc} (re-run as a new attempt)") from None
+                record["server_props_after"] = _post_wave_identity(spec, get)
                 if record["server_props_after"] != record["server_props_before"]:
                     raise Stop("STOP 12: the proposer /props changed during the wave (re-run as a new attempt)")
                 record["latency_probe_after"] = T4.latency_probe(spec, get=get)

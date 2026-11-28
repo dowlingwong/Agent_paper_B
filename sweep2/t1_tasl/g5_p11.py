@@ -110,7 +110,9 @@ def materialize(spec: dict) -> Path:
                 for name, raw in files.items()):
             raise S.Stop(f"STOP: the P11 synthetic kit differs from its recipe: {directory}")
         frozen = {name: S._sha_bytes(files[name]) for name in ("parent.py", "worker.py", "ar_isolated.py")}
-        node.update(node_spec_sha256=S._sha_bytes(files["node.json"]),
+        canonical_spec = json.dumps(json.loads(files["node.json"]), sort_keys=True, separators=(",", ":"),
+                                    ensure_ascii=False, default=str).encode()
+        node.update(node_spec_sha256=S._sha_bytes(canonical_spec),
                     committed_pin_sha256=S._sha_bytes(json.dumps(frozen, sort_keys=True).encode()))
     return kit
 

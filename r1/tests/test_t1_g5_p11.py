@@ -97,3 +97,17 @@ def test_synthetic_seal_has_engineering_label(recipe):
     J.SE.seal_node(spec, node)
     run_receipt = J.SE.seal_run(spec, not_run=(P.NODES[1],))
     assert run_receipt["label"] == P.LABEL and run.is_dir()
+
+
+def test_restart_transport_error_is_infrastructure_stop_12(recipe, monkeypatch):
+    from urllib.error import URLError
+
+    def offline(*args):
+        raise URLError("synthetic server stopped")
+
+    _, spec = recipe
+    monkeypatch.setattr(J.T4, "server_identity", offline)
+    with pytest.raises(S.Stop, match="STOP 12: after the wave"):
+        J._post_wave_identity(spec, None)
+    with pytest.raises(URLError):
+        J._post_wave_identity({}, None)
