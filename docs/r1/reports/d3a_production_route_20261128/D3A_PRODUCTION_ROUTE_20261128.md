@@ -316,7 +316,8 @@ are for the HTCondor route and are not edited or used here.
    `r1/tests/test_d3_analysis.py` passes 53 tests (`captures/p11_analysis_pin.txt`).
 4. The author signs P9; the coordinator publishes the note byte-identically on `main`.
 5. Only then does a chunk launch, after `validate --launch`, the strict note check, the canonical
-   lease and the empty-card/foreign-process check. G.5 has the TASL pair first; D.3a waits for it.
+   lease, the empty-card/foreign-process check, and the endpoint identity guard (§4.1) after
+   readiness and immediately before every chunk. G.5 has the TASL pair first; D.3a waits for it.
 
 No campaign, audit, G6/G7 step, label read or outcome was produced here. This record does not change
 the note's `approved: false` state.
@@ -332,12 +333,33 @@ python -B -m pytest -q -p no:cacheprovider -rfE \
 97 passed in 2.74s
 ```
 
+The endpoint guard unit and integration set on this tip:
+
+```
+python -B -m pytest r1/tests/test_d3_endpoint_guard.py -q
+23 passed
+```
+
+That set includes the Linux-only `HostProbe` integration (fake `ss`/`nvidia-smi`, a live `/props`,
+a real lease inode); on macOS the same set is 22 passed and 1 skipped. The stub driver test
+(`endpoint_guard_driver_test.sh`) passes the success, foreign-responder and failed-bind cases; its
+outputs are in `captures/endpoint_guard/`.
+
+The full `r1/tests` suite was run on clean checkouts of the published base `c66603ae` and this tip
+with harness `9bb41680`. Two modules (`test_trackp_p4_runner.py`, `test_trackp_sft_select_stop.py`)
+fail collection identically at both tips and were ignored. Base: `53 failed, 4888 passed, 162
+skipped, 3 errors`; tip: `52 failed, 4912 passed, 162 skipped, 3 errors`. The sorted `FAILED`/`ERROR`
+ID sets differ by one base-only flaky entry
+(`test_t1_tasl_crosscheck.py::test_default_part_on_both_hosts_seal_and_compare`) and **zero tip-only
+entries**: no new failure. The counts and ID comparison are in
+`captures/endpoint_guard/full_suite_compare.txt`.
+
 Cache staging: `read_data_cache` returns the reviewed tree `3843b53c…` and all five OpenML
 `prepare_node_dir` data maps equal the MANIFEST (four files, one ARFF each);
-`captures/cache_staging.txt` has the output. No repository code changed in this unit; it is records,
-one manifest, JSON launch/ledger data and capture scripts. The full `r1/tests` suite is not required
-for a docs-only record, but the focused launcher/chunk/adapter/accounting set that consumes these
-files passes, and P10/P11 pass at the base.
+`captures/cache_staging.txt` has the output. This guard unit changes one new module, its tests and
+the production template; it changes no manifest, launch record, signed value or experiment code
+path. The focused launcher/chunk/adapter/accounting set that consumes those files passes, and
+P10/P11 pass at the base.
 
 ## 8. Hashes
 
@@ -366,6 +388,10 @@ the work-root locks of the P7 engineering receipt; to probe the card before star
 the production chunk must; to set the user scope at 20 GiB (`20G`) from the decimal 1.4 × 14.27 GB basis; to record the
 direct-route environment as a disclosed substitution for the §2 image after finding Docker
 inaccessible and no Apptainer; to allocate `d3a-prod-20261128-a` after checking that no host
-directory, report or job used it; and to run only a seven-second endpoint start, no campaign. No
-signed value, pin, seed, request, image digest or harness byte was changed; no label, test or
-evaluation value was read; no other user's process was touched.
+directory, report or job used it; and to run only a seven-second endpoint start, no campaign. For the
+endpoint guard: to check listener PID, `/props` model/context/slots, the compute-app UUID, the
+canonical lease inode and the leased card's UUID together, fail closed on the first mismatch, seal
+the capture directory only after the started server is quiescent, and use exit 90 so an
+infrastructure STOP cannot be mistaken for a chunk failure. No signed value, pin, seed, request,
+image digest or harness byte was changed; no label, test or evaluation value was read; no other
+user's process was touched.

@@ -29,8 +29,6 @@ import argparse
 import json
 import os
 import re
-import shlex
-import socket
 import subprocess
 import sys
 import urllib.error
@@ -38,7 +36,7 @@ import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 CHECK_SCHEMA = "r1_d3_endpoint_check/v1"
 STOP_RC = 90
