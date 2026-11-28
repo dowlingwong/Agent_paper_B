@@ -1,0 +1,102 @@
+Current Triton version 3.2.0 is below the recommended 3.3.0 version. Errors may occur and these issues will not be fixed. Please consider upgrading Triton.
+Loading weights:   0%|          | 0/320 [00:00<?, ?it/s]Loading weights: 100%|██████████| 320/320 [00:00<00:00, 13195.86it/s]
+[transformers] `use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+{
+ "run_dir": "/data1/zli538/paperb_p4_20261127/p5_e0_fresh_20261128_ada/e0e2",
+ "report": {
+  "protocol": "trackp_e0/v2",
+  "stage": "final",
+  "variant": "fresh",
+  "target": "y_soft",
+  "lr": 0.0001,
+  "head_lr": 0.001,
+  "token_lr": 0.0001,
+  "max_steps": 2000,
+  "eval_every": 100,
+  "patience": 5,
+  "batch_size": 8,
+  "n_train": 2714,
+  "n_val": 286,
+  "n_test": 1000,
+  "val_cells": [
+   [
+    1,
+    3
+   ],
+   [
+    3,
+    2
+   ],
+   [
+    5,
+    4
+   ],
+   [
+    8,
+    2
+   ],
+   [
+    0,
+    3
+   ],
+   [
+    9,
+    3
+   ]
+  ],
+  "head_fit": {
+   "method": "full-batch L-BFGS (strong Wolfe), CPU float64",
+   "outer_iterations": 452,
+   "restarts": 1,
+   "converged": true,
+   "train_rps": 0.0014760360354557633,
+   "val_rps": 0.01550468523055315,
+   "grad_norm": 9.338665737237645e-05,
+   "descriptive": true,
+   "test": {
+    "n": 1000,
+    "rps": 0.01887257984046755,
+    "width_slope": 0.049039633167810764,
+    "mean_slope": 0.8370736114487888,
+    "width_ratio": 0.8064238693611836,
+    "width_slope_vs_label": 0.049101903171118635,
+    "mean_slope_vs_label": 0.8133965539102254,
+    "rps_interp": 0.019387020582864102,
+    "rps_extrap": 0.01805771633894536,
+    "label_width_slope_vs_s": 0.9253971715455148,
+    "label_mean_slope_vs_m": 1.0290607441508008,
+    "primary_width": "width_slope_vs_label",
+    "width_slope_vs_label_lb95": 0.003567110723836196,
+    "width_slope_vs_label_ub95": 0.097996941037624
+   },
+   "lora_starts_from": "the fresh head (restored after this fit)"
+  },
+  "frozen_token_rows": false,
+  "lora": {
+   "stopped_at": 2000,
+   "completed": true,
+   "checkpoint": "/data1/zli538/paperb_p4_20261127/p5_e0_fresh_20261128_ada/e0e2/lora/ckpt/step_0002000",
+   "best_step": 1800,
+   "best_value": 2.4955157641670667e-05,
+   "early_stopped": false,
+   "test": {
+    "n": 1000,
+    "rps": 9.51771040713234e-05,
+    "width_slope": 0.8494002529881797,
+    "mean_slope": 1.0198799806356469,
+    "width_ratio": 1.0872810701333622,
+    "width_slope_vs_label": 0.9065666993574975,
+    "mean_slope_vs_label": 0.9909444090128097,
+    "rps_interp": 3.559504236832229e-05,
+    "rps_extrap": 0.000189553858138351,
+    "label_width_slope_vs_s": 0.9253971715455148,
+    "label_mean_slope_vs_m": 1.0290607441508008,
+    "primary_width": "width_slope_vs_label",
+    "width_slope_vs_label_lb95": 0.8930008286699899,
+    "width_slope_vs_label_ub95": 0.9194754266898406
+   }
+  },
+  "pass": true,
+  "budget_override": null
+ }
+}

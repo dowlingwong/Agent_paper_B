@@ -1,0 +1,124 @@
+{
+  "argv": [
+    "--config",
+    "/home/dowling/r1_trackp/runs/p5_e0_fresh_20261128_tasl7/config/e0_config_ref_tasl7.json",
+    "e0",
+    "--stage",
+    "final",
+    "--base",
+    "kev-0.8b",
+    "--evidence",
+    "DRYRUN",
+    "--variant",
+    "fresh",
+    "--lr",
+    "0.0001",
+    "--seed",
+    "0",
+    "--gpu",
+    "0",
+    "--run-dir",
+    "/home/dowling/r1_trackp/runs/p5_e0_fresh_20261128_tasl7/e0e1"
+  ],
+  "base": {
+    "adapter_repo": "jaredpalmer/kev-0.8b",
+    "adapter_revision": "788ddbdd65715bb03a56788c822f6c632c9a551d",
+    "base_repo": "Qwen/Qwen3.5-0.8B-Base",
+    "base_revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+    "family": "kev"
+  },
+  "config_sha256": "31dd5776887df8e03c7f6e360f460c47f43c5d3bafc04a22c17f595c3b99b3d4",
+  "created_utc": "2026-11-28T10:41:41Z",
+  "data_manifest_sha256": "b963be2dd378241e0b0689907d4051bfa62922a8e4968aa40061ed7ef275bfef",
+  "environment": {
+    "packages": {
+      "kev": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/kev",
+        "pip_commit": "2074cc44256200bb37540103fa4572901faa10f3"
+      },
+      "laya": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/laya",
+        "pip_commit": "a478221bcad24d1a9c47b361c79328ebd2b100c6"
+      },
+      "startlux_decide": {
+        "path": "/home/dowling/r1_trackp/venvs/trackp-gpu/lib/python3.12/site-packages/startlux_decide",
+        "pip_commit": "a99977d9332decc9fb27a2488b4a83b533b6cd5f"
+      }
+    },
+    "peft": "0.21.2",
+    "torch": "2.6.0+cu124",
+    "transformers": "5.19.0"
+  },
+  "evidence_label": "DRYRUN",
+  "git": {
+    "harness": {
+      "branch": "trackp-20261026",
+      "commit": "897d83c8efa364ec2fdd37288241cc42e01d7274",
+      "dirty": false,
+      "dirty_files": [],
+      "path": "/home/dowling/r1_trackp/autoresearch_harness"
+    },
+    "paper": {
+      "branch": "HEAD",
+      "commit": "c80f83bc5bc93356dfacadbcb5b186dfb59d028f",
+      "dirty": false,
+      "dirty_files": [],
+      "path": "/home/dowling/r1_trackp/e0_samecode_20261128"
+    }
+  },
+  "gpu_lease": [
+    {
+      "event": "start",
+      "gpu_index": 0,
+      "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+      "job": "trackp e0 kev-0.8b",
+      "other_processes": {
+        "count": 0,
+        "memory_mib": 0
+      },
+      "pid": 2762897,
+      "trackx_marker": "absent: /home/dowling/r1_locks/trackx_evidence.active",
+      "utc": "2026-11-28T10:13:12Z"
+    },
+    {
+      "event": "end",
+      "gpu_index": 0,
+      "gpu_uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+      "job": "trackp e0 kev-0.8b",
+      "other_processes": {
+        "count": 0,
+        "memory_mib": 0
+      },
+      "pid": 2762897,
+      "utc": "2026-11-28T10:41:41Z"
+    }
+  ],
+  "head_form": "linear12",
+  "host": {
+    "cuda_device_order": null,
+    "cuda_visible_devices": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1",
+    "device": {
+      "compute_capability": "8.9",
+      "name": "NVIDIA GeForce RTX 4090",
+      "uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+    },
+    "gpus": [
+      {
+        "compute_capability": "8.9",
+        "driver": "580.178.04",
+        "name": "NVIDIA GeForce RTX 4090",
+        "uuid": "GPU-ab72fb4a-f3de-6e37-f03b-4b92654babb1"
+      }
+    ],
+    "hostname": "TASL-7"
+  },
+  "model_files_sha256": {
+    "adapter/README.md": "56a276a30ac9e74bb5d0409be1e00857c5f5e535bbe3c334f6e1a9061ecbce6f",
+    "adapter/adapter_config.json": "c52f427a089baaa47ca7b582016d2b15baf9bd1afa61bd2ea9012d4c076bdbcc",
+    "adapter/adapter_model.safetensors": "0999ae93c4525ef4551c32d6eab441df4d7e43dd2a1b6f863738186a14e047ae",
+    "heads.safetensors": "fec0665cd8a3abf229659e3d5fdba0d0ebd9cf12747ad8ca37b3939d071ff275"
+  },
+  "schema": "trackp_run_manifest/v1",
+  "seed": 0,
+  "subcommand": "e0"
+}

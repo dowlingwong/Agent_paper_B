@@ -1,0 +1,102 @@
+Current Triton version 3.2.0 is below the recommended 3.3.0 version. Errors may occur and these issues will not be fixed. Please consider upgrading Triton.
+Loading weights:   0%|          | 0/320 [00:00<?, ?it/s]Loading weights: 100%|██████████| 320/320 [00:00<00:00, 6583.27it/s]
+[transformers] `use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+{
+ "run_dir": "/home/dowling/r1_trackp/runs/p5_e0_fresh_20261128_tasl7/e0e1",
+ "report": {
+  "protocol": "trackp_e0/v2",
+  "stage": "final",
+  "variant": "fresh",
+  "target": "y_soft",
+  "lr": 0.0001,
+  "head_lr": 0.001,
+  "token_lr": 0.0001,
+  "max_steps": 2000,
+  "eval_every": 100,
+  "patience": 5,
+  "batch_size": 8,
+  "n_train": 2714,
+  "n_val": 286,
+  "n_test": 1000,
+  "val_cells": [
+   [
+    1,
+    3
+   ],
+   [
+    3,
+    2
+   ],
+   [
+    5,
+    4
+   ],
+   [
+    8,
+    2
+   ],
+   [
+    0,
+    3
+   ],
+   [
+    9,
+    3
+   ]
+  ],
+  "head_fit": {
+   "method": "full-batch L-BFGS (strong Wolfe), CPU float64",
+   "outer_iterations": 291,
+   "restarts": 1,
+   "converged": true,
+   "train_rps": 0.0020120018161833286,
+   "val_rps": 0.0125906802713871,
+   "grad_norm": 0.00010234107598448555,
+   "descriptive": true,
+   "test": {
+    "n": 1000,
+    "rps": 0.015053488933500985,
+    "width_slope": 0.01664473030317763,
+    "mean_slope": 0.8718309331506695,
+    "width_ratio": 0.8295005973761004,
+    "width_slope_vs_label": 0.011444443187878219,
+    "mean_slope_vs_label": 0.8468470154517501,
+    "rps_interp": 0.015848116952562847,
+    "rps_extrap": 0.01379481457772599,
+    "label_width_slope_vs_s": 0.9253971715455148,
+    "label_mean_slope_vs_m": 1.0290607441508008,
+    "primary_width": "width_slope_vs_label",
+    "width_slope_vs_label_lb95": -0.028247675748474834,
+    "width_slope_vs_label_ub95": 0.05452546576073373
+   },
+   "lora_starts_from": "the fresh head (restored after this fit)"
+  },
+  "frozen_token_rows": false,
+  "lora": {
+   "stopped_at": 2000,
+   "completed": true,
+   "checkpoint": "/home/dowling/r1_trackp/runs/p5_e0_fresh_20261128_tasl7/e0e1/lora/ckpt/step_0002000",
+   "best_step": 2000,
+   "best_value": 2.5104269298026338e-05,
+   "early_stopped": false,
+   "test": {
+    "n": 1000,
+    "rps": 0.00015756761371621191,
+    "width_slope": 0.8220402967312668,
+    "mean_slope": 1.0155634758165035,
+    "width_ratio": 1.0722957408427098,
+    "width_slope_vs_label": 0.8799750969879275,
+    "mean_slope_vs_label": 0.9865099710075711,
+    "rps_interp": 3.1193904628697924e-05,
+    "rps_extrap": 0.0003577409565344189,
+    "label_width_slope_vs_s": 0.9253971715455148,
+    "label_mean_slope_vs_m": 1.0290607441508008,
+    "primary_width": "width_slope_vs_label",
+    "width_slope_vs_label_lb95": 0.8680299889636561,
+    "width_slope_vs_label_ub95": 0.8920547959681355
+   }
+  },
+  "pass": true,
+  "budget_override": null
+ }
+}
