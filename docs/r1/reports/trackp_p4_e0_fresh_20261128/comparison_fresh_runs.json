@@ -1,0 +1,116 @@
+{
+ "criterion": "R1-P4-E0-CRITERION option A",
+ "engineering_only": true,
+ "equivalent": true,
+ "rps": {
+  "abs_delta": 2.949422032525412e-05,
+  "ada_mean": 0.00010557190693526274,
+  "ada_runs": [
+   0.00011596670979920207,
+   9.51771040713234e-05
+  ],
+  "pass": true,
+  "tasl7_mean": 0.00013506612726051686,
+  "tasl7_runs": [
+   0.00015756761371621191,
+   0.0001125646408048218
+  ],
+  "tol_abs": 3.04e-05
+ },
+ "schema": "r1_p4_e0_fresh_compare/v1",
+ "slope_pairs": [
+  {
+   "ada_run": 1,
+   "checks": [
+    {
+     "ada": 0.907029563917218,
+     "delta": -0.027054466929290477,
+     "metric": "width_slope_vs_label",
+     "pass": true,
+     "tasl7": 0.8799750969879275,
+     "tol_abs": 0.05
+    },
+    {
+     "ada": 0.9832066451865498,
+     "delta": 0.00330332582102133,
+     "metric": "mean_slope_vs_label",
+     "pass": true,
+     "tasl7": 0.9865099710075711,
+     "tol_abs": 0.05
+    }
+   ],
+   "pass": true,
+   "tasl7_run": 1
+  },
+  {
+   "ada_run": 1,
+   "checks": [
+    {
+     "ada": 0.907029563917218,
+     "delta": -0.01632098871079335,
+     "metric": "width_slope_vs_label",
+     "pass": true,
+     "tasl7": 0.8907085752064247,
+     "tol_abs": 0.05
+    },
+    {
+     "ada": 0.9832066451865498,
+     "delta": 0.005576805686686281,
+     "metric": "mean_slope_vs_label",
+     "pass": true,
+     "tasl7": 0.988783450873236,
+     "tol_abs": 0.05
+    }
+   ],
+   "pass": true,
+   "tasl7_run": 2
+  },
+  {
+   "ada_run": 2,
+   "checks": [
+    {
+     "ada": 0.9065666993574975,
+     "delta": -0.026591602369569922,
+     "metric": "width_slope_vs_label",
+     "pass": true,
+     "tasl7": 0.8799750969879275,
+     "tol_abs": 0.05
+    },
+    {
+     "ada": 0.9909444090128097,
+     "delta": -0.004434438005238572,
+     "metric": "mean_slope_vs_label",
+     "pass": true,
+     "tasl7": 0.9865099710075711,
+     "tol_abs": 0.05
+    }
+   ],
+   "pass": true,
+   "tasl7_run": 1
+  },
+  {
+   "ada_run": 2,
+   "checks": [
+    {
+     "ada": 0.9065666993574975,
+     "delta": -0.015858124151072794,
+     "metric": "width_slope_vs_label",
+     "pass": true,
+     "tasl7": 0.8907085752064247,
+     "tol_abs": 0.05
+    },
+    {
+     "ada": 0.9909444090128097,
+     "delta": -0.002160958139573621,
+     "metric": "mean_slope_vs_label",
+     "pass": true,
+     "tasl7": 0.988783450873236,
+     "tol_abs": 0.05
+    }
+   ],
+   "pass": true,
+   "tasl7_run": 2
+  }
+ ],
+ "slopes_pass": true
+}

@@ -1,0 +1,96 @@
+{
+  "batch_size": 8,
+  "budget_override": null,
+  "eval_every": 100,
+  "frozen_token_rows": false,
+  "head_fit": {
+    "converged": true,
+    "descriptive": true,
+    "grad_norm": 9.338665737237645e-05,
+    "lora_starts_from": "the fresh head (restored after this fit)",
+    "method": "full-batch L-BFGS (strong Wolfe), CPU float64",
+    "outer_iterations": 452,
+    "restarts": 1,
+    "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 0.8370736114487888,
+      "mean_slope_vs_label": 0.8133965539102254,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 0.01887257984046755,
+      "rps_extrap": 0.01805771633894536,
+      "rps_interp": 0.019387020582864102,
+      "width_ratio": 0.8064238693611836,
+      "width_slope": 0.049039633167810764,
+      "width_slope_vs_label": 0.049101903171118635,
+      "width_slope_vs_label_lb95": 0.003567110723836196,
+      "width_slope_vs_label_ub95": 0.097996941037624
+    },
+    "train_rps": 0.0014760360354557633,
+    "val_rps": 0.01550468523055315
+  },
+  "head_lr": 0.001,
+  "lora": {
+    "best_step": 1800,
+    "best_value": 2.4955157641670667e-05,
+    "checkpoint": "/data1/zli538/paperb_p4_20261127/p5_e0_fresh_20261128_ada/e0e2/lora/ckpt/step_0002000",
+    "completed": true,
+    "early_stopped": false,
+    "stopped_at": 2000,
+    "test": {
+      "label_mean_slope_vs_m": 1.0290607441508008,
+      "label_width_slope_vs_s": 0.9253971715455148,
+      "mean_slope": 1.0198799806356469,
+      "mean_slope_vs_label": 0.9909444090128097,
+      "n": 1000,
+      "primary_width": "width_slope_vs_label",
+      "rps": 9.51771040713234e-05,
+      "rps_extrap": 0.000189553858138351,
+      "rps_interp": 3.559504236832229e-05,
+      "width_ratio": 1.0872810701333622,
+      "width_slope": 0.8494002529881797,
+      "width_slope_vs_label": 0.9065666993574975,
+      "width_slope_vs_label_lb95": 0.8930008286699899,
+      "width_slope_vs_label_ub95": 0.9194754266898406
+    }
+  },
+  "lr": 0.0001,
+  "max_steps": 2000,
+  "n_test": 1000,
+  "n_train": 2714,
+  "n_val": 286,
+  "pass": true,
+  "patience": 5,
+  "protocol": "trackp_e0/v2",
+  "stage": "final",
+  "target": "y_soft",
+  "token_lr": 0.0001,
+  "val_cells": [
+    [
+      1,
+      3
+    ],
+    [
+      3,
+      2
+    ],
+    [
+      5,
+      4
+    ],
+    [
+      8,
+      2
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      9,
+      3
+    ]
+  ],
+  "variant": "fresh"
+}
