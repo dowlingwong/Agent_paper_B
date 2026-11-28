@@ -1,6 +1,6 @@
 # Compute round status — 28 November 2026, 01:30 CET (`coord/compute` @ this commit)
 
-Base `origin/main` `a98d2eff1d2847e34f00effe66b53bc00467e936`; queue read at `coord/coordinator` `37a7f03e`.
+Base `origin/main` `a98d2eff` at round start (later `73524055` published the D6 copy code); queue read at `coord/coordinator` `37a7f03e`.
 Worked the STATE order: push reports, TASL-7 E0, D.3 preflight, HTCondor cleanup, houseprice at 01:00 CET, P11,
 deepthought stop record, deepthought2 screening launch.
 
@@ -15,6 +15,7 @@ deepthought stop record, deepthought2 screening launch.
 | `compute/20261127-38` deepthought screening stop | eight scenes sealed, 0 failed, last 444/10,164; no analysis | `compute-screen-dt-stop-20261128` @ `b7cc5f70` | inventory only |
 | `compute/20261127-32` P11 host tests | gate-blocked remainder: each seal/server command refused at `STOP: run_id must be c3_t1_labels_<YYYYMMDD>`; recorded as checked at publication | `compute-g5-p11-refusals-20261128` @ `dec84350` | `compute-g5-p11-refusals-20261128-review` @ `be56676c`, **ACCEPTED with two MINOR** (`d8e4e559…`; MINOR-1 applied) |
 | `compute/20261127-02` item 2 survey redaction | already fixed on `origin/compute-resource-survey-20261126` @ `58e6bbeb` (no `vla` left in the survey captures); branch is ready to merge | survey branch | coordinator merge |
+| `compute/20261127-36` expansion D6 copy | **delivered**: 1,840 rows; summary `67355b66…`, assembly `b4c90ec6…`, runs `c23dec91…` all equal to the source | `compute-relcopy-x-20261128` @ `c70fed2c` | `compute-relcopy-x-20261128-review` @ `c257c58f`, **ACCEPTED, no findings** (`4b7ef4e8…`) |
 
 ## Running (report with IDs for the next round)
 
@@ -27,7 +28,7 @@ deepthought stop record, deepthought2 screening launch.
 
 | Card | Waits for |
 |---|---|
-| `compute/20261127-36` expansion D6 copy | reviewed code `35849909` is **not yet on `origin/main`** (local handoff `coord/local` @ `fb0af9f3`); source and dest are free; run immediately after publication |
+| `compute/20261127-36` expansion D6 copy | **done** (see above); coordinator publishes the accepted copy |
 | `compute/20261127-32` remaining P11 (C2, C4, C5, C9, C14, C16, C10 hours, C11 chunk side) | signed G.5 note + filled spec, or a purpose-built synthetic smoke spec; none fabricated |
 | `compute/20261127-33` item 2 Ada P5 rerun | the per-card lease is merged; waits for a decision on the E0 reference (now being produced by `-01`) |
 | `compute/20261127-12`/`-03` D.3 batch preflight | a startable ETP L40S/TOpAS A100; re-check `Start` |
